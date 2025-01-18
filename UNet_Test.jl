@@ -34,7 +34,18 @@ function unet(input_channels::Int, output_channels::Int)
         (x -> begin
             println("Nach MaxPool: ", size(x))
             x
+        end),
+        Conv((3, 3), 64 => 128, relu, pad=1),
+        (x -> begin
+            println("Nach Conv_2: ", size(x))
+            x
+        end),             # Zweite Convolution
+        MaxPool((2, 2), stride=(2, 3)),                   # Zweites Downsampling
+        (x -> begin
+            println("Nach zweiter MaxPool: ", size(x))
+            x
         end)
+        
     )
     
     # Decoder
@@ -43,17 +54,23 @@ function unet(input_channels::Int, output_channels::Int)
             println("Eingabegröße Decoder: ", size(x))
             x
         end),
-        ConvTranspose((3, 4), 64 => output_channels, stride=2, pad=1),  # Upsampling
+        
+        ConvTranspose((5, 3), 128 => 64, stride=(2,3),pad=(1,0)),   # Zweites Upsampling
         (x -> begin
-            println("Nach ConvTranspose: ", size(x))
+            println("Nach erstem Upsampling: ", size(x))
+            x
+        end),
+        ConvTranspose((1, 4), 64 => output_channels, stride=(2,2),pad=(1, 1)),  # Upsampling
+        (x -> begin
+            println("Nach finalem ConvTranspose: ", size(x))
             x
         end)
+        
+        
     )
     
     return Chain(encoder, decoder)
 end
-
-
 
 model = unet(input_channels, output_channels)
 
