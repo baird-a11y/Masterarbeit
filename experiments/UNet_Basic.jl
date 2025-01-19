@@ -13,7 +13,7 @@ input_channels = 1  # Anzahl der Eingabekanäle (z. B. Graustufenbilder)
 output_channels = 1  # Anzahl der Ausgabekanäle (z. B. Segmentierungsmasken)
 
 learning_rate = 0.001 # Lernrate
-num_epochs = 10 # Anzahl der Epochen
+num_epochs = 100 # Anzahl der Epochen
 mask_batch = 1 # Anzahl der Masken
 
 
