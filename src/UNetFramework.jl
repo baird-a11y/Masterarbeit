@@ -16,8 +16,6 @@ include("dataloader.jl")
 include("model.jl")  # Bindet Model.jl ein
 using .Model         # Nutzt das lokale Modul Model
 
-
-
 # Function to train the U-Net model
 function train_model(model, train_data, val_data; epochs=10, learning_rate=0.001)
     """
@@ -36,7 +34,7 @@ function train_model(model, train_data, val_data; epochs=10, learning_rate=0.001
     optimizer = Flux.ADAM(learning_rate)
 
     for epoch in 1:epochs
-        println("Epoch $epoch/$epochs")
+        @info "Epoch $epoch/$epochs"
 
         # Training Loop
         for (x_batch, y_batch) in train_data
@@ -49,12 +47,13 @@ function train_model(model, train_data, val_data; epochs=10, learning_rate=0.001
 
         # Validation Step
         val_loss = 0.0
+        num_batches = length(val_data)
         for (x_val, y_val) in val_data
             ŷ_val = model(x_val)
             val_loss += Flux.logitcrossentropy(ŷ_val, y_val)
         end
 
-        println("Validation Loss: ", val_loss / length(val_data))
+        @info "Validation Loss: $(val_loss / num_batches)"
     end
 
     return model
@@ -73,6 +72,7 @@ function evaluate_model(model, test_data)
         Accuracy of the model.
     """
     total_accuracy = 0.0
+    num_batches = length(test_data)
 
     for (x_test, y_test) in test_data
         ŷ_test = model(x_test)
@@ -80,8 +80,9 @@ function evaluate_model(model, test_data)
         total_accuracy += accuracy
     end
 
-    println("Test Accuracy: ", total_accuracy / length(test_data))
-    return total_accuracy / length(test_data)
+    accuracy = total_accuracy / num_batches
+    @info "Test Accuracy: $accuracy"
+    return accuracy
 end
 
 # Function to preprocess data
@@ -111,10 +112,15 @@ function visualize_results(model, input_image, ground_truth)
     # Führe Vorhersage durch
     prediction = model(input_image)
 
-    # Extrahiere die ersten beiden Dimensionen (Höhe, Breite)
-    input_image_flipped = reverse(input_image[:, :, 1, 1], dims=1)
-    ground_truth_flipped = reverse(ground_truth[:, :, 1, 1], dims=1)
-    prediction_flipped = reverse(prediction[:, :, 1, 1], dims=1)
+    # Übertrage Arrays zurück auf die CPU für die Visualisierung
+    input_image_cpu = Array(input_image[:, :, 1, 1])  # Extrahiere die ersten Dimensionen
+    ground_truth_cpu = Array(ground_truth[:, :, 1, 1])  # Gleiche Extraktion für Ground Truth
+    prediction_cpu = Array(prediction[:, :, 1, 1])  # Vorhersage ebenfalls auf CPU übertragen
+
+    # Flip-Operation für die Darstellung
+    input_image_flipped = reverse(input_image_cpu, dims=1)
+    ground_truth_flipped = reverse(ground_truth_cpu, dims=1)
+    prediction_flipped = reverse(prediction_cpu, dims=1)
 
     # Visualisierung mit vertikalem Layout
     plot(
@@ -125,5 +131,6 @@ function visualize_results(model, input_image, ground_truth)
         size=(600, 900)  # Größere Plotgröße für bessere Darstellung
     )
 end
+
 
 end # module
