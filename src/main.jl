@@ -15,7 +15,7 @@ import .Train
 
 # Parameter
 epochs = 10
-batch_size = 4
+batch_size = 2
 learning_rate = 0.001
 over_size = (512, 2048)
 
