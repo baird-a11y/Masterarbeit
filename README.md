@@ -47,7 +47,7 @@ This repository contains an implementation of the U-Net architecture for image s
 - `experiments/`
   - Scripts for testing and evaluating some ideas.
 - `results/`
-  - Empty at this point.
+  - Old results from the experiment codes.
 - `README.md`
   - Documentation for the repository.
 
