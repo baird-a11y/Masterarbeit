@@ -8,6 +8,8 @@ using Statistics
 using ImageCore
 using FileIO
 using ImageShow
+using Images
+using Plots
 
 # Include all necessary submodules
 include("dataloader.jl")
@@ -97,19 +99,31 @@ function preprocess_data(data)
 end
 
 # Function to visualize results
-function visualize_results(image, prediction)
+function visualize_results(model, input_image, ground_truth)
     """
-    Visualize predictions.
+    Visualize the input image, ground truth, and model prediction.
 
     Args:
-        image: Original input image.
-        prediction: Predicted segmentation mask.
+        model: Trained U-Net model for prediction.
+        input_image: Input image tensor (H, W, C, Batch).
+        ground_truth: Ground-truth mask tensor (H, W, C, Batch).
     """
-    
+    # Führe Vorhersage durch
+    prediction = model(input_image)
 
-    println("Visualizing results...")
-    display(image)
-    display(prediction)
+    # Extrahiere die ersten beiden Dimensionen (Höhe, Breite)
+    input_image_flipped = reverse(input_image[:, :, 1, 1], dims=1)
+    ground_truth_flipped = reverse(ground_truth[:, :, 1, 1], dims=1)
+    prediction_flipped = reverse(prediction[:, :, 1, 1], dims=1)
+
+    # Visualisierung mit vertikalem Layout
+    plot(
+        heatmap(input_image_flipped, title="Input Image", color=:viridis),
+        heatmap(ground_truth_flipped, title="Ground Truth Mask", color=:viridis),
+        heatmap(prediction_flipped, title="Predicted Mask", color=:viridis),
+        layout=(3, 1),  # Vertikales Layout
+        size=(600, 900)  # Größere Plotgröße für bessere Darstellung
+    )
 end
 
 end # module

@@ -17,11 +17,11 @@ function conv_block(in_channels::Int, out_channels::Int)
         A Chain representing the convolutional block.
     """
     return Chain(
-        (x -> begin println("Input to conv_block: ", size(x)); x end),
+        #(x -> begin println("Input to conv_block: ", size(x)); x end),
         Conv((3, 3), in_channels => out_channels, relu, pad=1),
-        (x -> begin println("After Conv: ", size(x)); x end),
-        BatchNorm(out_channels),
-        (x -> begin println("After BatchNorm: ", size(x)); x end)
+        #(x -> begin println("After Conv: ", size(x)); x end),
+        BatchNorm(out_channels)
+        #(x -> begin println("After BatchNorm: ", size(x)); x end)
     )
 end
 
@@ -38,13 +38,13 @@ function encoder_block(in_channels::Int, out_channels::Int)
         A tuple (encoder, pool) with the encoder layers and max pooling layer.
     """
     encoder = Chain(
-        (x -> begin println("Encoder input size: ", size(x)); x end),
+        #(x -> begin println("Encoder input size: ", size(x)); x end),
         conv_block(in_channels, out_channels),
         conv_block(out_channels, out_channels)
     )
     pool = Chain(
-        MaxPool((2, 2), stride=(2, 2)),
-        (x -> begin println("After max pooling: ", size(x)); x end)
+        MaxPool((2, 2), stride=(2, 2))
+        #(x -> begin println("After max pooling: ", size(x)); x end)
     )
     return encoder, pool
 end
@@ -62,11 +62,11 @@ function decoder_block(in_channels::Int, out_channels::Int)
         A Chain representing the decoder block.
     """
     return Chain(
-        (x -> begin println("Decoder input size: ", size(x)); x end),
+        #(x -> begin println("Decoder input size: ", size(x)); x end),
         ConvTranspose((2, 2), in_channels => out_channels, stride=(2, 2)),
-        (x -> begin println("After transposed convolution: ", size(x)); x end),
-        conv_block(out_channels, out_channels),
-        (x -> begin println("After conv block in decoder: ", size(x)); x end)
+        #(x -> begin println("After transposed convolution: ", size(x)); x end),
+        conv_block(out_channels, out_channels)
+        #(x -> begin println("After conv block in decoder: ", size(x)); x end)
     )
 end
 
@@ -97,7 +97,7 @@ function create_unet(input_channels::Int, output_channels::Int)
     # Combine all layers into a Chain without skip connections
     return Chain(
         (x -> begin
-            println("Input size: ", size(x))
+            #println("Input size: ", size(x))
             x1 = enc1(x); p1 = pool1(x1)
             x2 = enc2(p1); p2 = pool2(x2)
             x3 = enc3(p2); p3 = pool3(x3)
@@ -105,13 +105,13 @@ function create_unet(input_channels::Int, output_channels::Int)
             
             # Decoder without skip connections
             d4 = dec4(p4)
-            println("After decoding layer 4: ", size(d4))
+            #println("After decoding layer 4: ", size(d4))
             d3 = dec3(d4)
-            println("After decoding layer 3: ", size(d3))
+            #println("After decoding layer 3: ", size(d3))
             d2 = dec2(d3)
-            println("After decoding layer 2: ", size(d2))
+            #println("After decoding layer 2: ", size(d2))
             d1 = dec1(d2)
-            println("After decoding layer 1: ", size(d1))
+            #println("After decoding layer 1: ", size(d1))
             d1
         end)
     )

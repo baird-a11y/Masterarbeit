@@ -9,13 +9,13 @@ import .DataLoader
 import .Model
 import .Train
 using ImageTransformations
+using CUDA
 
 # Parameter
-epochs = 1
-batch_size = 1
+epochs = 10
+batch_size = 4
 learning_rate = 0.001
-over_size =(512, 2048)
-target_size = (16, 64)
+over_size = (512, 2048)
 
 # Daten laden und vorbereiten
 println("Lade Daten...")
@@ -24,28 +24,79 @@ images, labels = DataLoader.load_data(
     "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Masken"
 )
 
-# images = DataLoader.preprocess_image(images, over_size)
-# labels = DataLoader.preprocess_image(labels, over_size)
+# Daten vorverarbeiten und auf die GPU verschieben
 train_data = DataLoader.preprocess_and_batch(images, labels, batch_size, over_size)
+train_data_gpu = [(cu(x), cu(y)) for (x, y) in train_data]
 
-# U-Net Modell erstellen
+# U-Net Modell erstellen und auf die GPU verschieben
 println("Erstelle U-Net-Modell...")
 model = Model.create_unet(1, 1)  # Single-Channel Input/Output
+trained_model_gpu = cu(model)
 
 # Training starten
 println("Starte Training...")
-trained_model = Train.train_model(model, train_data, train_data; epochs=epochs, learning_rate=learning_rate)
-
-
-
-
+trained_model = Train.train_model(trained_model_gpu, train_data_gpu, train_data_gpu; epochs=epochs, learning_rate=learning_rate)
 
 # Ergebnisse evaluieren
 println("Evaluierung der Ergebnisse...")
-evaluate_model(trained_model, train_data)
+UNetFramework.evaluate_model(trained_model_gpu, train_data_gpu)
 
 # Optional: Visualisierung eines Beispiels
 println("Visualisiere Ergebnisse...")
+# Hole ein Testbeispiel aus den Trainingsdaten
 test_image, test_label = train_data[1]  # Erstes Beispiel
-prediction = trained_model(test_image)
-visualize_results(test_image, prediction)
+
+# Testbild und Label auf die GPU verschieben
+test_image_gpu = CUDA.array(test_image)
+test_label_gpu = CUDA.array(test_label)
+
+# Visualisierung der Ergebnisse mit Ground-Truth
+UNetFramework.visualize_results(trained_model_gpu, test_image, test_label)
+
+# Code without CUDA #
+# include("UNetFramework.jl")
+# include("DataLoader.jl")
+# include("Model.jl")
+# include("train.jl")
+# # Modul importieren
+# import .UNetFramework
+# import .DataLoader
+# import .Model
+# import .Train
+# using ImageTransformations
+# using CUDA
+# # Parameter
+# epochs = 10
+# batch_size = 4
+# learning_rate = 0.001
+# over_size =(512, 2048)
+
+# # Daten laden und vorbereiten
+# println("Lade Daten...")
+# images, labels = DataLoader.load_data(
+#     "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Bilder",
+#     "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Masken"
+# )
+
+# # images = DataLoader.preprocess_image(images, over_size)
+# # labels = DataLoader.preprocess_image(labels, over_size)
+# train_data = DataLoader.preprocess_and_batch(images, labels, batch_size, over_size)
+
+# # U-Net Modell erstellen
+# println("Erstelle U-Net-Modell...")
+# model = Model.create_unet(1, 1)  # Single-Channel Input/Output
+
+# # Training starten
+# println("Starte Training...")
+# trained_model = Train.train_model(model, train_data, train_data; epochs=epochs, learning_rate=learning_rate)
+
+# # Ergebnisse evaluieren
+# println("Evaluierung der Ergebnisse...")
+# UNetFramework.evaluate_model(trained_model, train_data)
+
+# # Optional: Visualisierung eines Beispiels
+# println("Visualisiere Ergebnisse...")
+# # Hole ein Testbeispiel aus den Trainingsdaten
+# test_image, test_label = train_data[1]  # Erstes Beispiel
+# # Visualisierung der Ergebnisse mit Ground-Truth
+# UNetFramework.visualize_results(trained_model, test_image, test_label)
