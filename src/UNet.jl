@@ -1,54 +1,112 @@
+module UNetFramework
 
-function unet(input_channels::Int, output_channels::Int)
-    # Encoder
-    encoder = Chain(
-        (x -> begin
-            println("Eingabegröße Encoder: ", size(x))
-            x
-        end),
-        Conv((2, 3), input_channels => 64, relu, pad=1),  # Erste Convolution
-        (x -> begin
-            println("Nach Conv: ", size(x))
-            x
-        end),
-        MaxPool((2, 2), stride=(2, 2)),                   # Einmaliges Downsampling
-        (x -> begin
-            println("Nach MaxPool: ", size(x))
-            x
-        end),
-        Conv((3, 3), 64 => 128, relu, pad=1),
-        (x -> begin
-            println("Nach Conv_2: ", size(x))
-            x
-        end),             # Zweite Convolution
-        MaxPool((2, 2), stride=(2, 3)),                   # Zweites Downsampling
-        (x -> begin
-            println("Nach zweiter MaxPool: ", size(x))
-            x
-        end)
-        
-    )
-    
-    # Decoder
-    decoder = Chain(
-        (x -> begin
-            println("Eingabegröße Decoder: ", size(x))
-            x
-        end),
-        
-        ConvTranspose((5, 3), 128 => 64, stride=(2,3),pad=(1,0)),   # Zweites Upsampling
-        (x -> begin
-            println("Nach erstem Upsampling: ", size(x))
-            x
-        end),
-        ConvTranspose((1, 4), 64 => output_channels, stride=(2,2),pad=(1, 1)),  # Upsampling
-        (x -> begin
-            println("Nach finalem ConvTranspose: ", size(x))
-            x
-        end)
-        
-        
-    )
-    
-    return Chain(encoder, decoder)
+export train_model, evaluate_model, preprocess_data, visualize_results
+
+using Flux
+using Flux.Optimise: update!
+using Statistics
+using ImageCore
+using FileIO
+
+# Include all necessary submodules
+include("dataloader.jl")
+include("model.jl")
+include("utils.jl")
+
+# Function to train the U-Net model
+function train_model(model, train_data, val_data; epochs=10, learning_rate=0.001)
+    """
+    Train the U-Net model.
+
+    Args:
+        model: The U-Net model instance.
+        train_data: Training dataset (batches).
+        val_data: Validation dataset (batches).
+        epochs: Number of training epochs.
+        learning_rate: Learning rate for the optimizer.
+
+    Returns:
+        Trained model.
+    """
+    optimizer = Flux.ADAM(learning_rate)
+
+    for epoch in 1:epochs
+        println("Epoch $epoch/$epochs")
+
+        # Training Loop
+        for (x_batch, y_batch) in train_data
+            loss, grads = Flux.withgradient(Flux.params(model)) do
+                ŷ = model(x_batch)
+                Flux.logitcrossentropy(ŷ, y_batch)
+            end
+            update!(optimizer, Flux.params(model), grads)
+        end
+
+        # Validation Step
+        val_loss = 0.0
+        for (x_val, y_val) in val_data
+            ŷ_val = model(x_val)
+            val_loss += Flux.logitcrossentropy(ŷ_val, y_val)
+        end
+
+        println("Validation Loss: ", val_loss / length(val_data))
+    end
+
+    return model
 end
+
+# Function to evaluate the U-Net model
+function evaluate_model(model, test_data)
+    """
+    Evaluate the U-Net model.
+
+    Args:
+        model: The trained U-Net model.
+        test_data: Testing dataset.
+
+    Returns:
+        Accuracy of the model.
+    """
+    total_accuracy = 0.0
+
+    for (x_test, y_test) in test_data
+        ŷ_test = model(x_test)
+        accuracy = mean(argmax(ŷ_test, dims=3) .== argmax(y_test, dims=3))
+        total_accuracy += accuracy
+    end
+
+    println("Test Accuracy: ", total_accuracy / length(test_data))
+    return total_accuracy / length(test_data)
+end
+
+# Function to preprocess data
+function preprocess_data(data)
+    """
+    Preprocess the input data.
+
+    Args:
+        data: Raw input data.
+
+    Returns:
+        Preprocessed data suitable for training or evaluation.
+    """
+    return Float32.(data) / 255.0
+end
+
+# Function to visualize results
+function visualize_results(image, prediction)
+    """
+    Visualize predictions.
+
+    Args:
+        image: Original input image.
+        prediction: Predicted segmentation mask.
+    """
+    using ImageShow
+
+    println("Visualizing results...")
+    display(image)
+    display(prediction)
+end
+
+end # module
