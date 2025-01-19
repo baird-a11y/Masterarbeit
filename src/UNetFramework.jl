@@ -15,7 +15,7 @@ using Plots
 include("dataloader.jl")
 include("model.jl")  # Bindet Model.jl ein
 using .Model         # Nutzt das lokale Modul Model
-include("utils.jl")
+
 
 
 # Function to train the U-Net model

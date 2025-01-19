@@ -46,9 +46,9 @@ function train_model(model, train_data, val_data; epochs, learning_rate)
             y_batch .=Float32.(y_batch) ./ maximum(y_batch)
 
             # Debugging statements
-            println("Typ von m(x): ", eltype(model(x_batch)))
-            println("Typ von y: ", eltype(y_batch))
-            println("Wertebereich von y: ", minimum(y_batch), " - ", maximum(y_batch))
+            # println("Typ von m(x): ", eltype(model(x_batch)))
+            # println("Typ von y: ", eltype(y_batch))
+            # println("Wertebereich von y: ", minimum(y_batch), " - ", maximum(y_batch))
 
             # Compute gradients and update model parameters
             grads = Flux.gradient(m -> loss(m, x_batch, y_batch), model)

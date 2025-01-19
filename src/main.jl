@@ -1,8 +1,8 @@
-
 include("UNetFramework.jl")
 include("DataLoader.jl")
 include("Model.jl")
 include("train.jl")
+
 # Modul importieren
 import .UNetFramework
 import .DataLoader
