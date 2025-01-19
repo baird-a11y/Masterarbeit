@@ -34,27 +34,9 @@ function load_data(image_path::String, label_path::String)
     return images, labels
 end
 
-# Function to preprocess a single image
-function preprocess_image(img, target_size::Tuple{Int, Int})
+function preprocess_and_batch(images::Vector, labels::Vector, batch_size::Int, target_size::Tuple{Int, Int})
     """
-    Preprocess a single image by converting it to grayscale, normalizing, resizing, and reshaping.
-
-    Args:
-        img: Input image.
-        target_size: Target size as a tuple (height, width).
-
-    Returns:
-        Preprocessed image with dimensions (height, width, channels, batch_size).
-    """
-    gray_img = Float32.(Gray.(img)) ./ 255.0
-    resized_img = imresize(gray_img, target_size)
-    return reshape(resized_img, size(resized_img, 1), size(resized_img, 2), 1, 1)  # U-Net-compatible dimensions
-end
-
-# Function to create batches
-function create_batches(images, labels, batch_size::Int, target_size::Tuple{Int, Int})
-    """
-    Create batches from the loaded images and labels.
+    Preprocess images and labels, and create batches for training.
 
     Args:
         images: Array of input images.
@@ -67,6 +49,17 @@ function create_batches(images, labels, batch_size::Int, target_size::Tuple{Int,
     """
     @assert length(images) == length(labels) "Number of images and labels must match."
 
+    function preprocess_image(img, target_size)
+        # Convert the image to grayscale and normalize pixel values to [0, 1]
+        gray_img = Float32.(Gray.(img)) ./ 255.0
+
+        # Resize the image to the target size (height, width)
+        resized_img = imresize(gray_img, target_size)
+
+        # Reshape the resized image for U-Net-compatible dimensions: (H, W, C, BatchSize)
+        return reshape(resized_img, size(resized_img, 1), size(resized_img, 2), 1, 1)
+    end
+
     batches = []
     for i in 1:batch_size:length(images)
         x_batch = images[i:min(i+batch_size-1, end)]
@@ -76,11 +69,13 @@ function create_batches(images, labels, batch_size::Int, target_size::Tuple{Int,
         x_batch = [preprocess_image(x, target_size) for x in x_batch]
         y_batch = [preprocess_image(y, target_size) for y in y_batch]
 
+        # Combine preprocessed images and labels into batches
         push!(batches, (cat(x_batch..., dims=4), cat(y_batch..., dims=4)))
     end
 
     println("Created ", length(batches), " batches.")
     return batches
 end
+
 
 end # module

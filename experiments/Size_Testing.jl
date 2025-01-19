@@ -13,7 +13,7 @@ input_channels = 1  # Anzahl der Eingabekanäle (z. B. Graustufenbilder)
 output_channels = 1  # Anzahl der Ausgabekanäle (z. B. Segmentierungsmasken)
 
 learning_rate = 0.001 # Lernrate
-num_epochs = 100 # Anzahl der Epochen
+num_epochs = 1 # Anzahl der Epochen
 mask_batch = 1 # Anzahl der Masken
 
 
@@ -196,7 +196,7 @@ end
 
 
 # Daten laden und vorbereiten
-img_path_pic = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Testdaten/Bilder/000101_10.png"
+img_path_pic = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Bilder/000101_10.png"
 img_pic = load(img_path_pic)
 # img_pic = pad_to_power_of_two(img_pic)
 gray_img_pic = Float32.(Gray.(img_pic)) ./ 255.0
@@ -210,7 +210,7 @@ batched_img_pic_resized = reshape(resized_img_pic, size(resized_img_pic, 1), siz
 
 
 
-img_path_mask = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Testdaten/Masken/000101_10.png"
+img_path_mask = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Masken/000101_10.png"
 img_mask = load(img_path_mask)
 # img_mask = pad_to_power_of_two(img_mask)
 gray_img_mask = Float32.(Gray.(img_mask)) ./ 255.0

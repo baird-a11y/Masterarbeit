@@ -7,11 +7,14 @@ using Flux.Optimise: update!
 using Statistics
 using ImageCore
 using FileIO
+using ImageShow
 
 # Include all necessary submodules
 include("dataloader.jl")
-include("model.jl")
+include("model.jl")  # Bindet Model.jl ein
+using .Model         # Nutzt das lokale Modul Model
 include("utils.jl")
+
 
 # Function to train the U-Net model
 function train_model(model, train_data, val_data; epochs=10, learning_rate=0.001)
@@ -102,7 +105,7 @@ function visualize_results(image, prediction)
         image: Original input image.
         prediction: Predicted segmentation mask.
     """
-    using ImageShow
+    
 
     println("Visualizing results...")
     display(image)

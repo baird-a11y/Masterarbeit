@@ -2,54 +2,71 @@ module Train
 
 export train_model
 
+include("dataloader.jl")
+include("model.jl")
 using Flux
 using Flux.Optimise: update!
-using DataLoader
-using Model
+using .DataLoader
+using .Model
+
+
 
 # Training function
-function train_model(; epochs=10, batch_size=4, learning_rate=0.001, target_size=(128, 128))
+function train_model(model, train_data, val_data; epochs, learning_rate)
     """
     Train the U-Net model using the specified hyperparameters.
 
     Args:
+        model: The U-Net model instance to be trained.
+        train_data: Training dataset (batches).
+        val_data: Validation dataset (batches).
         epochs: Number of training epochs.
-        batch_size: Size of each batch.
         learning_rate: Learning rate for the optimizer.
-        target_size: Target size for resizing input images.
 
     Returns:
         The trained model.
     """
-    # Load and preprocess data
-    images, labels = load_data("data_semantics/training/image_2", "data_semantics/training/semantic")
-    train_data = create_batches(images, labels, batch_size, target_size)
+    # Set up the optimizer
+    opt_state = Flux.setup(Flux.ADAM(learning_rate), model)
 
-    # Initialize model
-    model = create_unet(1, 1)  # Assuming single-channel input and output
+    # Loss function
+    loss(m, x, y) = Flux.logitcrossentropy(m(x), y)
 
-    # Define optimizer
-    optimizer = Flux.ADAM(learning_rate)
-
-    # Training loop
     for epoch in 1:epochs
         println("Epoch $epoch/$epochs")
         epoch_loss = 0.0
 
+        # Training loop
         for (x_batch, y_batch) in train_data
-            # Forward and backward pass
-            loss, grads = Flux.withgradient(Flux.params(model)) do
-                ŷ = model(x_batch)
-                Flux.logitcrossentropy(ŷ, y_batch)
-            end
+            # Normalize masks
+            y_batch = Array{Float32}(y_batch)
+            y_batch .= y_batch ./ maximum(y_batch)
 
-            # Update model parameters
-            update!(optimizer, Flux.params(model), grads)
+            # Debugging statements
+            println("Typ von m(x): ", eltype(model(x_batch)))
+            println("Typ von y: ", eltype(y_batch))
+            println("Wertebereich von y: ", minimum(y_batch), " - ", maximum(y_batch))
 
-            epoch_loss += loss
+            # Compute gradients and update model parameters
+            grads = Flux.gradient(m -> loss(m, x_batch, y_batch), model)
+            Flux.update!(opt_state, model, grads)
+
+            epoch_loss += loss(model, x_batch, y_batch)
         end
 
-        println("Epoch $epoch completed with Loss: ", epoch_loss / length(train_data))
+        println("Training Loss: ", epoch_loss / length(train_data))
+
+        # Validation loop
+        val_loss = 0.0
+        for (x_val, y_val) in val_data
+            y_val = Array{Float32}(y_val)
+            y_val .= y_val ./ maximum(y_val)
+
+            ŷ_val = model(x_val)
+            val_loss += loss(model, x_val, y_val)
+        end
+
+        println("Validation Loss: ", val_loss / length(val_data))
     end
 
     # Save the trained model
@@ -58,5 +75,6 @@ function train_model(; epochs=10, batch_size=4, learning_rate=0.001, target_size
 
     return model
 end
+
 
 end # module
