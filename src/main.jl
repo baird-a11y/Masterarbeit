@@ -58,8 +58,8 @@ end
 if use_cuda
     # Daten laden und vorbereiten
     train_data = load_and_preprocess_data(
-        "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Bilder",
-        "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Masken",
+        "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Bilder_1",
+        "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Masken_1",
         batch_size, over_size
     )
 
