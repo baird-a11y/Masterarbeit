@@ -97,3 +97,15 @@ function create_unet(input_channels::Int, output_channels::Int)
 end
 
 end # module
+
+# Testing the U-Net model
+using Test
+using .Model
+
+@testset "U-Net Model" begin
+    input = rand(Float32, 512, 2048, 1, 4)  # Input: 512x2048, 1 channel, batch size 4
+    model = create_unet(1, 1)  # Input channels: 1, Output channels: 1
+    output = model(input)
+    println("Test-Ausgabegröße: ", size(output))
+    @test size(output) == (512, 2048, 1, 4)  # Expected output dimensions
+end
