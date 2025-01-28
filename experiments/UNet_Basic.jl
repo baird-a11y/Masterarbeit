@@ -18,7 +18,6 @@ mask_batch = 1 # Anzahl der Masken
 target_size = (375, 1242) # Größe der Bilder
 batch_size = 4  # Anzahl der Bilder pro Batch
 
-
 # UNet-Modell definieren
 function unet(input_channels::Int, output_channels::Int)
     # Encoder
@@ -190,9 +189,7 @@ function onehot_labels(labels::Array{Int, 4}, num_classes::Int)
     return Flux.onehotbatch(labels[:, :, 1, :], 0:(num_classes-1))  # (H, W, C, N)
 end
 
-
-
-function train_unet(model, train_data, num_epochs::Int, learning_rate::Float64)
+function train_unet(model, train_data, num_epochs::Int, learning_rate::Float64, output_channels::Int)
     # Setze den Optimierer auf
     opt_state = Flux.setup(Adam(learning_rate), model)
     
@@ -202,7 +199,16 @@ function train_unet(model, train_data, num_epochs::Int, learning_rate::Float64)
     for epoch in 1:num_epochs
         total_loss = 0.0
         for (input_batch, mask_batch) in train_data
+            # Stelle sicher, dass die Eingabedimensionen korrekt sind
+            if ndims(input_batch) == 3
+                input_batch = reshape(input_batch, size(input_batch)..., 1) # Hinzufügen der Batch-Dimension
+                println("Input-Batch nach Reshape: ", size(input_batch))
+            end
+
+            # Labels in die richtige Form bringen
             mask_batch = permutedims(onehot_labels(mask_batch, output_channels), (2, 3, 1, 4))
+            println("Mask-Batch nach Permutation: ", size(mask_batch))
+            
             # Debugging: Dimensionen prüfen
             println("Shape von m(x): ", size(model(input_batch)))
             println("Shape von y: ", size(mask_batch))
@@ -218,6 +224,7 @@ function train_unet(model, train_data, num_epochs::Int, learning_rate::Float64)
         println("Epoch $epoch completed")
     end
 end
+
 
 
 # Funktion: Visualisierung
@@ -239,8 +246,6 @@ function visualize_results(model, input_image, ground_truth)
         size=(600, 900)  # Größere Plotgröße für bessere Darstellung
     )
 end
-
-
 
 
 # Funktion zum Laden und Verarbeiten eines einzelnen Bildes
@@ -313,8 +318,8 @@ function create_batches(dataset, batch_size)
 end
 
 # Ordnerpfade für Bilder und Masken
-image_dir = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Bilder_alle"
-label_dir = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Masken_alle"
+image_dir = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Bilder_1"
+label_dir = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Masken_1"
 
 # Lade alle Bilder und Masken
 train_dataset = load_dataset(image_dir, label_dir)
@@ -331,19 +336,6 @@ for (imgs, labels) in batched_train_data
     println("Batch Image Shape: ", size(imgs))  # Soll (375, 1242, 3, Batchgröße) sein
     println("Batch Label Shape: ", size(labels))  # Soll (375, 1242, 1, Batchgröße) sein
 end
-
-# # Dateipfade für Bild und Label
-# img_path = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Bilder_1/000101_10.png"
-# label_path = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Masken_1/000101_10.png"
-
-# # Lade und preprocess das Bild
-# resized_img = load_and_preprocess_image(img_path)
-# println("Shape des verarbeiteten Bildes: ", size(resized_img))
-
-# # Optional: Lade und preprocess das Label
-# # Lade das Bild
-# resized_label = load_and_preprocess_label(label_path)
-# println("Shape des verarbeiteten Labels: ", size(resized_label))
 
 # Modell erstellen
 model = unet(input_channels, output_channels)
