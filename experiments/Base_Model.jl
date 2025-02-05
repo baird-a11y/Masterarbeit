@@ -123,28 +123,11 @@ function create_batches(dataset, batch_size)
     return batched_data
 end
 
-# Training
-# function train_unet(model, train_data, num_epochs, learning_rate)
-#     opt_state = Flux.setup(Adam(learning_rate), model)
-#     loss(m, x, y) = Flux.crossentropy(Flux.softmax(m(x), dims=3), y)
-
-#     for epoch in 1:num_epochs
-#         total_loss = 0.0
-#         for (input_batch, mask_batch) in train_data
-#             mask_batch = permutedims(onehotbatch(mask_batch[:, :, 1, :], 0:(output_channels-1)), (2, 3, 1, 4))
-#             grads = Flux.gradient(() -> loss(model, input_batch, mask_batch), Flux.params(model))
-#             Flux.update!(opt_state, Flux.params(model), grads)
-#             total_loss += loss(model, input_batch, mask_batch)
-#         end
-#         println("Epoch $epoch completed. Loss: ", total_loss / length(train_data))
-#     end
-# end
-
 function train_unet(model, train_data, num_epochs, learning_rate, output_channels)
     opt = Adam(learning_rate)
-    trainable = Flux.params(model)  #  Speichert alle trainierbaren Parameter
+    opt_state = Flux.setup(opt, model)  # Optimierungszustand initialisieren
+    trainable = Flux.trainable(model)
 
-    # Loss-Funktion mit Crossentropy für Multi-Klassen-Segmentierung
     function loss_fn(x, y)
         pred = model(x)
         return Flux.crossentropy(Flux.softmax(pred, dims=4), y)
@@ -153,23 +136,15 @@ function train_unet(model, train_data, num_epochs, learning_rate, output_channel
     for epoch in 1:num_epochs
         total_loss = 0f0
         for (input_batch, mask_batch) in train_data
-            # Masken in One-Hot-Encoding konvertieren
             mask_batch = permutedims(onehotbatch(mask_batch[:, :, 1, :], 0:(output_channels-1)), (2, 3, 1, 4))
-
-            # Sicherstellen, dass die Daten auf der GPU sind (falls GPU vorhanden)
             input_batch, mask_batch = Flux.gpu(input_batch), Flux.gpu(mask_batch)
-
-            #  Explizite Gradientenberechnung über `trainable`
-            gs = gradient(() -> loss_fn(input_batch, mask_batch), trainable)
-            Flux.update!(opt, trainable, gs)
-
-            # Loss speichern
+            gs = gradient(m -> loss_fn(input_batch, mask_batch), model)
+            Flux.update!(opt_state, trainable, gs[1])  # Mit initialisiertem Zustand aufrufen
             total_loss += mean(loss_fn(input_batch, mask_batch))
         end
         println("Epoch $epoch completed. Loss: ", total_loss / length(train_data))
     end
 end
-
 
 
 
@@ -183,10 +158,19 @@ end
 
 # Visualisierung
 function visualize_results(model, input_image, ground_truth)
+    # Füge eine Batch-Dimension hinzu, falls diese fehlt:
+    if ndims(input_image) == 3
+        input_image = reshape(input_image, size(input_image)..., 1)
+    end
     prediction = model(input_image)
+    # Für die Visualisierung kannst du dann wieder die Batch-Dimension entfernen:
     input_image = input_image[:, :, 1, 1]
     ground_truth = ground_truth[:, :, 1, 1]
     prediction = prediction[:, :, 1, 1]
+    # Drehe die Bilder vertikal (d.h. entlang der ersten Dimension um):
+    input_image = reverse(input_image, dims=1)
+    ground_truth = reverse(ground_truth, dims=1)
+    prediction = reverse(prediction, dims=1)
     plot(
         heatmap(input_image, title="Input Image", color=:viridis),
         heatmap(ground_truth, title="Ground Truth Mask", color=:viridis),
@@ -195,6 +179,7 @@ function visualize_results(model, input_image, ground_truth)
         size=(900, 300)
     )
 end
+
 
 # Datenpfade
 image_dir = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Bilder_1"
@@ -205,9 +190,76 @@ train_dataset = load_dataset(image_dir, label_dir)
 batched_train_data = create_batches(train_dataset, batch_size)
 
 # Training starten
-train_unet(model, batched_train_data, num_epochs, learning_rate)
+train_unet(model, batched_train_data, num_epochs, learning_rate,output_channels)
 
 # Visualisierung der Ergebnisse
 input_image = batched_train_data[1][1][:, :, :, 1]
 ground_truth = batched_train_data[1][2][:, :, :, 1]
 visualize_results(model, input_image, ground_truth)
+
+
+
+
+
+# Auslesen von Informationen über den Datensatz
+
+using Images
+using FileIO   # für load()
+using Statistics
+
+# Hilfsfunktion für min/max, die sowohl bei Farb- als auch Graustufenbildern funktioniert.
+function get_minmax(img)
+    # Wenn der Elementtyp ein "Colorant" (z.B. RGB oder RGBA) ist, auf Kanäle zugreifen:
+    if eltype(img) <: Colorant
+        channels = channelview(img)
+        return (minimum(channels), maximum(channels))
+    else
+        return (minimum(img), maximum(img))
+    end
+end
+
+function print_dataset_info(image_dir::String, label_dir::String)
+    image_files = sort(readdir(image_dir, join=true))
+    label_files = sort(readdir(label_dir, join=true))
+
+    @info "Anzahl der gefundenen Bilder: $(length(image_files))"
+    @info "Anzahl der gefundenen Masken: $(length(label_files))"
+
+    for i in 1:length(image_files)
+        img_path = image_files[i]
+        lbl_path = label_files[i]
+
+        # Laden von Bild und Maske
+        img = load(img_path)
+        lbl = load(lbl_path)
+
+        # Bild-Infos
+        img_size = size(img)
+        img_type = eltype(img)
+        (img_min, img_max) = get_minmax(img)
+
+        # Masken-Infos
+        lbl_size = size(lbl)
+        lbl_type = eltype(lbl)
+        (lbl_min, lbl_max) = get_minmax(lbl)
+        lbl_unique = unique(vec(lbl))
+
+        println("\n=== Datensatz-Eintrag: $i ===")
+        println("Bilddatei:   $img_path")
+        println("  - Dimensionen: $img_size")
+        println("  - Datentyp:    $img_type")
+        println("  - Min/Max Kanalwerte: $img_min / $img_max")
+
+        println("Maskendatei: $lbl_path")
+        println("  - Dimensionen: $lbl_size")
+        println("  - Datentyp:    $lbl_type")
+        println("  - Min/Max Werte: $lbl_min / $lbl_max")
+        println("  - Einzigartige Werte: $lbl_unique")
+    end
+end
+
+# Beispielaufruf (Pfade anpassen)
+image_dir = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Bilder_1"
+label_dir = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Masken_1"
+
+print_dataset_info(image_dir, label_dir)
