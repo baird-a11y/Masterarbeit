@@ -192,31 +192,61 @@ function train_unet(model, train_data, num_epochs, learning_rate, output_channel
     opt_state = Flux.setup(opt, model)
     trainable_params = Flux.trainable(model)
 
-    # Dein Loss
     function loss_fn(x, y)
         pred = model(x)
-        return Flux.crossentropy(Flux.softmax(pred, dims=3), y)
+        println("DEBUG: Prediction shape: ", size(pred))
+        println("DEBUG: Ground truth shape: ", size(y))
+
+        # Falls y nicht One-Hot ist, dann logitcrossentropy nutzen
+        loss = Flux.logitcrossentropy(pred, y)
+        println("DEBUG: Loss-Wert: ", loss)
+        return loss
     end
 
     for epoch in 1:num_epochs
         total_loss = 0f0
-        for (input_batch, mask_batch) in train_data
-            # GPU
+        for (i, (input_batch, mask_batch)) in enumerate(train_data)
+            println("DEBUG: Epoch $epoch - Batch $i")
+            println("DEBUG: Input batch size: ", size(input_batch))
+            println("DEBUG: Label batch size: ", size(mask_batch))
+
+            # Speicher vor der GPU-Zuordnung checken
+            println("DEBUG: GPU Memory before batch: ", CUDA.memory_status())
+
             xb = gpu(input_batch)
             yb = gpu(mask_batch)
 
-            # Achtung: Hier der Zero-Argument-Closure & Param-Set
-            gs = gradient(() -> loss_fn(xb, yb), trainable_params)
+            # Speicher nach der GPU-Zuordnung checken
+            println("DEBUG: GPU Memory after batch: ", CUDA.memory_status())
+
+            # Gradientenberechnung mit expliziter Closure
+            gs = gradient(trainable_params) do
+                loss_fn(xb, yb)
+            end
+
+            # Speicher vor dem Update checken
+            println("DEBUG: GPU Memory before update: ", CUDA.memory_status())
 
             # Update
             Flux.update!(opt_state, trainable_params, gs)
 
-            # Metrik
-            total_loss += loss_fn(xb, yb)
+            # Speicher nach dem Update checken
+            println("DEBUG: GPU Memory after update: ", CUDA.memory_status())
+
+            # Loss berechnen
+            batch_loss = loss_fn(xb, yb)
+            total_loss += batch_loss
+
+            println("DEBUG: Batch $i abgeschlossen - Loss: ", batch_loss)
+            
+            # GPU-Speicher freigeben
+            CUDA.reclaim()
         end
+
         println("Epoch $epoch completed. Avg. Loss: ", total_loss / length(train_data))
     end
 end
+
 
 ################################################################################
 # 5) Visualisierung
