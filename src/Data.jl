@@ -4,14 +4,13 @@
 module Data
 
 using Images, FileIO, Statistics
-
+# using StatsBase  # Für countmap
 # Bild laden und normalisieren
 function load_and_preprocess_image(img_path::String)
     img = Float32.(channelview(load(img_path))) / 255.0f0  # Hier als Float32 literal
     img = permutedims(img, (2, 3, 1))
     return reshape(img, size(img)..., 1)
 end
-
 
 # Label laden, normalisieren und skalieren
 function load_and_preprocess_label(label_path::String)
@@ -21,10 +20,23 @@ function load_and_preprocess_label(label_path::String)
     scaled_label = Int.(round.(norm_label .* 34))
     println("DEBUG: Normalized Label Min/Max: ", minimum(norm_label), " / ", maximum(norm_label))
     println("DEBUG: Scaled Label Min/Max: ", minimum(scaled_label), " / ", maximum(scaled_label))
-    println("DEBUG: Unique Scaled Label Values: ", unique(scaled_label))
+    
+    unique_values = unique(scaled_label)
+    println("DEBUG: Unique Scaled Label Values: ", unique_values)
+    num_channels = length(unique_values)
+    println("DEBUG: Number of Output Channels (Classes): ", num_channels)
+    
+    # Get the largest class (i.e. the maximum of the unique values)
+    max_class = maximum(unique_values)
+    println("DEBUG: Largest class (maximum value): ", max_class)
+    
+    # Reshape the label to the desired dimensions
     label = reshape(permutedims(scaled_label, (1, 2)), size(scaled_label, 1), size(scaled_label, 2), 1, 1)
-    return label
+    return label, max_class
 end
+
+
+
 
 # Datensatz erstellen
 function load_dataset(image_dir::String, label_dir::String)

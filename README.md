@@ -18,23 +18,23 @@ This repository contains an implementation of the U-Net architecture for image s
 ## Installation
 
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/your-repo.git
-   cd your-repo
-   ```
+  ```bash
+  git clone https://github.com/your-username/your-repo.git
+  cd your-repo
+  ```
 
 2. Install Julia packages:
-   Open Julia in the repository directory and run:
-   ```julia
-   using Pkg
-   Pkg.activate(".")
-   Pkg.instantiate()
-   ```
+  Open Julia in the repository directory and run:
+  ```julia
+  using Pkg
+  Pkg.activate(".")
+  Pkg.instantiate()
+  ```
 
 3. Install CUDA support (if using GPU):
-   ```julia
-   Pkg.add("CUDA")
-   ```
+  ```julia
+  Pkg.add("CUDA")
+  ```
 
 ---
 
@@ -42,7 +42,7 @@ This repository contains an implementation of the U-Net architecture for image s
 
 - `src/`
   - Contains the implementation of the U-Net architecture, data loaders, and training pipeline.
-- `Datensatz/`
+- `data/`
   - Placeholder for training and validation datasets.
 - `experiments/`
   - Scripts for testing and evaluating some ideas.
@@ -60,8 +60,8 @@ Images and labels are automatically resized to the nearest higher power of 2 dim
 ```
 data/
 ├── Training/
-│   ├── Bilder/
-│   └── Masken/
+│   ├── Images/
+│   └── Masks/
 ```
 Run the `main.jl` script to load and preprocess the data:
 ```julia
@@ -96,4 +96,3 @@ UNetFramework.visualize_results(trained_model, test_image, test_label)
 Feel free to submit pull requests or report issues. Contributions to improve the code or add new features are welcome.
 
 ---
-
