@@ -1,99 +1,55 @@
 module Model
 
-export create_unet
-
 using Flux
-using ImageTransformations: imresize
+using Functors
 
-# Define a single convolutional block
-function conv_block(in_channels::Int, out_channels::Int)
-    return Chain(
-        Conv((3, 3), in_channels => out_channels, relu, pad=1),
-        BatchNorm(out_channels)
-    )
+# UNet-Struktur mit Functors, damit Flux.trainable() funktioniert
+struct UNet
+    layers
 end
+Functors.@functor UNet
 
-# Define the encoder block
-function encoder_block(in_channels::Int, out_channels::Int)
-    encoder = Chain(
-        conv_block(in_channels, out_channels),
-        conv_block(out_channels, out_channels)
-    )
-    pool = MaxPool((2, 2), stride=(2, 2))
-    return encoder, pool
-end
-
-# Define the bottleneck block
-function bottleneck(in_channels::Int, out_channels::Int)
-    return Chain(
-        conv_block(in_channels, out_channels),
-        conv_block(out_channels, out_channels)
-    )
-end
-
-# Define the decoder block
-function decoder_block(in_channels::Int, out_channels::Int)
-    upsample = ConvTranspose((2, 2), in_channels => out_channels, stride=(2, 2))
-    return Chain(
-        upsample,
-        conv_block(out_channels, out_channels)
-    )
-end
-
-# Resize function to match spatial dimensions
-function resize_to_match(input, target)
-    size_target = size(target)
-    imresize(input, (size_target[1], size_target[2]))
-end
-
-# Define the U-Net architecture with controlled upsampling
-function create_unet(input_channels::Int, output_channels::Int)
+function UNet(input_channels::Int, output_channels::Int)
     # Encoder
-    enc1, pool1 = encoder_block(input_channels, 64)
-    enc2, pool2 = encoder_block(64, 128)
-    enc3, pool3 = encoder_block(128, 256)
-    enc4, pool4 = encoder_block(256, 512)
-
-    # Bottleneck
-    bottleneck_layer = bottleneck(512, 1024)
-
-    # Decoder
-    dec4 = decoder_block(1024 + 512, 512)
-    dec3 = decoder_block(512 + 256, 256)
-    dec2 = decoder_block(256 + 128, 128)
-    dec1 = decoder_block(128 + 64, 64)
-
-    # Final Convolution for output
-    final_conv = Conv((1, 1), 64 => output_channels, pad=0)
-
-    return Chain(x -> begin
-        # Encoder Pass
-        x1 = enc1(x); p1 = pool1(x1)
-        x2 = enc2(p1); p2 = pool2(x2)
-        x3 = enc3(p2); p3 = pool3(x3)
-        x4 = enc4(p3); p4 = pool4(x4)
-        println("x1 Größe: ", size(x1))
-        println("p4 Größe: ", size(p4))
-        
-        # Bottleneck
-        b = bottleneck_layer(p4)
-        println("Bottleneck Größe: ", size(b))
-        b_resized = resize_to_match(b, x4)
-        println("Bottleneck Größe nach resize: ", size(b_resized))
-        println("x4 Größe: ", size(x4))
-        
-        # Decoder Pass with controlled resizing
-        d4 = resize_to_match(dec4(cat(b_resized, x4; dims=3)), x3)
-        d3 = resize_to_match(dec3(cat(d4, x3; dims=3)), x2)
-        d2 = resize_to_match(dec2(cat(d3, x2; dims=3)), x1)
-        d1 = resize_to_match(dec1(cat(d2, x1; dims=3)), x1)
-        println("d1 Größe: ", size(d1))
-
-        # Output with final resizing to input dimensions
-        output = resize_to_match(final_conv(d1), x)
-        println("Finale Ausgabegröße: ", size(output))
-        output
-    end)
+    encoder1 = Chain(Conv((3, 3), input_channels => 64, relu, pad=1),
+                     Conv((3, 3), 64 => 64, relu, pad=1))
+    encoder2 = Chain(MaxPool((2, 2)),
+                     Conv((2, 2), 64 => 128, relu, pad=1),
+                     Conv((3, 3), 128 => 128, relu, pad=1))
+    encoder3 = Chain(MaxPool((2, 2)),
+                     Conv((2, 2), 128 => 256, relu, pad=1),
+                     Conv((3, 3), 256 => 256, relu, pad=1))
+    encoder4 = Chain(MaxPool((2, 2)),
+                     Conv((2, 2), 256 => 512, relu, pad=1),
+                     Conv((3, 3), 512 => 512, relu, pad=1))
+    bottleneck = Chain(MaxPool((2, 2)),
+                       Conv((2, 2), 512 => 1024, relu, pad=1),
+                       Conv((3, 3), 1024 => 1024, relu, pad=1))
+    # Decoder (ohne echte Skip-Verbindungen – das muss später ergänzt werden)
+    decoder4 = Chain(ConvTranspose((2, 3), 1024 => 512, stride=2, pad=1))
+    decoder4_1 = Chain(Conv((3, 3), 1024 => 512, relu, pad=1),
+                       Conv((3, 3), 512 => 512, relu, pad=1))
+    decoder3 = Chain(ConvTranspose((3, 2), 512 => 256, stride=2, pad=1))
+    decoder3_1 = Chain(Conv((3, 3), 512 => 256, relu, pad=1),
+                       Conv((3, 3), 256 => 256, relu, pad=1))
+    decoder2 = Chain(ConvTranspose((2, 2), 256 => 128, stride=2, pad=1))
+    decoder2_1 = Chain(Conv((3, 3), 256 => 128, relu, pad=1),
+                       Conv((3, 3), 128 => 128, relu, pad=1))
+    decoder1 = Chain(ConvTranspose((3, 2), 128 => 64, stride=2, pad=1))
+    decoder1_1 = Chain(Conv((3, 3), 128 => 64, relu, pad=1),
+                       Conv((3, 3), 64 => 64, relu, pad=1),
+                       Conv((1, 1), 64 => output_channels))
+    layers = Chain(
+        encoder1, encoder2, encoder3, encoder4, bottleneck, 
+        decoder4, decoder4_1, decoder3, decoder3_1, decoder2, decoder2_1, 
+        decoder1, decoder1_1
+    )
+    return UNet(layers)
 end
 
-end # module
+# Definiert den Aufruf, sodass model(x) die Daten durch alle Layer leitet
+function (model::UNet)(x)
+    return model.layers(x)
+end
+
+end # module Model
