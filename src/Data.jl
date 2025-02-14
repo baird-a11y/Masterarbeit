@@ -4,7 +4,7 @@
 module Data
 
 using Images, FileIO, Statistics
-# using StatsBase  # Für countmap
+
 # Bild laden und normalisieren
 function load_and_preprocess_image(img_path::String)
     img = Float32.(channelview(load(img_path))) / 255.0f0  # Hier als Float32 literal
@@ -34,9 +34,6 @@ function load_and_preprocess_label(label_path::String)
     label = reshape(permutedims(scaled_label, (1, 2)), size(scaled_label, 1), size(scaled_label, 2), 1, 1)
     return label, max_class
 end
-
-
-
 
 # Datensatz erstellen
 function load_dataset(image_dir::String, label_dir::String)
