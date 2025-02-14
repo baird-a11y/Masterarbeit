@@ -1,41 +1,59 @@
+##############################
+# Main.jl
+##############################
+include("Data.jl")
+include("Model.jl")
+include("Training.jl")
+include("Visualization.jl")
+
 using Test
 using Flux
+using Flux: onehotbatch, logitcrossentropy
 using .Model
 using .Data
 using .Training
 using .Visualization
+using Statistics
+using FileIO
+using Images
+using LinearAlgebra
+using Optimisers
 
-# Test für die Bildvorverarbeitung
-@testset "Data Preprocessing" begin
-    img_path = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Bilder_1"
-    lbl_path = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Masken_1"
-    img = Data.load_and_preprocess_image(img_path)
-    lbl = Data.load_and_preprocess_label(lbl_path)
-    @test size(img)[end] == 1  # Batch-Dimension prüfen
-    @test typeof(img) == Array{Float32,4}
+# Beispiel-Daten laden
+img_path = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Bilder_1/000101_10.png"
+mask_path = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Masken_1/000101_10.png"
+
+# Bild und Maske laden und vorverarbeiten
+input_image = Data.load_and_preprocess_image(img_path)
+ground_truth = Data.load_and_preprocess_label(mask_path)
+ground_truth_int = Int.(ground_truth[:, :, 1, :])
+ground_truth_oh = permutedims(onehotbatch(ground_truth_int, 0:34), (2,3,1,4))
+ground_truth_oh = Float32.(ground_truth_oh)
+
+# Modell initialisieren (3 Eingangskanäle, 35 Ausgangskanäle)
+model = Model.UNet(3, 35)
+
+# Mit Optimisers.jl: Initialisiere den Optimierer-Zustand (hier Adam mit Lernrate 0.001)
+opt_state = Optimisers.setup(Optimisers.Adam(0.001), model)
+
+# Schritt 1a: Berechne den Loss für den aktuellen Batch
+loss_value = logitcrossentropy(model(input_image), ground_truth_oh)
+println("Initialer Loss: ", loss_value)
+
+# Schritt 1b: Berechne die Gradienten mit expliziter Übergabe des Modells
+∇model = gradient(m -> logitcrossentropy(m(input_image), ground_truth_oh), model)[1]
+println("Gradienten berechnet.")
+
+# Debug: Ausgabe der Gradienten-Normen für jeden Parameter
+for p in Flux.params(model)
+    println("Gradient norm (Parameter mit Größe ", size(p), "): ", norm(cpu(∇model[p])))
 end
 
-# Test für das Modell
-@testset "Model Forward Pass" begin
-    input_channels = 3
-    output_channels = 35
-    model = Model.UNet(input_channels, output_channels)
-    dummy_input = rand(Float32, 375, 1242, 3, 1)  # Dummy-Batch
-    output = model(dummy_input)
-    @test size(output)[1:3] == (375, 1242, output_channels)
-end
+println("Beispiel-Gewicht vor Update: ", cpu(first(Flux.params(model))))
 
-# Test für den Trainingsschritt (ein minimaler Schritt)
-@testset "Training Step" begin
-    input_channels = 3
-    output_channels = 35
-    model = Model.UNet(input_channels, output_channels)
-    dummy_input = rand(Float32, 375, 1242, 3, 1)
-    dummy_mask = rand(0:34, 375, 1242, 1, 1)
-    dummy_mask_int = Int.(dummy_mask[:, :, 1, :])
-    dummy_mask_oh = permutedims(onehotbatch(dummy_mask_int, 0:(output_channels-1)), (2, 3, 1, 4))
-    dummy_mask_oh = Float32.(dummy_mask_oh)
-    train_data = [(dummy_input, dummy_mask)]
-    # Wir führen einen einzigen Trainingsschritt durch, um sicherzustellen, dass keine Fehler auftreten
-    Training.train_unet(model, train_data, 1, 0.001, output_channels)
-end
+# Schritt 1c: Update: Aktualisiere Optimizer-Zustand und Modell explizit
+opt_state, model = Optimisers.update!(opt_state, model, ∇model)
+println("Beispiel-Gewicht nach Update: ", cpu(first(Flux.params(model))))
+
+# Optional: Visualisierung der Ergebnisse
+Visualization.visualize_results(model, input_image, ground_truth)

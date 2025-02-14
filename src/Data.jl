@@ -1,13 +1,17 @@
+##############################
+# Data.jl
+##############################
 module Data
 
 using Images, FileIO, Statistics
 
 # Bild laden und normalisieren
 function load_and_preprocess_image(img_path::String)
-    img = Float32.(channelview(load(img_path))) / 255.0
+    img = Float32.(channelview(load(img_path))) / 255.0f0  # Hier als Float32 literal
     img = permutedims(img, (2, 3, 1))
     return reshape(img, size(img)..., 1)
 end
+
 
 # Label laden, normalisieren und skalieren
 function load_and_preprocess_label(label_path::String)

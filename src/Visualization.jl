@@ -1,3 +1,6 @@
+##############################
+# Visualization.jl
+##############################
 module Visualization
 
 using Plots
