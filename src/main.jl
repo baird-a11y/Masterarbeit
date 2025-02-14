@@ -44,11 +44,6 @@ println("Initialer Loss: ", loss_value)
 ∇model = gradient(m -> logitcrossentropy(m(input_image), ground_truth_oh), model)[1]
 println("Gradienten berechnet.")
 
-# Debug: Ausgabe der Gradienten-Normen für jeden Parameter
-for p in Flux.params(model)
-    println("Gradient norm (Parameter mit Größe ", size(p), "): ", norm(cpu(∇model[p])))
-end
-
 println("Beispiel-Gewicht vor Update: ", cpu(first(Flux.params(model))))
 
 # Schritt 1c: Update: Aktualisiere Optimizer-Zustand und Modell explizit
