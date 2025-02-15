@@ -36,13 +36,23 @@ function load_and_preprocess_label(label_path::String)
 end
 
 # Datensatz erstellen
+# function load_dataset(image_dir::String, label_dir::String)
+#     image_files = sort(readdir(image_dir, join=true))
+#     label_files = sort(readdir(label_dir, join=true))
+#     dataset = [(load_and_preprocess_image(img), load_and_preprocess_label(lbl)) 
+#                for (img, lbl) in zip(image_files, label_files)]
+#     return dataset
+# end
+
 function load_dataset(image_dir::String, label_dir::String)
     image_files = sort(readdir(image_dir, join=true))
     label_files = sort(readdir(label_dir, join=true))
-    dataset = [(load_and_preprocess_image(img), load_and_preprocess_label(lbl)) 
+    # Hier extrahieren wir nur das erste Element (den Label-Tensor)
+    dataset = [(load_and_preprocess_image(img), first(load_and_preprocess_label(lbl))) 
                for (img, lbl) in zip(image_files, label_files)]
     return dataset
 end
+
 
 # Batches erstellen
 function create_batches(dataset, batch_size)

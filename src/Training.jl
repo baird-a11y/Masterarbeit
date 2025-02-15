@@ -30,7 +30,7 @@ function train_unet(model, train_data, num_epochs, learning_rate, output_channel
     for epoch in 1:num_epochs
         println("====== Epoch $epoch ======")
         total_loss = 0f0
-        
+        # println("Total number of batches: ", length(train_data))
         for (batch_idx, (input_batch, mask_batch)) in enumerate(train_data)
             println("\n--- Batch $batch_idx ---")
             
@@ -57,7 +57,7 @@ function train_unet(model, train_data, num_epochs, learning_rate, output_channel
             println("DEBUG: Batch Loss: ", batch_loss)
             total_loss += batch_loss
         end
-        push!(loss_over_time, total_loss)
+        push!(loss_over_time, total_loss/length(train_data))
         println("Epoch $epoch finished. Average Loss: ", total_loss / length(train_data))
         println("--------------------------------------------------")
     end

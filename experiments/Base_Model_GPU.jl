@@ -268,7 +268,7 @@ function visualize_results(model, input_image, ground_truth)
     gt_mask_2d   = ground_truth[:, :, 1, 1]
     pred_2d      = pred[:, :, :, 1]
 
-    pred_classes = Flux.onecold(pred_2d, 0:(size(pred_2d,3)-1); dims=3)
+    # pred_classes = Flux.onecold(pred_2d, 0:(size(pred_2d,3)-1); dims=3)
 
     # Reverse(., dims=1) bei Bedarf
     
