@@ -54,13 +54,10 @@ model = Model.UNet(input_channels, output_channels)
 
 losses = Training.train_unet(model, train_data, num_epochs, learning_rate, output_channels)
 
+# Use the first sample from the dataset for visualization.
+input_image = dataset[1][1]
+ground_truth = dataset[1][2]
 
-# p = scatter(1:num_epochs, losses, xlabel="Epoch", ylabel="Loss", title="Loss Over Time", marker=:o)
-
-# # Dient nur zur Visualisierung der Losses falls es ausreißer gibt
-# # scatter!(p, 5:7, losses[7:8], marker=:o)
-# # # scatter!(p, 9:10, losses[9:10], marker=:o)
-# display(p)
 
 # Optionally visualize the updated predictions
 Visualization.visualize_results(model, input_image, ground_truth,losses)
