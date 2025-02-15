@@ -51,8 +51,6 @@ println("Overall output channels (classes): ", output_channels)
     
 model = Model.UNet(input_channels, output_channels)
 
-# # Run the training loop for a specified number of epochs
-# Training.train_unet(model, train_data, num_epochs, learning_rate, output_channels)
 
 losses = Training.train_unet(model, train_data, num_epochs, learning_rate, output_channels)
 
@@ -64,5 +62,5 @@ losses = Training.train_unet(model, train_data, num_epochs, learning_rate, outpu
 # # # scatter!(p, 9:10, losses[9:10], marker=:o)
 # display(p)
 
-# # Optionally visualize the updated predictions
+# Optionally visualize the updated predictions
 Visualization.visualize_results(model, input_image, ground_truth,losses)

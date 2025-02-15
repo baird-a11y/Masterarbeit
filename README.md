@@ -6,75 +6,135 @@ This repository contains an implementation of the U-Net architecture for image s
 
 ## Features
 
-- **Customizable U-Net architecture**: Flexible encoder and decoder block definitions.
-- **Simplified U-Net architecture**: Currently, the implementation does not use bottleneck layers or skip-connections for simplicity.
-- **Preprocessing pipeline**: Converts images and labels to grayscale, normalizes them, resizes them to the nearest higher power of 2 dimensions for compatibility, and batches them for training.
-- **Training with Flux.jl**: Supports training with `Adam` optimizer and cross-entropy loss.
-- **GPU Support**: Fully compatible with CUDA for GPU acceleration.
-- **Visualization**: Displays predictions alongside input images and ground-truth masks.
+- **Customizable U-Net Architecture:**  
+  Flexible definitions for encoder and decoder blocks, with skip connections and a bottleneck layer.
+  
+- **Preprocessing Pipeline:**  
+  - Images are loaded and normalized (converted to `Float32`, scaled to [0,1]).
+  - Labels are loaded, normalized, and scaled to discrete integer classes (by multiplying by 34), then one-hot encoded.
+  - The pipeline can also determine the number of classes by computing the unique values in the processed mask.
+  
+- **Training with Flux.jl and Optimisers.jl:**  
+  The training loop uses an explicit parameter update mechanism with Optimisers.jl (e.g., Adam), making it easy to monitor gradients, losses, and parameter updates.
+  
+- **Batching:**  
+  Utility functions group individual image/mask pairs into batches along the batch dimension.
+  
+- **GPU Support:**  
+  The code is compatible with CUDA (if installed) for GPU acceleration.
+  
+- **Visualization:**  
+  Model predictions can be visualized alongside input images and ground-truth masks using Plots.jl.
 
 ---
 
 ## Installation
 
-1. Clone the repository:
-  ```bash
-  git clone https://github.com/your-username/your-repo.git
-  cd your-repo
-  ```
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/your-repo.git
+   cd your-repo
+   ```
 
-2. Install Julia packages:
-  Open Julia in the repository directory and run:
-  ```julia
-  using Pkg
-  Pkg.activate(".")
-  Pkg.instantiate()
-  ```
-
-3. Install CUDA support (if using GPU):
-  ```julia
-  Pkg.add("CUDA")
-  ```
+2. **Install Julia packages:**  
+   Open Julia in the repository directory and run:
+   ```julia
+   using Pkg
+   Pkg.activate(".")
+   Pkg.instantiate()
+   ```
 
 ---
 
 ## Directory Structure
 
-- `src/`
-  - Contains the implementation of the U-Net architecture, data loaders, and training pipeline.
-- `data/`
-  - Placeholder for training and validation datasets.
-- `experiments/`
-  - Scripts for testing and evaluating some ideas.
-- `results/`
-  - Old results from the experiment codes.
-- `README.md`
-  - Documentation for the repository.
+```
+src/
+    Contains the implementation of the U-Net architecture, data loaders (Data.jl), training pipeline (Training.jl), and visualization (Visualization.jl).
+data/
+    Placeholder for training and validation datasets.
+experiments/
+    Scripts for testing and evaluating different ideas.
+results/
+    Directory for saving experimental results.
+README.md
+    Documentation for the repository.
+```
 
 ---
 
 ## Usage
 
-### **1. Load and Preprocess Data**
-Images and labels are automatically resized to the nearest higher power of 2 dimensions (e.g., `512x512`, `1024x1024`) to simplify operations during training and inference. Ensure your images and labels are organized in the following directory structure:
+### 1. Load and Preprocess Data
+
+Organize your images and labels in a directory structure like this:
+
 ```
 data/
-├── Training/
-│   ├── Images/
-│   └── Masks/
-```
-Run the `main.jl` script to load and preprocess the data:
-```julia
-julia src/main.jl
+└── Training/
+    ├── Bilder_alle/
+    └── Masken_alle/
 ```
 
-### **2. Train the Model**
-The training process is defined in the `train_model` function. Adjust hyperparameters such as `epochs`, `batch_size`, and `learning_rate` in `main.jl`.
-
-### **3. Visualize Results**
-After training, visualize the model's predictions alongside the ground-truth masks:
+In your main script, load the dataset and create batches:
 ```julia
-UNetFramework.visualize_results(trained_model, test_image, test_label)
+using Data
+
+img_dir = "Your Path"
+mask_dir = "Your Path"
+
+# Load dataset as an array of (input_image, ground_truth) tuples.
+dataset = Data.load_dataset(img_dir, mask_dir)
+println("Number of samples in dataset: ", length(dataset))
+
+# Create batches from the dataset (e.g., batch_size = 4)
+batch_size = 4
+train_data = Data.create_batches(dataset, batch_size)
+println("Number of batches: ", length(train_data))
+```
+
+The label preprocessing function also returns the largest class value, from which you can determine the number of output channels (by adding one).
+
+### 2. Train the Model
+
+The training process is defined in the `train_unet` function in `Training.jl`, which uses explicit gradient computation and parameter updates via `Optimisers.jl`. For example, in your main script:
+
+```julia
+using Model, Training
+
+# Determine output channels from a sample mask:
+_, max_class = Data.load_and_preprocess_label("path/to/sample_mask.png")
+output_channels = max_class + 1  # Classes from 0 to max_class
+
+# Initialize the model (e.g., 3 input channels, determined output channels)
+input_channels = 3
+model = Model.UNet(input_channels, output_channels)
+
+# Train the model for a set number of epochs
+num_epochs = 10
+losses = Training.train_unet(model, train_data, num_epochs, 0.001, output_channels)
+```
+
+The training loop prints debug information (shapes, means, losses, etc.) for each batch and epoch. The loss for each epoch is stored in `losses`, which you can later use for plotting.
+
+### 3. Visualize Results
+
+After training, visualize the model's predictions alongside the input image and ground truth mask:
+
+```julia
+using Visualization
+
+Visualization.visualize_results(model, input_image, ground_truth)
+```
+
+### 4. Plot Loss Over Time
+
+If you saved the epoch loss values in an array (returned by `train_unet`), you can plot the loss progression:
+
+```julia
+using Plots
+
+scatter(1:num_epochs, losses, xlabel="Epoch", ylabel="Loss", title="Loss Over Time", marker=:o)
 ```
 
 ---
@@ -84,15 +144,15 @@ UNetFramework.visualize_results(trained_model, test_image, test_label)
 - Julia 1.8+
 - Packages:
   - Flux.jl
+  - Optimisers.jl
   - CUDA.jl (optional, for GPU support)
   - Images.jl
   - ImageTransformations.jl
   - Plots.jl
+  - FileIO.jl
 
 ---
 
 ## Contribution
 
-Feel free to submit pull requests or report issues. Contributions to improve the code or add new features are welcome.
-
----
+Contributions are welcome! Please feel free to submit pull requests or open issues if you have any suggestions or encounter any problems.
