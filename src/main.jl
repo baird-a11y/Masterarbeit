@@ -20,7 +20,7 @@ using LinearAlgebra
 using Optimisers
 using Plots
 
-num_epochs = 1 # Number of epochs to train
+num_epochs = 10 # Number of epochs to train
 learning_rate = 0.001 # Learning rate
 input_channels = 3 # RGB input channels
 batch_size = 4 # Desired batch size
