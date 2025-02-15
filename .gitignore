@@ -1,3 +1,2 @@
 unet_model.pth
-Waves.jl
-wave_simulation.gif
+src_experiments_gpu
