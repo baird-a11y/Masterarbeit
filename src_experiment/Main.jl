@@ -15,7 +15,7 @@ using .Visualization
 const NUM_EPOCHS    = 10
 const LEARNING_RATE = 0.001
 const BATCH_SIZE    = 4
-const DATASET_SIZE  = 10  # Gesamtanzahl synthetischer Beispiele
+const DATASET_SIZE  = 2000  # Gesamtanzahl synthetischer Beispiele
 const IMAGE_SIZE    = 64
 const MAX_SPEED     = 3
 
@@ -38,6 +38,6 @@ model = Model.UNet(3, 1)
 losses = Training.train_unet_synthetic(model, train_data, NUM_EPOCHS, LEARNING_RATE)
 
 # 5) Visualisiere eine Vorhersage anhand des ersten Samples
-Visualization.visualize_synthetic_results(model, dataset[1])
+Visualization.visualize_synthetic_results(model, dataset[1];threshold=0.2)
 
 println("Training abgeschlossen.")

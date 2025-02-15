@@ -97,44 +97,44 @@ function (model::UNet)(x)
     # ================== Encoder ==================
     println("DEBUG: Input shape: ", size(x))
     e1 = model.encoder1(x)
-    println("DEBUG: e1 shape: ", size(e1), " Mean: ", mean(e1), " Std: ", std(e1))
+    #println("DEBUG: e1 shape: ", size(e1), " Mean: ", mean(e1), " Std: ", std(e1))
 
     e2 = model.encoder2(e1)
-    println("DEBUG: e2 shape: ", size(e2), " Mean: ", mean(e2), " Std: ", std(e2))
+    #println("DEBUG: e2 shape: ", size(e2), " Mean: ", mean(e2), " Std: ", std(e2))
 
     e3 = model.encoder3(e2)
-    println("DEBUG: e3 shape: ", size(e3), " Mean: ", mean(e3), " Std: ", std(e3))
+    #println("DEBUG: e3 shape: ", size(e3), " Mean: ", mean(e3), " Std: ", std(e3))
 
     e4 = model.encoder4(e3)
-    println("DEBUG: e4 shape: ", size(e4), " Mean: ", mean(e4), " Std: ", std(e4))
+    #println("DEBUG: e4 shape: ", size(e4), " Mean: ", mean(e4), " Std: ", std(e4))
     
     b = model.bottleneck(e4)
-    println("DEBUG: Bottleneck shape: ", size(b), " Mean: ", mean(b), " Std: ", std(b))
+    #println("DEBUG: Bottleneck shape: ", size(b), " Mean: ", mean(b), " Std: ", std(b))
     
     # ================== Decoder ==================
     # Decoder 4 (skip mit e4)
     d4 = model.decoder4(b)
-    println("DEBUG: d4 shape (before skip): ", size(d4), " Mean: ", mean(d4), " Std: ", std(d4))
+    #println("DEBUG: d4 shape (before skip): ", size(d4), " Mean: ", mean(d4), " Std: ", std(d4))
     d4 = model.decoder4_1(cat(d4, e4, dims=3))
-    println("DEBUG: d4 shape (after skip): ", size(d4), " Mean: ", mean(d4), " Std: ", std(d4))
+    #println("DEBUG: d4 shape (after skip): ", size(d4), " Mean: ", mean(d4), " Std: ", std(d4))
     
     # Decoder 3 (skip mit e3)
     d3 = model.decoder3(d4)
-    println("DEBUG: d3 shape (before skip): ", size(d3), " Mean: ", mean(d3), " Std: ", std(d3))
+    #println("DEBUG: d3 shape (before skip): ", size(d3), " Mean: ", mean(d3), " Std: ", std(d3))
     d3 = model.decoder3_1(cat(d3, e3, dims=3))
-    println("DEBUG: d3 shape (after skip): ", size(d3), " Mean: ", mean(d3), " Std: ", std(d3))
+    #println("DEBUG: d3 shape (after skip): ", size(d3), " Mean: ", mean(d3), " Std: ", std(d3))
     
     # Decoder 2 (skip mit e2)
     d2 = model.decoder2(d3)
-    println("DEBUG: d2 shape (before skip): ", size(d2), " Mean: ", mean(d2), " Std: ", std(d2))
+    #println("DEBUG: d2 shape (before skip): ", size(d2), " Mean: ", mean(d2), " Std: ", std(d2))
     d2 = model.decoder2_1(cat(d2, e2, dims=3))
-    println("DEBUG: d2 shape (after skip): ", size(d2), " Mean: ", mean(d2), " Std: ", std(d2))
+    #println("DEBUG: d2 shape (after skip): ", size(d2), " Mean: ", mean(d2), " Std: ", std(d2))
     
     # Decoder 1 (skip mit e1)
     d1 = model.decoder1(d2)
-    println("DEBUG: d1 shape (before skip): ", size(d1), " Mean: ", mean(d1), " Std: ", std(d1))
+    #println("DEBUG: d1 shape (before skip): ", size(d1), " Mean: ", mean(d1), " Std: ", std(d1))
     d1 = model.decoder1_1(cat(d1, e1, dims=3))
-    println("DEBUG: d1 shape (final): ", size(d1), " Mean: ", mean(d1), " Std: ", std(d1))
+    #println("DEBUG: d1 shape (final): ", size(d1), " Mean: ", mean(d1), " Std: ", std(d1))
     
     # ================== Output-Aktivierung ==================
     if model.output_channels == 1
