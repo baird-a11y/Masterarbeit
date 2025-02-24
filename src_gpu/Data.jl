@@ -32,13 +32,19 @@ end
 # Bild laden und normalisieren
 function load_and_preprocess_image(img_path::String; target_h::Int=374, target_w::Int=1238)
     raw_img = load(img_path)
-    # zu Float32 konvertieren (direkt die richtige Zieltypklasse spezifizieren)
-    img_float = Float32.(raw_img)
-    img_chan = channelview(img_float)
-    img_array = permutedims(img_chan, (2, 3, 1))
+    
+    # Konvertierung von RGB{N0f8} zu Float32 - korrigierte Version
+    # Zuerst in Array umwandeln, dann channelview, dann zu Float32 konvertieren
+    img_float = Float32.(channelview(raw_img))
+    
+    # channelview gibt uns ein Array mit Dimensionen [channels, height, width]
+    # Wir müssen die Dimensionen zu [height, width, channels] umorganisieren
+    img_array = permutedims(img_float, (2, 3, 1))
+    
     img_std = standardize_size(img_array, target_h, target_w)
     return reshape(img_std, size(img_std)..., 1)
 end
+
 
 # Label laden und auf 0..34 skalieren
 function load_and_preprocess_label(label_path::String; target_h::Int=374, target_w::Int=1238)
@@ -62,10 +68,17 @@ function load_dataset(image_dir::String, label_dir::String)
     dataset = Vector{Tuple}(undef, length(image_files))
     
     @threads for i in 1:length(image_files)
-        dataset[i] = (
-            load_and_preprocess_image(image_files[i]),
-            first(load_and_preprocess_label(label_files[i]))
-        )
+        try
+            dataset[i] = (
+                load_and_preprocess_image(image_files[i]),
+                first(load_and_preprocess_label(label_files[i]))
+            )
+        catch e
+            println("Error processing image $(image_files[i]): $e")
+            # Provide a default or skip this entry
+            # For now, we'll just rethrow to see the specific error
+            rethrow(e)
+        end
     end
     
     return dataset
