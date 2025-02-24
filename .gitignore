@@ -4,3 +4,4 @@ checkpoints/checkpoint_epoch1.bson
 .gitignore
 checkpoints/checkpoint_epoch2.bson
 checkpoints/final_model.bson
+checkpoints/checkpoint_epoch3.bson
