@@ -45,9 +45,11 @@ function visualize_results(model, input_image, ground_truth, losses;
     prediction_classes = prediction_to_class_labels(prediction_raw)
     
     # Reshape for plotting
-    img_for_plot = dropdims(input_cpu[:,:,1,1], dims=3)
-    gt_for_plot = dropdims(ground_truth_cpu[:,:,1,1], dims=3)
-    pred_for_plot = dropdims(prediction_classes[:,:,1], dims=3)
+    img_for_plot = dropdims(selectdim(selectdim(input_cpu, 3, 1), 4, 1), dims=3)
+    gt_for_plot = dropdims(ground_truth_cpu, dims=3)
+    pred_for_plot = dropdims(prediction_classes, dims=3)
+    # gt_for_plot = dropdims(ground_truth_cpu[:,:,1,1], dims=3)
+    # pred_for_plot = dropdims(prediction_classes[:,:,1], dims=3)
     
     # Custom colormap for easier visualization
     num_classes = maximum(gt_for_plot) + 1

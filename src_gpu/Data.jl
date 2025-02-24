@@ -285,7 +285,7 @@ function create_augmented_dataset(dataset, augmentation_factor=2)
     augmented_dataset[1:length(dataset)] = dataset
     
     # Add augmented data
-    for i in 1:length(dataset)
+    for i in 1:eachindex(dataset)
         for j in 1:(augmentation_factor-1)
             idx = length(dataset) + (i-1)*(augmentation_factor-1) + j
             if idx <= length(augmented_dataset)

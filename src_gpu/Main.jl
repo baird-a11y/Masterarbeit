@@ -27,10 +27,10 @@ import Base.GC
 
 # Hyperparameter
 num_epochs = 2       # Anzahl Trainings-Epochen
-learning_rate = 0.0001
+learning_rate = 0.00001
 input_channels = 3   # z.B. RGB
 batch_size = 2       # Reduced batch size from 4 to 2
-use_mixed_precision = true  # Enable mixed precision to reduce memory usage
+use_mixed_precision = false  # Enable mixed precision to reduce memory usage
 checkpoint_dir = "checkpoints"  # Directory to save model checkpoints
 checkpoint_freq = 1  # Save checkpoint every N epochs
 
@@ -113,16 +113,16 @@ println("Training took ", end_time - start_time)
 
 clear_gpu_memory()
 
-# Beispielhafte Visualisierung mit dem 1. Sample
-input_image = dataset[1][1]
-ground_truth = dataset[1][2]
-Visualization.visualize_results(model, input_image, ground_truth, losses; 
-                              save_path="results")
+# # Beispielhafte Visualisierung mit dem 1. Sample
+# input_image = dataset[1][1]
+# ground_truth = dataset[1][2]
+# Visualization.visualize_results(model, input_image, ground_truth, losses; 
+#                               save_path="results")
 
-# Visualize model architecture
-Visualization.visualize_model_architecture(model)
+# # Visualize model architecture
+# Visualization.visualize_model_architecture(model)
 
-# Visualize training metrics
-Visualization.visualize_training_metrics(losses)
+# # Visualize training metrics
+# Visualization.visualize_training_metrics(losses)
 
 println("Done!")

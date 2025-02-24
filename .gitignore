@@ -1,2 +1,6 @@
 unet_model.pth
 src_experiments_gpu
+checkpoints/checkpoint_epoch1.bson
+.gitignore
+checkpoints/checkpoint_epoch2.bson
+checkpoints/final_model.bson
