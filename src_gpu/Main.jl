@@ -27,7 +27,7 @@ import Base.GC
 
 # Hyperparameter
 num_epochs = 2       # Anzahl Trainings-Epochen
-learning_rate = 0.001
+learning_rate = 0.0001
 input_channels = 3   # z.B. RGB
 batch_size = 2       # Reduced batch size from 4 to 2
 use_mixed_precision = true  # Enable mixed precision to reduce memory usage

@@ -46,7 +46,7 @@ function weighted_loss_fn(model, x, y, class_weights=nothing)
         
         # Handle zeros in weights to avoid division by zero
         non_zero_mask = weights .> 0
-        weights = weights .+ (1.0f-5) .* (1.0f0 .- non_zero_mask)
+        weights = weights .+ (1f-5) .* (1.0f0 .- non_zero_mask)
         
         # Apply weights
         weighted_loss = loss .* weights
@@ -233,9 +233,14 @@ function train_unet_mixed_precision(model, train_data, num_epochs, learning_rate
             mask_batch_oh = batch_one_hot(mask_batch, output_channels)
             println("One-hot encoded mask: $(size(mask_batch_oh))")
 
-            # Forward pass in fp16
+            # Check for NaN in forward pass
             output_fp16 = model_fp16(input_batch_fp16)
-            println("Model output: $(size(output_fp16))")
+            if any(isnan, output_fp16) || any(isinf, output_fp16)
+                println("Warning: NaN or Inf in model output. Skipping batch.")
+                continue
+            end
+
+            
 
             # Check if dimensions match
             if size(output_fp16)[1:2] != size(mask_batch_oh)[1:2]
@@ -256,7 +261,12 @@ function train_unet_mixed_precision(model, train_data, num_epochs, learning_rate
             loss = 0f0
             try
                 # Compute loss in fp32 for numerical stability
+                # Check loss value
                 loss = logitcrossentropy(Float32.(output_fp16), mask_batch_oh)
+                if isnan(loss) || isinf(loss)
+                    println("Warning: Loss is NaN or Inf. Skipping batch.")
+                    continue
+                end
 
                 # Compute gradients with mixed precision
                 ∇model = gradient(m -> logitcrossentropy(Float32.(m(input_batch_fp16)), mask_batch_oh), 
@@ -273,7 +283,7 @@ function train_unet_mixed_precision(model, train_data, num_epochs, learning_rate
                 # Skip this batch but continue training
                 continue
             end
-
+            
             # Update progress bar
             next!(p; showvalues = [(:batch, batch_idx), (:loss, loss)])
 
@@ -398,5 +408,27 @@ function calculate_class_weights(dataset, num_classes)
     
     return weights
 end
+
+function safe_update!(opt_state, model, ∇model)
+    # Check for NaN or Inf in gradients
+    has_bad_gradients = false
+    for p in Flux.params(∇model)
+        if any(isnan, p) || any(isinf, p)
+            has_bad_gradients = true
+            break
+        end
+    end
+    
+    if has_bad_gradients
+        println("Warning: NaN or Inf detected in gradients. Skipping update.")
+        return opt_state, model
+    else
+        # Apply gradient clipping
+        ∇model_clipped = Flux.clip(∇model, -1.0, 1.0)
+        # Update model parameters
+        return Optimisers.update!(opt_state, model, ∇model_clipped)
+    end
+end
+
 
 end # module Training
