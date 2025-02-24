@@ -77,11 +77,8 @@ end
 
 using Base.Threads
 
-# Threaded dataset loading with fixed dimensions
-function load_dataset(image_dir::String, label_dir::String; verbose=true)
-    image_files = sort(readdir(image_dir, join=true))
-    label_files = sort(readdir(label_dir, join=true))
-    
+# Load a subset of data from file lists rather than directories
+function load_dataset(image_files::Vector{String}, label_files::Vector{String}; verbose=true)
     if verbose
         println("Loading dataset with $(length(image_files)) images")
         println("All images will be standardized to $(STANDARD_HEIGHT)×$(STANDARD_WIDTH)")
@@ -97,19 +94,6 @@ function load_dataset(image_dir::String, label_dir::String; verbose=true)
             # Process image and label
             img_data = load_and_preprocess_image(image_files[i])
             label_data, _ = load_and_preprocess_label(label_files[i])
-            
-            # Verify dimensions
-            img_dims = size(img_data)[1:2]
-            label_dims = size(label_data)[1:2]
-            
-            if img_dims != (STANDARD_HEIGHT, STANDARD_WIDTH) || 
-               label_dims != (STANDARD_HEIGHT, STANDARD_WIDTH)
-                if verbose
-                    println("Warning: Unexpected dimensions for item $i:")
-                    println("  Image: $img_dims, Label: $label_dims")
-                    println("  Expected: ($(STANDARD_HEIGHT), $(STANDARD_WIDTH))")
-                end
-            end
             
             dataset[i] = (img_data, label_data)
         catch e
@@ -129,32 +113,37 @@ function load_dataset(image_dir::String, label_dir::String; verbose=true)
     
     if verbose
         println("Dataset loaded successfully with $(length(dataset)) samples")
-        println("All samples standardized to $(STANDARD_HEIGHT)×$(STANDARD_WIDTH)")
     end
     
     return dataset
 end
 
-# Optimized batching with preallocated vector
-function create_batches(dataset, batch_size)
-    n_batches = ceil(Int, length(dataset) / batch_size)
-    batched_data = Vector{Tuple}(undef, n_batches)
+# Memory-efficient batch creation - loads one batch at a time
+function create_batches_lazy(image_files::Vector{String}, label_files::Vector{String}, batch_size::Int)
+    n_batches = ceil(Int, length(image_files) / batch_size)
     
-    for i in 1:n_batches
-        batch_start = (i-1) * batch_size + 1
-        batch_end = min(batch_start + batch_size - 1, length(dataset))
-        batch_indices = batch_start:batch_end
+    # Return a function that loads batches on demand
+    function load_batch(batch_idx::Int)
+        if batch_idx > n_batches || batch_idx < 1
+            error("Batch index out of range: $batch_idx (max: $n_batches)")
+        end
         
-        # Preallocate arrays and then concatenate
-        imgs = cat([dataset[j][1] for j in batch_indices]...; dims=4)
-        labels = cat([dataset[j][2] for j in batch_indices]...; dims=4)
+        batch_start = (batch_idx-1) * batch_size + 1
+        batch_end = min(batch_start + batch_size - 1, length(image_files))
+        batch_img_files = image_files[batch_start:batch_end]
+        batch_label_files = label_files[batch_start:batch_end]
         
-        batched_data[i] = (imgs, labels)
+        # Load just this batch
+        batch_data = load_dataset(batch_img_files, batch_label_files, verbose=false)
+        
+        # Combine into tensors
+        imgs = cat([item[1] for item in batch_data]...; dims=4)
+        labels = cat([item[2] for item in batch_data]...; dims=4)
+        
+        return (imgs, labels)
     end
     
-    println("Created $(n_batches) batches of size up to $(batch_size)")
-    
-    return batched_data
+    return load_batch, n_batches
 end
 
 # Shuffle dataset for better training
@@ -200,6 +189,28 @@ function create_augmented_dataset(dataset, augmentation_factor=2)
     println("Created augmented dataset with $(length(augmented_dataset)) samples")
     
     return shuffle(augmented_dataset)
+end
+
+# Optimized batching with preallocated vector
+function create_batches(dataset, batch_size)
+    n_batches = ceil(Int, length(dataset) / batch_size)
+    batched_data = Vector{Tuple}(undef, n_batches)
+    
+    for i in 1:n_batches
+        batch_start = (i-1) * batch_size + 1
+        batch_end = min(batch_start + batch_size - 1, length(dataset))
+        batch_indices = batch_start:batch_end
+        
+        # Preallocate arrays and then concatenate
+        imgs = cat([dataset[j][1] for j in batch_indices]...; dims=4)
+        labels = cat([dataset[j][2] for j in batch_indices]...; dims=4)
+        
+        batched_data[i] = (imgs, labels)
+    end
+    
+    println("Created $(n_batches) batches of size up to $(batch_size)")
+    
+    return batched_data
 end
 
 end # module Data

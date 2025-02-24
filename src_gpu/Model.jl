@@ -1,5 +1,5 @@
 ##################################
-# Model.jl - With Dimension Debugging
+# Model.jl - With Dimension Debugging and Memory Efficiency
 ##################################
 module Model
 
@@ -27,8 +27,9 @@ struct UNet
 end
 Functors.@functor UNet
 
-function UNet(input_channels::Int, output_channels::Int; dropout_rate=0.2)
-    # Encoder - Use BatchNorm for better training stability
+# Original UNet function to be called when memory_efficient=false
+function UNet_full(input_channels::Int, output_channels::Int; dropout_rate=0.2)
+    # Original encoder implementation with full feature maps
     encoder1 = Chain(
         Conv((3, 3), input_channels => 64, relu, pad=SamePad()),
         BatchNorm(64),
@@ -111,10 +112,104 @@ function UNet(input_channels::Int, output_channels::Int; dropout_rate=0.2)
                 decoder2, decoder2_1, decoder1, decoder1_1, dropout)
 end
 
+# Memory-efficient UNet with smaller feature maps
+function UNet(input_channels::Int, output_channels::Int; dropout_rate=0.2, memory_efficient=false)
+    if !memory_efficient
+        # Call the original UNet implementation with full feature maps
+        #println("Creating standard UNet with full feature maps")
+        return UNet_full(input_channels, output_channels, dropout_rate=dropout_rate)
+    end
+    
+    #println("Creating memory-efficient UNet with reduced feature maps")
+    
+    # Reduced size for feature maps to save memory
+    # Use 75% of the original feature map sizes
+    encoder1 = Chain(
+        Conv((3, 3), input_channels => 48, relu, pad=SamePad()),  # 64 -> 48
+        BatchNorm(48),
+        Conv((3, 3), 48 => 48, relu, pad=SamePad()),
+        BatchNorm(48)
+    )
+    encoder2 = Chain(
+        MaxPool((2,2)),
+        Conv((3, 3), 48 => 96, relu, pad=SamePad()),  # 128 -> 96
+        BatchNorm(96),
+        Conv((3, 3), 96 => 96, relu, pad=SamePad()),
+        BatchNorm(96)
+    )
+    encoder3 = Chain(
+        MaxPool((2,2)),
+        Conv((3, 3), 96 => 192, relu, pad=SamePad()),  # 256 -> 192
+        BatchNorm(192),
+        Conv((3, 3), 192 => 192, relu, pad=SamePad()),
+        BatchNorm(192)
+    )
+    encoder4 = Chain(
+        MaxPool((2,2)),
+        Conv((3, 3), 192 => 384, relu, pad=SamePad()),  # 512 -> 384
+        BatchNorm(384),
+        Conv((3, 3), 384 => 384, relu, pad=SamePad()),
+        BatchNorm(384)
+    )
+    bottleneck = Chain(
+        MaxPool((2,2)),
+        Conv((3,3), 384 => 768, relu, pad=SamePad()),  # 1024 -> 768
+        BatchNorm(768),
+        Dropout(dropout_rate),
+        Conv((3,3), 768 => 768, relu, pad=SamePad()),
+        BatchNorm(768)
+    )
+    
+    # Decoder - Use SamePad for more consistent dimensions
+    decoder4 = ConvTranspose((2, 2), 768 => 384, stride=2)
+    
+    decoder4_1 = Chain(
+        Conv((3,3), 768 => 384, relu, pad=SamePad()),  # 1024->768, 512->384
+        BatchNorm(384),
+        Conv((3,3), 384 => 384, relu, pad=SamePad()),
+        BatchNorm(384)
+    )
+    
+    decoder3 = ConvTranspose((2,2), 384 => 192, stride=2)
+    
+    decoder3_1 = Chain(
+        Conv((3,3), 384 => 192, relu, pad=SamePad()),  # 512->384, 256->192
+        BatchNorm(192),
+        Conv((3,3), 192 => 192, relu, pad=SamePad()),
+        BatchNorm(192)
+    )
+    
+    decoder2 = ConvTranspose((2,2), 192 => 96, stride=2)
+    
+    decoder2_1 = Chain(
+        Conv((3,3), 192 => 96, relu, pad=SamePad()),  # 256->192, 128->96
+        BatchNorm(96),
+        Conv((3,3), 96 => 96, relu, pad=SamePad()),
+        BatchNorm(96)
+    )
+    
+    decoder1 = ConvTranspose((2,2), 96 => 48, stride=2)
+    
+    decoder1_1 = Chain(
+        Conv((3,3), 96 => 48, relu, pad=SamePad()),  # 128->96, 64->48
+        BatchNorm(48),
+        Conv((3,3), 48 => 48, relu, pad=SamePad()),
+        BatchNorm(48),
+        Dropout(dropout_rate/2),  # Less dropout in final layers
+        Conv((1,1), 48 => output_channels)
+    )
+    
+    dropout = Dropout(dropout_rate)
+    
+    return UNet(encoder1, encoder2, encoder3, encoder4, bottleneck,
+                decoder4, decoder4_1, decoder3, decoder3_1,
+                decoder2, decoder2_1, decoder1, decoder1_1, dropout)
+end
+
 # Helper function to handle center cropping for skip connections
 function crop_and_concat(x, skip, dims=3)
     # Debug dimensions
-    println("crop_and_concat: x size = $(size(x)), skip size = $(size(skip))")
+    #println("crop_and_concat: x size = $(size(x)), skip size = $(size(skip))")
     
     # Get dimensions
     x_size = size(x)
@@ -124,7 +219,7 @@ function crop_and_concat(x, skip, dims=3)
     height_diff = skip_size[1] - x_size[1]
     width_diff = skip_size[2] - x_size[2]
     
-    println("  height_diff = $height_diff, width_diff = $width_diff")
+    #println("  height_diff = $height_diff, width_diff = $width_diff")
     
     local result
     if height_diff < 0 || width_diff < 0
@@ -140,7 +235,7 @@ function crop_and_concat(x, skip, dims=3)
                    w_start:w_start+skip_size[2]-1, :, :] .= skip
         
         result = cat(x, padded_skip, dims=dims)
-        println("  Skip connection was smaller, padded to: $(size(padded_skip))")
+        #println("  Skip connection was smaller, padded to: $(size(padded_skip))")
     else
         # Skip connection is larger, crop it
         h_start = height_diff ÷ 2 + 1
@@ -150,57 +245,57 @@ function crop_and_concat(x, skip, dims=3)
                            w_start:w_start+x_size[2]-1, :, :]
         
         result = cat(x, cropped_skip, dims=dims)
-        println("  Skip connection was larger, cropped to: $(size(cropped_skip))")
+        #println("  Skip connection was larger, cropped to: $(size(cropped_skip))")
     end
     
-    println("  Result size after concat: $(size(result))")
+    #println("  Result size after concat: $(size(result))")
     return result
 end
 
 function (model::UNet)(x)
-    println("\n===== UNet Forward Pass =====")
-    println("Input shape: $(size(x))")
+    #println("\n===== UNet Forward Pass =====")
+    #println("Input shape: $(size(x))")
     
     # Apply dropout at training time only
     e1 = model.encoder1(x)
-    println("After encoder1: $(size(e1))")
+    #println("After encoder1: $(size(e1))")
     
     e2 = model.encoder2(e1)
-    println("After encoder2: $(size(e2))")
+    #println("After encoder2: $(size(e2))")
     
     e3 = model.encoder3(e2)
-    println("After encoder3: $(size(e3))")
+    #println("After encoder3: $(size(e3))")
     
     e4 = model.encoder4(e3)
-    println("After encoder4: $(size(e4))")
+    #println("After encoder4: $(size(e4))")
     
     b  = model.bottleneck(e4)
-    println("After bottleneck: $(size(b))")
+    #println("After bottleneck: $(size(b))")
 
     # More robust skip connections with crop_and_concat
     d4 = model.decoder4(b)
-    println("After decoder4 (before concat): $(size(d4))")
+    #println("After decoder4 (before concat): $(size(d4))")
     
     d4 = model.decoder4_1(crop_and_concat(d4, e4))
-    println("After decoder4_1: $(size(d4))")
+    #println("After decoder4_1: $(size(d4))")
 
     d3 = model.decoder3(d4)
-    println("After decoder3 (before concat): $(size(d3))")
+    #println("After decoder3 (before concat): $(size(d3))")
     
     d3 = model.decoder3_1(crop_and_concat(d3, e3))
-    println("After decoder3_1: $(size(d3))")
+    #println("After decoder3_1: $(size(d3))")
 
     d2 = model.decoder2(d3)
-    println("After decoder2 (before concat): $(size(d2))")
+    #println("After decoder2 (before concat): $(size(d2))")
     
     d2 = model.decoder2_1(crop_and_concat(d2, e2))
-    println("After decoder2_1: $(size(d2))")
+    #println("After decoder2_1: $(size(d2))")
 
     d1 = model.decoder1(d2)
-    println("After decoder1 (before concat): $(size(d1))")
+    #println("After decoder1 (before concat): $(size(d1))")
     
     d1 = model.decoder1_1(crop_and_concat(d1, e1))
-    println("After decoder1_1 (final output): $(size(d1))")
+    #println("After decoder1_1 (final output): $(size(d1))")
 
     return d1
 end
