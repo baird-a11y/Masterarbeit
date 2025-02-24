@@ -25,7 +25,7 @@ function train_unet(model, train_data, num_epochs, learning_rate, output_channel
         total_loss = 0f0
 
         for (batch_idx, (input_batch, mask_batch)) in enumerate(train_data)
-            println("\n--- Batch $batch_idx ---")
+            #println("\n--- Batch $batch_idx ---")
 
             # Falls die Maske z. B. (H, W, 1, N) mit Int-Werten hat
             mask_batch_int = Int.(mask_batch[:, :, 1, :])
@@ -45,7 +45,7 @@ function train_unet(model, train_data, num_epochs, learning_rate, output_channel
             # Loss zum Monitoring
             batch_loss = logitcrossentropy(model(input_batch), mask_batch_oh)
             total_loss += batch_loss
-            println("DEBUG: Batch Loss: ", batch_loss)
+            #println("DEBUG: Batch Loss: ", batch_loss)
         end
 
         avg_loss = total_loss / length(train_data)

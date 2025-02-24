@@ -95,7 +95,7 @@ end
 
 function (model::UNet)(x)
     # ================== Encoder ==================
-    println("DEBUG: Input shape: ", size(x))
+    #println("DEBUG: Input shape: ", size(x))
     e1 = model.encoder1(x)
     #println("DEBUG: e1 shape: ", size(e1), " Mean: ", mean(e1), " Std: ", std(e1))
 
