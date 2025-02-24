@@ -1,5 +1,5 @@
 ##################################
-# Model.jl - Optimized
+# Model.jl - With Dimension Debugging
 ##################################
 module Model
 
@@ -113,6 +113,9 @@ end
 
 # Helper function to handle center cropping for skip connections
 function crop_and_concat(x, skip, dims=3)
+    # Debug dimensions
+    println("crop_and_concat: x size = $(size(x)), skip size = $(size(skip))")
+    
     # Get dimensions
     x_size = size(x)
     skip_size = size(skip)
@@ -121,6 +124,9 @@ function crop_and_concat(x, skip, dims=3)
     height_diff = skip_size[1] - x_size[1]
     width_diff = skip_size[2] - x_size[2]
     
+    println("  height_diff = $height_diff, width_diff = $width_diff")
+    
+    local result
     if height_diff < 0 || width_diff < 0
         # Skip connection is smaller, pad it
         padded_skip = zeros(eltype(skip), max(x_size[1], skip_size[1]), 
@@ -132,8 +138,9 @@ function crop_and_concat(x, skip, dims=3)
         
         padded_skip[h_start:h_start+skip_size[1]-1, 
                    w_start:w_start+skip_size[2]-1, :, :] .= skip
-                   
-        return cat(x, padded_skip, dims=dims)
+        
+        result = cat(x, padded_skip, dims=dims)
+        println("  Skip connection was smaller, padded to: $(size(padded_skip))")
     else
         # Skip connection is larger, crop it
         h_start = height_diff ÷ 2 + 1
@@ -141,31 +148,59 @@ function crop_and_concat(x, skip, dims=3)
         
         cropped_skip = skip[h_start:h_start+x_size[1]-1, 
                            w_start:w_start+x_size[2]-1, :, :]
-                           
-        return cat(x, cropped_skip, dims=dims)
+        
+        result = cat(x, cropped_skip, dims=dims)
+        println("  Skip connection was larger, cropped to: $(size(cropped_skip))")
     end
+    
+    println("  Result size after concat: $(size(result))")
+    return result
 end
 
 function (model::UNet)(x)
+    println("\n===== UNet Forward Pass =====")
+    println("Input shape: $(size(x))")
+    
     # Apply dropout at training time only
     e1 = model.encoder1(x)
+    println("After encoder1: $(size(e1))")
+    
     e2 = model.encoder2(e1)
+    println("After encoder2: $(size(e2))")
+    
     e3 = model.encoder3(e2)
+    println("After encoder3: $(size(e3))")
+    
     e4 = model.encoder4(e3)
+    println("After encoder4: $(size(e4))")
+    
     b  = model.bottleneck(e4)
+    println("After bottleneck: $(size(b))")
 
     # More robust skip connections with crop_and_concat
     d4 = model.decoder4(b)
+    println("After decoder4 (before concat): $(size(d4))")
+    
     d4 = model.decoder4_1(crop_and_concat(d4, e4))
+    println("After decoder4_1: $(size(d4))")
 
     d3 = model.decoder3(d4)
+    println("After decoder3 (before concat): $(size(d3))")
+    
     d3 = model.decoder3_1(crop_and_concat(d3, e3))
+    println("After decoder3_1: $(size(d3))")
 
     d2 = model.decoder2(d3)
+    println("After decoder2 (before concat): $(size(d2))")
+    
     d2 = model.decoder2_1(crop_and_concat(d2, e2))
+    println("After decoder2_1: $(size(d2))")
 
     d1 = model.decoder1(d2)
+    println("After decoder1 (before concat): $(size(d1))")
+    
     d1 = model.decoder1_1(crop_and_concat(d1, e1))
+    println("After decoder1_1 (final output): $(size(d1))")
 
     return d1
 end
