@@ -22,7 +22,7 @@ using Plots
 using Dates
 
 
-num_epochs = 10 # Number of epochs to train
+num_epochs = 2 # Number of epochs to train
 learning_rate = 0.001 # Learning rate
 input_channels = 3 # RGB input channels
 batch_size = 4 # Desired batch size
@@ -40,7 +40,7 @@ println("Number of samples in dataset: ", length(dataset))
 train_data = Data.create_batches(dataset, batch_size)
 println("Number of batches: ", length(train_data))
 
-global_max_class = 0
+# global_max_class = 0
 # for mask_path in mask_files
 #     _, max_class = Data.load_and_preprocess_label(mask_path)
 #     global_max_class = max(global_max_class, max_class)
