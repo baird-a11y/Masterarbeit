@@ -21,10 +21,37 @@ This repository contains an implementation of the U-Net architecture for image s
   Utility functions group individual image/mask pairs into batches along the batch dimension.
   
 - **GPU Support:**  
-  The code is compatible with CUDA (if installed) for GPU acceleration.
+  GPU-accelerated version available in the `src_gpu` directory, while the standard implementation in `src` operates on CPU.
   
 - **Visualization:**  
   Model predictions can be visualized alongside input images and ground-truth masks using Plots.jl.
+
+---
+
+## Directory Structure
+
+```
+checkpoints/
+    Storage for model checkpoints during training.
+Datensatz/
+    Contains the training and validation datasets (images and labels).
+experiments/
+    Scripts for testing and evaluating different ideas.
+results/
+    Directory for saving visualization results and generated images.
+src/
+    Standard CPU implementation of the U-Net architecture, data loaders, training pipeline, and visualization.
+src_experiment/
+    Experimental versions of the code for testing new approaches.
+src_gpu/
+    GPU-accelerated implementation of the U-Net framework (requires CUDA).
+.gitignore
+    Git ignore file specifying which files and directories to exclude from version control.
+README.md
+    Documentation for the repository.
+unet_model.pth
+    Pretrained model weights.
+```
 
 ---
 
@@ -46,31 +73,14 @@ This repository contains an implementation of the U-Net architecture for image s
 
 ---
 
-## Directory Structure
-
-```
-src/
-    Contains the implementation of the U-Net architecture, data loaders (Data.jl), training pipeline (Training.jl), and visualization (Visualization.jl).
-data/
-    Placeholder for training and validation datasets.
-experiments/
-    Scripts for testing and evaluating different ideas.
-results/
-    Directory for saving experimental results.
-README.md
-    Documentation for the repository.
-```
-
----
-
 ## Usage
 
 ### 1. Load and Preprocess Data
 
-Organize your images and labels in a directory structure like this:
+Organize your images and labels in the `Datensatz` directory:
 
 ```
-data/
+Datensatz/
 └── Training/
     ├── Bilder_alle/
     └── Masken_alle/
@@ -80,8 +90,8 @@ In your main script, load the dataset and create batches:
 ```julia
 using Data
 
-img_dir = "Your Path"
-mask_dir = "Your Path"
+img_dir = "Datensatz/Training/Bilder_alle"
+mask_dir = "Datensatz/Training/Masken_alle"
 
 # Load dataset as an array of (input_image, ground_truth) tuples.
 dataset = Data.load_dataset(img_dir, mask_dir)
@@ -103,7 +113,7 @@ The training process is defined in the `train_unet` function in `Training.jl`, w
 using Model, Training
 
 # Determine output channels from a sample mask:
-_, max_class = Data.load_and_preprocess_label("path/to/sample_mask.png")
+_, max_class = Data.load_and_preprocess_label("Datensatz/Training/Masken_alle/sample_mask.png")
 output_channels = max_class + 1  # Classes from 0 to max_class
 
 # Initialize the model (e.g., 3 input channels, determined output channels)
@@ -127,6 +137,8 @@ using Visualization
 Visualization.visualize_results(model, input_image, ground_truth)
 ```
 
+The visualization results will be saved in the `results` directory.
+
 ### 4. Plot Loss Over Time
 
 If you saved the epoch loss values in an array (returned by `train_unet`), you can plot the loss progression:
@@ -136,6 +148,18 @@ using Plots
 
 scatter(1:num_epochs, losses, xlabel="Epoch", ylabel="Loss", title="Loss Over Time", marker=:o)
 ```
+
+### 5. GPU Acceleration
+
+To use the GPU-accelerated implementation, import from the `src_gpu` directory instead of `src`:
+
+```julia
+include("src_gpu/Model.jl")
+include("src_gpu/Training.jl")
+# ... and so on
+```
+
+Make sure you have CUDA installed and configured properly for GPU support.
 
 ---
 
