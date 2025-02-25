@@ -34,7 +34,7 @@ use_mixed_precision = false  # Enable mixed precision to reduce memory usage
 checkpoint_dir = "checkpoints"  # Directory to save model checkpoints
 checkpoint_freq = 1  # Save checkpoint every N epochs
 sub_size = 50  # Number of samples to load for trainin
-sub_set = true  # Load entire dataset or a subset
+sub_set = false  # Load entire dataset or a subset
 # GPU memory management
 function clear_gpu_memory()
     GC.gc()
