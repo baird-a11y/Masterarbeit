@@ -7,7 +7,7 @@ include("Data.jl")
 include("Model.jl")
 include("Training.jl")
 include("Visualization.jl")
-
+include("Results.jl")
 using Test
 using Flux
 using Flux: onehotbatch, logitcrossentropy, gpu
@@ -69,7 +69,7 @@ train_data = Data.create_batches(dataset, batch_size)
 println("Number of batches: ", length(train_data))
 
 # Anzahl Output-Kanäle (Klassenanzahl). In dem Beispiel 35.
-output_channels = 35
+output_channels = 34
 println("Overall output channels (classes): ", output_channels)
 
 # UNet-Modell erstellen - using smaller feature maps to reduce memory
@@ -114,16 +114,5 @@ println("Training took ", end_time - start_time)
 
 clear_gpu_memory()
 
-# # Beispielhafte Visualisierung mit dem 1. Sample
-# input_image = dataset[1][1]
-# ground_truth = dataset[1][2]
-# Visualization.visualize_results(model, input_image, ground_truth, losses; 
-#                               save_path="results")
-
-# # Visualize model architecture
-# Visualization.visualize_model_architecture(model)
-
-# # Visualize training metrics
-# Visualization.visualize_training_metrics(losses)
-
+run(Results.jl)
 println("Done!")
