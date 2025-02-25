@@ -155,7 +155,7 @@ function load_dataset(image_files::Vector{String}, label_files::Vector{String}; 
     
     @threads for i in 1:length(image_files)
         try
-            println("\nProcessing sample $i: $(basename(image_files[i]))")
+            # println("\nProcessing sample $i: $(basename(image_files[i]))")
             
             # Process image and label
             img_data = load_and_preprocess_image(image_files[i])
@@ -179,7 +179,7 @@ function load_dataset(image_files::Vector{String}, label_files::Vector{String}; 
         catch e
             Threads.atomic_add!(error_count, 1)
             if verbose
-                println("Error processing file pair ($(image_files[i]), $(label_files[i])): $e")
+                # println("Error processing file pair ($(image_files[i]), $(label_files[i])): $e")
             end
             # Provide empty data as fallback
             dataset[i] = (zeros(Float32, STANDARD_HEIGHT, STANDARD_WIDTH, 3, 1),
@@ -188,39 +188,39 @@ function load_dataset(image_files::Vector{String}, label_files::Vector{String}; 
     end
     
     if error_count[] > 0
-        println("Warning: Encountered $(error_count[]) errors during dataset loading")
+        # println("Warning: Encountered $(error_count[]) errors during dataset loading")
     end
     
     if verbose
-        println("\n===== DATASET SUMMARY =====")
-        println("Dataset loaded with $(length(dataset)) samples")
-        println("All samples standardized to $(STANDARD_HEIGHT)×$(STANDARD_WIDTH)")
+        # println("\n===== DATASET SUMMARY =====")
+        # println("Dataset loaded with $(length(dataset)) samples")
+        # println("All samples standardized to $(STANDARD_HEIGHT)×$(STANDARD_WIDTH)")
         
-        # Print overall label statistics
-        println("\nLabel distribution across entire dataset:")
-        println("Total unique labels: $(length(all_unique_labels))")
+        # # Print overall label statistics
+        # println("\nLabel distribution across entire dataset:")
+        # println("Total unique labels: $(length(all_unique_labels))")
         
         total_pixels = sum(values(total_label_counts))
         
         for label in sort(collect(all_unique_labels))
             count = get(total_label_counts, label, 0)
             percentage = 100 * count / total_pixels
-            println("  Label $label: $count pixels ($(round(percentage, digits=2))%)")
+            # println("  Label $label: $count pixels ($(round(percentage, digits=2))%)")
         end
         
         # Check if we have all expected classes (0-34)
         if maximum(all_unique_labels) <= 34
-            println("\nLabel range is within expected range (0-34)")
+            # println("\nLabel range is within expected range (0-34)")
         else
-            println("\nWARNING: Found labels outside expected range (0-34)")
-            println("Max label found: $(maximum(all_unique_labels))")
+            # println("\nWARNING: Found labels outside expected range (0-34)")
+            # println("Max label found: $(maximum(all_unique_labels))")
         end
         
         # Check for missing classes
         missing_classes = setdiff(Set(0:34), all_unique_labels)
         if !isempty(missing_classes)
-            println("\nWARNING: Some classes are missing in the dataset:")
-            println("Missing classes: $missing_classes")
+            # println("\nWARNING: Some classes are missing in the dataset:")
+            # println("Missing classes: $missing_classes")
         end
     end
     
@@ -304,36 +304,36 @@ end
 function debug_batch(batch, batch_idx)
     input_batch, label_batch = batch
     
-    println("\n===== BATCH $batch_idx DEBUG =====")
-    println("Input batch shape: $(size(input_batch))")
-    println("Label batch shape: $(size(label_batch))")
+    #println("\n===== BATCH $batch_idx DEBUG =====")
+    #println("Input batch shape: $(size(input_batch))")
+    #println("Label batch shape: $(size(label_batch))")
     
     # Get overall statistics for this batch
     batch_size = size(input_batch, 4)
-    println("Batch size: $batch_size")
+    #println("Batch size: $batch_size")
     
     # Check each sample in the batch
     for i in 1:batch_size
         sample_input = input_batch[:,:,:,i]
         sample_label = label_batch[:,:,:,i]
         
-        println("\nSample $i in batch $batch_idx:")
-        println("  Input shape: $(size(sample_input))")
-        println("  Input range: min=$(minimum(sample_input)), max=$(maximum(sample_input)), mean=$(mean(sample_input))")
-        println("  Label shape: $(size(sample_label))")
+        # println("\nSample $i in batch $batch_idx:")
+        # println("  Input shape: $(size(sample_input))")
+        # println("  Input range: min=$(minimum(sample_input)), max=$(maximum(sample_input)), mean=$(mean(sample_input))")
+        # println("  Label shape: $(size(sample_label))")
         
         # Check label distribution
         flat_labels = reshape(sample_label, :)
         unique_labels = unique(flat_labels)
         
-        println("  Unique labels: $unique_labels")
-        println("  Number of unique labels: $(length(unique_labels))")
+        # println("  Unique labels: $unique_labels")
+        # println("  Number of unique labels: $(length(unique_labels))")
         
         # Count occurrences of each label
         for label in unique_labels
             count = sum(flat_labels .== label)
             percentage = 100 * count / length(flat_labels)
-            println("    Label $label: $count pixels ($(round(percentage, digits=2))%)")
+            # println("    Label $label: $count pixels ($(round(percentage, digits=2))%)")
         end
     end
     
