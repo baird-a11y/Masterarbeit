@@ -33,7 +33,8 @@ batch_size = 2       # Reduced batch size from 4 to 2
 use_mixed_precision = false  # Enable mixed precision to reduce memory usage
 checkpoint_dir = "checkpoints"  # Directory to save model checkpoints
 checkpoint_freq = 1  # Save checkpoint every N epochs
-
+sub_size = 50  # Number of samples to load for trainin
+sub_set = true  # Load entire dataset or a subset
 # GPU memory management
 function clear_gpu_memory()
     GC.gc()
@@ -46,19 +47,19 @@ img_dir = "S:/Masterarbeit/Datensatz/Training/image_2"
 mask_dir = "S:/Masterarbeit/Datensatz/Training/semantic"
 
 println("Loading dataset...")
-# Datensatz laden - option 1: load all data at once
-# dataset = Data.load_dataset(img_dir, mask_dir)
 
-# Option 2: Load a subset of data for testing
-image_files = sort(readdir(img_dir, join=true))
-label_files = sort(readdir(mask_dir, join=true))
-subset_size = min(50, length(image_files))  # Limit to 50 images or fewer
+if sub_set
+    image_files = sort(readdir(img_dir, join=true))
+    label_files = sort(readdir(mask_dir, join=true))
+    subset_size = min(sub_size, length(image_files))  # Limit to 50 images or fewer
+    println("Loading subset of $subset_size images (out of $(length(image_files)) total)")
+    subset_img_files = image_files[1:subset_size]
+    subset_label_files = label_files[1:subset_size]
+    dataset = Data.load_dataset(subset_img_files, subset_label_files)
+else
+    dataset = Data.load_dataset(img_dir, mask_dir)
+end
 
-println("Loading subset of $subset_size images (out of $(length(image_files)) total)")
-subset_img_files = image_files[1:subset_size]
-subset_label_files = label_files[1:subset_size]
-
-dataset = Data.load_dataset(subset_img_files, subset_label_files)
 println("Number of samples in dataset: ", length(dataset))
 
 clear_gpu_memory()
