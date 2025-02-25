@@ -1,0 +1,16 @@
+===== SEMANTIC SEGMENTATION MODEL RESULTS =====
+Model evaluated on 5 test images
+
+OVERALL METRICS:
+Mean Pixel Accuracy: 15.04%
+Mean IoU: 4.53%
+
+TOP 5 BEST PERFORMING CLASSES:
+  Class 4: 52.21%
+  Class 20: 33.32%
+  Class 25: 25.11%
+  Class 0: 12.86%
+  Class 18: 9.06%
+
+BOTTOM 5 WORST PERFORMING CLASSES:
+  Class 8: 0.0%
