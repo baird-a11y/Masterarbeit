@@ -1,14 +1,5 @@
 unet_model.pth
 src_experiments_gpu
-checkpoints/checkpoint_epoch1.bson
+
 .gitignore
-checkpoints/checkpoint_epoch2.bson
-checkpoints/final_model.bson
-checkpoints/checkpoint_epoch3.bson
-checkpoints/checkpoint_epoch4.bson
-checkpoints/checkpoint_epoch5.bson
-checkpoints/checkpoint_epoch6.bson
-checkpoints/checkpoint_epoch7.bson
-checkpoints/checkpoint_epoch8.bson
-checkpoints/checkpoint_epoch9.bson
-checkpoints/checkpoint_epoch10.bson
+
