@@ -1,0 +1,24 @@
+Parameters for run at 2025-02-27_17-55
+==================================
+patience: 10
+batch-size: 2
+subset: false
+output-dir: results
+validation-split: 0.1
+early-stopping: false
+checkpoint-dir: checkpoints
+use-class-balancing: false
+lr-scheduler: onecycle
+data-dir: S:/Masterarbeit/Datensatz
+model-type: efficient
+mixed-precision: false
+loss-type: combo
+epochs: 20
+use-residual: false
+dropout-rate: 0.3
+learning-rate: 0.001
+checkpoint-freq: 1
+use-attention: false
+subset-size: 50
+augmentation: 2
+seed: 42
