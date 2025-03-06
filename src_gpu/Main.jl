@@ -43,8 +43,8 @@ function clear_gpu_memory()
 end
 
 # Verzeichnisse
-img_dir = "S:/Masterarbeit/Datensatz/Training/image_2"
-mask_dir = "S:/Masterarbeit/Datensatz/Training/semantic"
+img_dir = "/local/home/baselt/Datensatz/Training/image_2"
+mask_dir = "/local/home/baselt/Datensatz/Training/semantic"
 
 println("Loading dataset...")
 
