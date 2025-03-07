@@ -26,7 +26,7 @@ using Dates
 import Base.GC
 
 # Hyperparameter
-num_epochs = 10       # Anzahl Trainings-Epochen
+num_epochs = 1       # Anzahl Trainings-Epochen
 learning_rate = 0.001
 input_channels = 3   # z.B. RGB
 batch_size = 2       # Reduced batch size from 4 to 2
@@ -50,6 +50,12 @@ end
 # Verzeichnisse
 img_dir = "/local/home/baselt/Datensatz/Training/image_2"
 mask_dir = "/local/home/baselt/Datensatz/Training/semantic"
+
+# Ich will wissen wie viele Bilder in img_dir sind
+println("Number of images in img_dir: ", length(readdir(img_dir)))
+println("Number of images in mask_dir: ", length(readdir(mask_dir)))
+
+
 
 println("Loading dataset...")
 

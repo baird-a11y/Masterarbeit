@@ -9,7 +9,7 @@ using Flux: onehotbatch, logitcrossentropy, gpu, cpu
 using Statistics
 using LinearAlgebra
 using Optimisers
-using Optimisers: cpu  # Falls in Ihrer Version verfügbar
+# using Optimisers: cpu  # Falls in Ihrer Version verfügbar
 using CUDA
 using .Model
 using BSON: @save, @load
