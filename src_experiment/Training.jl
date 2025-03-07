@@ -51,6 +51,41 @@ function batch_one_hot(batch, num_classes)
     return gpu(one_hot)
 end
 
+function debug_gradients(model, x, y, y_oh)
+    # Berechne Gradienten
+    grads = gradient(model -> loss_fn(model, x, y_oh), model)[1]
+    
+    # Überprüfe Gradienten für einige Schichten
+    total_grad_norm = 0.0
+    for layer_name in [:encoder1, :bottleneck, :decoder1_1]
+        layer = getproperty(model, layer_name)
+        if isa(layer, Chain) && !isempty(layer)
+            first_layer = layer[1]
+            if hasproperty(first_layer, :weight)
+                param = first_layer.weight
+                param_grads = grads.params[layer][1].weight
+                
+                param_cpu = cpu(param_grads)
+                grad_norm = norm(param_cpu)
+                total_grad_norm += grad_norm
+                
+                println("Gradients for $layer_name - norm: $grad_norm")
+                println("  mean: $(mean(param_cpu)), std: $(std(param_cpu))")
+                println("  min: $(minimum(param_cpu)), max: $(maximum(param_cpu))")
+                
+                # Prüfe auf Vanishing/Exploding Gradients
+                if maximum(abs.(param_cpu)) < 1e-6
+                    println("  WARNING: Possible vanishing gradients")
+                elseif maximum(abs.(param_cpu)) > 1.0
+                    println("  WARNING: Possible exploding gradients")
+                end
+            end
+        end
+    end
+    println("Total gradient norm: $total_grad_norm")
+    return grads
+end
+
 # Einfache Loss-Funktion für semantische Segmentierung
 function loss_fn(model, x, y)
     pred = model(x)
@@ -68,110 +103,125 @@ end
 # Standard Precision Training Funktion mit Batch-Verifizierung
 # ===================================================
 function train_unet(model, train_data, num_epochs, learning_rate, output_channels; 
-                    checkpoint_dir="checkpoints", checkpoint_freq=5, verify_batches=true)
+    checkpoint_dir="checkpoints", checkpoint_freq=5)
 
-    mkpath(checkpoint_dir)
-    opt = Optimisers.Adam(learning_rate)
-    opt_state = Optimisers.setup(opt, model)
+mkpath(checkpoint_dir)
+opt = Optimisers.Adam(learning_rate)
+opt_state = Optimisers.setup(opt, model)
+
+losses = Float32[]
+
+# Initialen Loss berechnen
+x_batch, y_batch = first(train_data)
+x_gpu = gpu(x_batch)
+y_oh = batch_one_hot(y_batch, output_channels)
+initial_loss = loss_fn(model, x_gpu, y_oh)
+println("Initial loss before training: $initial_loss")
+
+# Debug Gradienten
+println("\nInitial gradient check:")
+debug_gradients(model, x_gpu, y_batch, y_oh)
+
+for epoch in 1:num_epochs
+println("====== Epoch $epoch / $num_epochs ======")
+
+total_loss = 0f0
+batch_count = 0
+
+# Speichere Modell-Parameter vor der Epoche
+if epoch == 1
+first_param_sample = Dict()
+for layer_name in [:encoder1, :bottleneck, :decoder1_1]
+layer = getproperty(model, layer_name)
+if isa(layer, Chain) && !isempty(layer) && hasproperty(layer[1], :weight)
+    w_sample = cpu(layer[1].weight)[1:5, 1:5, 1, 1]
+    first_param_sample[layer_name] = copy(w_sample)
+end
+end
+end
+
+p = Progress(length(train_data), 1, "Training epoch $epoch...")
+
+for (batch_idx, (input_batch, mask_batch)) in enumerate(train_data)
+# One-Hot-Kodierung der Labels
+mask_batch_oh = batch_one_hot(mask_batch, output_channels)
+
+# Daten auf die GPU verschieben
+input_batch = gpu(input_batch)
+
+# Debug für ersten Batch der ersten Epoche
+if epoch == 1 && batch_idx == 1
+println("\nChecking first batch encoding:")
+flat_oh = reshape(cpu(mask_batch_oh), :, output_channels)
+row_sums = vec(sum(flat_oh, dims=2))
+num_zeros = count(row_sums .< 0.5)
+println("One-hot vectors with zero sum: $num_zeros out of $(length(row_sums))")
+
+# Speichere das One-Hot-Encoding für spätere Überprüfung
+first_oh_sample = mask_batch_oh[100:105, 100:105, :, 1]
+end
+
+# Gradienten und Loss berechnen
+grads = gradient(model -> loss_fn(model, input_batch, mask_batch_oh), model)[1]
+batch_loss = loss_fn(model, input_batch, mask_batch_oh)
+
+# Debug für ersten Batch der ersten Epoche
+if epoch == 1 && batch_idx == 1
+println("\nFirst batch gradient analysis:")
+debug_gradients(model, input_batch, mask_batch, mask_batch_oh)
+end
+
+# Modellparameter aktualisieren
+opt_state, model = Optimisers.update!(opt_state, model, grads)
+
+total_loss += batch_loss
+batch_count += 1
+
+next!(p; showvalues = [(:batch, batch_idx), (:loss, batch_loss)])
+
+# GPU-Speicher freigeben
+CUDA.reclaim()
+end
+
+avg_loss = total_loss / batch_count
+push!(losses, avg_loss)
+println("Epoch $epoch finished. Average Loss: $avg_loss")
+
+# Überprüfe, ob sich die Modellparameter geändert haben
+if epoch == 1
+println("\nChecking if parameters changed after one epoch:")
+for layer_name in [:encoder1, :bottleneck, :decoder1_1]
+layer = getproperty(model, layer_name)
+if isa(layer, Chain) && !isempty(layer) && hasproperty(layer[1], :weight) && haskey(first_param_sample, layer_name)
+    w_sample_now = cpu(layer[1].weight)[1:5, 1:5, 1, 1]
+    w_sample_before = first_param_sample[layer_name]
     
-    losses = Float32[]
+    max_change = maximum(abs.(w_sample_now - w_sample_before))
+    println("$layer_name - Max weight change: $max_change")
     
-    # Batch-Verifizierung vor dem Training
-    if verify_batches
-        println("\n======= BATCH VERIFICATION =======")
-        println("Checking $(min(3, length(train_data))) batches for correct order and consistency:")
-        
-        for batch_idx in 1:min(3, length(train_data))
-            input_batch, mask_batch = train_data[batch_idx]
-            batch_size = size(input_batch, 4)
-            
-            # Bestimme Anzahl der Eingabekanäle direkt aus dem Batch
-            channels = size(input_batch, 3)
-            
-            println("Batch $batch_idx: $(size(input_batch)) inputs, $(size(mask_batch)) masks")
-            
-            # Überprüfe, ob die Dimensionen korrekt sind
-            # Verwende feste Werte statt Konstanten aus dem Data-Modul
-            expected_input_dims = (368, 1232, channels, batch_size)
-            expected_mask_dims = (368, 1232, 1, batch_size)
-            
-            if size(input_batch) != expected_input_dims
-                println("  WARNING: Input batch has unexpected dimensions!")
-                println("    Expected: $expected_input_dims, Got: $(size(input_batch))")
-            end
-            
-            if size(mask_batch) != expected_mask_dims
-                println("  WARNING: Mask batch has unexpected dimensions!")
-                println("    Expected: $expected_mask_dims, Got: $(size(mask_batch))")
-            end
-            
-            # Überprüfe Ranges und statistische Werte
-            input_stats = (min=minimum(input_batch), max=maximum(input_batch), mean=mean(input_batch))
-            mask_stats = (min=minimum(mask_batch), max=maximum(mask_batch))
-            
-            println("  Input stats: min=$(input_stats.min), max=$(input_stats.max), mean=$(input_stats.mean)")
-            println("  Mask stats: min=$(mask_stats.min), max=$(mask_stats.max) (should be 0-34)")
-            println("")
-        end
-        println("================================\n")
+    if max_change < 1e-10
+        println("  WARNING: Weights barely changed!")
+    else
+        println("  Weights updated successfully")
     end
-    
-    for epoch in 1:num_epochs
-        println("====== Epoch $epoch / $num_epochs ======")
-        
-        total_loss = 0f0
-        batch_count = 0
-        
-        p = Progress(length(train_data), 1, "Training epoch $epoch...")
-        
-        for (batch_idx, (input_batch, mask_batch)) in enumerate(train_data)
-            # Vergewissere dich, dass Dimensionen korrekt sind
-            if verify_batches && batch_idx == 1
-                channels = size(input_batch, 3)
-                println("First batch dimensions: Input $(size(input_batch)), Mask $(size(mask_batch))")
-                println("  Input channels: $channels")
-            end
-            
-            # One-Hot-Kodierung der Labels
-            mask_batch_oh = batch_one_hot(mask_batch, output_channels)
-            
-            # Daten auf die GPU verschieben
-            input_batch = gpu(input_batch)
-            
-            # Gradienten und Loss berechnen
-            gradients = gradient(model -> loss_fn(model, input_batch, mask_batch_oh), model)[1]
-            batch_loss = loss_fn(model, input_batch, mask_batch_oh)
-            
-            # Modellparameter aktualisieren
-            opt_state, model = Optimisers.update!(opt_state, model, gradients)
-            
-            total_loss += batch_loss
-            batch_count += 1
-            
-            next!(p; showvalues = [(:batch, batch_idx), (:loss, batch_loss)])
-            
-            # GPU-Speicher freigeben
-            CUDA.reclaim()
-        end
-        
-        avg_loss = total_loss / batch_count
-        push!(losses, avg_loss)
-        println("Epoch $epoch finished. Average Loss: $avg_loss")
-        
-        # Checkpoint speichern
-        if epoch % checkpoint_freq == 0 || epoch == num_epochs
-            save_checkpoint(model, epoch, avg_loss, 
-                           joinpath(checkpoint_dir, "checkpoint_epoch$(epoch).bson"))
-        end
-        
-        println("--------------------------------------------------")
-    end
-    
-    # Finales Modell speichern
-    save_checkpoint(model, num_epochs, losses[end], 
-                   joinpath(checkpoint_dir, "final_model.bson"))
-    
-    return model, losses
+end
+end
+end
+
+# Checkpoint speichern
+if epoch % checkpoint_freq == 0 || epoch == num_epochs
+save_checkpoint(model, epoch, avg_loss, 
+           joinpath(checkpoint_dir, "checkpoint_epoch$(epoch).bson"))
+end
+
+println("--------------------------------------------------")
+end
+
+# Finales Modell speichern
+save_checkpoint(model, num_epochs, losses[end], 
+   joinpath(checkpoint_dir, "final_model.bson"))
+
+return model, losses
 end
 
 end # module Training
