@@ -102,126 +102,79 @@ end
 # ===================================================
 # Standard Precision Training Funktion mit Batch-Verifizierung
 # ===================================================
-function train_unet(model, train_data, num_epochs, learning_rate, output_channels; 
-    checkpoint_dir="checkpoints", checkpoint_freq=5)
+function train_simple(model, train_data, num_epochs, learning_rate, output_channels;
+        checkpoint_dir="checkpoints", checkpoint_freq=1)
+    mkpath(checkpoint_dir)
 
-mkpath(checkpoint_dir)
-opt = Optimisers.Adam(learning_rate)
-opt_state = Optimisers.setup(opt, model)
+    # Neues Optimierer-Setup mit Flux.setup statt Optimisers.setup
+    opt = Flux.Adam(learning_rate)
+    opt_state = Flux.setup(opt, model)
 
-losses = Float32[]
+    losses = Float32[]
 
-# Initialen Loss berechnen
-x_batch, y_batch = first(train_data)
-x_gpu = gpu(x_batch)
-y_oh = batch_one_hot(y_batch, output_channels)
-initial_loss = loss_fn(model, x_gpu, y_oh)
-println("Initial loss before training: $initial_loss")
+    # Berechne initialen Loss
+    x, y = first(train_data)
+    x_device = to_device(x)
+    y_oh = manual_one_hot(y, output_channels)
+    initial_loss = simple_loss_fn(model, x_device, y_oh)
+    println("Initial loss: $initial_loss")
 
-# Debug Gradienten
-println("\nInitial gradient check:")
-debug_gradients(model, x_gpu, y_batch, y_oh)
+    for epoch in 1:num_epochs
+        println("====== Epoch $epoch / $num_epochs ======")
 
-for epoch in 1:num_epochs
-println("====== Epoch $epoch / $num_epochs ======")
+        total_loss = 0f0
+        batch_count = 0
 
-total_loss = 0f0
-batch_count = 0
+        for (batch_idx, (input_batch, mask_batch)) in enumerate(train_data)
+        # Auf GPU/CPU verschieben
+        input_device = to_device(input_batch)
 
-# Speichere Modell-Parameter vor der Epoche
-if epoch == 1
-first_param_sample = Dict()
-for layer_name in [:encoder1, :bottleneck, :decoder1_1]
-layer = getproperty(model, layer_name)
-if isa(layer, Chain) && !isempty(layer) && hasproperty(layer[1], :weight)
-    w_sample = cpu(layer[1].weight)[1:5, 1:5, 1, 1]
-    first_param_sample[layer_name] = copy(w_sample)
-end
-end
-end
+        # One-Hot Encoding
+        mask_oh = manual_one_hot(mask_batch, output_channels)
 
-p = Progress(length(train_data), 1, "Training epoch $epoch...")
+        # Trainingsprozess in try-catch Block
+            try
+                # Gradienten und Loss berechnen mit der neuen API
+                loss, grads = Flux.withgradient(model) do m
+                    simple_loss_fn(m, input_device, mask_oh)
+                end
 
-for (batch_idx, (input_batch, mask_batch)) in enumerate(train_data)
-# One-Hot-Kodierung der Labels
-mask_batch_oh = batch_one_hot(mask_batch, output_channels)
+                # Modell aktualisieren mit der neuen API
+                Flux.update!(opt_state, model, grads[1])
 
-# Daten auf die GPU verschieben
-input_batch = gpu(input_batch)
+                total_loss += loss
+                batch_count += 1
 
-# Debug für ersten Batch der ersten Epoche
-if epoch == 1 && batch_idx == 1
-println("\nChecking first batch encoding:")
-flat_oh = reshape(cpu(mask_batch_oh), :, output_channels)
-row_sums = vec(sum(flat_oh, dims=2))
-num_zeros = count(row_sums .< 0.5)
-println("One-hot vectors with zero sum: $num_zeros out of $(length(row_sums))")
+                # Ausgabe
+                if batch_idx % 10 == 0 || batch_idx == 1
+                    println("  Batch $batch_idx/$(length(train_data)) - Loss: $loss")
+                end
+            catch e
+                println("Error in batch $batch_idx: $e")
+                println(stacktrace())
+            end
 
-# Speichere das One-Hot-Encoding für spätere Überprüfung
-first_oh_sample = mask_batch_oh[100:105, 100:105, :, 1]
-end
+            # Speicher freigeben
+            if batch_idx % 5 == 0
+                clear_memory()
+            end
+        end
 
-# Gradienten und Loss berechnen
-grads = gradient(model -> loss_fn(model, input_batch, mask_batch_oh), model)[1]
-batch_loss = loss_fn(model, input_batch, mask_batch_oh)
+        # Berechne durchschnittlichen Loss
+        avg_loss = total_loss / batch_count
+        push!(losses, avg_loss)
+        println("Epoch $epoch completed. Average Loss: $avg_loss")
 
-# Debug für ersten Batch der ersten Epoche
-if epoch == 1 && batch_idx == 1
-println("\nFirst batch gradient analysis:")
-debug_gradients(model, input_batch, mask_batch, mask_batch_oh)
-end
-
-# Modellparameter aktualisieren
-opt_state, model = Optimisers.update!(opt_state, model, grads)
-
-total_loss += batch_loss
-batch_count += 1
-
-next!(p; showvalues = [(:batch, batch_idx), (:loss, batch_loss)])
-
-# GPU-Speicher freigeben
-CUDA.reclaim()
-end
-
-avg_loss = total_loss / batch_count
-push!(losses, avg_loss)
-println("Epoch $epoch finished. Average Loss: $avg_loss")
-
-# Überprüfe, ob sich die Modellparameter geändert haben
-if epoch == 1
-println("\nChecking if parameters changed after one epoch:")
-for layer_name in [:encoder1, :bottleneck, :decoder1_1]
-layer = getproperty(model, layer_name)
-if isa(layer, Chain) && !isempty(layer) && hasproperty(layer[1], :weight) && haskey(first_param_sample, layer_name)
-    w_sample_now = cpu(layer[1].weight)[1:5, 1:5, 1, 1]
-    w_sample_before = first_param_sample[layer_name]
-    
-    max_change = maximum(abs.(w_sample_now - w_sample_before))
-    println("$layer_name - Max weight change: $max_change")
-    
-    if max_change < 1e-10
-        println("  WARNING: Weights barely changed!")
-    else
-        println("  Weights updated successfully")
+        # Speichere Checkpoint
+        if epoch % checkpoint_freq == 0 || epoch == num_epochs
+            checkpoint_path = joinpath(checkpoint_dir, "checkpoint_epoch$(epoch).bson")
+            model_cpu = cpu(model)
+            @save checkpoint_path model=model_cpu epoch=epoch loss=avg_loss
+            println("Saved checkpoint to $checkpoint_path")
+        end
     end
-end
-end
-end
 
-# Checkpoint speichern
-if epoch % checkpoint_freq == 0 || epoch == num_epochs
-save_checkpoint(model, epoch, avg_loss, 
-           joinpath(checkpoint_dir, "checkpoint_epoch$(epoch).bson"))
-end
-
-println("--------------------------------------------------")
-end
-
-# Finales Modell speichern
-save_checkpoint(model, num_epochs, losses[end], 
-   joinpath(checkpoint_dir, "final_model.bson"))
-
-return model, losses
+    return model, losses
 end
 
 end # module Training
