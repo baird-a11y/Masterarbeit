@@ -137,15 +137,36 @@ using Base.Threads
 
 # Threaded dataset loading mit festen Dimensionen
 function load_dataset(image_dir::String, label_dir::String; verbose=true)
-    image_files = sort(readdir(image_dir, join=true))
-    label_files = sort(readdir(label_dir, join=true))
+    # Lese Verzeichnisse und extrahiere Basisnamen ohne Pfad und Erweiterung
+    image_paths = readdir(image_dir, join=true)
+    label_paths = readdir(label_dir, join=true)
+    
+    # Extrahiere Basisnamen für bessere Zuordnung
+    image_basenames = basename.(image_paths)
+    label_basenames = basename.(label_paths)
     
     if verbose
-        println("Loading dataset with $(length(image_files)) images")
+        println("Found $(length(image_paths)) images and $(length(label_paths)) labels")
         println("All images will be standardized to $(STANDARD_HEIGHT)×$(STANDARD_WIDTH)")
     end
     
-    return load_dataset(image_files, label_files; verbose=verbose)
+    # Überprüfe, ob die Anzahl der Bilder und Labels übereinstimmt
+    if length(image_paths) != length(label_paths)
+        println("WARNING: Number of images ($(length(image_paths))) does not match number of labels ($(length(label_paths)))")
+    end
+    
+    # Sortiere Dateien alphabetisch, um Konsistenz zu gewährleisten
+    sorted_image_files = sort(image_paths)
+    sorted_label_files = sort(label_paths)
+    
+    if verbose
+        println("Verifying first 5 image-label pairs for correct matching:")
+        for i in 1:min(5, length(sorted_image_files))
+            println("  Image: $(basename(sorted_image_files[i])) -> Label: $(basename(sorted_label_files[i]))")
+        end
+    end
+    
+    return load_dataset(sorted_image_files, sorted_label_files; verbose=verbose)
 end
 
 # Lade ein Subset von Daten aus Dateilisten anstatt aus Verzeichnissen
@@ -190,7 +211,7 @@ function load_dataset(image_files::Vector{String}, label_files::Vector{String}; 
     return dataset
 end
 
-# Optimierte Batch-Erstellung mit vorallokiertem Vector
+# Optimierte Batch-Erstellung mit Reihenfolgeerhaltung
 function create_batches(dataset, batch_size; debug=false)
     n_batches = ceil(Int, length(dataset) / batch_size)
     batched_data = Vector{Tuple}(undef, n_batches)
@@ -200,14 +221,32 @@ function create_batches(dataset, batch_size; debug=false)
         batch_end = min(batch_start + batch_size - 1, length(dataset))
         batch_indices = batch_start:batch_end
         
+        # Hole Bilder und Labels für diesen Batch
+        batch_imgs = [dataset[j][1] for j in batch_indices]
+        batch_labels = [dataset[j][2] for j in batch_indices]
+        
+        # Prüfe auf konsistente Dimensionen
+        img_dims = [size(img) for img in batch_imgs]
+        label_dims = [size(label) for label in batch_labels]
+        
+        if debug
+            println("Batch $i: Indices $batch_start to $batch_end")
+            println("  Image dimensions: $img_dims")
+            println("  Label dimensions: $label_dims")
+        end
+        
         # Vorallokieren und dann Konkatenieren
-        imgs = cat([dataset[j][1] for j in batch_indices]...; dims=4)
-        labels = cat([dataset[j][2] for j in batch_indices]...; dims=4)
+        imgs = cat(batch_imgs...; dims=4)
+        labels = cat(batch_labels...; dims=4)
         
         batched_data[i] = (imgs, labels)
+        
+        if debug && i == 1
+            println("First batch created with image shape $(size(imgs)) and label shape $(size(labels))")
+        end
     end
     
-    println("Created $(n_batches) batches of size up to $(batch_size)")
+    println("Created $(n_batches) batches of size up to $(batch_size) in original order")
     
     return batched_data
 end
