@@ -207,9 +207,8 @@ function visualize_results(model, input_image, ground_truth)
 end
 
 # Datenpfade (anpassen!)
-image_dir = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Bilder_1"
-label_dir = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Masken_1"
-
+image_dir = "/local/home/baselt/Datensatz/Training/image_2"
+label_dir = "/local/home/baselt/Datensatz/Training/semantic"
 # Datensatz laden und vorbereiten
 train_dataset = load_dataset(image_dir, label_dir)
 batched_train_data = create_batches(train_dataset, batch_size)
