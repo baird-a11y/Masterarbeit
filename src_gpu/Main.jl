@@ -31,7 +31,8 @@ learning_rate = 0.001
 input_channels = 3   # z.B. RGB
 batch_size = 2       # Reduced batch size from 4 to 2
 use_mixed_precision = false  # Enable mixed precision to reduce memory usage
-checkpoint_dir = "checkpoints"  # Directory to save model checkpoints
+# checkpoint_dir = "checkpoints"  # Directory to save model checkpoints
+checkpoint_dir = "/local/home/baselt/checkpoints"  # Directory to save model checkpoints
 checkpoint_freq = 1  # Save checkpoint every N epochs
 sub_size = 50  # Number of samples to load for trainin
 sub_set = false  # Load entire dataset or a subset
@@ -42,9 +43,13 @@ function clear_gpu_memory()
     println("GPU memory cleared")
 end
 
+# # Verzeichnisse
+# img_dir = "S:/Masterarbeit/Datensatz/Training/image_2"
+# mask_dir = "S:/Masterarbeit/Datensatz/Training/semantic"
+
 # Verzeichnisse
-img_dir = "S:/Masterarbeit/Datensatz/Training/image_2"
-mask_dir = "S:/Masterarbeit/Datensatz/Training/semantic"
+img_dir = "/local/home/baselt/Datensatz/Training/image_2"
+mask_dir = "/local/home/baselt/Datensatz/Training/semantic"
 
 println("Loading dataset...")
 

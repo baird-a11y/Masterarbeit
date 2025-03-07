@@ -21,14 +21,23 @@ using .Visualization
 # Global variables declaration
 # Set this to false if you want to run without masks
 use_masks = false
+# if use_masks
+#     test_img_dir = "S:/Masterarbeit/Datensatz/Testing/image_2"  # Test images
+# else
+#     test_img_dir = "S:/Masterarbeit/Datensatz/Training/image_2"  # Test images
+#     test_mask_dir = "S:/Masterarbeit/Datensatz/Training/semantic"  # Test masks
+# end
+# checkpoint_path = "S:/Masterarbeit/checkpoints/final_model.bson"  # Path to your saved model
+
 if use_masks
-    test_img_dir = "S:/Masterarbeit/Datensatz/Testing/image_2"  # Test images
+    test_img_dir = "/local/home/baselt/Datensatz/Testing/image_2"  # Test images
 else
-    test_img_dir = "S:/Masterarbeit/Datensatz/Training/image_2"  # Test images
-    test_mask_dir = "S:/Masterarbeit/Datensatz/Training/semantic"  # Test masks
+    test_img_dir = "/local/home/baselt/Datensatz/Training/image_2"  # Test images
+    test_mask_dir = "/local/home/baselt/Datensatz/Training/semantic"  # Test masks
 end
-checkpoint_path = "S:/Masterarbeit/checkpoints/final_model.bson"  # Path to your saved model
-num_classes = 35  # Number of classes in your segmentation model
+checkpoint_path = "/local/home/baselt/checkpoints/final_model.bson"  # Path to your saved model
+
+um_classes = 35  # Number of classes in your segmentation model
 results_dir = "results_presentation"  # Output directory
 num_examples = 5  # Number of examples to visualize
 
