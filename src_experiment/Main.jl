@@ -1,10 +1,9 @@
 ##################################
-# Main.jl - Einfaches Training mit CPU Fallback
+# Main.jl - Angepasst für RGB-Masken mit aktueller Flux-API
 ##################################
 
 include("Data.jl")
 include("Model.jl")
-include("Training.jl")
 include("Visualization.jl")
 
 using Flux
@@ -12,7 +11,6 @@ using Flux: logitcrossentropy
 using CUDA
 using .Model
 using .Data
-using .Training
 using .Visualization
 using Dates
 import Base.GC
@@ -21,10 +19,10 @@ using BSON: @save
 
 # Hyperparameter
 num_epochs = 10
-learning_rate = 0.01  # Höhere Lernrate
+learning_rate = 0.01
 input_channels = 3    
 batch_size = 2        
-output_channels = 35  
+output_channels = 14  # Angepasst auf 14 Klassen (0-13)
 checkpoint_dir = "/local/home/baselt/checkpoints"
 
 # GPU/CPU Management
@@ -57,13 +55,13 @@ function clear_memory()
     println("Memory cleared")
 end
 
-# Verzeichnisse
+# Verzeichnisse - Korrigierte Pfade
 img_dir = "/local/home/baselt/Datensatz/Training/image_2"
-mask_dir = "/local/home/baselt/Datensatz/Training/semantic"
+mask_dir = "/local/home/baselt/Datensatz/Training/semantic_rgb"
 
-# Lade Datensatz
-println("Loading dataset...")
-dataset = Data.load_dataset(img_dir, mask_dir, verbose=false)
+# Lade Datensatz mit RGB-Masken-Flag
+println("Loading dataset with RGB masks...")
+dataset = Data.load_dataset(img_dir, mask_dir, verbose=true, use_rgb_masks=true)
 println("Number of samples in dataset: ", length(dataset))
 
 # Erstelle Batches
@@ -85,6 +83,7 @@ function manual_one_hot(batch, num_classes)
     # Prüfe auf ungültige Werte
     if any(batch_int .< 0) || any(batch_int .>= num_classes)
         println("WARNING: Labels außerhalb des gültigen Bereichs gefunden!")
+        println("Range: ", minimum(batch_int), " to ", maximum(batch_int))
         batch_int = clamp.(batch_int, 0, num_classes-1)
     end
     
@@ -113,21 +112,27 @@ function simple_loss_fn(model, x, y)
     return logitcrossentropy(pred, y)
 end
 
-# Trainingsschleife
+# Korrigierte und robustere Trainingsschleife mit aktueller Flux API
 function train_simple(model, train_data, num_epochs, learning_rate, output_channels;
                     checkpoint_dir="checkpoints", checkpoint_freq=1)
     mkpath(checkpoint_dir)
-    opt = Optimisers.Adam(learning_rate)
-    opt_state = Optimisers.setup(opt, model)
+    
+    # Korrektes Setup des Optimizers mit der aktuellen Flux API
+    opt = Flux.Adam(learning_rate)
     
     losses = Float32[]
     
     # Berechne initialen Loss
-    x, y = first(train_data)
-    x_device = to_device(x)
-    y_oh = manual_one_hot(y, output_channels)
-    initial_loss = simple_loss_fn(model, x_device, y_oh)
-    println("Initial loss: $initial_loss")
+    try
+        x, y = first(train_data)
+        x_device = to_device(x)
+        y_oh = manual_one_hot(y, output_channels)
+        initial_loss = simple_loss_fn(model, x_device, y_oh)
+        println("Initial loss: $initial_loss")
+    catch e
+        println("Error computing initial loss: $e")
+        initial_loss = NaN32
+    end
     
     for epoch in 1:num_epochs
         println("====== Epoch $epoch / $num_epochs ======")
@@ -136,30 +141,38 @@ function train_simple(model, train_data, num_epochs, learning_rate, output_chann
         batch_count = 0
         
         for (batch_idx, (input_batch, mask_batch)) in enumerate(train_data)
-            # Auf GPU/CPU verschieben
-            input_device = to_device(input_batch)
-            
-            # One-Hot Encoding
-            mask_oh = manual_one_hot(mask_batch, output_channels)
-            
-            # Trainingsprozess in try-catch Block
             try
-                # Gradienten und Loss berechnen
-                gs = gradient(() -> simple_loss_fn(model, input_device, mask_oh), Flux.params(model))
-                batch_loss = simple_loss_fn(model, input_device, mask_oh)
+                # Auf GPU/CPU verschieben
+                input_device = to_device(input_batch)
                 
-                # Modell aktualisieren
-                Flux.update!(opt, Flux.params(model), gs)
+                # One-Hot Encoding
+                mask_oh = manual_one_hot(mask_batch, output_channels)
                 
-                total_loss += batch_loss
+                # Manuelles Training mit der aktuellen Flux API
+                loss = nothing
+                gs = gradient(Flux.params(model)) do
+                    loss = simple_loss_fn(model, input_device, mask_oh)
+                    return loss
+                end
+                
+                # Aktualisiere Modell mit dem Optimizer
+                Flux.Optimise.update!(opt, Flux.params(model), gs)
+                
+                # Cast loss to scalar if it's an array
+                if isa(loss, AbstractArray)
+                    loss = loss[1]
+                end
+                
+                total_loss += loss
                 batch_count += 1
                 
                 # Ausgabe
-                if batch_idx % 10 == 0
-                    println("  Batch $batch_idx/$(length(train_data)) - Loss: $batch_loss")
+                if batch_idx % 10 == 0 || batch_idx == 1
+                    println("  Batch $batch_idx/$(length(train_data)) - Loss: $loss")
                 end
             catch e
                 println("Error in batch $batch_idx: $e")
+                println(stacktrace())
             end
             
             # Speicher freigeben
@@ -169,15 +182,20 @@ function train_simple(model, train_data, num_epochs, learning_rate, output_chann
         end
         
         # Berechne durchschnittlichen Loss
-        avg_loss = total_loss / batch_count
-        push!(losses, avg_loss)
-        println("Epoch $epoch completed. Average Loss: $avg_loss")
+        if batch_count > 0
+            avg_loss = total_loss / batch_count
+            push!(losses, avg_loss)
+            println("Epoch $epoch completed. Average Loss: $avg_loss")
+        else
+            println("Warning: No successful batches in epoch $epoch")
+            push!(losses, NaN32)
+        end
         
         # Speichere Checkpoint
         if epoch % checkpoint_freq == 0 || epoch == num_epochs
             checkpoint_path = joinpath(checkpoint_dir, "checkpoint_epoch$(epoch).bson")
             model_cpu = cpu(model)
-            @save checkpoint_path model=model_cpu epoch=epoch loss=avg_loss
+            @save checkpoint_path model=model_cpu epoch=epoch loss=losses[end]
             println("Saved checkpoint to $checkpoint_path")
         end
     end

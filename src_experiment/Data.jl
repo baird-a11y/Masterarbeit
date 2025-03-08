@@ -1,5 +1,5 @@
 ##################################
-# Data.jl - Optimiert für einheitliche Bildgrößen
+# Data.jl - Optimiert für RGB-Masken
 ##################################
 module Data
 
@@ -77,11 +77,188 @@ function load_and_preprocess_image(img_path::String; verbose=false)
     return reshape(img_std, size(img_std)..., 1)
 end
 
-# Label laden und auf 0..34 skalieren mit festen Dimensionen
-function load_and_preprocess_label(label_path::String; verbose=false)
+# Neue Funktion für RGB Masken
+function load_and_preprocess_rgb_label(label_path::String; verbose=false, cache_colors=nothing)
     raw_label = load(label_path)
     
     # Originalgrößen für Debugging
+    original_size = size(raw_label)
+    
+    if verbose
+        println("Label: $(basename(label_path))")
+        println("  Original size: $original_size")
+    end
+    
+    # Wenn kein Cache übergeben wurde, erstelle die Farbzuordnung neu
+    if isnothing(cache_colors)
+        # Extrahiere eindeutige Farben
+        unique_colors = unique(raw_label)
+        color_to_class = Dict(color => i-1 for (i, color) in enumerate(unique_colors))
+        
+        if verbose
+            println("  Found $(length(unique_colors)) unique colors/classes")
+        end
+    else
+        # Benutze den übergebenen Cache
+        color_to_class = cache_colors
+    end
+    
+    # Erstelle Klassenmaske
+    class_mask = zeros(Int, size(raw_label))
+    for i in CartesianIndices(raw_label)
+        color = raw_label[i]
+        # Wenn Farbe nicht im Cache, füge sie hinzu oder setze auf 0
+        if haskey(color_to_class, color)
+            class_mask[i] = color_to_class[color]
+        else
+            if verbose
+                println("  WARNING: Found new color not in mapping: $color")
+            end
+            class_mask[i] = 0  # Default-Klasse
+        end
+    end
+    
+    # Standardisiere auf feste Dimensionen
+    class_mask_std = standardize_size_2d(class_mask)
+    max_class = maximum(class_mask_std)
+    
+    if verbose
+        # Analysiere Klassenverteilung
+        unique_classes = unique(class_mask_std)
+        println("  Final classes: $(length(unique_classes))")
+        println("  Max class: $max_class")
+    end
+    
+    label = reshape(class_mask_std, size(class_mask_std,1), size(class_mask_std,2), 1, 1)
+    
+    return label, max_class, color_to_class
+end
+
+using Base.Threads
+
+# Threaded dataset loading für RGB-Masken mit Farbzuordnungs-Cache
+function load_dataset(image_dir::String, label_dir::String; verbose=true, use_rgb_masks=true)
+    # Lese Verzeichnisse
+    image_paths = readdir(image_dir, join=true)
+    label_paths = readdir(label_dir, join=true)
+    
+    if verbose
+        println("Found $(length(image_paths)) images and $(length(label_paths)) labels")
+        println("All images will be standardized to $(STANDARD_HEIGHT)×$(STANDARD_WIDTH)")
+        if use_rgb_masks
+            println("Processing RGB masks with color-to-class mapping")
+        else
+            println("Processing grayscale masks with value scaling")
+        end
+    end
+    
+    # Sortiere Dateien alphabetisch, um Konsistenz zu gewährleisten
+    sorted_image_files = sort(image_paths)
+    sorted_label_files = sort(label_paths)
+    
+    if verbose
+        println("Verifying first 5 image-label pairs for correct matching:")
+        for i in 1:min(5, length(sorted_image_files))
+            println("  Image: $(basename(sorted_image_files[i])) -> Label: $(basename(sorted_label_files[i]))")
+        end
+    end
+    
+    # Für RGB-Masken: erstelle erst ein Farbmapping anhand der ersten Maske
+    color_to_class_cache = nothing
+    if use_rgb_masks
+        if verbose
+            println("Creating color-to-class mapping from first mask...")
+        end
+        first_label, _, color_map = load_and_preprocess_rgb_label(
+            sorted_label_files[1], verbose=verbose)
+        color_to_class_cache = color_map
+        
+        if verbose
+            println("Color mapping created with $(length(color_to_class_cache)) colors")
+        end
+    end
+    
+    # Lade Datensatz mit konsistentem Farbmapping
+    return load_dataset(sorted_image_files, sorted_label_files; 
+                      verbose=verbose, 
+                      use_rgb_masks=use_rgb_masks, 
+                      color_cache=color_to_class_cache)
+end
+
+# Lade ein Subset von Daten aus Dateilisten mit RGB-Unterstützung
+function load_dataset(image_files::Vector{String}, label_files::Vector{String}; 
+                    verbose=true, use_rgb_masks=true, color_cache=nothing)
+    if verbose
+        println("Loading dataset with $(length(image_files)) images")
+        println("All images will be standardized to $(STANDARD_HEIGHT)×$(STANDARD_WIDTH)")
+    end
+    
+    dataset = Vector{Tuple}(undef, length(image_files))
+    
+    # Zähle Verarbeitungsfehler
+    error_count = Threads.Atomic{Int}(0)
+    
+    # Für die Fehlerbehandlung als atomare Variable
+    max_class_global = Threads.Atomic{Int}(0)
+    
+    @threads for i in 1:length(image_files)
+        try
+            # Verarbeite Bild
+            img_data = load_and_preprocess_image(image_files[i], verbose=false)
+            
+            # Verarbeite Label je nach Typ
+            local label_data, max_class
+            if use_rgb_masks
+                label_data, max_class, _ = load_and_preprocess_rgb_label(
+                    label_files[i], verbose=false, cache_colors=color_cache)
+            else
+                # Alte Methode für Grauwertbilder
+                label_data, max_class = load_and_preprocess_label(label_files[i], verbose=false)
+            end
+            
+            # Aktualisiere maximale Klasse global
+            atomic_max!(max_class_global, max_class)
+            
+            dataset[i] = (img_data, label_data)
+        catch e
+            Threads.atomic_add!(error_count, 1)
+            if verbose
+                println("Error processing file pair ($(image_files[i]), $(label_files[i])): $e")
+            end
+            # Stelle leere Daten als Fallback bereit
+            dataset[i] = (zeros(Float32, STANDARD_HEIGHT, STANDARD_WIDTH, 3, 1),
+                         zeros(Int, STANDARD_HEIGHT, STANDARD_WIDTH, 1, 1))
+        end
+    end
+    
+    if error_count[] > 0 && verbose
+        println("Warning: Encountered $(error_count[]) errors during dataset loading")
+    end
+    
+    if verbose
+        println("Dataset loaded with $(length(dataset)) samples")
+        println("Maximum class ID found: $(max_class_global[])")
+        println("All samples standardized to $(STANDARD_HEIGHT)×$(STANDARD_WIDTH)")
+    end
+    
+    return dataset
+end
+
+# Alte Label-Funktion behalten für Abwärtskompatibilität
+function load_and_preprocess_label(label_path::String; verbose=false)
+    raw_label = load(label_path)
+    
+    # Überprüfe, ob es ein RGB-Bild ist
+    pixel_type = eltype(raw_label)
+    is_rgb = pixel_type <: RGB || pixel_type <: RGBA
+    
+    if is_rgb
+        # Für RGB-Bilder: Verwende die neue Funktion
+        label, max_class, _ = load_and_preprocess_rgb_label(label_path, verbose=verbose)
+        return label, max_class
+    end
+    
+    # Ab hier: bisherige Implementierung für Grauwertbilder
     original_size = size(raw_label)
     
     if verbose
@@ -103,112 +280,27 @@ function load_and_preprocess_label(label_path::String; verbose=false)
         unique_labels = unique(scaled_label)
         println("  Unique labels after scaling: $unique_labels")
         println("  Number of unique labels: $(length(unique_labels))")
-        
-        # Zähle Vorkommen jedes Labels
-        for label in unique_labels
-            count = sum(scaled_label .== label)
-            percentage = 100 * count / length(scaled_label)
-            println("    Label $label: $count pixels ($(round(percentage, digits=2))%)")
-        end
     end
     
     # Standardisiere auf feste Dimensionen
     scaled_label_std = standardize_size_2d(scaled_label)
     max_class = maximum(scaled_label_std)
     
-    if verbose
-        # Überprüfe, ob nach der Standardisierung neue Labels erscheinen (sollte nicht passieren)
-        unique_after_std = unique(scaled_label_std)
-        if length(unique_after_std) != length(unique_labels)
-            println("  WARNING: Label count changed after standardization!")
-            println("  Labels after standardization: $unique_after_std")
-        end
-        
-        println("  Final label shape: $(size(scaled_label_std))")
-        println("  Max class: $max_class (should be <= 34)")
-    end
-    
     label = reshape(scaled_label_std, size(scaled_label_std,1), size(scaled_label_std,2), 1, 1)
     
     return label, max_class
 end
 
-using Base.Threads
-
-# Threaded dataset loading mit festen Dimensionen
-function load_dataset(image_dir::String, label_dir::String; verbose=true)
-    # Lese Verzeichnisse und extrahiere Basisnamen ohne Pfad und Erweiterung
-    image_paths = readdir(image_dir, join=true)
-    label_paths = readdir(label_dir, join=true)
-    
-    # Extrahiere Basisnamen für bessere Zuordnung
-    image_basenames = basename.(image_paths)
-    label_basenames = basename.(label_paths)
-    
-    if verbose
-        println("Found $(length(image_paths)) images and $(length(label_paths)) labels")
-        println("All images will be standardized to $(STANDARD_HEIGHT)×$(STANDARD_WIDTH)")
-    end
-    
-    # Überprüfe, ob die Anzahl der Bilder und Labels übereinstimmt
-    if length(image_paths) != length(label_paths)
-        println("WARNING: Number of images ($(length(image_paths))) does not match number of labels ($(length(label_paths)))")
-    end
-    
-    # Sortiere Dateien alphabetisch, um Konsistenz zu gewährleisten
-    sorted_image_files = sort(image_paths)
-    sorted_label_files = sort(label_paths)
-    
-    if verbose
-        println("Verifying first 5 image-label pairs for correct matching:")
-        for i in 1:min(5, length(sorted_image_files))
-            println("  Image: $(basename(sorted_image_files[i])) -> Label: $(basename(sorted_label_files[i]))")
+# Hilfsfunktion für atomare Maximierung
+function atomic_max!(atomic_val, new_val)
+    old_val = atomic_val[]
+    while new_val > old_val
+        old_val = Threads.atomic_cas!(atomic_val, old_val, new_val)
+        # Wenn CAS erfolgreich war oder neuer Wert kleiner, breche ab
+        if old_val >= new_val
+            break
         end
     end
-    
-    return load_dataset(sorted_image_files, sorted_label_files; verbose=verbose)
-end
-
-# Lade ein Subset von Daten aus Dateilisten anstatt aus Verzeichnissen
-function load_dataset(image_files::Vector{String}, label_files::Vector{String}; verbose=true)
-    if verbose
-        println("Loading dataset with $(length(image_files)) images")
-        println("All images will be standardized to $(STANDARD_HEIGHT)×$(STANDARD_WIDTH)")
-    end
-    
-    dataset = Vector{Tuple}(undef, length(image_files))
-    
-    # Zähle Verarbeitungsfehler
-    error_count = Threads.Atomic{Int}(0)
-    
-    @threads for i in 1:length(image_files)
-        try
-            # Verarbeite Bild und Label
-            img_data = load_and_preprocess_image(image_files[i], verbose=false)
-            label_data, max_class = load_and_preprocess_label(label_files[i], verbose=false)
-            
-            dataset[i] = (img_data, label_data)
-        catch e
-            Threads.atomic_add!(error_count, 1)
-            if verbose
-                println("Error processing file pair ($(image_files[i]), $(label_files[i])): $e")
-            end
-            # Stelle leere Daten als Fallback bereit
-            dataset[i] = (zeros(Float32, STANDARD_HEIGHT, STANDARD_WIDTH, 3, 1),
-                         zeros(Int, STANDARD_HEIGHT, STANDARD_WIDTH, 1, 1))
-        end
-    end
-    
-    if error_count[] > 0 && verbose
-        println("Warning: Encountered $(error_count[]) errors during dataset loading")
-    end
-    
-    if verbose
-        println("Dataset loaded with $(length(dataset)) samples")
-        println("All samples standardized to $(STANDARD_HEIGHT)×$(STANDARD_WIDTH)")
-    end
-    
-    return dataset
 end
 
 # Optimierte Batch-Erstellung mit Reihenfolgeerhaltung

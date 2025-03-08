@@ -49,7 +49,7 @@ end
 
 # Verzeichnisse
 img_dir = "/local/home/baselt/Datensatz/Training/image_2"
-mask_dir = "/local/home/baselt/Datensatz/Training/semantic"
+mask_dir = "/local/home/baselt/Datensatz/Training/semantic_rgb"
 
 # Ich will wissen wie viele Bilder in img_dir sind
 println("Number of images in img_dir: ", length(readdir(img_dir)))
