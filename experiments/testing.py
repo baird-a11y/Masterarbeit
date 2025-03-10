@@ -46,10 +46,10 @@ class KITTISemanticDataset(Dataset):
         return image
 
 # Ordner für Trainings- und Testdaten definieren
-train_image_dir = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Bilder_1"
-train_label_dir = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Training/Masken_1"
-test_image_dir = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Testing/Bilder"
-test_label_dir = "G:/Meine Ablage/Geowissenschaften/Masterarbeit/Masterarbeit/Datensatz/Testing/Masken"
+train_image_dir = "S:/Masterarbeit/Datensatz/Training/image_2"
+train_label_dir = "S:/Masterarbeit/Datensatz/Training/semantic"
+test_image_dir = "S:/Masterarbeit/Datensatz/Training/image_2"
+test_label_dir = "S:/Masterarbeit/Datensatz/Training/semantic"
 
 # Dataset und DataLoader für Trainingsdaten
 train_dataset = KITTISemanticDataset(train_image_dir, train_label_dir, transform=resize_transform)
