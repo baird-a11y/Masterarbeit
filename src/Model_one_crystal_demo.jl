@@ -15,13 +15,13 @@ using LaMEM, GeophysicalModelGenerator  # Für Datengenerierung
 # Bildgrößen für UNet-Architektur
 STANDARD_HEIGHT = 256   # Reduziert für schnelleres Training
 STANDARD_WIDTH = 256    # Quadratisch für einfachere Handhabung
-NUM_EPOCHS = 50         # Mehr Epochen für Regression
+NUM_EPOCHS = 3         # Mehr Epochen für Regression
 LEARNING_RATE = 0.001   # Höhere Lernrate für Regression
 INPUT_CHANNELS = 1      # Nur Phasenfeld
 OUTPUT_CHANNELS = 2     # v_x und v_z
-BATCH_SIZE = 4          # Kleinere Batches wegen Speicher
+BATCH_SIZE = 2          # Kleinere Batches wegen Speicher
 CHECKPOINT_DIR = "velocity_checkpoints"
-DATASET_SIZE = 500      # Anzahl generierter Trainingssamples
+DATASET_SIZE = 8      # Anzahl generierter Trainingssamples
 
 # ==================== HILFSFUNKTIONEN ====================
 
@@ -54,9 +54,57 @@ function standardize_size_3d(data::AbstractArray{T,3}) where {T}
     return final
 end
 
+# ==================== LAMEM FUNKTION ====================
+
+function LaMEM_Single_crystal(; nx=64, nz=64, η=1e20, Δρ=200, cen_2D=[(0.0, 0.0)], R=[0.1])
+    # Create a model with a single crystal phase
+    # nx, nz: number of grid points in x and z direction
+    # η: viscosity of matrix in Pa.s
+    # Δρ: density contrast in kg/m^3
+    # cen_2D: center of sphere in km
+    # R: radius of sphere in km
+
+    # Define the model parameters
+    η_crystal = 1e4*η       # viscosity of crystal in Pa.s
+    ρ_magma   = 2700
+
+    model     = Model(Grid(nel=(nx,nz), x=[-1,1], z=[-1,1]), Time(nstep_max=1), Output(out_strain_rate=1) )
+    matrix    = Phase(ID=0,Name="matrix", eta=η,        rho=ρ_magma);
+    crystal   = Phase(ID=1,Name="crystal",eta=η_crystal,rho=ρ_magma+Δρ);
+    add_phase!(model, crystal, matrix)
+
+    for i =1:length(cen_2D)
+        # Add a sphere with the crystal phase
+        add_sphere!(model, cen=(cen_2D[i][1], 0.0, cen_2D[i][2]), radius=R[i],  phase=ConstantPhase(1))
+    end
+   
+    # Run LaMEM
+    run_lamem(model,1)
+
+    # Read results back into julia
+    data, _ = read_LaMEM_timestep(model, 1)
+
+    # Extract the data we need 
+    x_vec_1D = data.x.val[:,1,1]
+    z_vec_1D = data.z.val[1,1,:]
+
+    phase = data.fields.phase[:,1,:]
+    Vx    = data.fields.velocity[1][:,1,:]          # velocity in x [cm/year]
+    Vz    = data.fields.velocity[3][:,1,:]          # velocity in z [cm/year]
+    Exx   = data.fields.strain_rate[1][:,1,:]       # strainrate in x (=dVx/dx) in [1/s]
+    Ezz   = data.fields.strain_rate[9][:,1,:]       # strainrate in z (=dVz/dz) in [1/s]
+    rho   = data.fields.density[:,1,:]              # density in kg/m^3    
+    log10eta  = data.fields.visc_creep[:,1,:]       # log10(viscosity)
+
+    V_stokes =  2/9*Δρ*9.81*(R[1]*1000)^2/(η)            # Stokes velocity in m/s
+    V_stokes_cm_year = V_stokes * 100 * (3600*24*365.25) # convert to cm/year
+
+    return x_vec_1D, z_vec_1D, phase, Vx, Vz, Exx, Ezz, V_stokes_cm_year
+end
+
 # ==================== DATENGENERIERUNG MIT LAMEM ====================
 
-function generate_single_sample(sample_id; nx=128, nz=128)
+function generate_single_sample(sample_id; nx=64, nz=64)  # Kleinere Grid-Größe
     """
     Generiert ein einzelnes Trainingsbeispiel mit zufälligen Parametern
     """
@@ -75,10 +123,12 @@ function generate_single_sample(sample_id; nx=128, nz=128)
     R = [rand(0.03:0.01:0.08)]
     
     try
-        # LaMEM-Simulation ausführen
+        # LaMEM-Simulation ausführen mit reduzierten Parametern
         x, z, phase, Vx, Vz, Exx, Ezz, V_stokes = LaMEM_Single_crystal(
             nx=nx, nz=nz, η=η, Δρ=Δρ, cen_2D=cen_2D, R=R
         )
+        
+        println("  Sample $sample_id erfolgreich generiert")
         
         return (
             phase=phase, 
@@ -89,33 +139,59 @@ function generate_single_sample(sample_id; nx=128, nz=128)
         )
     catch e
         println("Fehler bei Sample $sample_id: $e")
+        # Debug-Info ausgeben
+        println("  Parameter: η=$η, Δρ=$Δρ, center=$cen_2D, R=$R")
         return nothing
     end
 end
 
-function generate_training_dataset(n_samples=DATASET_SIZE)
+function generate_training_dataset(n_samples=8)  # Erstmal weniger Samples zum Testen
     """
     Generiert einen kompletten Trainingsdatensatz
     """
     println("Generiere $n_samples Trainingsbeispiele...")
     
+    # Erst testen, ob LaMEM_Single_crystal verfügbar ist
+    if !@isdefined(LaMEM_Single_crystal)
+        error("LaMEM_Single_crystal Funktion nicht gefunden! 
+               Lösung: include(\"src/SinkingSphere_LaMEM.jl\") vor diesem Skript ausführen")
+    end
+    
+    # Test mit einem einfachen Beispiel
+    println("Teste LaMEM_Single_crystal Funktion...")
+    try
+        test_result = LaMEM_Single_crystal(nx=32, nz=32, η=1e20, Δρ=200, cen_2D=[(0.0, 0.5)], R=[0.05])
+        println("  ✓ LaMEM-Test erfolgreich!")
+    catch e
+        error("LaMEM-Test fehlgeschlagen: $e")
+    end
+    
     dataset = []
     successful_samples = 0
     
     for i in 1:n_samples
-        sample = generate_single_sample(i)
+        sample = generate_single_sample(i, nx=64, nz=64)  # Kleinere Grid-Größe
         
         if sample !== nothing
             push!(dataset, sample)
             successful_samples += 1
-            
-            if successful_samples % 10 == 0
-                println("  $successful_samples/$n_samples Samples erfolgreich generiert")
-            end
+            println("  ✓ Sample $i erfolgreich")
+        else
+            println("  ✗ Sample $i fehlgeschlagen")
+        end
+        
+        # Nach jedem Sample GPU-Speicher freigeben
+        if CUDA.functional()
+            CUDA.reclaim()
         end
     end
     
     println("Datengenerierung abgeschlossen: $successful_samples/$n_samples Samples")
+    
+    if successful_samples == 0
+        error("Keine Trainingssamples generiert! Prüfe LaMEM-Setup.")
+    end
+    
     return dataset
 end
 
