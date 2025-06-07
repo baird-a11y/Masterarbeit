@@ -21,7 +21,7 @@ INPUT_CHANNELS = 1      # Nur Phasenfeld
 OUTPUT_CHANNELS = 2     # v_x und v_z
 BATCH_SIZE = 2          # Kleinere Batches wegen Speicher
 CHECKPOINT_DIR = "velocity_checkpoints"
-DATASET_SIZE = 8      # Anzahl generierter Trainingssamples
+DATASET_SIZE = 16      # Anzahl generierter Trainingssamples
 
 # ==================== HILFSFUNKTIONEN ====================
 
