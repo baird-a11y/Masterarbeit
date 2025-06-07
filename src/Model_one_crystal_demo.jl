@@ -15,13 +15,13 @@ using LaMEM, GeophysicalModelGenerator  # Für Datengenerierung
 # Bildgrößen für UNet-Architektur
 STANDARD_HEIGHT = 256   # Reduziert für schnelleres Training
 STANDARD_WIDTH = 256    # Quadratisch für einfachere Handhabung
-NUM_EPOCHS = 3         # Mehr Epochen für Regression
+NUM_EPOCHS = 100         # Mehr Epochen für Regression
 LEARNING_RATE = 0.001   # Höhere Lernrate für Regression
 INPUT_CHANNELS = 1      # Nur Phasenfeld
 OUTPUT_CHANNELS = 2     # v_x und v_z
 BATCH_SIZE = 2          # Kleinere Batches wegen Speicher
 CHECKPOINT_DIR = "velocity_checkpoints"
-DATASET_SIZE = 16      # Anzahl generierter Trainingssamples
+DATASET_SIZE = 2000      # Anzahl generierter Trainingssamples
 
 # ==================== HILFSFUNKTIONEN ====================
 
