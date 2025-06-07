@@ -84,7 +84,7 @@ end
 
 # ==================== LAMEM GROUND TRUTH ====================
 
-function LaMEM_Single_crystal(; nx=64, nz=64, η=1e20, Δρ=200, cen_2D=[(0.0, 0.0)], R=[0.1])
+function LaMEM_Single_crystal(; nx=128, nz=128, η=1e20, Δρ=200, cen_2D=[(0.0, 0.0)], R=[0.1])
     η_crystal = 1e4*η
     ρ_magma = 2700
 
@@ -315,8 +315,8 @@ function evaluate_accuracy_with_lamem(model, target_size=(128, 128))
     
     # Test-Konfigurationen
     test_configs = [
-        (nx=64, nz=64, η=1e20, Δρ=200, cen_2D=[(0.0, 0.5)], R=[0.05]),
-        (nx=64, nz=64, η=1e20, Δρ=300, cen_2D=[(0.3, 0.6)], R=[0.06]),
+        (nx=128, nz=128, η=1e20, Δρ=200, cen_2D=[(0.0, 0.5)], R=[0.05]),
+        (nx=128, nz=128, η=1e20, Δρ=300, cen_2D=[(0.3, 0.6)], R=[0.06]),
     ]
     
     results = []
@@ -479,7 +479,7 @@ function create_comprehensive_visualization(model, lamem_result=nothing, target_
     
     Label(fig[4, 1:4], stats_text, tellwidth=false, fontsize=12)
     
-    save_path = "H:/Masterarbeit/Auswertung/velocity_evaluation_complete.png"
+    save_path = "velocity_evaluation_complete.png"
     save(save_path, fig)
     println("Visualisierung gespeichert: $save_path")
     
@@ -581,4 +581,4 @@ println("complete_velocity_evaluation(\"final_velocity_model.bson\", target_size
 println("="^60)
 
 # Automatische Ausführung (auskommentieren falls gewünscht):
-results = complete_velocity_evaluation("final_velocity_model.bson", run_lamem=true)
+results = complete_velocity_evaluation("final_velocity_model.bson", run_lamem=true, target_size=(128, 128))
