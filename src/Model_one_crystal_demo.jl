@@ -12,16 +12,16 @@ using LaMEM, GeophysicalModelGenerator  # Für Datengenerierung
 
 # ==================== KONFIGURATION ====================
 
-# Bildgrößen für UNet-Architektur
-STANDARD_HEIGHT = 256   # Reduziert für schnelleres Training
-STANDARD_WIDTH = 256    # Quadratisch für einfachere Handhabung
-NUM_EPOCHS = 100         # Mehr Epochen für Regression
-LEARNING_RATE = 0.001   # Höhere Lernrate für Regression
-INPUT_CHANNELS = 1      # Nur Phasenfeld
-OUTPUT_CHANNELS = 2     # v_x und v_z
-BATCH_SIZE = 2          # Kleinere Batches wegen Speicher
-CHECKPOINT_DIR = "velocity_checkpoints"
-DATASET_SIZE = 2000      # Anzahl generierter Trainingssamples
+# Bildgrößen für UNet-Architektur - jetzt konsistent!
+STANDARD_HEIGHT = 256   
+STANDARD_WIDTH = 256    
+NUM_EPOCHS = 100         
+LEARNING_RATE = 0.001   
+INPUT_CHANNELS = 1      
+OUTPUT_CHANNELS = 2     
+BATCH_SIZE = 1          # 
+CHECKPOINT_DIR = "velocity_checkpoints_256"
+DATASET_SIZE = 100      # 
 
 # ==================== HILFSFUNKTIONEN ====================
 
@@ -104,11 +104,12 @@ end
 
 # ==================== DATENGENERIERUNG MIT LAMEM ====================
 
-function generate_single_sample(sample_id; nx=64, nz=64)  # Kleinere Grid-Größe
+function generate_single_sample(sample_id; nx=256, nz=256)  # ERHÖHT auf 256!
     """
     Generiert ein einzelnes Trainingsbeispiel mit zufälligen Parametern
+    JETZT MIT KONSISTENTER 256x256 AUFLÖSUNG
     """
-    println("Generiere Sample $sample_id...")
+    println("Generiere Sample $sample_id (256x256)...")
     
     # Zufällige Parameter für Variation
     η = 10^(rand() * 2 + 19)  # 1e19 bis 1e21 Pa.s
@@ -123,12 +124,12 @@ function generate_single_sample(sample_id; nx=64, nz=64)  # Kleinere Grid-Größ
     R = [rand(0.03:0.01:0.08)]
     
     try
-        # LaMEM-Simulation ausführen mit reduzierten Parametern
+        # LaMEM-Simulation mit 256x256 Auflösung
         x, z, phase, Vx, Vz, Exx, Ezz, V_stokes = LaMEM_Single_crystal(
             nx=nx, nz=nz, η=η, Δρ=Δρ, cen_2D=cen_2D, R=R
         )
         
-        println("  Sample $sample_id erfolgreich generiert")
+        println("  Sample $sample_id (256x256) erfolgreich generiert")
         
         return (
             phase=phase, 
@@ -139,54 +140,47 @@ function generate_single_sample(sample_id; nx=64, nz=64)  # Kleinere Grid-Größ
         )
     catch e
         println("Fehler bei Sample $sample_id: $e")
-        # Debug-Info ausgeben
-        println("  Parameter: η=$η, Δρ=$Δρ, center=$cen_2D, R=$R")
         return nothing
     end
 end
 
-function generate_training_dataset(n_samples=8)  # Erstmal weniger Samples zum Testen
+function generate_training_dataset(n_samples=500)  # Weniger Samples wegen höherer Auflösung
     """
-    Generiert einen kompletten Trainingsdatensatz
+    Generiert einen kompletten Trainingsdatensatz mit 256x256 Auflösung
     """
-    println("Generiere $n_samples Trainingsbeispiele...")
-    
-    # Erst testen, ob LaMEM_Single_crystal verfügbar ist
-    if !@isdefined(LaMEM_Single_crystal)
-        error("LaMEM_Single_crystal Funktion nicht gefunden! 
-               Lösung: include(\"src/SinkingSphere_LaMEM.jl\") vor diesem Skript ausführen")
-    end
+    println("Generiere $n_samples Trainingsbeispiele (256x256)...")
     
     # Test mit einem einfachen Beispiel
-    println("Teste LaMEM_Single_crystal Funktion...")
+    println("Teste LaMEM_Single_crystal mit 256x256...")
     try
-        test_result = LaMEM_Single_crystal(nx=32, nz=32, η=1e20, Δρ=200, cen_2D=[(0.0, 0.5)], R=[0.05])
-        println("  ✓ LaMEM-Test erfolgreich!")
+        test_result = LaMEM_Single_crystal(nx=256, nz=256, η=1e20, Δρ=200, cen_2D=[(0.0, 0.5)], R=[0.05])
+        println("  ✓ LaMEM 256x256-Test erfolgreich!")
     catch e
-        error("LaMEM-Test fehlgeschlagen: $e")
+        error("LaMEM 256x256-Test fehlgeschlagen: $e")
     end
     
     dataset = []
     successful_samples = 0
     
     for i in 1:n_samples
-        sample = generate_single_sample(i, nx=64, nz=64)  # Kleinere Grid-Größe
+        sample = generate_single_sample(i, nx=256, nz=256)  # Explizit 256x256
         
         if sample !== nothing
             push!(dataset, sample)
             successful_samples += 1
-            println("  ✓ Sample $i erfolgreich")
+            println("  ✓ Sample $i erfolgreich (256x256)")
         else
             println("  ✗ Sample $i fehlgeschlagen")
         end
         
-        # Nach jedem Sample GPU-Speicher freigeben
+        # Speicher-Management wichtiger bei höherer Auflösung
         if CUDA.functional()
             CUDA.reclaim()
         end
+        GC.gc()
     end
     
-    println("Datengenerierung abgeschlossen: $successful_samples/$n_samples Samples")
+    println("Datengenerierung abgeschlossen: $successful_samples/$n_samples Samples (256x256)")
     
     if successful_samples == 0
         error("Keine Trainingssamples generiert! Prüfe LaMEM-Setup.")
@@ -199,29 +193,42 @@ end
 
 function preprocess_phase_field(phase_data)
     """
-    Bereitet Phasenfeld für UNet vor
+    Bereitet Phasenfeld für UNet vor - KEINE SKALIERUNG mehr nötig!
     """
-    # Auf Standardgröße bringen
-    phase_std = standardize_size(Float32.(phase_data))
+    # Daten sollten bereits 256x256 sein
+    if size(phase_data) != (256, 256)
+        println("WARNUNG: Unerwartete Phasenfeldgröße: $(size(phase_data))")
+        # Fallback zur Standardisierung
+        phase_std = standardize_size(Float32.(phase_data))
+    else
+        phase_std = Float32.(phase_data)
+    end
     
     # Reshape zu (H, W, C, B) für Flux
-    return reshape(phase_std, STANDARD_HEIGHT, STANDARD_WIDTH, 1, 1)
+    return reshape(phase_std, 256, 256, 1, 1)
 end
 
 function preprocess_velocity_fields(vx, vz, v_stokes)
     """
-    Bereitet Geschwindigkeitsfelder für Training vor
+    Bereitet Geschwindigkeitsfelder für Training vor - KEINE SKALIERUNG mehr nötig!
     """
     # Mit Stokes-Geschwindigkeit normalisieren
     vx_norm = Float32.(vx ./ v_stokes)
     vz_norm = Float32.(vz ./ v_stokes)
     
-    # Auf Standardgröße bringen
-    vx_std = standardize_size(vx_norm)
-    vz_std = standardize_size(vz_norm)
+    # Daten sollten bereits 256x256 sein
+    if size(vx_norm) != (256, 256)
+        println("WARNUNG: Unerwartete Geschwindigkeitsfeldgröße: $(size(vx_norm))")
+        # Fallback zur Standardisierung
+        vx_std = standardize_size(vx_norm)
+        vz_std = standardize_size(vz_norm)
+    else
+        vx_std = vx_norm
+        vz_std = vz_norm
+    end
     
     # Zu (H, W, 2, 1) kombinieren
-    velocity_field = zeros(Float32, STANDARD_HEIGHT, STANDARD_WIDTH, 2, 1)
+    velocity_field = zeros(Float32, 256, 256, 2, 1)
     velocity_field[:, :, 1, 1] .= vx_std
     velocity_field[:, :, 2, 1] .= vz_std
     
@@ -230,9 +237,9 @@ end
 
 function create_training_batches(raw_dataset)
     """
-    Konvertiert Rohdaten zu Trainings-Batches
+    Konvertiert Rohdaten zu Trainings-Batches - optimiert für 256x256
     """
-    println("Erstelle Trainings-Batches...")
+    println("Erstelle Trainings-Batches für 256x256...")
     
     processed_data = []
     
@@ -246,31 +253,28 @@ function create_training_batches(raw_dataset)
             
             push!(processed_data, (phase_input, velocity_target))
             
-            if i % 50 == 0
+            if i % 25 == 0  # Häufigere Updates wegen weniger Samples
                 println("  $i/$(length(raw_dataset)) Samples verarbeitet")
+                # Zwischenspeicher freigeben
+                GC.gc()
             end
         catch e
             println("Fehler bei Verarbeitung von Sample $i: $e")
         end
     end
     
-    # Batches erstellen
-    n_batches = ceil(Int, length(processed_data) / BATCH_SIZE)
+    # Kleinere Batches wegen höherem Speicherverbrauch
+    n_batches = length(processed_data)  # Batch-Size = 1
     batched_data = []
     
     for i in 1:n_batches
-        batch_start = (i-1) * BATCH_SIZE + 1
-        batch_end = min(batch_start + BATCH_SIZE - 1, length(processed_data))
-        batch_indices = batch_start:batch_end
-        
-        # Daten zusammenfügen
-        phase_batch = cat([processed_data[j][1] for j in batch_indices]...; dims=4)
-        velocity_batch = cat([processed_data[j][2] for j in batch_indices]...; dims=4)
+        phase_batch = processed_data[i][1]
+        velocity_batch = processed_data[i][2]
         
         push!(batched_data, (phase_batch, velocity_batch))
     end
     
-    println("$(length(batched_data)) Batches mit je bis zu $BATCH_SIZE Samples erstellt")
+    println("$(length(batched_data)) Batches mit je 1 Sample (256x256) erstellt")
     return batched_data
 end
 

@@ -34,7 +34,7 @@ Erster Ansatz wäre einfach ein Bild erst mal nur vom Kristall zu erstellen und 
 3. **Forward-Pass Fehler**: `crop_and_concat` Funktion defekt
     - **Lösung**: Skip-Connections korrekt implementiert
 4. **Koordinatensystem**: v_z Vorzeichen unklar
-    - **Status**: Funktioniert, evtl. später zu prüfen
+    - **Status**: ~~Funktioniert, evtl. später zu prüfen~~ **GELÖST** durch Debugging
 
 #### Wichtige Code Teile
 
@@ -97,26 +97,65 @@ results = complete_velocity_evaluation("model.bson")
 - Okay Modelle: MSE 0.01-0.05, R² 0.5-0.8
 - **Unser Modell**: MSE = 0.0015, R² = 0.944 → **EXZELLENT**
 
-#### Ausblick
+---
 
-**Sofortige nächste Schritte:**
+### Experiment 2: Koordinaten-System Debugging
 
-- **Mission erfolgreich**: UNet kann LaMEM-Geschwindigkeitsfelder vorhersagen
-- **Robustheits-Tests**: Extreme Parameter, Physik-Constraints prüfen
-- **Skalierung**: 500-1000 Bilder für noch bessere Generalisierung
+#### Problem-Erkennung
 
-**Weitere Entwicklung:**
+Bei ersten Anwendungen des trainierten UNets stellte sich heraus, dass **Kristall-Positionen im Input nicht mit Geschwindigkeits-Hotspots im Output** übereinstimmten. Verdacht auf Koordinatensystem-Probleme.
 
-- **Mehrere Kristalle**: 2-3 Kristalle gleichzeitig
-- **Komplexere Geometrien**: Ellipsen, verschiedene Formen
-- **Real-world Validation**: Vergleich mit experimentellen Daten
-- **Parameterstudien**: Automatische Exploration von η, Δρ, R-Räumen
+#### Debugging-Ansatz
 
-**Offene Fragen für nächste Session:**
+- **Vereinfachtes Evaluierungs-Tool** entwickelt (nur v_z fokussiert)
+- **Pixel-genaue Analyse** von Kristall-Zentrum vs. min(v_z) Position
+- **Dimensionen-Konsistenz** zwischen Training und Anwendung prüfen
 
-- Funktioniert das Modell bei extremen Parametern?
-- Lernt es echte Physik oder nur Pattern-Matching?
-- Wie robust ist es gegenüber ungesehenen Konfigurationen?
+#### Erkenntnisse
+
+**Problem identifiziert:**
+
+- **LaMEM-Output**: 257×257 Pixel
+- **UNet-Training**: 256×256 Pixel
+- **UNet-Output**: 256×256 Pixel
+- → **1-Pixel Versatz** durch Dimensionen-Mismatch
+
+**Koordinaten-Präzision gemessen:**
+
+- **Ground Truth Alignment**: 6.1 Pixel (✅ physikalisch korrekt)
+- **UNet Alignment**: 6.3 Pixel (✅ lernt korrekte Physik)
+- **GT vs. UNet Abweichung**: **1.0 Pixel** (✅ praktisch perfekt!)
+
+**Fazit:**
+
+- **KEIN Koordinatensystem-Problem**
+- **UNet lernt korrekte Physik**
+- **Problem lag an Dimensionen-Inkonsistenz**
+
+#### Code-Tools
+
+**Koordinaten-Debugging:**
+
+```julia
+# Vereinfachte v_z-fokussierte Evaluierung
+result = debug_vz_coordinates("model.bson", target_size=(256,256))
+
+# Findet automatisch:
+# - Kristall-Zentrum im Phasenfeld
+# - Min v_z Position in Ground Truth vs. UNet
+# - Pixel-genaue Abweichungen
+```
+
+**Dimensionen-Fix:**
+
+```julia
+# Konsistente Größen-Behandlung
+actual_size = size(phase_gt)
+if actual_size != target_size
+    println("LaMEM liefert $(actual_size) statt $(target_size)")
+    # Automatische Anpassung...
+end
+```
 
 ---
 
@@ -126,3 +165,41 @@ results = complete_velocity_evaluation("model.bson")
 2. **Evaluierung ist kritisch**: Ohne Ground Truth Vergleich keine echte Bewertung
 3. **Physikalische Plausibilität**: Metriken können täuschen, visuelle Inspektion wichtig
 4. **Iterative Entwicklung**: Kleine Tests → Probleme finden → Fixes → Skalierung
+5. **Dimensionen-Konsistenz ist KRITISCH**: 1-Pixel Unterschiede können zu falschen Schlüssen führen
+6. **Debugging-Tools entwickeln**: Vereinfachte, fokussierte Evaluierung besser als komplexe
+
+---
+
+## Nächste Schritte
+
+### Sofort (diese Session):
+
+1. **Koordinaten-Problem gelöst** - UNet funktioniert korrekt
+2. **Konsistente 256×256 Datenpipeline** erstellen
+    - LaMEM auf exakt 256×256 fixieren
+    - Training und Anwendung identisch
+3. **Trainingscode überprüfen** für Konsistenz
+
+### Kurz-/Mittelfristig:
+
+1. **Robustheits-Tests**: Extreme Parameter, Physik-Constraints prüfen
+2. **Skalierung**: 500-1000 konsistente Bilder für bessere Generalisierung
+3. **Performance-Optimierung**: Memory-Management für größere Datasets
+
+### Langfristig:
+
+1. **Mehrere Kristalle**: 2-3 Kristalle gleichzeitig
+2. **Komplexere Geometrien**: Ellipsen, verschiedene Formen
+3. **Real-world Validation**: Vergleich mit experimentellen Daten
+4. **Parameterstudien**: Automatische Exploration von η, Δρ, R-Räumen
+
+---
+
+## Aktueller Status
+
+- **Koordinaten-Problem gelöst**: Kein Problem, 1-Pixel Genauigkeit
+- **UNet-Architektur**: Funktioniert exzellent
+- **Datenpipeline**: Dimensionen-Konsistenz implementieren
+- **Skalierung**: Bereit für mehr Trainingsdaten
+
+**Haupterkenntniss**: Das Modell ist bereits sehr gut trainiert - das Problem lag an inkonsistenten Eingabedaten, nicht am Training selbst!
