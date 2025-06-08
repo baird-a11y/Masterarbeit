@@ -99,6 +99,124 @@ results = complete_velocity_evaluation("model.bson")
 
 ---
 
+### Experiment 3: Code-Refactoring und Pipeline-Verbesserung
+
+#### Problem-Erkennung
+
+Der ursprüngliche Trainingscode hatte mehrere Probleme:
+
+- **Hartcodierte Parameter** überall im Code verstreut
+- **Inkonsistente Dimensionen** zwischen Training (256×256) und LaMEM-Output (257×257)
+- **GPU Scalar Indexing Probleme** bei der `crop_and_concat` Funktion
+- **Schwierige Wartbarkeit** durch unstrukturierten Code
+
+#### Refactoring-Ansatz
+
+- **Zentrale Konfiguration**: Alle Parameter in `CONFIG` Struktur gesammelt
+- **Modularer Aufbau**: Separate Funktionen für jede Pipeline-Komponente
+- **256×256 Konsistenz-Fix**: LaMEM Parameter angepasst (`nel=(255,255)` für 256×256 Output)
+- **GPU-Kompatibilität**: Vereinfachte `crop_and_concat` Funktion
+
+#### Code-Verbesserungen
+
+**Zentrale Konfiguration:**
+
+```julia
+const CONFIG = (
+    image_size = (256, 256),           # Konsistente Dimensionen
+    dataset_size = 20,                 # Anzahl Trainingssamples  
+    learning_rate = 0.001,             # Lernrate
+    eta_range = (1e19, 1e21),         # Parameter-Bereiche
+    use_gpu = false,                   # Hardware-Einstellungen
+    # ... alle anderen Parameter zentral
+)
+```
+
+**LaMEM Dimensionen-Fix:**
+
+```julia
+function LaMEM_Single_crystal_fixed(; η=1e20, Δρ=200, cen_2D=[(0.0, 0.0)], R=[0.1])
+    target_h, target_w = CONFIG.image_size
+    nel_h, nel_w = target_h - 1, target_w - 1  # LaMEM erzeugt nel+1 Punkte
+    
+    model = Model(Grid(nel=(nel_h, nel_w), x=[-1,1], z=[-1,1]), ...)
+    # Automatische Dimensionsprüfung und Zuschneidung
+end
+```
+
+**Konfigurierbare Parameter-Generierung:**
+
+```julia
+function generate_random_params()
+    η_min, η_max = CONFIG.eta_range
+    η = 10^(rand() * (log10(η_max) - log10(η_min)) + log10(η_min))
+    # Weitere Parameter basierend auf CONFIG-Bereichen
+end
+```
+
+#### Erkenntnisse
+
+**GPU-Training Probleme:**
+
+- **Scalar Indexing Fehler** bei komplexen Array-Operationen auf GPU
+- **CPU-Training** als stabile Alternative implementiert
+- GPU-Training für später optimierbar, CPU funktioniert zuverlässig
+
+**Dimensionen-Konsistenz erfolgreich:**
+
+- LaMEM liefert jetzt garantiert 256×256 Output
+- Training und Anwendung verwenden identische Dimensionen
+- Automatische Validierung in jeder Pipeline-Stufe
+
+**Code-Wartbarkeit drastisch verbessert:**
+
+- **Ein CONFIG-Block** statt Parameter überall im Code
+- **Einfache Experimente**: Parameter ändern ohne Code-Suche
+- **Modularer Aufbau** ermöglicht einfache Erweiterungen
+
+#### Aktuelle Pipeline-Funktionen
+
+**Komplettes Training:**
+
+```julia
+# Alle Parameter konfigurierbar
+model, losses, data = run_complete_training_configured()
+
+# Parameter ändern:
+CONFIG = merge(CONFIG, (dataset_size = 100, num_epochs = 50))
+```
+
+**Testing und Debugging:**
+
+```julia
+# Konsistenz-Test der gesamten Pipeline
+test_256_consistency()
+
+# Koordinaten-Debugging für trainierte Modelle
+result = debug_vz_coordinates("model.bson")
+```
+
+#### Status
+
+**Erfolgreich implementiert:**
+
+- **256×256 Konsistenz** in gesamter Pipeline
+- **Zentrale Konfiguration** für alle Parameter
+- **CPU-Training** funktioniert stabil
+- **Modularer, wartbarer Code**
+
+**Aktuelle Herausforderungen:**
+
+- **GPU-Training** benötigt weitere Optimierung
+- **Skip-Connections** für komplexe Größen-Unterschiede
+
+**Nächste Tests:**
+
+- **Kleine Trainingsläufe** (20 Samples, 10 Epochen) für Pipeline-Validierung
+- **Skalierung** bei erfolgreicher Validierung
+
+---
+
 ### Experiment 2: Koordinaten-System Debugging
 
 #### Problem-Erkennung
@@ -175,16 +293,16 @@ end
 ### Sofort (diese Session):
 
 1. **Koordinaten-Problem gelöst** - UNet funktioniert korrekt
-2. **Konsistente 256×256 Datenpipeline** erstellen
-    - LaMEM auf exakt 256×256 fixieren
-    - Training und Anwendung identisch
-3. **Trainingscode überprüfen** für Konsistenz
+2. **Code-Refactoring abgeschlossen** - Zentrale Konfiguration implementiert
+3. **256×256 Pipeline-Konsistenz** hergestellt
+4. **CPU-Training Pipeline** validieren
 
 ### Kurz-/Mittelfristig:
 
-1. **Robustheits-Tests**: Extreme Parameter, Physik-Constraints prüfen
-2. **Skalierung**: 500-1000 konsistente Bilder für bessere Generalisierung
-3. **Performance-Optimierung**: Memory-Management für größere Datasets
+1. **GPU-Training optimieren**: Scalar Indexing Probleme in Skip-Connections lösen
+2. **Pipeline-Validierung**: Kleine Trainingsläufe (20 Samples) durchführen
+3. **Skalierung**: Bei erfolgreicher Validierung auf 500-1000 Samples erweitern
+4. **Robustheits-Tests**: Extreme Parameter, Physik-Constraints prüfen
 
 ### Langfristig:
 

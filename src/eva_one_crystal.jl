@@ -319,4 +319,4 @@ println("Verwende: debug_vz_coordinates(\"dein_model.bson\")")
 println("Beispiel:")
 
 # Ausführung (Pfad anpassen!):
-result = debug_vz_coordinates("final_velocity_model_256.bson", target_size=(256, 256))
+result = debug_vz_coordinates("final_model_configured.bson", target_size=(256, 256))
