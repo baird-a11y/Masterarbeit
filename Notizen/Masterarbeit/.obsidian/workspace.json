@@ -13,32 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Besprechung 06.06.25.md",
+                "file": "Zwei Kristalle.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Besprechung 06.06.25"
-            }
-          }
-        ]
-      },
-      {
-        "id": "ffce3915ef329f73",
-        "type": "tabs",
-        "children": [
-          {
-            "id": "2c36b4d29c6e7bb2",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Ein Kristall.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Ein Kristall"
+              "title": "Zwei Kristalle"
             }
           }
         ]
@@ -188,9 +168,10 @@
       "graph:Graphen-Ansicht öffnen": false
     }
   },
-  "active": "2c36b4d29c6e7bb2",
+  "active": "e1bef16d0b2fe62d",
   "lastOpenFiles": [
-    "Besprechung 06.06.25.md",
-    "Ein Kristall.md"
+    "Ein Kristall.md",
+    "Zwei Kristalle.md",
+    "Besprechung 06.06.25.md"
   ]
 }

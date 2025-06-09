@@ -79,11 +79,11 @@ const CONFIG = (
     
     # Training-Parameter
     learning_rate = 0.001,
-    num_epochs = 30,                   # Erstmal weniger für Testing
+    num_epochs = 5,                   # Erstmal weniger für Testing
     batch_size = 2,                    # Kleine Batches für 256×256
     
     # Dataset-Parameter
-    dataset_size = 100,                 # Erstmal weniger für Testing
+    dataset_size = 10,                 # Erstmal weniger für Testing
     test_split = 0.1,                  # 10% für Testing
     
     # LaMEM-Parameter (Bereiche für Variation)
@@ -97,7 +97,7 @@ const CONFIG = (
     save_every_n_epochs = 5,           # Häufiger speichern bei weniger Epochen
     
     # Hardware-Parameter
-    use_gpu = false,                   # CPU-Training für Stabilität!
+    use_gpu = true,                   # CPU-Training für Stabilität!
     memory_cleanup_frequency = 10,     # Häufiger cleanup
     
     # Debug-Parameter
