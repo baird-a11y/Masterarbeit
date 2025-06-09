@@ -251,18 +251,18 @@ function debug_vz_coordinates(model_path; target_size=(256, 256))
     # Plot 1: Phasenfeld
     ax1 = Axis(fig[1, 1], title="Phasenfeld", xlabel="x", ylabel="z", aspect=DataAspect())
     heatmap!(ax1, phase_gt, colormap=:grays)
-    scatter!(ax1, [gt_crystal_center[2]], [gt_crystal_center[1]], color=:red, markersize=15, label="Kristall-Zentrum")
+    #scatter!(ax1, [gt_crystal_center[2]], [gt_crystal_center[1]], color=:red, markersize=15, label="Kristall-Zentrum")
     
     # Plot 2: LaMEM v_z
     ax2 = Axis(fig[1, 2], title="LaMEM: v_z", xlabel="x", ylabel="z", aspect=DataAspect())
     heatmap!(ax2, vz_gt ./ v_stokes, colormap=:RdBu, colorrange=(-3, 1))
-    scatter!(ax2, [gt_vz_min_pos[2]], [gt_vz_min_pos[1]], color=:yellow, markersize=15, label="Min v_z")
+    #scatter!(ax2, [gt_vz_min_pos[2]], [gt_vz_min_pos[1]], color=:yellow, markersize=15, label="Min v_z")
     contour!(ax2, phase_gt, levels=[0.5], color=:black, linewidth=2)
     
     # Plot 3: UNet v_z
     ax3 = Axis(fig[1, 3], title="UNet: v_z", xlabel="x", ylabel="z", aspect=DataAspect())
     heatmap!(ax3, vz_pred, colormap=:RdBu, colorrange=(-3, 1))
-    scatter!(ax3, [pred_vz_min_pos[2]], [pred_vz_min_pos[1]], color=:yellow, markersize=15, label="Min v_z")
+    #scatter!(ax3, [pred_vz_min_pos[2]], [pred_vz_min_pos[1]], color=:yellow, markersize=15, label="Min v_z")
     contour!(ax3, phase_gt, levels=[0.5], color=:black, linewidth=2)
     
     # Statistiken hinzufügen
@@ -319,4 +319,4 @@ println("Verwende: debug_vz_coordinates(\"dein_model.bson\")")
 println("Beispiel:")
 
 # Ausführung (Pfad anpassen!):
-result = debug_vz_coordinates("final_model_configured.bson", target_size=(256, 256))
+result = debug_vz_coordinates("final_model_30_200_2.bson", target_size=(256, 256))
