@@ -1,365 +1,340 @@
-using Flux
+using Flux          # Neuronale Netzwerk-Bibliothek
 using Flux: mse, gpu, cpu
-using CUDA
-using Statistics
-using FileIO
-using LinearAlgebra
-using Optimisers
-using ProgressMeter
-using BSON: @save, @load
-using Random
-using LaMEM, GeophysicalModelGenerator
+using CUDA          # GPU-Unterstützung
+using Statistics    # Für statistische Funktionen (mean, etc.)
+using FileIO        # Datei-Ein/Ausgabe
+using LinearAlgebra # Für mathematische Operationen
+using Optimisers    # Optimierungsalgorithmen
+using ProgressMeter # Fortschrittsanzeige
+using BSON: @save, @load  # Modellspeicherung
+using Random        # Zufallszahlengenerator
+using LaMEM, GeophysicalModelGenerator  # Für Datengenerierung
 
-println("=== VERBESSERTER VELOCITY UNET TRAINER ===")
+# ==================== KONFIGURATION ====================
 
-# ==================== MODELL-STRUKTUREN ====================
+# Bildgrößen für UNet-Architektur - jetzt konsistent!
+STANDARD_HEIGHT = 256   
+STANDARD_WIDTH = 256    
+NUM_EPOCHS = 100         
+LEARNING_RATE = 0.001   
+INPUT_CHANNELS = 1      
+OUTPUT_CHANNELS = 2     
+BATCH_SIZE = 1          # 
+CHECKPOINT_DIR = "velocity_checkpoints_256"
+DATASET_SIZE = 100      # 
 
-struct VelocityUNet
-    encoder1; encoder2; encoder3; encoder4; bottleneck
-    decoder4; decoder4_1; decoder3; decoder3_1
-    decoder2; decoder2_1; decoder1; decoder1_1
+# ==================== HILFSFUNKTIONEN ====================
+
+function clear_gpu_memory()
+    GC.gc()
+    CUDA.reclaim()
+    println("GPU-Speicher freigegeben")
 end
 
-Flux.@functor VelocityUNet
-
-function crop_and_concat(x, skip, dims=3)
-    """
-    GPU-freundliche Skip-Connection Funktion
-    """
-    x_size = size(x)
-    skip_size = size(skip)
+# Standardisiert die Größe auf feste Dimensionen
+function standardize_size(data::AbstractArray{T,2}) where {T}
+    h, w = size(data)
+    final = zeros(T, STANDARD_HEIGHT, STANDARD_WIDTH)
     
-    # Einfache Lösung: Falls Größen nicht passen, nimm die kleinere
-    min_h = min(x_size[1], skip_size[1])
-    min_w = min(x_size[2], skip_size[2])
+    h_range = 1:min(h, STANDARD_HEIGHT)
+    w_range = 1:min(w, STANDARD_WIDTH)
+    final[h_range, w_range] .= view(data, h_range, w_range)
     
-    # Schneide beide auf gleiche Größe zu
-    x_cropped = x[1:min_h, 1:min_w, :, :]
-    skip_cropped = skip[1:min_h, 1:min_w, :, :]
-    
-    # Zusammenfügen
-    return cat(x_cropped, skip_cropped, dims=dims)
+    return final
 end
 
-function (model::VelocityUNet)(x)
-    """
-    Forward-Pass durch das UNet
-    """
-    # Encoder
-    e1 = model.encoder1(x)
-    e2 = model.encoder2(e1)
-    e3 = model.encoder3(e2)
-    e4 = model.encoder4(e3)
-    b = model.bottleneck(e4)
+function standardize_size_3d(data::AbstractArray{T,3}) where {T}
+    h, w, c = size(data)
+    final = zeros(T, STANDARD_HEIGHT, STANDARD_WIDTH, c)
     
-    # Decoder mit Skip-Connections
-    d4 = model.decoder4(b)
-    d4 = model.decoder4_1(crop_and_concat(d4, e4))
+    h_range = 1:min(h, STANDARD_HEIGHT)
+    w_range = 1:min(w, STANDARD_WIDTH)
+    final[h_range, w_range, :] .= view(data, h_range, w_range, 1:c)
     
-    d3 = model.decoder3(d4)
-    d3 = model.decoder3_1(crop_and_concat(d3, e3))
-    
-    d2 = model.decoder2(d3)
-    d2 = model.decoder2_1(crop_and_concat(d2, e2))
-    
-    d1 = model.decoder1(d2)
-    d1 = model.decoder1_1(crop_and_concat(d1, e1))
-    
-    return d1
+    return final
 end
 
-# ==================== ZENTRALE KONFIGURATION ====================
+# ==================== LAMEM FUNKTION ====================
 
-# Alle Parameter an einem Ort - einfach zu ändern!
-const CONFIG = (
-    # Modell-Parameter
-    image_size = (256, 256),           # Konsistente 256×256
-    input_channels = 1,                # Phasenfeld
-    output_channels = 2,               # v_x, v_z
-    
-    # Training-Parameter
-    learning_rate = 0.001,
-    num_epochs = 5,                   # Erstmal weniger für Testing
-    batch_size = 2,                    # Kleine Batches für 256×256
-    
-    # Dataset-Parameter
-    dataset_size = 10,                 # Erstmal weniger für Testing
-    test_split = 0.1,                  # 10% für Testing
-    
-    # LaMEM-Parameter (Bereiche für Variation)
-    eta_range = (1e19, 1e21),         # Viskosität-Bereich
-    delta_rho_range = (100, 500),      # Dichtedifferenz-Bereich
-    position_range = (-0.6, 0.6),     # Kristall-Position Bereich
-    radius_range = (0.03, 0.08),      # Kristall-Radius Bereich
-    
-    # Speicher-Parameter
-    checkpoint_dir = "velocity_checkpoints_256_v2",
-    save_every_n_epochs = 5,           # Häufiger speichern bei weniger Epochen
-    
-    # Hardware-Parameter
-    use_gpu = true,                   # CPU-Training für Stabilität!
-    memory_cleanup_frequency = 10,     # Häufiger cleanup
-    
-    # Debug-Parameter
-    verbose = true,
-    save_sample_images = true
-)
+function LaMEM_Single_crystal(; nx=64, nz=64, η=1e20, Δρ=200, cen_2D=[(0.0, 0.0)], R=[0.1])
+    # Create a model with a single crystal phase
+    # nx, nz: number of grid points in x and z direction
+    # η: viscosity of matrix in Pa.s
+    # Δρ: density contrast in kg/m^3
+    # cen_2D: center of sphere in km
+    # R: radius of sphere in km
 
-println("Konfiguration geladen:")
-println("  Bildgröße: $(CONFIG.image_size)")
-println("  Trainingsdaten: $(CONFIG.dataset_size)")
-println("  Epochen: $(CONFIG.num_epochs)")
-println("  Lernrate: $(CONFIG.learning_rate)")
+    # Define the model parameters
+    η_crystal = 1e4*η       # viscosity of crystal in Pa.s
+    ρ_magma   = 2700
 
-# ==================== VERBESSERTE LAMEM-FUNKTION ====================
-
-function LaMEM_Single_crystal_fixed(; η=1e20, Δρ=200, cen_2D=[(0.0, 0.0)], R=[0.1])
-    """
-    LaMEM Funktion mit garantierten $(CONFIG.image_size) Dimensionen
-    """
-    η_crystal = 1e4*η
-    ρ_magma = 2700
-    
-    # KRITISCH: nel=(255,255) für exakt 256×256 Output
-    target_h, target_w = CONFIG.image_size
-    nel_h, nel_w = target_h - 1, target_w - 1  # LaMEM erzeugt nel+1 Punkte
-    
-    model = Model(
-        Grid(nel=(nel_h, nel_w), x=[-1,1], z=[-1,1]), 
-        Time(nstep_max=1), 
-        Output(out_strain_rate=1)
-    )
-    
-    matrix = Phase(ID=0, Name="matrix", eta=η, rho=ρ_magma)
-    crystal = Phase(ID=1, Name="crystal", eta=η_crystal, rho=ρ_magma+Δρ)
+    model     = Model(Grid(nel=(nx,nz), x=[-1,1], z=[-1,1]), Time(nstep_max=1), Output(out_strain_rate=1) )
+    matrix    = Phase(ID=0,Name="matrix", eta=η,        rho=ρ_magma);
+    crystal   = Phase(ID=1,Name="crystal",eta=η_crystal,rho=ρ_magma+Δρ);
     add_phase!(model, crystal, matrix)
 
-    for i = 1:length(cen_2D)
-        add_sphere!(model, cen=(cen_2D[i][1], 0.0, cen_2D[i][2]), radius=R[i], phase=ConstantPhase(1))
+    for i =1:length(cen_2D)
+        # Add a sphere with the crystal phase
+        add_sphere!(model, cen=(cen_2D[i][1], 0.0, cen_2D[i][2]), radius=R[i],  phase=ConstantPhase(1))
     end
    
-    run_lamem(model, 1)
+    # Run LaMEM
+    run_lamem(model,1)
+
+    # Read results back into julia
     data, _ = read_LaMEM_timestep(model, 1)
 
-    # Daten extrahieren
+    # Extract the data we need 
     x_vec_1D = data.x.val[:,1,1]
     z_vec_1D = data.z.val[1,1,:]
+
     phase = data.fields.phase[:,1,:]
-    Vx = data.fields.velocity[1][:,1,:]
-    Vz = data.fields.velocity[3][:,1,:]
-    
-    V_stokes = 2/9*Δρ*9.81*(R[1]*1000)^2/(η)
-    V_stokes_cm_year = V_stokes * 100 * (3600*24*365.25)
-    
-    # Dimensionen-Sicherheitscheck
-    actual_size = size(phase)
-    if actual_size != CONFIG.image_size
-        if CONFIG.verbose
-            println("   Warnung: LaMEM lieferte $actual_size, schneide auf $(CONFIG.image_size) zu")
-        end
-        
-        # Zuschneiden auf Zielgröße
-        phase = phase[1:target_h, 1:target_w]
-        Vx = Vx[1:target_h, 1:target_w]
-        Vz = Vz[1:target_h, 1:target_w]
-        x_vec_1D = x_vec_1D[1:target_h]
-        z_vec_1D = z_vec_1D[1:target_w]
-    end
+    Vx    = data.fields.velocity[1][:,1,:]          # velocity in x [cm/year]
+    Vz    = data.fields.velocity[3][:,1,:]          # velocity in z [cm/year]
+    Exx   = data.fields.strain_rate[1][:,1,:]       # strainrate in x (=dVx/dx) in [1/s]
+    Ezz   = data.fields.strain_rate[9][:,1,:]       # strainrate in z (=dVz/dz) in [1/s]
+    rho   = data.fields.density[:,1,:]              # density in kg/m^3    
+    log10eta  = data.fields.visc_creep[:,1,:]       # log10(viscosity)
 
-    return x_vec_1D, z_vec_1D, phase, Vx, Vz, V_stokes_cm_year
+    V_stokes =  2/9*Δρ*9.81*(R[1]*1000)^2/(η)            # Stokes velocity in m/s
+    V_stokes_cm_year = V_stokes * 100 * (3600*24*365.25) # convert to cm/year
+
+    return x_vec_1D, z_vec_1D, phase, Vx, Vz, Exx, Ezz, V_stokes_cm_year
 end
 
-# ==================== KONFIGURIERBARE DATENGENERIERUNG ====================
+# ==================== DATENGENERIERUNG MIT LAMEM ====================
 
-function generate_random_params()
+function generate_single_sample(sample_id; nx=256, nz=256)  # ERHÖHT auf 256!
     """
-    Generiert zufällige Parameter basierend auf CONFIG
+    Generiert ein einzelnes Trainingsbeispiel mit zufälligen Parametern
+    JETZT MIT KONSISTENTER 256x256 AUFLÖSUNG
     """
-    # Logarithmische Verteilung für Viskosität
-    η_min, η_max = CONFIG.eta_range
-    η = 10^(rand() * (log10(η_max) - log10(η_min)) + log10(η_min))
+    println("Generiere Sample $sample_id (256x256)...")
     
-    # Lineare Verteilungen
-    Δρ = rand(CONFIG.delta_rho_range[1]:CONFIG.delta_rho_range[2])
+    # Zufällige Parameter für Variation
+    η = 10^(rand() * 2 + 19)  # 1e19 bis 1e21 Pa.s
+    Δρ = rand(100:500)        # 100-500 kg/m³ Dichtedifferenz
     
-    pos_min, pos_max = CONFIG.position_range
-    x_pos = rand() * (pos_max - pos_min) + pos_min
-    z_pos = rand() * (0.8 - 0.2) + 0.2  # Z immer zwischen 0.2 und 0.8
+    # Zufällige Kristallposition (nicht zu nah am Rand)
+    x_pos = rand(-0.6:0.1:0.6)
+    z_pos = rand(0.2:0.1:0.8)
+    cen_2D = [(x_pos, z_pos)]
     
-    rad_min, rad_max = CONFIG.radius_range
-    R = rand() * (rad_max - rad_min) + rad_min
-    
-    return (
-        η = η,
-        Δρ = Δρ,
-        cen_2D = [(x_pos, z_pos)],
-        R = [R]
-    )
-end
-
-function generate_single_sample_configured(sample_id)
-    """
-    Generiert ein Sample mit konfigurierbaren Parametern
-    """
-    if CONFIG.verbose && sample_id % 50 == 0
-        println("Generiere Sample $sample_id/$(CONFIG.dataset_size)...")
-    end
-    
-    # Zufällige Parameter generieren
-    params = generate_random_params()
+    # Zufälliger Radius
+    R = [rand(0.03:0.01:0.08)]
     
     try
-        # LaMEM-Simulation
-        x, z, phase, Vx, Vz, V_stokes = LaMEM_Single_crystal_fixed(;params...)
+        # LaMEM-Simulation mit 256x256 Auflösung
+        x, z, phase, Vx, Vz, Exx, Ezz, V_stokes = LaMEM_Single_crystal(
+            nx=nx, nz=nz, η=η, Δρ=Δρ, cen_2D=cen_2D, R=R
+        )
         
-        # Dimensionsprüfung
-        if size(phase) != CONFIG.image_size
-            error("Sample $sample_id: Falsche Dimensionen $(size(phase))")
-        end
+        println("  Sample $sample_id (256x256) erfolgreich generiert")
         
         return (
-            phase = phase, 
-            vx = Vx, 
-            vz = Vz, 
-            v_stokes = V_stokes,
-            params = params
+            phase=phase, 
+            vx=Vx, 
+            vz=Vz, 
+            v_stokes=V_stokes,
+            params=(η=η, Δρ=Δρ, center=cen_2D[1], radius=R[1])
         )
     catch e
-        if CONFIG.verbose
-            println("   Fehler bei Sample $sample_id: $e")
-        end
+        println("Fehler bei Sample $sample_id: $e")
         return nothing
     end
 end
 
-function generate_training_dataset_configured()
+function generate_training_dataset(n_samples=500)  # Weniger Samples wegen höherer Auflösung
     """
-    Generiert konfigurierbaren Trainingsdatensatz
+    Generiert einen kompletten Trainingsdatensatz mit 256x256 Auflösung
     """
-    println("\n=== GENERIERE TRAININGSDATENSATZ ===")
-    println("Parameter:")
-    println("  Samples: $(CONFIG.dataset_size)")
-    println("  Bildgröße: $(CONFIG.image_size)")
-    println("  Eta-Bereich: $(CONFIG.eta_range)")
-    println("  Delta-Rho-Bereich: $(CONFIG.delta_rho_range)")
+    println("Generiere $n_samples Trainingsbeispiele (256x256)...")
     
-    # LaMEM-Test
-    println("\n1. Teste LaMEM-Konsistenz...")
-    test_params = generate_random_params()
+    # Test mit einem einfachen Beispiel
+    println("Teste LaMEM_Single_crystal mit 256x256...")
     try
-        x, z, phase, vx, vz, v_stokes = LaMEM_Single_crystal_fixed(;test_params...)
-        println("   ✓ LaMEM-Test erfolgreich: $(size(phase))")
+        test_result = LaMEM_Single_crystal(nx=256, nz=256, η=1e20, Δρ=200, cen_2D=[(0.0, 0.5)], R=[0.05])
+        println("  ✓ LaMEM 256x256-Test erfolgreich!")
     catch e
-        error("LaMEM-Test fehlgeschlagen: $e")
+        error("LaMEM 256x256-Test fehlgeschlagen: $e")
     end
     
-    # Datengenerierung
-    println("\n2. Generiere Samples...")
     dataset = []
-    successful = 0
+    successful_samples = 0
     
-    progress = Progress(CONFIG.dataset_size, desc="Generating samples: ")
-    
-    for i in 1:CONFIG.dataset_size
-        sample = generate_single_sample_configured(i)
+    for i in 1:n_samples
+        sample = generate_single_sample(i, nx=256, nz=256)  # Explizit 256x256
         
         if sample !== nothing
             push!(dataset, sample)
-            successful += 1
+            successful_samples += 1
+            println("  ✓ Sample $i erfolgreich (256x256)")
+        else
+            println("  ✗ Sample $i fehlgeschlagen")
         end
         
-        # Memory-Management
-        if i % CONFIG.memory_cleanup_frequency == 0
-            GC.gc()
-            if CUDA.functional() && CONFIG.use_gpu
-                CUDA.reclaim()
-            end
+        # Speicher-Management wichtiger bei höherer Auflösung
+        if CUDA.functional()
+            CUDA.reclaim()
         end
-        
-        next!(progress)
+        GC.gc()
     end
     
-    finish!(progress)
+    println("Datengenerierung abgeschlossen: $successful_samples/$n_samples Samples (256x256)")
     
-    success_rate = round(100 * successful / CONFIG.dataset_size, digits=1)
-    println("\n3. Datengenerierung abgeschlossen:")
-    println("   Erfolgreich: $successful/$(CONFIG.dataset_size) ($success_rate%)")
-    
-    if successful == 0
-        error("Keine Samples generiert!")
+    if successful_samples == 0
+        error("Keine Trainingssamples generiert! Prüfe LaMEM-Setup.")
     end
     
     return dataset
 end
 
-# ==================== KONFIGURIERBARE DATENVORVERARBEITUNG ====================
+# ==================== DATENVORVERARBEITUNG ====================
 
-function preprocess_configured(sample_data)
+function preprocess_phase_field(phase_data)
     """
-    Vorverarbeitung mit konfigurierbaren Parametern
+    Bereitet Phasenfeld für UNet vor - KEINE SKALIERUNG mehr nötig!
     """
-    h, w = CONFIG.image_size
-    
-    # Dimensionsprüfung
-    if size(sample_data.phase) != (h, w)
-        error("Sample hat falsche Dimensionen: $(size(sample_data.phase)) statt $(string(h, ", ", w))")
+    # Daten sollten bereits 256x256 sein
+    if size(phase_data) != (256, 256)
+        println("WARNUNG: Unerwartete Phasenfeldgröße: $(size(phase_data))")
+        # Fallback zur Standardisierung
+        phase_std = standardize_size(Float32.(phase_data))
+    else
+        phase_std = Float32.(phase_data)
     end
     
-    # Phase für UNet
-    phase_input = reshape(Float32.(sample_data.phase), h, w, 1, 1)
-    
-    # Geschwindigkeiten normalisieren
-    vx_norm = Float32.(sample_data.vx ./ sample_data.v_stokes)
-    vz_norm = Float32.(sample_data.vz ./ sample_data.v_stokes)
-    
-    # Velocity target
-    velocity_target = zeros(Float32, h, w, 2, 1)
-    velocity_target[:, :, 1, 1] .= vx_norm
-    velocity_target[:, :, 2, 1] .= vz_norm
-    
-    return (phase_input, velocity_target)
+    # Reshape zu (H, W, C, B) für Flux
+    return reshape(phase_std, 256, 256, 1, 1)
 end
 
-function create_training_batches_configured(raw_dataset)
+function preprocess_velocity_fields(vx, vz, v_stokes)
     """
-    Erstellt Trainings-Batches mit Konfiguration
+    Bereitet Geschwindigkeitsfelder für Training vor - KEINE SKALIERUNG mehr nötig!
     """
-    println("Erstelle Trainings-Batches...")
-    println("  Batch-Größe: $(CONFIG.batch_size)")
+    # Mit Stokes-Geschwindigkeit normalisieren
+    vx_norm = Float32.(vx ./ v_stokes)
+    vz_norm = Float32.(vz ./ v_stokes)
+    
+    # Daten sollten bereits 256x256 sein
+    if size(vx_norm) != (256, 256)
+        println("WARNUNG: Unerwartete Geschwindigkeitsfeldgröße: $(size(vx_norm))")
+        # Fallback zur Standardisierung
+        vx_std = standardize_size(vx_norm)
+        vz_std = standardize_size(vz_norm)
+    else
+        vx_std = vx_norm
+        vz_std = vz_norm
+    end
+    
+    # Zu (H, W, 2, 1) kombinieren
+    velocity_field = zeros(Float32, 256, 256, 2, 1)
+    velocity_field[:, :, 1, 1] .= vx_std
+    velocity_field[:, :, 2, 1] .= vz_std
+    
+    return velocity_field
+end
+
+function create_training_batches(raw_dataset)
+    """
+    Konvertiert Rohdaten zu Trainings-Batches - optimiert für 256x256
+    """
+    println("Erstelle Trainings-Batches für 256x256...")
     
     processed_data = []
     
     for (i, sample) in enumerate(raw_dataset)
         try
-            phase_input, velocity_target = preprocess_configured(sample)
+            # Phase und Geschwindigkeiten vorverarbeiten
+            phase_input = preprocess_phase_field(sample.phase)
+            velocity_target = preprocess_velocity_fields(
+                sample.vx, sample.vz, sample.v_stokes
+            )
+            
             push!(processed_data, (phase_input, velocity_target))
+            
+            if i % 25 == 0  # Häufigere Updates wegen weniger Samples
+                println("  $i/$(length(raw_dataset)) Samples verarbeitet")
+                # Zwischenspeicher freigeben
+                GC.gc()
+            end
         catch e
-            println("Fehler bei Sample $i: $e")
+            println("Fehler bei Verarbeitung von Sample $i: $e")
         end
     end
     
-    # Batches erstellen (erstmal einzeln)
+    # Kleinere Batches wegen höherem Speicherverbrauch
+    n_batches = length(processed_data)  # Batch-Size = 1
     batched_data = []
-    for data in processed_data
-        push!(batched_data, data)
+    
+    for i in 1:n_batches
+        phase_batch = processed_data[i][1]
+        velocity_batch = processed_data[i][2]
+        
+        push!(batched_data, (phase_batch, velocity_batch))
     end
     
-    println("✓ $(length(batched_data)) Batches erstellt")
+    println("$(length(batched_data)) Batches mit je 1 Sample (256x256) erstellt")
     return batched_data
 end
 
-# ==================== KONFIGURIERBARE MODELL-ARCHITEKTUR ====================
+# ==================== MODELL-DEFINITION ====================
 
-function create_velocity_unet_configured()
-    """
-    Erstellt UNet mit konfigurierbaren Parametern
-    """
-    input_ch = CONFIG.input_channels
-    output_ch = CONFIG.output_channels
+struct VelocityUNet
+    # Encoder
+    encoder1
+    encoder2
+    encoder3
+    encoder4
+    bottleneck
+    # Decoder
+    decoder4
+    decoder4_1
+    decoder3
+    decoder3_1
+    decoder2
+    decoder2_1
+    decoder1
+    decoder1_1
+end
+
+Flux.@functor VelocityUNet
+
+function crop_and_concat(x, skip, dims=3)
+    x_size = size(x)
+    skip_size = size(skip)
     
+    height_diff = skip_size[1] - x_size[1]
+    width_diff = skip_size[2] - x_size[2]
+    
+    if height_diff < 0 || width_diff < 0
+        padded_skip = zeros(eltype(skip),
+                            max(x_size[1], skip_size[1]),
+                            max(x_size[2], skip_size[2]),
+                            skip_size[3], skip_size[4])
+        
+        h_start = abs(min(0, height_diff)) ÷ 2 + 1
+        w_start = abs(min(0, width_diff)) ÷ 2 + 1
+        
+        padded_skip[h_start:h_start+skip_size[1]-1,
+                    w_start:w_start+skip_size[2]-1, :, :] .= skip
+        
+        return cat(x, padded_skip, dims=dims)
+    else
+        h_start = height_diff ÷ 2 + 1
+        w_start = width_diff ÷ 2 + 1
+        
+        cropped_skip = skip[h_start:h_start+x_size[1]-1,
+                            w_start:w_start+x_size[2]-1, :, :]
+        
+        return cat(x, cropped_skip, dims=dims)
+    end
+end
+
+function create_velocity_unet(input_channels=1, output_channels=2)
     # Encoder
     encoder1 = Chain(
-        Conv((3, 3), input_ch => 32, relu, pad=SamePad()),
+        Conv((3, 3), input_channels => 32, relu, pad=SamePad()),
         BatchNorm(32),
         Conv((3, 3), 32 => 32, relu, pad=SamePad()),
         BatchNorm(32)
@@ -430,7 +405,7 @@ function create_velocity_unet_configured()
         Conv((3,3), 32 => 32, relu, pad=SamePad()),
         BatchNorm(32),
         Dropout(0.2),
-        Conv((1,1), 32 => output_ch)  # Keine Aktivierung für Regression
+        Conv((1,1), 32 => output_channels)  # KEINE AKTIVIERUNG für Regression!
     )
     
     return VelocityUNet(encoder1, encoder2, encoder3, encoder4, bottleneck,
@@ -438,50 +413,58 @@ function create_velocity_unet_configured()
                         decoder2, decoder2_1, decoder1, decoder1_1)
 end
 
-# ==================== KONFIGURIERBARE TRAINING-LOOP ====================
+function (model::VelocityUNet)(x)
+    # Encoder
+    e1 = model.encoder1(x)
+    e2 = model.encoder2(e1)
+    e3 = model.encoder3(e2)
+    e4 = model.encoder4(e3)
+    b = model.bottleneck(e4)
+    
+    # Decoder mit Skip-Connections
+    d4 = model.decoder4(b)
+    d4 = model.decoder4_1(crop_and_concat(d4, e4))
+    
+    d3 = model.decoder3(d4)
+    d3 = model.decoder3_1(crop_and_concat(d3, e3))
+    
+    d2 = model.decoder2(d3)
+    d2 = model.decoder2_1(crop_and_concat(d2, e2))
+    
+    d1 = model.decoder1(d2)
+    d1 = model.decoder1_1(crop_and_concat(d1, e1))
+    
+    return d1
+end
 
-function train_velocity_unet_configured(model, train_data)
-    """
-    Training mit konfigurierbaren Parametern
-    """
-    println("\n=== STARTE TRAINING ===")
-    println("Parameter:")
-    println("  Epochen: $(CONFIG.num_epochs)")
-    println("  Lernrate: $(CONFIG.learning_rate)")
-    println("  Batches: $(length(train_data))")
-    println("  GPU: $(CONFIG.use_gpu && CUDA.functional())")
+# ==================== TRAINING ====================
+
+function velocity_loss_fn(model, x, y_true)
+    y_pred = model(x)
+    return mse(y_pred, y_true)
+end
+
+function train_velocity_unet(model, train_data, num_epochs, learning_rate)
+    mkpath(CHECKPOINT_DIR)
     
-    # Checkpoint-Verzeichnis erstellen
-    mkpath(CONFIG.checkpoint_dir)
-    
-    # Optimizer
-    opt_state = Optimisers.setup(Optimisers.Adam(CONFIG.learning_rate), model)
+    opt_state = Optimisers.setup(Optimisers.Adam(learning_rate), model)
     losses = Float32[]
     
-    # GPU setup
-    if CONFIG.use_gpu && CUDA.functional()
-        model = gpu(model)
-        println("  Modell auf GPU verschoben")
-    end
-    
-    # Training loop
-    for epoch in 1:CONFIG.num_epochs
-        println("\n--- Epoche $epoch/$(CONFIG.num_epochs) ---")
+    for epoch in 1:num_epochs
+        println("====== Epoche $epoch/$num_epochs ======")
         
         total_loss = 0f0
         batch_count = 0
         
         for (batch_idx, (phase_batch, velocity_batch)) in enumerate(train_data)
             try
-                # Auf GPU verschieben falls verfügbar
-                if CONFIG.use_gpu && CUDA.functional()
-                    phase_batch = gpu(phase_batch)
-                    velocity_batch = gpu(velocity_batch)
-                end
+                # Auf GPU verschieben
+                phase_batch = gpu(phase_batch)
+                velocity_batch = gpu(velocity_batch)
                 
-                # Verlust und Gradienten berechnen
-                ∇model = gradient(m -> mse(m(phase_batch), velocity_batch), model)[1]
-                batch_loss = mse(model(phase_batch), velocity_batch)
+                # Gradienten berechnen
+                ∇model = gradient(m -> velocity_loss_fn(m, phase_batch, velocity_batch), model)[1]
+                batch_loss = velocity_loss_fn(model, phase_batch, velocity_batch)
                 
                 # Parameter aktualisieren
                 opt_state, model = Optimisers.update!(opt_state, model, ∇model)
@@ -489,104 +472,124 @@ function train_velocity_unet_configured(model, train_data)
                 total_loss += batch_loss
                 batch_count += 1
                 
-                if CONFIG.verbose && batch_idx % 100 == 0
-                    println("  Batch $batch_idx: Loss = $(round(batch_loss, digits=6))")
-                end
+                println("  Batch $batch_idx: MSE Verlust = $(round(batch_loss, digits=6))")
                 
             catch e
-                println("  Fehler bei Batch $batch_idx: $e")
+                println("  FEHLER bei Batch $batch_idx: $e")
             end
             
-            # Memory cleanup
-            if batch_idx % CONFIG.memory_cleanup_frequency == 0 && CONFIG.use_gpu && CUDA.functional()
-                CUDA.reclaim()
-            end
+            CUDA.reclaim()
         end
         
-        # Epoche abgeschlossen
         avg_loss = batch_count > 0 ? total_loss / batch_count : NaN32
         push!(losses, avg_loss)
         
         println("Epoche $epoch: Durchschnittsverlust = $(round(avg_loss, digits=6))")
         
         # Checkpoint speichern
-        if epoch % CONFIG.save_every_n_epochs == 0
+        if epoch % 10 == 0
             model_cpu = cpu(model)
-            checkpoint_path = joinpath(CONFIG.checkpoint_dir, "checkpoint_epoch_$(epoch).bson")
-            @save checkpoint_path model_cpu
-            println("  Checkpoint gespeichert: $checkpoint_path")
+            @save joinpath(CHECKPOINT_DIR, "velocity_checkpoint_epoch$(epoch).bson") model_cpu
+            println("  Checkpoint für Epoche $epoch gespeichert")
         end
         
-        # Memory cleanup
-        GC.gc()
-        if CONFIG.use_gpu && CUDA.functional()
-            CUDA.reclaim()
-        end
+        clear_gpu_memory()
     end
-    
-    # Finales Modell speichern
-    final_model_cpu = cpu(model)
-    final_path = joinpath(CONFIG.checkpoint_dir, "final_model_configured.bson")
-    @save final_path final_model_cpu
-    println("\nFinales Modell gespeichert: $final_path")
     
     return model, losses
 end
 
-# ==================== HAUPTFUNKTION ====================
+# ==================== EVALUIERUNG ====================
 
-function run_complete_training_configured()
+function predict_velocity(model, phase_input)
     """
-    Führt komplettes Training mit Konfiguration durch
+    Vorhersage von Geschwindigkeitsfeldern
     """
-    println("=== KOMPLETTES KONFIGURIERTES TRAINING ===")
+    phase_gpu = gpu(phase_input)
+    velocity_pred = cpu(model(phase_gpu))
     
-    # 1. Daten generieren
-    println("\n1. DATENGENERIERUNG")
-    raw_dataset = generate_training_dataset_configured()
+    # Zurück zu separaten v_x und v_z Arrays
+    vx_pred = velocity_pred[:, :, 1, 1]
+    vz_pred = velocity_pred[:, :, 2, 1]
     
-    # 2. Daten vorverarbeiten
-    println("\n2. DATENVORVERARBEITUNG")
-    train_batches = create_training_batches_configured(raw_dataset)
-    
-    # 3. Modell erstellen
-    println("\n3. MODELL-ERSTELLUNG")
-    model = create_velocity_unet_configured()
-    println("Modell erstellt mit $(CONFIG.input_channels) → $(CONFIG.output_channels) Kanälen")
-    
-    # 4. Training
-    println("\n4. TRAINING")
-    trained_model, losses = train_velocity_unet_configured(model, train_batches)
-    
-    # 5. Zusammenfassung
-    println("\n" * "="^50)
-    println("TRAINING ABGESCHLOSSEN")
-    println("="^50)
-    println("Konfiguration:")
-    println("  Samples: $(length(raw_dataset))")
-    println("  Epochen: $(CONFIG.num_epochs)")
-    println("  Finaler Loss: $(round(losses[end], digits=6))")
-    println("  Modell gespeichert: $(CONFIG.checkpoint_dir)")
-    println("="^50)
-    
-    return trained_model, losses, raw_dataset
+    return vx_pred, vz_pred
 end
 
-# ==================== VERWENDUNG ====================
+function evaluate_model(model, test_sample)
+    """
+    Evaluiert das Modell auf einem Testbeispiel
+    """
+    # Eingabe vorbereiten
+    phase_input = preprocess_phase_field(test_sample.phase)
+    
+    # Vorhersage
+    vx_pred, vz_pred = predict_velocity(model, phase_input)
+    
+    # Ground Truth normalisieren
+    vx_true = test_sample.vx ./ test_sample.v_stokes
+    vz_true = test_sample.vz ./ test_sample.v_stokes
+    
+    # Ground Truth auf gleiche Größe bringen
+    vx_true_std = standardize_size(Float32.(vx_true))
+    vz_true_std = standardize_size(Float32.(vz_true))
+    
+    # MSE berechnen
+    mse_vx = mean((vx_pred .- vx_true_std).^2)
+    mse_vz = mean((vz_pred .- vz_true_std).^2)
+    mse_total = (mse_vx + mse_vz) / 2
+    
+    println("Evaluierung:")
+    println("  MSE v_x: $(round(mse_vx, digits=6))")
+    println("  MSE v_z: $(round(mse_vz, digits=6))")
+    println("  MSE gesamt: $(round(mse_total, digits=6))")
+    
+    return (
+        vx_pred=vx_pred, vz_pred=vz_pred,
+        vx_true=vx_true_std, vz_true=vz_true_std,
+        mse_vx=mse_vx, mse_vz=mse_vz, mse_total=mse_total
+    )
+end
 
-println("\n" * "="^60)
-println("KONFIGURIERTER VELOCITY UNET TRAINER GELADEN")
-println("="^60)
-println("Verwendung:")
-println("  # Alle Parameter sind in CONFIG definiert")
-println("  # Training starten:")
-println("  model, losses, data = run_complete_training_configured()")
-println("  ")
-println("  # Parameter ändern:")
-println("  # CONFIG.dataset_size = 1000")
-println("  # CONFIG.learning_rate = 0.0005")
-println("  # etc.")
-println("="^60)
+# ==================== HAUPTPROGRAMM ====================
 
-# ==================== TRAINING STARTEN ====================
-model, losses, data = run_complete_training_configured()
+println("===== GESCHWINDIGKEITSFELD-VORHERSAGE MIT UNET =====")
+
+# 1. Trainingsdaten generieren
+println("\n1. Generiere Trainingsdaten...")
+raw_dataset = generate_training_dataset(DATASET_SIZE)
+
+if length(raw_dataset) < 10
+    println("FEHLER: Zu wenige Trainingssamples generiert!")
+    exit()
+end
+
+# 2. Daten vorverarbeiten
+println("\n2. Verarbeite Daten für Training...")
+train_batches = create_training_batches(raw_dataset)
+
+# 3. Modell erstellen
+println("\n3. Erstelle UNet-Modell...")
+model = create_velocity_unet(INPUT_CHANNELS, OUTPUT_CHANNELS)
+model = gpu(model)
+
+# 4. Training
+println("\n4. Starte Training...")
+trained_model, training_losses = train_velocity_unet(
+    model, train_batches, NUM_EPOCHS, LEARNING_RATE
+)
+
+# 5. Finales Modell speichern
+final_model_cpu = cpu(trained_model)
+@save joinpath(CHECKPOINT_DIR, "final_velocity_model.bson") final_model_cpu
+println("\nFinales Modell gespeichert!")
+
+# 6. Evaluierung auf Testbeispiel
+println("\n5. Evaluiere Modell...")
+if length(raw_dataset) > 0
+    test_idx = rand(1:length(raw_dataset))
+    test_result = evaluate_model(trained_model, raw_dataset[test_idx])
+    
+    println("\nTraining abgeschlossen!")
+    println("Finaler Trainingsverlust: $(round(training_losses[end], digits=6))")
+    println("Test-MSE: $(round(test_result.mse_total, digits=6))")
+end
