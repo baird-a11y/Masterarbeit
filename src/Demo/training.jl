@@ -110,6 +110,7 @@ function train_velocity_unet(
     target_resolution;
     config = create_training_config()
 )
+    
     println("=== STARTE UNET TRAINING ===")
     println("Konfiguration:")
     println("  Epochen: $(config.num_epochs)")
@@ -135,7 +136,7 @@ function train_velocity_unet(
         println("  Modell auf GPU verschoben")
         # ENTFERNT: Globales allowscalar - wird lokal verwendet
     end
-    
+    model_cpu = cpu(model)
     # Training-Geschichte
     train_losses = Float32[]
     val_losses = Float32[]
@@ -156,9 +157,9 @@ function train_velocity_unet(
             batch_samples = train_dataset[i:end_idx]
             
             try
-                phase_batch, velocity_batch, successful = create_adaptive_batch(
+                phase_batch, velocity_batch, successful = deepcopy(create_adaptive_batch(
                     batch_samples, target_resolution, verbose=false
-                )
+                ))
                 
                 if successful == 0
                     continue  # Skip leere Batches
@@ -205,13 +206,13 @@ function train_velocity_unet(
         else
             Inf32
         end
-        push!(train_losses, avg_train_loss)
+        train_losses = vcat(train_losses, avg_train_loss)
         
         # Validation (auf CPU-Modell)
         val_loss = evaluate_model_safe(
             model_cpu, val_dataset, target_resolution
         )
-        push!(val_losses, val_loss)
+        val_losses = vcat(val_losses, val_loss)
         
         println("Epoche $epoch abgeschlossen:")
         println("  Training Loss: $(round(avg_train_loss, digits=6))")
@@ -268,6 +269,9 @@ end
 """
 Sichere Evaluierung auf CPU
 """
+"""
+Sichere Evaluierung auf CPU
+"""
 function evaluate_model_safe(model, val_dataset, target_resolution)
     total_loss = 0.0f0
     n_batches = 0
@@ -275,8 +279,15 @@ function evaluate_model_safe(model, val_dataset, target_resolution)
     # Kleine Batches für Validation
     val_batch_size = min(2, length(val_dataset))
     
-    for i in 1:val_batch_size:min(20, length(val_dataset))  # Limitiere Validation
+    for i in 1:val_batch_size:length(val_dataset)  # Ensure valid range
         end_idx = min(i + val_batch_size - 1, length(val_dataset))
+        
+        # Überprüfen Sie, ob der Bereich gültig ist
+        if i > end_idx
+            println("Ungültiger Bereich: i=$i, end_idx=$end_idx")
+            continue
+        end
+        
         batch_samples = val_dataset[i:end_idx]
         
         try

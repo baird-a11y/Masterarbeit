@@ -77,6 +77,9 @@ end
 """
 Bestimme optimale Batch-Größe und erstelle Batch ohne GPU-OOM
 """
+"""
+Bestimme optimale Batch-Größe und erstelle Batch ohne GPU-OOM
+"""
 function create_adaptive_batch(samples, target_resolution; max_gpu_memory_percent=80, verbose=false)
     if isempty(samples)
         error("Keine Samples für Batch-Erstellung!")
@@ -103,8 +106,8 @@ function create_adaptive_batch(samples, target_resolution; max_gpu_memory_percen
     selected_samples = samples[selected_indices]
     
     # Preprocessing
-    batch_phases = []
-    batch_velocities = []
+    batch_phases = Vector{Array{Float32, 4}}(undef, actual_batch_size)
+    batch_velocities = Vector{Array{Float32, 4}}(undef, actual_batch_size)
     successful_samples = 0
     
     for (i, sample) in enumerate(selected_samples)
@@ -124,8 +127,8 @@ function create_adaptive_batch(samples, target_resolution; max_gpu_memory_percen
                 target_resolution=target_resolution
             )
             
-            push!(batch_phases, phase_tensor)
-            push!(batch_velocities, velocity_tensor)
+            batch_phases[i] = phase_tensor
+            batch_velocities[i] = velocity_tensor
             successful_samples += 1
             
         catch e
@@ -142,8 +145,8 @@ function create_adaptive_batch(samples, target_resolution; max_gpu_memory_percen
     
     # Tensoren zusammenfügen
     try
-        phase_batch = cat(batch_phases..., dims=4)
-        velocity_batch = cat(batch_velocities..., dims=4)
+        phase_batch = cat(batch_phases[1:successful_samples]..., dims=4)
+        velocity_batch = cat(batch_velocities[1:successful_samples]..., dims=4)
         
         if verbose
             println("Batch erstellt: $(size(phase_batch)), $(size(velocity_batch))")
