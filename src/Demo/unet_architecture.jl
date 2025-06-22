@@ -376,7 +376,7 @@ function create_final_corrected_unet(config::UNetConfig)
 end
 
 """
-Final korrigierter Forward-Pass
+Final korrigierter Forward-Pass - OHNE DEBUG-AUSGABEN für Zygote-Kompatibilität
 """
 function (model::FinalCorrectedUNet)(x)
     input_size = size(x)
@@ -395,12 +395,13 @@ function (model::FinalCorrectedUNet)(x)
         push!(skip_features, features)
         current = pooled
         
-        println("Encoder $level: Input $(size(x)), Features $(size(features)), Pooled $(size(pooled))")
+        # ENTFERNT: Debug-Ausgaben (verursachen Zygote-Fehler)
+        # println("Encoder $level: Input $(size(x)), Features $(size(features)), Pooled $(size(pooled))")
     end
     
     # Bottleneck
     current = model.bottleneck(current)
-    println("Bottleneck: $(size(current))")
+    # ENTFERNT: println("Bottleneck: $(size(current))")
     
     # Decoder-Phase
     for (i, decoder) in enumerate(model.decoder_blocks)
@@ -408,34 +409,29 @@ function (model::FinalCorrectedUNet)(x)
         skip = skip_features[skip_idx]
         current = decoder(current, skip)
         
-        println("Decoder $i: Output $(size(current))")
+        # ENTFERNT: println("Decoder $i: Output $(size(current))")
     end
     
     # Output-Layer
     output = model.output_layer(current)
     
-    # FINALE Dimensionsprüfung
+    # FINALE Dimensionsprüfung - NUR bei Bedarf
     expected_output = (model.config.input_resolution, model.config.input_resolution, model.config.output_channels, input_size[4])
     
     if size(output) != expected_output
-        println("KRITISCHER FEHLER: Output $(size(output)) ≠ Erwartet $expected_output")
         # NOTFALL-KORREKTUR: Crop/Pad auf korrekte Größe
         h_target, w_target = expected_output[1:2]
         h_current, w_current = size(output)[1:2]
         
-        if h_current > h_target || w_current > h_target
+        if h_current > h_target || w_current > w_target
             # Crop
             output = output[1:h_target, 1:w_target, :, :]
-            println("NOTFALL-CROP: $(size(output))")
         elseif h_current < h_target || w_current < w_target
             # Pad
             padded = zeros(eltype(output), h_target, w_target, size(output, 3), size(output, 4))
             padded[1:h_current, 1:w_current, :, :] .= output
             output = padded
-            println("NOTFALL-PAD: $(size(output))")
         end
-    else
-        println("✓ Korrekte Output-Dimensionen: $(size(output))")
     end
     
     return output

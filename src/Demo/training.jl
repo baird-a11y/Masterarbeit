@@ -170,25 +170,18 @@ function train_velocity_unet(
                     velocity_batch = gpu(velocity_batch)
                 end
                 
-                # VOLLSTÄNDIG NEUER ANSATZ: Training auf CPU für Stabilität
-                # Konvertiere zu CPU für Training (vermeidet alle GPU-Scalar-Probleme)
+                # VOLLSTÄNDIG KORRIGIERTES CPU-TRAINING
+                # Alle Daten auf CPU
                 phase_cpu = cpu(phase_batch)
                 velocity_cpu = cpu(velocity_batch)
-                model_cpu = cpu(model)
                 
-                # Training auf CPU
+                # Training auf CPU-Modell
                 loss_fn(m) = mse(m(phase_cpu), velocity_cpu)
                 ∇model_cpu = gradient(loss_fn, model_cpu)[1]
                 batch_loss = loss_fn(model_cpu)
                 
-                # Update auf CPU
-                opt_state_cpu = Optimisers.setup(Optimisers.Adam(config.learning_rate), model_cpu)
-                opt_state_cpu, model_cpu = Optimisers.update!(opt_state_cpu, model_cpu, ∇model_cpu)
-                
-                # Zurück zur GPU falls nötig
-                if config.use_gpu && CUDA.functional()
-                    model = gpu(model_cpu)
-                end
+                # Update CPU-Modell
+                opt_state, model_cpu = Optimisers.update!(opt_state, model_cpu, ∇model_cpu)
                 
                 # Prüfe auf valide Loss
                 if isfinite(batch_loss)
@@ -214,9 +207,9 @@ function train_velocity_unet(
         end
         push!(train_losses, avg_train_loss)
         
-        # Validation (immer auf CPU für Stabilität)
+        # Validation (auf CPU-Modell)
         val_loss = evaluate_model_safe(
-            cpu(model), val_dataset, target_resolution
+            model_cpu, val_dataset, target_resolution
         )
         push!(val_losses, val_loss)
         
@@ -229,8 +222,7 @@ function train_velocity_unet(
             best_val_loss = val_loss
             patience_counter = 0
             
-            # Speichere bestes Modell (immer CPU-Version)
-            model_cpu = cpu(model)
+            # Speichere bestes Modell (CPU-Version)
             best_model_path = joinpath(config.checkpoint_dir, "best_model.bson")
             @save best_model_path model_cpu
             println("  Neues bestes Modell gespeichert!")
@@ -247,7 +239,6 @@ function train_velocity_unet(
         
         # Checkpoint speichern
         if epoch % config.save_every_n_epochs == 0
-            model_cpu = cpu(model)
             checkpoint_path = joinpath(config.checkpoint_dir, "checkpoint_epoch_$(epoch).bson")
             @save checkpoint_path model_cpu epoch train_losses val_losses
             println("  Checkpoint gespeichert: $checkpoint_path")
@@ -261,9 +252,8 @@ function train_velocity_unet(
     end
     
     # Finales Modell speichern
-    final_model_cpu = cpu(model)
     final_path = joinpath(config.checkpoint_dir, "final_model.bson")
-    @save final_path final_model_cpu train_losses val_losses
+    @save final_path model_cpu train_losses val_losses
     
     println("\n" * "="^50)
     println("TRAINING ABGESCHLOSSEN")
@@ -272,7 +262,7 @@ function train_velocity_unet(
     println("Finale Training Loss: $(round(train_losses[end], digits=6))")
     println("Modelle gespeichert in: $(config.checkpoint_dir)")
     
-    return model, train_losses, val_losses
+    return model_cpu, train_losses, val_losses  # Returniere CPU-Modell
 end
 
 """
