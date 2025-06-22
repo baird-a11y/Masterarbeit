@@ -196,8 +196,8 @@ function train_velocity_unet_safe(
                 end
                 
                 # Alle Daten auf CPU
-                phase_batch = cpu(phase_batch)
-                velocity_batch = cpu(velocity_batch)
+                # phase_batch = cpu(phase_batch)
+                # velocity_batch = cpu(velocity_batch)
                 
                 # ZYGOTE-SICHERE Verlustfunktion
                 function loss_fn(m)
