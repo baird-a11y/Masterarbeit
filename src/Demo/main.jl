@@ -1,299 +1,360 @@
 # =============================================================================
-# HAUPTSKRIPT - ADAPTIVE UNET FÜR LAMEM
+# VEREINFACHTES SERVER-SCRIPT - ADAPTIVE UNET FÜR LAMEM
 # =============================================================================
-# Speichern als: main.jl
+# Speichern als: main_server_simple.jl
 
 using Flux
 using CUDA
-using GLMakie
 using Statistics
 using Random
+import Dates
+using Serialization
+using BSON: @save
 
-println("=== ADAPTIVE UNET FÜR LAMEM ===")
+println("=== ADAPTIVE UNET FÜR LAMEM - SERVER MODE ===")
+println("Zeit: $(Dates.now())")
 println("Lade Module...")
 
-# Module laden (Pfade anpassen falls nötig)
+# Module laden
 include("lamem_interface.jl")
 include("data_processing.jl") 
 include("unet_config.jl")
 include("unet_architecture.jl")
 include("batch_management.jl")
+include("training.jl")
 
 println("Alle Module erfolgreich geladen!")
 
 # =============================================================================
-# DEMO-FUNKTIONEN
+# SERVER KONFIGURATION
+# =============================================================================
+
+const SERVER_CONFIG = (
+    # Experimentelle Parameter
+    n_samples = 5,                     # Anzahl LaMEM-Simulationen
+    resolutions = [128, 256],            # Verschiedene Auflösungen
+    target_resolution = 256,             # UNet-Auflösung
+    
+    # Training-Parameter  
+    num_epochs = 1,                     # Training-Epochen
+    learning_rate = 0.001f0,             # Lernrate
+    batch_size = 1,                      # Batch-Größe
+    early_stopping_patience = 15,        # Early stopping
+    
+    # Output-Parameter
+    checkpoint_dir = "server_checkpoints", # Checkpoint-Verzeichnis
+    results_dir = "server_results",       # Ergebnisse
+    
+    # Server-spezifisch
+    save_dataset = true,                  # Dataset für spätere Nutzung speichern
+    use_gpu = CUDA.functional(),          # GPU falls verfügbar
+)
+
+# =============================================================================
+# SERVER BATCH-JOB
 # =============================================================================
 
 """
-Komplette Demo: Von LaMEM-Daten bis UNet-Training
+Vereinfachter Server-Batch-Job ohne Logging
 """
-function demo_complete_pipeline(;
-    n_samples = 50,
-    target_resolution = 256,
-    resolutions = [128, 256],
-    verbose = true
-)
-    println("\n" * "="^80)
-    println("KOMPLETTE PIPELINE DEMO")
+function run_server_batch_job()
+    # Erstelle Output-Verzeichnisse
+    mkpath(SERVER_CONFIG.checkpoint_dir)
+    mkpath(SERVER_CONFIG.results_dir)
+    
+    println("="^80)
+    println("STARTE SERVER BATCH-JOB")
     println("="^80)
     
-    # 1. Datengenerierung
-    println("\n1. DATENGENERIERUNG")
-    dataset = generate_mixed_resolution_dataset(n_samples, resolutions=resolutions, verbose=verbose)
-    
-    if length(dataset) == 0
-        error("Keine Daten generiert!")
+    # Konfiguration ausgeben
+    for (key, value) in pairs(SERVER_CONFIG)
+        println("$key: $value")
     end
     
-    # 2. UNet-Konfiguration
-    println("\n2. UNET-KONFIGURATION")
-    config = design_adaptive_unet(target_resolution)
-    
-    # 3. UNet-Erstellung
-    println("\n3. UNET-ERSTELLUNG")
-    model = create_final_corrected_unet(config)
-    
-    # 4. Test des UNet
-    println("\n4. UNET-TEST")
-    success, output_shape = test_corrected_unet(target_resolution, verbose=verbose)
-    
-    # 5. Batch-Management-Test
-    println("\n5. BATCH-MANAGEMENT-TEST")
-    println("Erstelle adaptive Batches...")
+    start_time = time()
     
     try
-        phase_batch, velocity_batch, successful = create_adaptive_batch(
-            dataset[1:min(8, length(dataset))], 
-            target_resolution,
-            verbose=verbose
+        # 1. SYSTEM-CHECK
+        println("\n" * "="^60)
+        println("1. SYSTEM-CHECK")
+        println("="^60)
+        
+        # Hardware-Info
+        println("Julia Version: $(VERSION)")
+        println("CUDA verfügbar: $(CUDA.functional())")
+        if CUDA.functional()
+            println("GPU: $(CUDA.name(CUDA.device()))")
+            mem_info = get_gpu_memory_info()
+            println("GPU Memory: $(round(mem_info.total / 1e9, digits=2)) GB")
+        end
+        
+        if !quick_test_server()
+            error("System-Test fehlgeschlagen!")
+        end
+        println("✓ System-Test erfolgreich")
+        
+        # 2. DATENGENERIERUNG
+        println("\n" * "="^60)
+        println("2. DATENGENERIERUNG")
+        println("="^60)
+        
+        println("Starte Generierung von $(SERVER_CONFIG.n_samples) Samples...")
+        
+        dataset = generate_mixed_resolution_dataset(
+            SERVER_CONFIG.n_samples,
+            resolutions=SERVER_CONFIG.resolutions,
+            verbose=false  # Weniger Ausgabe für Server
         )
         
-        println("Batch-Erstellung erfolgreich!")
-        println("  Phase Batch: $(size(phase_batch))")
-        println("  Velocity Batch: $(size(velocity_batch))")
-        println("  Erfolgreiche Samples: $successful")
-        
-        # 6. Forward-Pass mit echten Daten
-        println("\n6. FORWARD-PASS MIT ECHTEN DATEN")
-        if CUDA.functional()
-            model_gpu = gpu(model)
-            phase_gpu = gpu(phase_batch)
-            output = cpu(model_gpu(phase_gpu))
-        else
-            output = model(phase_batch)
+        if length(dataset) == 0
+            error("Keine Trainingsdaten generiert!")
         end
         
-        println("Forward-Pass erfolgreich!")
-        println("  Output: $(size(output))")
+        println("✓ Dataset erstellt: $(length(dataset)) Samples")
         
-        # 7. Visualisierung (optional)
-        if verbose
-            println("\n7. VISUALISIERUNG")
-            visualize_sample_prediction(phase_batch, velocity_batch, output)
+        # Dataset speichern
+        if SERVER_CONFIG.save_dataset
+            
+            dataset_path = joinpath(SERVER_CONFIG.results_dir, "dataset.jls")
+            serialize(dataset_path, dataset)
+            println("✓ Dataset gespeichert: $dataset_path")
         end
+        
+        # 3. MODELL-ERSTELLUNG
+        println("\n" * "="^60)
+        println("3. MODELL-ERSTELLUNG")
+        println("="^60)
+        
+        config = design_adaptive_unet(SERVER_CONFIG.target_resolution)
+        println("UNet Konfiguration: $(config.depth) Layer, $(config.filter_progression)")
+        
+        model = create_final_corrected_unet(config)
+        println("✓ UNet erstellt")
+        
+        # Modell-Test
+        success, output_shape = test_final_corrected_unet(
+            SERVER_CONFIG.target_resolution, 
+            verbose=false
+        )
+        
+        if !success
+            error("UNet-Test fehlgeschlagen!")
+        end
+        println("✓ UNet-Test erfolgreich: $(output_shape)")
+        
+        # 4. TRAINING
+        println("\n" * "="^60)
+        println("4. TRAINING")
+        println("="^60)
+        
+        # Training-Konfiguration
+        train_config = create_training_config(
+            learning_rate = SERVER_CONFIG.learning_rate,
+            num_epochs = SERVER_CONFIG.num_epochs,
+            batch_size = SERVER_CONFIG.batch_size,
+            checkpoint_dir = SERVER_CONFIG.checkpoint_dir,
+            save_every_n_epochs = 5,  # Häufiger speichern auf Server
+            use_gpu = SERVER_CONFIG.use_gpu,
+            validation_split = 0.15f0,  # Mehr Validation-Daten
+            early_stopping_patience = SERVER_CONFIG.early_stopping_patience
+        )
+        
+        println("Starte Training: $(train_config.num_epochs) Epochen, GPU: $(train_config.use_gpu)")
+        
+        # Training mit Error-Handling
+        trained_model, train_losses, val_losses = train_velocity_unet(
+            model, dataset, SERVER_CONFIG.target_resolution,
+            config=train_config
+        )
+        
+        println("✓ Training abgeschlossen")
+        
+        # 5. EVALUIERUNG
+        println("\n" * "="^60)
+        println("5. EVALUIERUNG")
+        println("="^60)
+        
+        # Training-Statistiken
+        final_train_loss = train_losses[end]
+        final_val_loss = val_losses[end]
+        best_val_loss = minimum(val_losses)
+        best_epoch = argmin(val_losses)
+        
+        println("Training Statistiken:")
+        println("  Finale Training Loss: $(round(final_train_loss, digits=6))")
+        println("  Finale Validation Loss: $(round(final_val_loss, digits=6))")
+        println("  Beste Validation Loss: $(round(best_val_loss, digits=6)) (Epoche $best_epoch)")
+        println("  Training Epochen: $(length(train_losses))")
+        
+        # Speichere Ergebnisse
+        
+        results_data = Dict(
+            "train_losses" => train_losses,
+            "val_losses" => val_losses,
+            "config" => config,
+            "server_config" => SERVER_CONFIG,
+            "final_stats" => Dict(
+                "final_train_loss" => final_train_loss,
+                "final_val_loss" => final_val_loss,
+                "best_val_loss" => best_val_loss,
+                "best_epoch" => best_epoch
+            )
+        )
+        
+        results_path = joinpath(SERVER_CONFIG.results_dir, "training_results.bson")
+        @save results_path results_data
+        println("✓ Trainingsergebnisse gespeichert: $results_path")
+        
+        # 6. FINAL TEST
+        println("\n" * "="^60)
+        println("6. FINAL TEST")
+        println("="^60)
+        
+        if length(dataset) > 0
+            # Test mit mehreren Samples
+            n_test_samples = min(5, length(dataset))
+            total_mse_vx = 0.0
+            total_mse_vz = 0.0
+            
+            for i in 1:n_test_samples
+                test_sample = dataset[i]
+                x, z, phase, vx, vz, exx, ezz, v_stokes = test_sample
+                
+                phase_tensor, velocity_tensor = preprocess_lamem_sample(
+                    x, z, phase, vx, vz, v_stokes,
+                    target_resolution=SERVER_CONFIG.target_resolution
+                )
+                
+                prediction = cpu(trained_model(phase_tensor))
+                
+                mse_vx = mean((prediction[:,:,1,1] .- velocity_tensor[:,:,1,1]).^2)
+                mse_vz = mean((prediction[:,:,2,1] .- velocity_tensor[:,:,2,1]).^2)
+                
+                total_mse_vx += mse_vx
+                total_mse_vz += mse_vz
+            end
+            
+            avg_mse_vx = total_mse_vx / n_test_samples
+            avg_mse_vz = total_mse_vz / n_test_samples
+            avg_mse_total = (avg_mse_vx + avg_mse_vz) / 2
+            
+            println("Final Test Ergebnisse ($(n_test_samples) Samples):")
+            println("  Durchschnitt MSE Vx: $(round(avg_mse_vx, digits=6))")
+            println("  Durchschnitt MSE Vz: $(round(avg_mse_vz, digits=6))")
+            println("  Durchschnitt MSE Total: $(round(avg_mse_total, digits=6))")
+            
+            # Speichere Test-Ergebnisse
+            test_results = Dict(
+                "avg_mse_vx" => avg_mse_vx,
+                "avg_mse_vz" => avg_mse_vz,
+                "avg_mse_total" => avg_mse_total,
+                "n_test_samples" => n_test_samples
+            )
+            
+            test_path = joinpath(SERVER_CONFIG.results_dir, "test_results.bson")
+            @save test_path test_results
+            println("✓ Test-Ergebnisse gespeichert: $test_path")
+        end
+        
+        # Erfolgreicher Abschluss
+        end_time = time()
+        total_time = end_time - start_time
+        
+        println("\n" * "="^80)
+        println("BATCH-JOB ERFOLGREICH ABGESCHLOSSEN")
+        println("="^80)
+        println("Gesamtzeit: $(round(total_time/3600, digits=2)) Stunden")
+        println("Checkpoints: $(SERVER_CONFIG.checkpoint_dir)")
+        println("Ergebnisse: $(SERVER_CONFIG.results_dir)")
+        
+        return true
         
     catch e
-        println("Fehler beim Batch-Management: $e")
-    end
-    
-    println("\n" * "="^80)
-    println("PIPELINE DEMO ABGESCHLOSSEN")
-    println("="^80)
-    
-    return dataset, model, config
-end
-
-"""
-Visualisiert eine Vorhersage
-"""
-function visualize_sample_prediction(phase_batch, velocity_batch, prediction; sample_idx=1)
-    try
-        # Extrahiere ersten Sample
-        phase = phase_batch[:, :, 1, sample_idx]
-        vx_true = velocity_batch[:, :, 1, sample_idx]
-        vz_true = velocity_batch[:, :, 2, sample_idx]
-        vx_pred = prediction[:, :, 1, sample_idx]
-        vz_pred = prediction[:, :, 2, sample_idx]
+        end_time = time()
+        total_time = end_time - start_time
         
-        # Erstelle Figure
-        fig = Figure(resolution=(1200, 800))
+        println("\n" * "="^80)
+        println("BATCH-JOB FEHLGESCHLAGEN")
+        println("="^80)
+        println("Fehler: $e")
+        println("Laufzeit bis Fehler: $(round(total_time/60, digits=1)) Minuten")
         
-        # Plot 1: Phasenfeld
-        ax1 = Axis(fig[1, 1], title="Phasenfeld", aspect=DataAspect())
-        heatmap!(ax1, phase, colormap=:grays)
-        
-        # Plot 2: Vz True
-        ax2 = Axis(fig[1, 2], title="Vz True", aspect=DataAspect())
-        heatmap!(ax2, vz_true, colormap=:RdBu, colorrange=(-3, 1))
-        contour!(ax2, phase, levels=[0.5], color=:black, linewidth=2)
-        
-        # Plot 3: Vz Predicted
-        ax3 = Axis(fig[1, 3], title="Vz Predicted", aspect=DataAspect())
-        heatmap!(ax3, vz_pred, colormap=:RdBu, colorrange=(-3, 1))
-        contour!(ax3, phase, levels=[0.5], color=:black, linewidth=2)
-        
-        # Plot 4: Vz Error
-        ax4 = Axis(fig[1, 4], title="Vz Error", aspect=DataAspect())
-        error_vz = abs.(vz_pred .- vz_true)
-        heatmap!(ax4, error_vz, colormap=:hot)
-        
-        # Statistiken
-        mse_vz = mean((vz_pred .- vz_true).^2)
-        mse_vx = mean((vx_pred .- vx_true).^2)
-        
-        Label(fig[2, 1:4], "MSE Vz: $(round(mse_vz, digits=6)), MSE Vx: $(round(mse_vx, digits=6))")
-        
-        save("unet_prediction_demo.png", fig)
-        println("Visualisierung gespeichert: unet_prediction_demo.png")
-        
-        display(fig)
-        
-    catch e
-        println("Visualisierung fehlgeschlagen: $e")
-    end
-end
-
-"""
-Teste alle verfügbaren Auflösungen
-"""
-function demo_all_resolutions()
-    println("\n=== TESTE ALLE AUFLÖSUNGEN ===")
-    
-    resolutions = [64, 128, 256]
-    if CUDA.functional()
-        push!(resolutions, 512)
-    end
-    
-    results = Dict{Int, Bool}()
-    
-    for res in resolutions
-        println("\n" * "="^50)
-        println("Teste $(res)×$(res)")
-        
-        try
-            # Konfiguration
-            config = design_adaptive_unet(res)
-            
-            # UNet erstellen
-            model = create_final_corrected_unet(config)
-            
-            # Test
-            success, output_shape = test_corrected_unet(res, verbose=true)
-            results[res] = success
-            
-        catch e
-            println("Fehler bei $(res)×$(res): $e")
-            results[res] = false
+        # Stacktrace ausgeben für Debugging
+        for (exc, bt) in Base.catch_stack()
+            showerror(stdout, exc, bt)
+            println()
         end
+        
+        return false
     end
-    
-    # Zusammenfassung
-    println("\n" * "="^50)
-    println("ZUSAMMENFASSUNG ALLER TESTS:")
-    successful = sum(values(results))
-    total = length(results)
-    println("Erfolgreich: $successful/$total")
-    
-    for (res, success) in sort(collect(results))
-        status = success ? "✓" : "✗"
-        println("  $(res)×$(res): $status")
-    end
-    
-    return results
 end
 
 """
-Schnelle Funktionalitätsprüfung
+Server-optimierter System-Test
 """
-function quick_test()
-    println("\n=== SCHNELLER FUNKTIONALITÄTSTEST ===")
-    
+function quick_test_server()
     try
-        # 1. LaMEM Test
-        println("1. Teste LaMEM Interface...")
+        # LaMEM Test
         x, z, phase, vx, vz, exx, ezz, v_stokes = LaMEM_Multi_crystal(
             resolution=(64, 64),
             n_crystals=1,
             radius_crystal=[0.05],
             cen_2D=[(0.0, 0.5)]
         )
-        println("   ✓ LaMEM erfolgreich")
         
-        # 2. Preprocessing Test
-        println("2. Teste Preprocessing...")
-        phase_tensor, velocity_tensor = preprocess_lamem_sample(x, z, phase, vx, vz, v_stokes, target_resolution=128)
-        println("   ✓ Preprocessing erfolgreich")
+        # Preprocessing Test
+        phase_tensor, velocity_tensor = preprocess_lamem_sample(
+            x, z, phase, vx, vz, v_stokes, target_resolution=128
+        )
         
-        # 3. UNet Test
-        println("3. Teste UNet...")
+        # UNet Test
         config = design_adaptive_unet(128)
         model = create_final_corrected_unet(config)
         test_input = randn(Float32, 128, 128, 1, 2)
         output = model(test_input)
-        println("   ✓ UNet erfolgreich")
         
-        println("\n✓ ALLE TESTS ERFOLGREICH!")
-        return true
+        return size(output) == (128, 128, 2, 2)
         
     catch e
-        println("\n✗ TEST FEHLGESCHLAGEN: $e")
+        println("System-Test Fehler: $e")
         return false
     end
 end
 
-# =============================================================================
-# VERFÜGBARE FUNKTIONEN
-# =============================================================================
-
-println("\n" * "="^60)
-println("VERFÜGBARE FUNKTIONEN:")
-println("="^60)
-println()
-println("DEMO-FUNKTIONEN:")
-println("  quick_test()                    - Schneller Funktionalitätstest")
-println("  demo_all_resolutions()          - Teste alle UNet-Auflösungen")
-println("  demo_complete_pipeline()        - Komplette Pipeline-Demo")
-println()
-println("DATENGENERIERUNG:")
-println("  LaMEM_Multi_crystal(...)        - Einzelne LaMEM-Simulation")
-println("  generate_mixed_resolution_dataset(n) - Generiere n Samples")
-println()
-println("DATENVERARBEITUNG:")
-println("  resize_power_of_2(data, size)   - Größenanpassung")
-println("  preprocess_lamem_sample(...)    - Sample für UNet vorbereiten")
-println()
-println("UNET:")
-println("  design_adaptive_unet(resolution) - UNet-Konfiguration erstellen")
-println("  create_final_corrected_unet(config) - UNet erstellen")
-println("  test_corrected_unet(resolution)  - UNet testen")
-println()
-println("BATCH-MANAGEMENT:")
-println("  create_adaptive_batch(samples, res) - Batch erstellen")
-println("  smart_batch_manager(dataset, res)   - Smart Batch Iterator")
-println("  get_gpu_memory_info()           - GPU-Speicher-Info")
-println()
-println("="^60)
-
-# =============================================================================
-# AUSFÜHRUNG
-# =============================================================================
-
-if abspath(PROGRAM_FILE) == @__FILE__
-    println("\nHauptskript wird direkt ausgeführt...")
-    println("Führe schnellen Test aus...")
+"""
+Server-optimierte UNet-Test-Funktion
+"""
+function test_final_corrected_unet(resolution::Int=256; batch_size::Int=2, verbose::Bool=false)
+    config = design_adaptive_unet(resolution)
+    model = create_final_corrected_unet(config)
+    test_input = randn(Float32, resolution, resolution, 1, batch_size)
     
-    if quick_test()
-        println("\n🎉 System ist bereit!")
-        println("\nNächste Schritte:")
-        println("  - demo_complete_pipeline() für vollständige Demo")
-        println("  - demo_all_resolutions() für Auflösungstest")
-        println("  - Eigene Experimente starten")
-    else
-        println("\n⚠️  System-Setup unvollständig!")
-        println("Bitte prüfen Sie die Fehlermeldungen oben.")
+    try
+        output = model(test_input)
+        expected_shape = (resolution, resolution, 2, batch_size)
+        success = size(output) == expected_shape
+        
+        return success, size(output)
+    catch e
+        return false, nothing
     end
+end
+
+# =============================================================================
+# SERVER BATCH-JOB START
+# =============================================================================
+
+println("="^80)
+println("SERVER BATCH-JOB INITIALISIERUNG")
+println("="^80)
+
+# Führe Batch-Job aus
+success = run_server_batch_job()
+
+if success
+    println(" SERVER BATCH-JOB ERFOLGREICH ABGESCHLOSSEN! ")
+    exit(0)
 else
-    println("\nModule erfolgreich geladen!")
-    println("Nutzen Sie quick_test() für einen ersten Test.")
+    println(" SERVER BATCH-JOB FEHLGESCHLAGEN! ")
+    exit(1)
 end

@@ -6,6 +6,7 @@
 using Flux
 using Flux: mse
 using CUDA
+using CUDA: @allowscalar  # HINZUGEFÜGT: Import @allowscalar Makro
 using Optimisers
 using BSON: @save
 using Statistics
@@ -101,7 +102,7 @@ function evaluate_model(model, val_dataset, target_resolution; use_gpu=false)
 end
 
 """
-Haupttraining-Funktion
+Haupttraining-Funktion - KORRIGIERT für GPU-Kompatibilität
 """
 function train_velocity_unet(
     model, 
@@ -132,6 +133,7 @@ function train_velocity_unet(
     if config.use_gpu && CUDA.functional()
         model = gpu(model)
         println("  Modell auf GPU verschoben")
+        # ENTFERNT: Globales allowscalar - wird lokal verwendet
     end
     
     # Training-Geschichte
@@ -148,42 +150,102 @@ function train_velocity_unet(
         epoch_loss = 0.0f0
         n_batches = 0
         
-        # Batch Manager für Training
-        batch_manager = smart_batch_manager(
-            train_dataset, target_resolution, 
-            verbose=(epoch == 1)  # Nur erste Epoche verbose
-        )
-        
-        for (phase_batch, velocity_batch, successful, batch_idx) in batch_manager
+        # Vereinfachtes Batch-Management für GPU-Kompatibilität
+        for i in 1:config.batch_size:min(50, length(train_dataset))  # Limitiere für ersten Test
+            end_idx = min(i + config.batch_size - 1, length(train_dataset))
+            batch_samples = train_dataset[i:end_idx]
+            
             try
+                phase_batch, velocity_batch, successful = create_adaptive_batch(
+                    batch_samples, target_resolution, verbose=false
+                )
+                
+                if successful == 0
+                    continue  # Skip leere Batches
+                end
+                
+                # GPU-Transfer
+                if config.use_gpu && CUDA.functional()
+                    phase_batch = gpu(phase_batch)
+                    velocity_batch = gpu(velocity_batch)
+                end
+                
                 # Gradienten berechnen und Parameter aktualisieren
-                loss_fn(m) = mse(m(phase_batch), velocity_batch)
+                # ROBUSTE LÖSUNG: Automatische GPU/CPU-Handhabung
+                loss_fn(m) = begin
+                    pred = m(phase_batch)
+                    loss_val = mse(pred, velocity_batch)
+                    return loss_val
+                end
+                
                 ∇model = gradient(loss_fn, model)[1]
-                batch_loss = loss_fn(model)
                 
-                opt_state, model = Optimisers.update!(opt_state, model, ∇model)
+                # Sichere Loss-Extraktion (funktioniert mit und ohne GPU)
+                batch_loss = if config.use_gpu && CUDA.functional()
+                    @allowscalar loss_fn(model)
+                else
+                    loss_fn(model)
+                end
                 
-                epoch_loss += batch_loss
-                n_batches += 1
+                # Prüfe auf valide Loss
+                if isfinite(batch_loss)
+                    opt_state, model = Optimisers.update!(opt_state, model, ∇model)
+                    epoch_loss += batch_loss
+                    n_batches += 1
+                end
                 
-                if batch_idx % 10 == 1
-                    println("  Batch $batch_idx: Loss = $(round(batch_loss, digits=6))")
+                if i % (config.batch_size * 10) == 1
+                    # Sichere Loss-Ausgabe (automatische GPU/CPU-Handhabung)
+                    safe_loss = if config.use_gpu && CUDA.functional()
+                        @allowscalar Float32(batch_loss)
+                    else
+                        Float32(batch_loss)
+                    end
+                    println("  Batch $i: Loss = $(round(safe_loss, digits=6))")
                 end
                 
             catch e
-                println("  Fehler bei Batch $batch_idx: $e")
+                println("  Fehler bei Batch $i: $e")
+                
+                # Bei GPU-Fehlern: Fallback zu CPU
+                if config.use_gpu && (occursin("GPU", string(e)) || occursin("CUDA", string(e)))
+                    println("  GPU-Fehler erkannt, verwende CPU für diesen Batch")
+                    try
+                        # CPU-Fallback
+                        phase_batch_cpu = cpu(phase_batch)
+                        velocity_batch_cpu = cpu(velocity_batch)
+                        model_cpu = cpu(model)
+                        
+                        pred_cpu = model_cpu(phase_batch_cpu)
+                        batch_loss = mse(pred_cpu, velocity_batch_cpu)
+                        
+                        if isfinite(batch_loss)
+                            epoch_loss += batch_loss
+                            n_batches += 1
+                        end
+                    catch e2
+                        println("  Auch CPU-Fallback fehlgeschlagen: $e2")
+                    end
+                end
                 continue
             end
         end
         
-        # Durchschnittlicher Training-Loss
-        avg_train_loss = n_batches > 0 ? epoch_loss / n_batches : Inf32
+        # Durchschnittlicher Training-Loss mit sicherer Konvertierung
+        avg_train_loss = if n_batches > 0
+            if config.use_gpu && CUDA.functional()
+                @allowscalar Float32(epoch_loss / n_batches)
+            else
+                Float32(epoch_loss / n_batches)
+            end
+        else
+            Inf32
+        end
         push!(train_losses, avg_train_loss)
         
-        # Validation
-        val_loss = evaluate_model(
-            model, val_dataset, target_resolution, 
-            use_gpu=config.use_gpu
+        # Validation (immer auf CPU für Stabilität)
+        val_loss = evaluate_model_safe(
+            cpu(model), val_dataset, target_resolution
         )
         push!(val_losses, val_loss)
         
@@ -196,7 +258,7 @@ function train_velocity_unet(
             best_val_loss = val_loss
             patience_counter = 0
             
-            # Speichere bestes Modell
+            # Speichere bestes Modell (immer CPU-Version)
             model_cpu = cpu(model)
             best_model_path = joinpath(config.checkpoint_dir, "best_model.bson")
             @save best_model_path model_cpu
@@ -240,6 +302,51 @@ function train_velocity_unet(
     println("Modelle gespeichert in: $(config.checkpoint_dir)")
     
     return model, train_losses, val_losses
+end
+
+"""
+Sichere Evaluierung auf CPU
+"""
+function evaluate_model_safe(model, val_dataset, target_resolution)
+    total_loss = 0.0f0
+    n_batches = 0
+    
+    # Kleine Batches für Validation
+    val_batch_size = min(2, length(val_dataset))
+    
+    for i in 1:val_batch_size:min(20, length(val_dataset))  # Limitiere Validation
+        end_idx = min(i + val_batch_size - 1, length(val_dataset))
+        batch_samples = val_dataset[i:end_idx]
+        
+        try
+            phase_batch, velocity_batch, successful = create_adaptive_batch(
+                batch_samples, target_resolution, verbose=false
+            )
+            
+            if successful == 0
+                continue
+            end
+            
+            # Evaluation immer auf CPU
+            phase_batch = cpu(phase_batch)
+            velocity_batch = cpu(velocity_batch)
+            model = cpu(model)
+            
+            prediction = model(phase_batch)
+            batch_loss = mse(prediction, velocity_batch)
+            
+            if isfinite(batch_loss)
+                total_loss += batch_loss
+                n_batches += 1
+            end
+            
+        catch e
+            println("Validation Batch $i fehlgeschlagen: $e")
+            continue
+        end
+    end
+    
+    return n_batches > 0 ? total_loss / n_batches : Inf32
 end
 
 """
@@ -294,7 +401,7 @@ function demo_training(;
     # 2. UNet erstellen
     println("\n2. Erstelle UNet...")
     config = design_adaptive_unet(target_resolution)
-    model = create_final_corrected_unet(config)
+    model = create_corrected_adaptive_unet(config)
     
     # 3. Training-Konfiguration
     train_config = create_training_config(
