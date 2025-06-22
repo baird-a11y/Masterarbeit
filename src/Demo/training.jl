@@ -110,7 +110,6 @@ function train_velocity_unet(
     target_resolution;
     config = create_training_config()
 )
-    
     println("=== STARTE UNET TRAINING ===")
     println("Konfiguration:")
     println("  Epochen: $(config.num_epochs)")
@@ -130,13 +129,10 @@ function train_velocity_unet(
     # Optimizer setup
     opt_state = Optimisers.setup(Optimisers.Adam(config.learning_rate), model)
     
-    # GPU setup
-    if config.use_gpu && CUDA.functional()
-        model = gpu(model)
-        println("  Modell auf GPU verschoben")
-        # ENTFERNT: Globales allowscalar - wird lokal verwendet
-    end
+    # CPU-Training bevorzugen für Stabilität
     model_cpu = cpu(model)
+    println("  Training auf CPU für Stabilität")
+    
     # Training-Geschichte
     train_losses = Float32[]
     val_losses = Float32[]
@@ -157,18 +153,12 @@ function train_velocity_unet(
             batch_samples = train_dataset[i:end_idx]
             
             try
-                phase_batch, velocity_batch, successful = deepcopy(create_adaptive_batch(
+                phase_batch, velocity_batch, successful = create_adaptive_batch(
                     batch_samples, target_resolution, verbose=false
-                ))
+                )
                 
                 if successful == 0
                     continue  # Skip leere Batches
-                end
-                
-                # GPU-Transfer
-                if config.use_gpu && CUDA.functional()
-                    phase_batch = gpu(phase_batch)
-                    velocity_batch = gpu(velocity_batch)
                 end
                 
                 # VOLLSTÄNDIG KORRIGIERTES CPU-TRAINING
@@ -206,13 +196,13 @@ function train_velocity_unet(
         else
             Inf32
         end
-        train_losses = vcat(train_losses, avg_train_loss)
+        push!(train_losses, avg_train_loss)
         
         # Validation (auf CPU-Modell)
         val_loss = evaluate_model_safe(
             model_cpu, val_dataset, target_resolution
         )
-        val_losses = vcat(val_losses, val_loss)
+        push!(val_losses, val_loss)
         
         println("Epoche $epoch abgeschlossen:")
         println("  Training Loss: $(round(avg_train_loss, digits=6))")
@@ -269,9 +259,6 @@ end
 """
 Sichere Evaluierung auf CPU
 """
-"""
-Sichere Evaluierung auf CPU
-"""
 function evaluate_model_safe(model, val_dataset, target_resolution)
     total_loss = 0.0f0
     n_batches = 0
@@ -279,15 +266,8 @@ function evaluate_model_safe(model, val_dataset, target_resolution)
     # Kleine Batches für Validation
     val_batch_size = min(2, length(val_dataset))
     
-    for i in 1:val_batch_size:length(val_dataset)  # Ensure valid range
+    for i in 1:val_batch_size:min(20, length(val_dataset))  # Limitiere Validation
         end_idx = min(i + val_batch_size - 1, length(val_dataset))
-        
-        # Überprüfen Sie, ob der Bereich gültig ist
-        if i > end_idx
-            println("Ungültiger Bereich: i=$i, end_idx=$end_idx")
-            continue
-        end
-        
         batch_samples = val_dataset[i:end_idx]
         
         try
@@ -373,7 +353,7 @@ function demo_training(;
     # 2. UNet erstellen
     println("\n2. Erstelle UNet...")
     config = design_adaptive_unet(target_resolution)
-    model = create_corrected_adaptive_unet(config)
+    model = create_final_corrected_unet(config)
     
     # 3. Training-Konfiguration
     train_config = create_training_config(

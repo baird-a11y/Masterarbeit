@@ -50,7 +50,8 @@ struct FixedEncoderBlock
     level::Int
 end
 
-Flux.@functor FixedEncoderBlock
+# Verwende @layer anstelle von @functor
+Flux.@layer FixedEncoderBlock
 
 function (block::FixedEncoderBlock)(x)
     features = block.conv_block(x)
@@ -73,7 +74,8 @@ struct FixedDecoderBlock
     target_size::Tuple{Int, Int}  # NEUE: Zielgröße für diesen Decoder
 end
 
-Flux.@functor FixedDecoderBlock
+# Verwende @layer anstelle von @functor
+Flux.@layer FixedDecoderBlock
 
 function (block::FixedDecoderBlock)(x, skip_features)
     # Upsampling
@@ -104,7 +106,7 @@ function (block::FixedDecoderBlock)(x, skip_features)
     # FINAL: Stelle sicher, dass Output exakte Zielgröße hat
     result_size = size(result)
     if result_size[1:2] != block.target_size
-        println("KORREKTUR: Decoder $(block.level) Output $(result_size[1:2]) → $(block.target_size)")
+        println("KORREKTUR: Decoder $(block.level) Output $(result_size[1:3]) → $(block.target_size)")
         h_end = min(result_size[1], block.target_size[1])
         w_end = min(result_size[2], block.target_size[2])
         result = result[1:h_end, 1:w_end, :, :]
@@ -195,7 +197,8 @@ struct ManualUpsampleBlock
     target_size::Tuple{Int, Int}
 end
 
-Flux.@functor ManualUpsampleBlock
+# Verwende @layer anstelle von @functor
+Flux.@layer ManualUpsampleBlock
 
 function (block::ManualUpsampleBlock)(x, skip_features)
     # Manuelle 2x Vergrößerung durch Repeat + Conv
@@ -306,7 +309,8 @@ struct FinalCorrectedUNet
     output_layer::Chain
 end
 
-Flux.@functor FinalCorrectedUNet
+# Verwende @layer anstelle von @functor
+Flux.@layer FinalCorrectedUNet
 
 """
 Erstellt final korrigiertes UNet mit garantierten Dimensionen
