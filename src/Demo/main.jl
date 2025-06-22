@@ -53,7 +53,7 @@ const SERVER_CONFIG = (
     
     # Server-spezifisch
     save_dataset = true,                # Dataset für spätere Nutzung speichern
-    use_gpu = false,                    # CPU für Stabilität
+    use_gpu = true,                    # CPU für Stabilität
 )
 
 # =============================================================================

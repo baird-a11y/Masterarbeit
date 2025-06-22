@@ -99,6 +99,66 @@ results = complete_velocity_evaluation("model.bson")
 
 ---
 
+### Experiment 2: Koordinaten-System Debugging
+
+#### Problem-Erkennung
+
+Bei ersten Anwendungen des trainierten UNets stellte sich heraus, dass **Kristall-Positionen im Input nicht mit Geschwindigkeits-Hotspots im Output** übereinstimmten. Verdacht auf Koordinatensystem-Probleme.
+
+#### Debugging-Ansatz
+
+- **Vereinfachtes Evaluierungs-Tool** entwickelt (nur v_z fokussiert)
+- **Pixel-genaue Analyse** von Kristall-Zentrum vs. min(v_z) Position
+- **Dimensionen-Konsistenz** zwischen Training und Anwendung prüfen
+
+#### Erkenntnisse
+
+**Problem identifiziert:**
+
+- **LaMEM-Output**: 257×257 Pixel
+- **UNet-Training**: 256×256 Pixel
+- **UNet-Output**: 256×256 Pixel
+- → **1-Pixel Versatz** durch Dimensionen-Mismatch
+
+**Koordinaten-Präzision gemessen:**
+
+- **Ground Truth Alignment**: 6.1 Pixel (✅ physikalisch korrekt)
+- **UNet Alignment**: 6.3 Pixel (✅ lernt korrekte Physik)
+- **GT vs. UNet Abweichung**: **1.0 Pixel** (✅ praktisch perfekt!)
+
+**Fazit:**
+
+- **KEIN Koordinatensystem-Problem**
+- **UNet lernt korrekte Physik**
+- **Problem lag an Dimensionen-Inkonsistenz**
+
+#### Code-Tools
+
+**Koordinaten-Debugging:**
+
+```julia
+# Vereinfachte v_z-fokussierte Evaluierung
+result = debug_vz_coordinates("model.bson", target_size=(256,256))
+
+# Findet automatisch:
+# - Kristall-Zentrum im Phasenfeld
+# - Min v_z Position in Ground Truth vs. UNet
+# - Pixel-genaue Abweichungen
+```
+
+**Dimensionen-Fix:**
+
+```julia
+# Konsistente Größen-Behandlung
+actual_size = size(phase_gt)
+if actual_size != target_size
+    println("LaMEM liefert $(actual_size) statt $(target_size)")
+    # Automatische Anpassung...
+end
+```
+
+---
+
 ### Experiment 3: Code-Refactoring und Pipeline-Verbesserung
 
 #### Problem-Erkennung
@@ -217,63 +277,168 @@ result = debug_vz_coordinates("model.bson")
 
 ---
 
-### Experiment 2: Koordinaten-System Debugging
+### Experiment 4: Zygote-Kompatibilität und Sichere Pipeline - 22.06.2025
 
 #### Problem-Erkennung
 
-Bei ersten Anwendungen des trainierten UNets stellte sich heraus, dass **Kristall-Positionen im Input nicht mit Geschwindigkeits-Hotspots im Output** übereinstimmten. Verdacht auf Koordinatensystem-Probleme.
+Nach dem Refactoring traten beim Training **kritische Zygote-Fehler** auf:
 
-#### Debugging-Ansatz
+- **"Mutating arrays is not supported"** - `push!` Operationen in UNet Forward-Pass
+- **"step cannot be zero"** - Range-Fehler in Validation-Schleifen
+- **GPU-Kernel-Compilation Errors** - Broadcast-Probleme mit komplexen Tensor-Operationen
 
-- **Vereinfachtes Evaluierungs-Tool** entwickelt (nur v_z fokussiert)
-- **Pixel-genaue Analyse** von Kristall-Zentrum vs. min(v_z) Position
-- **Dimensionen-Konsistenz** zwischen Training und Anwendung prüfen
+#### Ursachen-Analyse
 
-#### Erkenntnisse
+**Zygote-Inkompatibilität:**
 
-**Problem identifiziert:**
+- Original UNet verwendete `push!(skip_features, ...)` für Skip-Connections
+- Zygote kann mutating Array-Operationen nicht differenzieren
+- Komplexe Array-Manipulationen in `crop_and_concat` Funktionen
 
-- **LaMEM-Output**: 257×257 Pixel
-- **UNet-Training**: 256×256 Pixel
-- **UNet-Output**: 256×256 Pixel
-- → **1-Pixel Versatz** durch Dimensionen-Mismatch
+**Range-Fehler:**
 
-**Koordinaten-Präzision gemessen:**
+- Validation-Schleifen mit ungültigen Start/End-Indizes
+- Leere Datasets führten zu `1:0` Ranges
+- Fehlende Validierung von Batch-Größen vs. Dataset-Größe
 
-- **Ground Truth Alignment**: 6.1 Pixel (✅ physikalisch korrekt)
-- **UNet Alignment**: 6.3 Pixel (✅ lernt korrekte Physik)
-- **GT vs. UNet Abweichung**: **1.0 Pixel** (✅ praktisch perfekt!)
+#### Lösungsansatz
 
-**Fazit:**
-
-- **KEIN Koordinatensystem-Problem**
-- **UNet lernt korrekte Physik**
-- **Problem lag an Dimensionen-Inkonsistenz**
-
-#### Code-Tools
-
-**Koordinaten-Debugging:**
+**1. Vereinfachte Zygote-sichere UNet-Architektur:**
 
 ```julia
-# Vereinfachte v_z-fokussierte Evaluierung
-result = debug_vz_coordinates("model.bson", target_size=(256,256))
+struct SimplifiedUNet
+    # Explizite Layer-Definition ohne dynamische Arrays
+    enc1_conv1::Conv; enc1_conv2::Conv; enc1_pool::MaxPool
+    enc2_conv1::Conv; enc2_conv2::Conv; enc2_pool::MaxPool
+    # ... weitere Layer
+end
 
-# Findet automatisch:
-# - Kristall-Zentrum im Phasenfeld
-# - Min v_z Position in Ground Truth vs. UNet
-# - Pixel-genaue Abweichungen
-```
-
-**Dimensionen-Fix:**
-
-```julia
-# Konsistente Größen-Behandlung
-actual_size = size(phase_gt)
-if actual_size != target_size
-    println("LaMEM liefert $(actual_size) statt $(target_size)")
-    # Automatische Anpassung...
+# Forward-Pass ohne push! Operationen
+function (model::SimplifiedUNet)(x)
+    enc1 = model.enc1_conv2(model.enc1_conv1(x))
+    # Direkte Skip-Connections ohne Array-Sammlung
+    # ...
 end
 ```
+
+**2. Sichere Training-Schleife:**
+
+```julia
+function train_velocity_unet_safe(model, dataset, target_resolution; config)
+    # Robuste Dataset-Validierung
+    if length(dataset) == 0
+        error("Dataset ist leer!")
+    end
+    
+    # Sichere Range-Erstellung
+    for i in 1:batch_size:min(max_batches, length(dataset))
+        if i > length(dataset)
+            break  # Verhindere ungültige Ranges
+        end
+        # ...
+    end
+    
+    # Zygote-sichere Gradient-Berechnung
+    loss_val, grads = Flux.withgradient(loss_fn, model)
+end
+```
+
+**3. Reduzierte Server-Konfiguration:**
+
+```julia
+const SERVER_CONFIG = (
+    n_samples = 5,           # Weniger Samples für Stabilität
+    target_resolution = 128, # Kleinere Auflösung
+    num_epochs = 2,          # Kurze Tests
+    batch_size = 2,          # Kleine Batches
+    use_gpu = false,         # CPU-only für Zygote-Kompatibilität
+)
+```
+
+#### Implementierung
+
+**Neue Module erstellt:**
+
+- `unet_architecture_zygote_safe.jl` - Vereinfachte UNet-Struktur
+- `training_safe.jl` - Robuste Training-Funktionen
+- `main_safe.jl` - Sichere Server-Pipeline
+
+**Deprecated Syntax behoben:**
+
+- `Flux.@functor` → `Flux.@layer` (neuere Flux-Version)
+- Dokumentationsstring-Syntax korrigiert
+- CPU-fokussiertes Training implementiert
+
+#### Ergebnisse - Erfolgreicher Durchlauf
+
+**Training-Performance:**
+
+```
+--- Epoche 1/2 ---
+  Training Loss: 0.357047
+  Validation Loss: 0.094105
+  Neues bestes Modell gespeichert!
+
+--- Epoche 2/2 ---
+  Training Loss: 0.334409
+  Validation Loss: 0.087728
+  Neues bestes Modell gespeichert!
+```
+
+**Final Test Ergebnisse:**
+
+- **MSE Vx**: 0.599 (Horizontale Geschwindigkeit)
+- **MSE Vz**: 0.697 (Vertikale Geschwindigkeit)
+- **MSE Total**: 0.648
+- **Laufzeit**: 0.78 Minuten für kompletten Durchlauf
+
+#### Bewertung der Ergebnisse
+
+**Positive Aspekte:**
+
+- **Stabile Konvergenz**: Beide Losses sinken konsistent (6-7% Verbesserung)
+- **Kein Overfitting**: Validation Loss besser als Training Loss
+- **Zygote-Kompatibilität**: Keine Differenzierung-Fehler mehr
+- **Robuste Pipeline**: Alle Module arbeiten fehlerfrei zusammen
+
+**Verbesserungspotential:**
+
+- **MSE-Werte noch hoch**: 0.6-0.7 vs. ideale Werte < 0.1
+- **Wenig Trainingsdaten**: Nur 5 Samples vs. optimale 100-500
+- **Kurzes Training**: 2 Epochen vs. empfohlene 20-50
+
+#### Skalierungs-Empfehlungen
+
+**Sofortige Verbesserungen:**
+
+```julia
+const IMPROVED_CONFIG = (
+    n_samples = 50,        # 10x mehr Trainingsdaten
+    num_epochs = 20,       # 10x mehr Epochen  
+    batch_size = 4,        # Größere Batches
+    learning_rate = 0.0005f0,  # Feinere Lernrate
+)
+```
+
+**Erweiterte Validierung:**
+
+- **Physik-Tests**: Kontinuitätsgleichung ∂vx/∂x + ∂vz/∂z ≈ 0
+- **Visualisierung**: Vorhersagen vs. Ground Truth Plots
+- **Robustheitstests**: Verschiedene Kristall-Positionen und -Größen
+
+#### Technische Erkenntnisse
+
+**Zygote-Anforderungen:**
+
+- **Keine mutierende Operationen**: Vermeidung von `push!`, `append!`, etc.
+- **Statische Architektur**: Feste Layer-Struktur ohne dynamische Arrays
+- **Sichere Gradient-Berechnung**: `Flux.withgradient()` statt manueller Differenzierung
+
+**CPU vs. GPU Training:**
+
+- **CPU**: Stabil, Zygote-kompatibel, ausreichend für Prototyping
+- **GPU**: Potentiell schneller, aber komplexere Fehlerdiagnose erforderlich
+- **Empfehlung**: CPU für Entwicklung, GPU für Production-Training
 
 ---
 
@@ -285,39 +450,42 @@ end
 4. **Iterative Entwicklung**: Kleine Tests → Probleme finden → Fixes → Skalierung
 5. **Dimensionen-Konsistenz ist KRITISCH**: 1-Pixel Unterschiede können zu falschen Schlüssen führen
 6. **Debugging-Tools entwickeln**: Vereinfachte, fokussierte Evaluierung besser als komplexe
+7. **Zygote-Kompatibilität beachten**: Frühe Architektur-Entscheidungen können spätes Training verhindern
+8. **Modulare Entwicklung**: Getrennte, testbare Module erleichtern Debugging erheblich
+9. **CPU-Training als Fallback**: Nicht immer ist GPU-Training nötig oder stabil
 
 ---
 
 ## Nächste Schritte
 
-### Sofort (diese Session):
+### Sofort (aktueller Stand):
 
-1. **Koordinaten-Problem gelöst** - UNet funktioniert korrekt
-2. **Code-Refactoring abgeschlossen** - Zentrale Konfiguration implementiert
-3. **256×256 Pipeline-Konsistenz** hergestellt
-4. **CPU-Training Pipeline** validieren
+1. **Pipeline funktioniert** - Zygote-sichere Architektur etabliert
+2. **Skalierung möglich** - Erhöhung von Samples und Epochen
+3. **Modular erweiterbar** - Basis für komplexere Experimente
 
 ### Kurz-/Mittelfristig:
 
-1. **GPU-Training optimieren**: Scalar Indexing Probleme in Skip-Connections lösen
-2. **Pipeline-Validierung**: Kleine Trainingsläufe (20 Samples) durchführen
-3. **Skalierung**: Bei erfolgreicher Validierung auf 500-1000 Samples erweitern
-4. **Robustheits-Tests**: Extreme Parameter, Physik-Constraints prüfen
+1. **Performance-Optimierung**: 50-100 Samples, 20-50 Epochen
+2. **Physik-Validierung**: Kontinuitätsgleichung und Strömungsmuster prüfen
+3. **Hyperparameter-Tuning**: Lernrate, Architektur-Größe, Regularisierung
+4. **Visualisierung**: Plots von Vorhersagen vs. Ground Truth
 
 ### Langfristig:
 
-1. **Mehrere Kristalle**: 2-3 Kristalle gleichzeitig
+1. **Mehrere Kristalle**: Erweiterung auf 2-3 Kristalle gleichzeitig
 2. **Komplexere Geometrien**: Ellipsen, verschiedene Formen
 3. **Real-world Validation**: Vergleich mit experimentellen Daten
-4. **Parameterstudien**: Automatische Exploration von η, Δρ, R-Räumen
+4. **GPU-Optimierung**: Für große Datensätze und komplexe Modelle
 
 ---
 
 ## Aktueller Status
 
-- **Koordinaten-Problem gelöst**: Kein Problem, 1-Pixel Genauigkeit
-- **UNet-Architektur**: Funktioniert exzellent
-- **Datenpipeline**: Dimensionen-Konsistenz implementieren
-- **Skalierung**: Bereit für mehr Trainingsdaten
+- **Pipeline-Status**: ✅ Vollständig funktional und Zygote-kompatibel
+- **Training-Qualität**: ✅ Konvergent, aber verbesserungsfähig (MSE ≈ 0.65)
+- **Code-Wartbarkeit**: ✅ Modularer, erweiterbarer Aufbau
+- **Skalierbarkeit**: ✅ Bereit für mehr Daten und längeres Training
+- **Physik-Validierung**: ⏳ Nächster wichtiger Schritt
 
-**Haupterkenntniss**: Das Modell ist bereits sehr gut trainiert - das Problem lag an inkonsistenten Eingabedaten, nicht am Training selbst!
+**Haupterkenntniss**: Nach Überwindung der Zygote-Kompatibilitätsprobleme haben wir jetzt eine **stabile, funktionale UNet-Pipeline** für LaMEM-Daten, die als solide Basis für weitere Experimente dient.

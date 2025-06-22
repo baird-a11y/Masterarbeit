@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Zwei Kristalle.md",
+                "file": "Ein Kristall.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Zwei Kristalle"
+              "title": "Ein Kristall"
             }
           }
         ]
@@ -170,8 +170,8 @@
   },
   "active": "e1bef16d0b2fe62d",
   "lastOpenFiles": [
-    "Ein Kristall.md",
     "Zwei Kristalle.md",
+    "Ein Kristall.md",
     "Besprechung 06.06.25.md"
   ]
 }
