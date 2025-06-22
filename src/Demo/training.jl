@@ -154,7 +154,7 @@ function train_velocity_unet_safe(
     println("  Validation: $(length(val_dataset)) Samples")
     
     # CPU-Modell für Stabilität
-    model = cpu(model)
+    # model = cpu(model)
     
     # Optimizer setup
     opt_state = Optimisers.setup(Optimisers.Adam(config.learning_rate), model)
