@@ -494,4 +494,4 @@ println("="^60)
 # result_1 = debug_single_crystal("final_model_two_crystals_demo.bson", target_size=(256, 256))
 
 println("\nBeispiel: Zwei Kristalle")
-result_2 = debug_two_crystals("final_model_two_crystals_demo.bson", target_size=(256, 256))
+result_2 = debug_two_crystals("final_gpu_model_multi.bson", target_size=(256, 256))
