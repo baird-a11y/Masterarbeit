@@ -31,7 +31,7 @@ println("Alle Module erfolgreich geladen!")
 
 const SERVER_CONFIG = (
     # Experimentelle Parameter
-    n_samples = 5,                     # Anzahl LaMEM-Simulationen
+    n_samples = 2,                     # Anzahl LaMEM-Simulationen
     resolutions = [128, 256],            # Verschiedene Auflösungen
     target_resolution = 256,             # UNet-Auflösung
     
@@ -47,7 +47,7 @@ const SERVER_CONFIG = (
     
     # Server-spezifisch
     save_dataset = true,                  # Dataset für spätere Nutzung speichern
-    use_gpu = CUDA.functional(),          # GPU falls verfügbar
+    use_gpu = false,                      # GEÄNDERT: CPU für Stabilität auf Server
 )
 
 # =============================================================================
@@ -114,7 +114,7 @@ function run_server_batch_job()
         
         # Dataset speichern
         if SERVER_CONFIG.save_dataset
-            
+           
             dataset_path = joinpath(SERVER_CONFIG.results_dir, "dataset.jls")
             serialize(dataset_path, dataset)
             println("✓ Dataset gespeichert: $dataset_path")

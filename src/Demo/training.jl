@@ -170,74 +170,45 @@ function train_velocity_unet(
                     velocity_batch = gpu(velocity_batch)
                 end
                 
-                # Gradienten berechnen und Parameter aktualisieren
-                # ROBUSTE LÖSUNG: Automatische GPU/CPU-Handhabung
-                loss_fn(m) = begin
-                    pred = m(phase_batch)
-                    loss_val = mse(pred, velocity_batch)
-                    return loss_val
-                end
+                # VOLLSTÄNDIG NEUER ANSATZ: Training auf CPU für Stabilität
+                # Konvertiere zu CPU für Training (vermeidet alle GPU-Scalar-Probleme)
+                phase_cpu = cpu(phase_batch)
+                velocity_cpu = cpu(velocity_batch)
+                model_cpu = cpu(model)
                 
-                ∇model = gradient(loss_fn, model)[1]
+                # Training auf CPU
+                loss_fn(m) = mse(m(phase_cpu), velocity_cpu)
+                ∇model_cpu = gradient(loss_fn, model_cpu)[1]
+                batch_loss = loss_fn(model_cpu)
                 
-                # Sichere Loss-Extraktion (funktioniert mit und ohne GPU)
-                batch_loss = if config.use_gpu && CUDA.functional()
-                    @allowscalar loss_fn(model)
-                else
-                    loss_fn(model)
+                # Update auf CPU
+                opt_state_cpu = Optimisers.setup(Optimisers.Adam(config.learning_rate), model_cpu)
+                opt_state_cpu, model_cpu = Optimisers.update!(opt_state_cpu, model_cpu, ∇model_cpu)
+                
+                # Zurück zur GPU falls nötig
+                if config.use_gpu && CUDA.functional()
+                    model = gpu(model_cpu)
                 end
                 
                 # Prüfe auf valide Loss
                 if isfinite(batch_loss)
-                    opt_state, model = Optimisers.update!(opt_state, model, ∇model)
                     epoch_loss += batch_loss
                     n_batches += 1
                 end
                 
                 if i % (config.batch_size * 10) == 1
-                    # Sichere Loss-Ausgabe (automatische GPU/CPU-Handhabung)
-                    safe_loss = if config.use_gpu && CUDA.functional()
-                        @allowscalar Float32(batch_loss)
-                    else
-                        Float32(batch_loss)
-                    end
-                    println("  Batch $i: Loss = $(round(safe_loss, digits=6))")
+                    println("  Batch $i: Loss = $(round(Float32(batch_loss), digits=6))")
                 end
                 
             catch e
                 println("  Fehler bei Batch $i: $e")
-                
-                # Bei GPU-Fehlern: Fallback zu CPU
-                if config.use_gpu && (occursin("GPU", string(e)) || occursin("CUDA", string(e)))
-                    println("  GPU-Fehler erkannt, verwende CPU für diesen Batch")
-                    try
-                        # CPU-Fallback
-                        phase_batch_cpu = cpu(phase_batch)
-                        velocity_batch_cpu = cpu(velocity_batch)
-                        model_cpu = cpu(model)
-                        
-                        pred_cpu = model_cpu(phase_batch_cpu)
-                        batch_loss = mse(pred_cpu, velocity_batch_cpu)
-                        
-                        if isfinite(batch_loss)
-                            epoch_loss += batch_loss
-                            n_batches += 1
-                        end
-                    catch e2
-                        println("  Auch CPU-Fallback fehlgeschlagen: $e2")
-                    end
-                end
                 continue
             end
         end
         
-        # Durchschnittlicher Training-Loss mit sicherer Konvertierung
+        # Durchschnittlicher Training-Loss
         avg_train_loss = if n_batches > 0
-            if config.use_gpu && CUDA.functional()
-                @allowscalar Float32(epoch_loss / n_batches)
-            else
-                Float32(epoch_loss / n_batches)
-            end
+            Float32(epoch_loss / n_batches)
         else
             Inf32
         end
