@@ -6,3 +6,9 @@ src/Demo/output.pvd
 .gitignore
 
 src/Demo/server_results/dataset.jls
+src/Demo/safe_server_checkpoints/best_model.bson
+src/Demo/safe_server_checkpoints/checkpoint_epoch_2.bson
+src/Demo/safe_server_checkpoints/final_model.bson
+src/Demo/safe_server_results/dataset.jls
+src/Demo/safe_server_results/test_results.bson
+src/Demo/safe_server_results/training_results.bson

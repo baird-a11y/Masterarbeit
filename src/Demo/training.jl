@@ -1,15 +1,15 @@
 # =============================================================================
-# TRAINING MODULE
+# TRAINING MODULE - ZYGOTE-SICHER
 # =============================================================================
-# Speichern als: training.jl
+# Speichern als: training_safe.jl
 
 using Flux
 using Flux: mse
 using CUDA
-using CUDA: @allowscalar  # HINZUGEFÜGT: Import @allowscalar Makro
 using Optimisers
 using BSON: @save
 using Statistics
+using Random
 
 """
 Training-Konfiguration
@@ -34,7 +34,7 @@ function create_training_config(;
     batch_size = 4,
     checkpoint_dir = "checkpoints",
     save_every_n_epochs = 10,
-    use_gpu = CUDA.functional(),
+    use_gpu = false,  # Default auf CPU für Stabilität
     validation_split = 0.1f0,
     early_stopping_patience = 10
 )
@@ -49,8 +49,13 @@ Teilt Dataset in Training und Validation auf
 """
 function split_dataset(dataset, validation_split=0.1)
     n_total = length(dataset)
-    n_val = Int(round(n_total * validation_split))
+    n_val = max(1, Int(round(n_total * validation_split)))  # Mindestens 1 Validation-Sample
     n_train = n_total - n_val
+    
+    if n_train < 1
+        # Falls zu wenig Daten: Verwende alles für Training
+        return dataset, dataset[1:1]  # Dummy Validation
+    end
     
     shuffled_indices = randperm(n_total)
     train_indices = shuffled_indices[1:n_train]
@@ -63,212 +68,30 @@ function split_dataset(dataset, validation_split=0.1)
 end
 
 """
-Evaluiert Modell auf Validation-Set
-"""
-function evaluate_model(model, val_dataset, target_resolution; use_gpu=false)
-    total_loss = 0.0f0
-    n_batches = 0
-    
-    # Kleine Batches für Validation
-    val_batch_size = min(4, length(val_dataset))
-    
-    for i in 1:val_batch_size:length(val_dataset)
-        end_idx = min(i + val_batch_size - 1, length(val_dataset))
-        batch_samples = val_dataset[i:end_idx]
-        
-        try
-            phase_batch, velocity_batch, _ = create_adaptive_batch(
-                batch_samples, target_resolution, verbose=false
-            )
-            
-            if use_gpu && CUDA.functional()
-                phase_batch = gpu(phase_batch)
-                velocity_batch = gpu(velocity_batch)
-            end
-            
-            prediction = model(phase_batch)
-            batch_loss = mse(prediction, velocity_batch)
-            
-            total_loss += batch_loss
-            n_batches += 1
-            
-        catch e
-            println("Validation Batch $i fehlgeschlagen: $e")
-            continue
-        end
-    end
-    
-    return n_batches > 0 ? total_loss / n_batches : Inf32
-end
-
-"""
-Haupttraining-Funktion - KORRIGIERT für GPU-Kompatibilität
-"""
-function train_velocity_unet(
-    model, 
-    dataset, 
-    target_resolution;
-    config = create_training_config()
-)
-    println("=== STARTE UNET TRAINING ===")
-    println("Konfiguration:")
-    println("  Epochen: $(config.num_epochs)")
-    println("  Lernrate: $(config.learning_rate)")
-    println("  Batch-Größe: $(config.batch_size)")
-    println("  GPU: $(config.use_gpu)")
-    println("  Dataset-Größe: $(length(dataset))")
-    
-    # Checkpoint-Verzeichnis erstellen
-    mkpath(config.checkpoint_dir)
-    
-    # Dataset aufteilen
-    train_dataset, val_dataset = split_dataset(dataset, config.validation_split)
-    println("  Training: $(length(train_dataset)) Samples")
-    println("  Validation: $(length(val_dataset)) Samples")
-    
-    # Optimizer setup
-    opt_state = Optimisers.setup(Optimisers.Adam(config.learning_rate), model)
-    
-    # CPU-Training bevorzugen für Stabilität
-    model_cpu = cpu(model)
-    println("  Training auf CPU für Stabilität")
-    
-    # Training-Geschichte
-    train_losses = Float32[]
-    val_losses = Float32[]
-    best_val_loss = Inf32
-    patience_counter = 0
-    
-    # Training-Loop
-    for epoch in 1:config.num_epochs
-        println("\n--- Epoche $epoch/$(config.num_epochs) ---")
-        
-        # Training
-        epoch_loss = 0.0f0
-        n_batches = 0
-        
-        # Vereinfachtes Batch-Management für GPU-Kompatibilität
-        for i in 1:config.batch_size:min(50, length(train_dataset))  # Limitiere für ersten Test
-            end_idx = min(i + config.batch_size - 1, length(train_dataset))
-            batch_samples = train_dataset[i:end_idx]
-            
-            try
-                phase_batch, velocity_batch, successful = create_adaptive_batch(
-                    batch_samples, target_resolution, verbose=false
-                )
-                
-                if successful == 0
-                    continue  # Skip leere Batches
-                end
-                
-                # VOLLSTÄNDIG KORRIGIERTES CPU-TRAINING
-                # Alle Daten auf CPU
-                phase_cpu = cpu(phase_batch)
-                velocity_cpu = cpu(velocity_batch)
-                
-                # Training auf CPU-Modell
-                loss_fn(m) = mse(m(phase_cpu), velocity_cpu)
-                ∇model_cpu = gradient(loss_fn, model_cpu)[1]
-                batch_loss = loss_fn(model_cpu)
-                
-                # Update CPU-Modell
-                opt_state, model_cpu = Optimisers.update!(opt_state, model_cpu, ∇model_cpu)
-                
-                # Prüfe auf valide Loss
-                if isfinite(batch_loss)
-                    epoch_loss += batch_loss
-                    n_batches += 1
-                end
-                
-                if i % (config.batch_size * 10) == 1
-                    println("  Batch $i: Loss = $(round(Float32(batch_loss), digits=6))")
-                end
-                
-            catch e
-                println("  Fehler bei Batch $i: $e")
-                continue
-            end
-        end
-        
-        # Durchschnittlicher Training-Loss
-        avg_train_loss = if n_batches > 0
-            Float32(epoch_loss / n_batches)
-        else
-            Inf32
-        end
-        push!(train_losses, avg_train_loss)
-        
-        # Validation (auf CPU-Modell)
-        val_loss = evaluate_model_safe(
-            model_cpu, val_dataset, target_resolution
-        )
-        push!(val_losses, val_loss)
-        
-        println("Epoche $epoch abgeschlossen:")
-        println("  Training Loss: $(round(avg_train_loss, digits=6))")
-        println("  Validation Loss: $(round(val_loss, digits=6))")
-        
-        # Early Stopping Check
-        if val_loss < best_val_loss
-            best_val_loss = val_loss
-            patience_counter = 0
-            
-            # Speichere bestes Modell (CPU-Version)
-            best_model_path = joinpath(config.checkpoint_dir, "best_model.bson")
-            @save best_model_path model_cpu
-            println("  Neues bestes Modell gespeichert!")
-            
-        else
-            patience_counter += 1
-            println("  Validation Loss nicht verbessert (Patience: $patience_counter/$(config.early_stopping_patience))")
-            
-            if patience_counter >= config.early_stopping_patience
-                println("  Early Stopping aktiviert!")
-                break
-            end
-        end
-        
-        # Checkpoint speichern
-        if epoch % config.save_every_n_epochs == 0
-            checkpoint_path = joinpath(config.checkpoint_dir, "checkpoint_epoch_$(epoch).bson")
-            @save checkpoint_path model_cpu epoch train_losses val_losses
-            println("  Checkpoint gespeichert: $checkpoint_path")
-        end
-        
-        # Memory cleanup
-        GC.gc()
-        if CUDA.functional()
-            CUDA.reclaim()
-        end
-    end
-    
-    # Finales Modell speichern
-    final_path = joinpath(config.checkpoint_dir, "final_model.bson")
-    @save final_path model_cpu train_losses val_losses
-    
-    println("\n" * "="^50)
-    println("TRAINING ABGESCHLOSSEN")
-    println("="^50)
-    println("Beste Validation Loss: $(round(best_val_loss, digits=6))")
-    println("Finale Training Loss: $(round(train_losses[end], digits=6))")
-    println("Modelle gespeichert in: $(config.checkpoint_dir)")
-    
-    return model_cpu, train_losses, val_losses  # Returniere CPU-Modell
-end
-
-"""
-Sichere Evaluierung auf CPU
+Sichere Evaluierung auf CPU - KORRIGIERT
 """
 function evaluate_model_safe(model, val_dataset, target_resolution)
+    if length(val_dataset) == 0
+        return Inf32
+    end
+    
     total_loss = 0.0f0
     n_batches = 0
     
-    # Kleine Batches für Validation
+    # Sichere Batch-Größe
     val_batch_size = min(2, length(val_dataset))
+    max_batches = min(5, length(val_dataset))  # Maximal 5 Batches für Validation
     
-    for i in 1:val_batch_size:min(20, length(val_dataset))  # Limitiere Validation
+    # KORRIGIERT: Sichere Range-Erstellung
+    for i in 1:val_batch_size:max_batches
         end_idx = min(i + val_batch_size - 1, length(val_dataset))
-        batch_samples = val_dataset[i:end_idx]
+        
+        # Überspringe wenn Start-Index größer als Dataset
+        if i > length(val_dataset)
+            break
+        end
+        
+        batch_samples = val_dataset[i:min(end_idx, length(val_dataset))]
         
         try
             phase_batch, velocity_batch, successful = create_adaptive_batch(
@@ -302,6 +125,174 @@ function evaluate_model_safe(model, val_dataset, target_resolution)
 end
 
 """
+KORRIGIERTE Haupttraining-Funktion - CPU-fokussiert und Zygote-sicher
+"""
+function train_velocity_unet_safe(
+    model, 
+    dataset, 
+    target_resolution;
+    config = create_training_config()
+)
+    println("=== STARTE SICHERES UNET TRAINING ===")
+    println("Konfiguration:")
+    println("  Epochen: $(config.num_epochs)")
+    println("  Lernrate: $(config.learning_rate)")
+    println("  Batch-Größe: $(config.batch_size)")
+    println("  Dataset-Größe: $(length(dataset))")
+    
+    # Validiere Dataset
+    if length(dataset) == 0
+        error("Dataset ist leer!")
+    end
+    
+    # Checkpoint-Verzeichnis erstellen
+    mkpath(config.checkpoint_dir)
+    
+    # Dataset aufteilen
+    train_dataset, val_dataset = split_dataset(dataset, config.validation_split)
+    println("  Training: $(length(train_dataset)) Samples")
+    println("  Validation: $(length(val_dataset)) Samples")
+    
+    # CPU-Modell für Stabilität
+    model = cpu(model)
+    
+    # Optimizer setup
+    opt_state = Optimisers.setup(Optimisers.Adam(config.learning_rate), model)
+    
+    # Training-Geschichte
+    train_losses = Float32[]
+    val_losses = Float32[]
+    best_val_loss = Inf32
+    patience_counter = 0
+    
+    # Training-Loop
+    for epoch in 1:config.num_epochs
+        println("\n--- Epoche $epoch/$(config.num_epochs) ---")
+        
+        # Training
+        epoch_loss = 0.0f0
+        n_batches = 0
+        
+        # Sichere Batch-Verarbeitung
+        max_training_batches = min(20, length(train_dataset))  # Limitiere für Stabilität
+        
+        for i in 1:config.batch_size:max_training_batches
+            end_idx = min(i + config.batch_size - 1, length(train_dataset))
+            
+            # Überspringe wenn Start-Index zu groß
+            if i > length(train_dataset)
+                break
+            end
+            
+            batch_samples = train_dataset[i:min(end_idx, length(train_dataset))]
+            
+            try
+                phase_batch, velocity_batch, successful = create_adaptive_batch(
+                    batch_samples, target_resolution, verbose=false
+                )
+                
+                if successful == 0
+                    continue  # Skip leere Batches
+                end
+                
+                # Alle Daten auf CPU
+                phase_batch = cpu(phase_batch)
+                velocity_batch = cpu(velocity_batch)
+                
+                # ZYGOTE-SICHERE Verlustfunktion
+                function loss_fn(m)
+                    pred = m(phase_batch)
+                    return mse(pred, velocity_batch)
+                end
+                
+                # Gradient-Berechnung
+                loss_val, grads = Flux.withgradient(loss_fn, model)
+                
+                # Parameter-Update
+                if grads[1] !== nothing
+                    opt_state, model = Optimisers.update!(opt_state, model, grads[1])
+                end
+                
+                # Prüfe auf valide Loss
+                if isfinite(loss_val)
+                    epoch_loss += loss_val
+                    n_batches += 1
+                end
+                
+                if i % (config.batch_size * 5) == 1
+                    println("  Batch $i: Loss = $(round(Float32(loss_val), digits=6))")
+                end
+                
+            catch e
+                println("  Fehler bei Batch $i: $e")
+                continue
+            end
+        end
+        
+        # Durchschnittlicher Training-Loss
+        avg_train_loss = if n_batches > 0
+            Float32(epoch_loss / n_batches)
+        else
+            Inf32
+        end
+        push!(train_losses, avg_train_loss)
+        
+        # Validation
+        val_loss = evaluate_model_safe(model, val_dataset, target_resolution)
+        push!(val_losses, val_loss)
+        
+        println("Epoche $epoch abgeschlossen:")
+        println("  Training Loss: $(round(avg_train_loss, digits=6))")
+        println("  Validation Loss: $(round(val_loss, digits=6))")
+        
+        # Early Stopping Check
+        if val_loss < best_val_loss
+            best_val_loss = val_loss
+            patience_counter = 0
+            
+            # Speichere bestes Modell
+            best_model_path = joinpath(config.checkpoint_dir, "best_model.bson")
+            @save best_model_path model
+            println("  Neues bestes Modell gespeichert!")
+            
+        else
+            patience_counter += 1
+            println("  Validation Loss nicht verbessert (Patience: $patience_counter/$(config.early_stopping_patience))")
+            
+            if patience_counter >= config.early_stopping_patience
+                println("  Early Stopping aktiviert!")
+                break
+            end
+        end
+        
+        # Checkpoint speichern
+        if epoch % config.save_every_n_epochs == 0
+            checkpoint_path = joinpath(config.checkpoint_dir, "checkpoint_epoch_$(epoch).bson")
+            @save checkpoint_path model epoch train_losses val_losses
+            println("  Checkpoint gespeichert: $checkpoint_path")
+        end
+        
+        # Memory cleanup
+        GC.gc()
+    end
+    
+    # Finales Modell speichern
+    final_path = joinpath(config.checkpoint_dir, "final_model.bson")
+    @save final_path model train_losses val_losses
+    
+    println("\n" * "="^50)
+    println("TRAINING ABGESCHLOSSEN")
+    println("="^50)
+    println("Beste Validation Loss: $(round(best_val_loss, digits=6))")
+    if length(train_losses) > 0
+        println("Finale Training Loss: $(round(train_losses[end], digits=6))")
+    end
+    println("Modelle gespeichert in: $(config.checkpoint_dir)")
+    
+    return model, train_losses, val_losses
+end
+
+"""
 Lädt ein gespeichertes Modell
 """
 function load_trained_model(model_path::String)
@@ -314,7 +305,7 @@ function load_trained_model(model_path::String)
     model_dict = BSON.load(model_path)
     
     # Versuche verschiedene Schlüssel
-    for key in [:model_cpu, :model, :final_model_cpu, :best_model]
+    for key in [:model, :best_model, :final_model]
         if haskey(model_dict, key)
             model = model_dict[key]
             println("Modell unter Schlüssel '$key' gefunden")
@@ -322,80 +313,18 @@ function load_trained_model(model_path::String)
         end
     end
     
-    # Fallback: Nehme ersten Wert
-    model = first(values(model_dict))
-    println("Verwende ersten Wert aus BSON-Datei")
-    return model
-end
-
-"""
-Demo für komplettes Training
-"""
-function demo_training(;
-    n_samples = 100,
-    target_resolution = 128,
-    num_epochs = 20
-)
-    println("=== TRAINING DEMO ===")
-    
-    # 1. Daten generieren
-    println("\n1. Generiere Trainingsdaten...")
-    dataset = generate_mixed_resolution_dataset(
-        n_samples, 
-        resolutions=[64, 128, 256],
-        verbose=true
-    )
-    
-    if length(dataset) < 10
-        error("Zu wenige Samples generiert!")
+    # Fallback: Nehme ersten Wert der ein Modell sein könnte
+    for (key, value) in model_dict
+        if isa(value, Flux.Chain) || hasproperty(value, :layers) || string(typeof(value)) |> x -> contains(x, "UNet")
+            println("Modell unter Schlüssel '$key' gefunden")
+            return value
+        end
     end
     
-    # 2. UNet erstellen
-    println("\n2. Erstelle UNet...")
-    config = design_adaptive_unet(target_resolution)
-    model = create_final_corrected_unet(config)
-    
-    # 3. Training-Konfiguration
-    train_config = create_training_config(
-        num_epochs = num_epochs,
-        learning_rate = 0.001f0,
-        checkpoint_dir = "demo_training_checkpoints"
-    )
-    
-    # 4. Training
-    println("\n3. Starte Training...")
-    trained_model, train_losses, val_losses = train_velocity_unet(
-        model, dataset, target_resolution, config=train_config
-    )
-    
-    # 5. Evaluierung
-    println("\n4. Evaluiere trainiertes Modell...")
-    if length(dataset) > 0
-        test_sample = dataset[1]
-        x, z, phase, vx, vz, exx, ezz, v_stokes = test_sample
-        
-        phase_tensor, velocity_tensor = preprocess_lamem_sample(
-            x, z, phase, vx, vz, v_stokes,
-            target_resolution=target_resolution
-        )
-        
-        prediction = cpu(trained_model(phase_tensor))
-        
-        mse_vx = mean((prediction[:,:,1,1] .- velocity_tensor[:,:,1,1]).^2)
-        mse_vz = mean((prediction[:,:,2,1] .- velocity_tensor[:,:,2,1]).^2)
-        
-        println("Test-Evaluierung:")
-        println("  MSE Vx: $(round(mse_vx, digits=6))")
-        println("  MSE Vz: $(round(mse_vz, digits=6))")
-        println("  MSE Gesamt: $(round((mse_vx + mse_vz)/2, digits=6))")
-    end
-    
-    println("\n✓ Training Demo abgeschlossen!")
-    return trained_model, train_losses, val_losses
+    error("Kein Modell in der BSON-Datei gefunden")
 end
 
-println("Training Module geladen!")
+println("Sicheres Training Module geladen!")
 println("Verfügbare Funktionen:")
-println("  - train_velocity_unet(model, dataset, resolution)")
-println("  - demo_training()")
+println("  - train_velocity_unet_safe(model, dataset, resolution)")
 println("  - load_trained_model(path)")

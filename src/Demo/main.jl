@@ -1,7 +1,7 @@
 # =============================================================================
-# VEREINFACHTES SERVER-SCRIPT - ADAPTIVE UNET FÜR LAMEM
+# VEREINFACHTES SERVER-SCRIPT - ADAPTIVE UNET FÜR LAMEM (SICHER)
 # =============================================================================
-# Speichern als: main_server_simple.jl
+# Speichern als: main_safe.jl
 
 using Flux
 using CUDA
@@ -11,7 +11,7 @@ import Dates
 using Serialization
 using BSON: @save
 
-println("=== ADAPTIVE UNET FÜR LAMEM - SERVER MODE ===")
+println("=== ADAPTIVE UNET FÜR LAMEM - SICHERER SERVER MODE ===")
 println("Zeit: $(Dates.now())")
 println("Lade Module...")
 
@@ -19,51 +19,57 @@ println("Lade Module...")
 include("lamem_interface.jl")
 include("data_processing.jl") 
 include("unet_config.jl")
-include("unet_architecture.jl")
+
+# VERWENDE SICHERE MODULE
+println("Lade sichere UNet-Architektur...")
+include("unet_architecture.jl")  # Neue sichere Version
+
+println("Lade sicheres Training-Modul...")
+include("training.jl")  # Neue sichere Version
+
 include("batch_management.jl")
-include("training.jl")
 
 println("Alle Module erfolgreich geladen!")
 
 # =============================================================================
-# SERVER KONFIGURATION
+# SERVER KONFIGURATION - REDUZIERT FÜR STABILITÄT
 # =============================================================================
 
 const SERVER_CONFIG = (
-    # Experimentelle Parameter
-    n_samples = 2,                     # Anzahl LaMEM-Simulationen
-    resolutions = [128, 256],            # Verschiedene Auflösungen
-    target_resolution = 256,             # UNet-Auflösung
+    # Experimentelle Parameter - REDUZIERT
+    n_samples = 5,                      # Weniger Samples für ersten Test
+    resolutions = [128],                # Nur eine Auflösung
+    target_resolution = 128,            # Kleinere Auflösung
     
     # Training-Parameter  
-    num_epochs = 1,                     # Training-Epochen
-    learning_rate = 0.001f0,             # Lernrate
-    batch_size = 1,                      # Batch-Größe
-    early_stopping_patience = 15,        # Early stopping
+    num_epochs = 2,                     # Weniger Epochen für Test
+    learning_rate = 0.001f0,            # Lernrate
+    batch_size = 2,                     # Kleinere Batch-Größe
+    early_stopping_patience = 5,        # Weniger Patience
     
     # Output-Parameter
-    checkpoint_dir = "server_checkpoints", # Checkpoint-Verzeichnis
-    results_dir = "server_results",       # Ergebnisse
+    checkpoint_dir = "safe_server_checkpoints", # Checkpoint-Verzeichnis
+    results_dir = "safe_server_results",       # Ergebnisse
     
     # Server-spezifisch
-    save_dataset = true,                  # Dataset für spätere Nutzung speichern
-    use_gpu = false,                      # GEÄNDERT: CPU für Stabilität auf Server
+    save_dataset = true,                # Dataset für spätere Nutzung speichern
+    use_gpu = false,                    # CPU für Stabilität
 )
 
 # =============================================================================
-# SERVER BATCH-JOB
+# SICHERER SERVER BATCH-JOB
 # =============================================================================
 
 """
-Vereinfachter Server-Batch-Job ohne Logging
+Sicherer Server-Batch-Job mit reduzierter Komplexität
 """
-function run_server_batch_job()
+function run_safe_server_batch_job()
     # Erstelle Output-Verzeichnisse
     mkpath(SERVER_CONFIG.checkpoint_dir)
     mkpath(SERVER_CONFIG.results_dir)
     
     println("="^80)
-    println("STARTE SERVER BATCH-JOB")
+    println("STARTE SICHEREN SERVER BATCH-JOB")
     println("="^80)
     
     # Konfiguration ausgeben
@@ -82,13 +88,8 @@ function run_server_batch_job()
         # Hardware-Info
         println("Julia Version: $(VERSION)")
         println("CUDA verfügbar: $(CUDA.functional())")
-        if CUDA.functional()
-            println("GPU: $(CUDA.name(CUDA.device()))")
-            mem_info = get_gpu_memory_info()
-            println("GPU Memory: $(round(mem_info.total / 1e9, digits=2)) GB")
-        end
         
-        if !quick_test_server()
+        if !quick_test_safe()
             error("System-Test fehlgeschlagen!")
         end
         println("✓ System-Test erfolgreich")
@@ -103,7 +104,7 @@ function run_server_batch_job()
         dataset = generate_mixed_resolution_dataset(
             SERVER_CONFIG.n_samples,
             resolutions=SERVER_CONFIG.resolutions,
-            verbose=false  # Weniger Ausgabe für Server
+            verbose=true
         )
         
         if length(dataset) == 0
@@ -114,7 +115,6 @@ function run_server_batch_job()
         
         # Dataset speichern
         if SERVER_CONFIG.save_dataset
-           
             dataset_path = joinpath(SERVER_CONFIG.results_dir, "dataset.jls")
             serialize(dataset_path, dataset)
             println("✓ Dataset gespeichert: $dataset_path")
@@ -122,29 +122,23 @@ function run_server_batch_job()
         
         # 3. MODELL-ERSTELLUNG
         println("\n" * "="^60)
-        println("3. MODELL-ERSTELLUNG")
+        println("3. MODELL-ERSTELLUNG (VEREINFACHT)")
         println("="^60)
         
-        config = design_adaptive_unet(SERVER_CONFIG.target_resolution)
-        println("UNet Konfiguration: $(config.depth) Layer, $(config.filter_progression)")
-        
-        model = create_final_corrected_unet(config)
-        println("✓ UNet erstellt")
+        println("Erstelle vereinfachtes UNet...")
+        model = create_simplified_unet(1, 2, 32)  # input_ch, output_ch, base_filters
         
         # Modell-Test
-        success, output_shape = test_final_corrected_unet(
-            SERVER_CONFIG.target_resolution, 
-            verbose=false
-        )
+        success, _ = test_simplified_unet(SERVER_CONFIG.target_resolution, batch_size=2)
         
         if !success
             error("UNet-Test fehlgeschlagen!")
         end
-        println("✓ UNet-Test erfolgreich: $(output_shape)")
+        println("✓ Vereinfachtes UNet erfolgreich getestet")
         
         # 4. TRAINING
         println("\n" * "="^60)
-        println("4. TRAINING")
+        println("4. SICHERES TRAINING")
         println("="^60)
         
         # Training-Konfiguration
@@ -153,16 +147,16 @@ function run_server_batch_job()
             num_epochs = SERVER_CONFIG.num_epochs,
             batch_size = SERVER_CONFIG.batch_size,
             checkpoint_dir = SERVER_CONFIG.checkpoint_dir,
-            save_every_n_epochs = 5,  # Häufiger speichern auf Server
+            save_every_n_epochs = 2,  # Häufiger speichern
             use_gpu = SERVER_CONFIG.use_gpu,
-            validation_split = 0.15f0,  # Mehr Validation-Daten
+            validation_split = 0.2f0,  # Mehr Validation-Daten
             early_stopping_patience = SERVER_CONFIG.early_stopping_patience
         )
         
-        println("Starte Training: $(train_config.num_epochs) Epochen, GPU: $(train_config.use_gpu)")
+        println("Starte sicheres Training: $(train_config.num_epochs) Epochen")
         
-        # Training mit Error-Handling
-        trained_model, train_losses, val_losses = train_velocity_unet(
+        # Training mit sicherer Funktion
+        trained_model, train_losses, val_losses = train_velocity_unet_safe(
             model, dataset, SERVER_CONFIG.target_resolution,
             config=train_config
         )
@@ -175,30 +169,30 @@ function run_server_batch_job()
         println("="^60)
         
         # Training-Statistiken
-        final_train_loss = train_losses[end]
-        final_val_loss = val_losses[end]
-        best_val_loss = minimum(val_losses)
-        best_epoch = argmin(val_losses)
+        if length(train_losses) > 0
+            final_train_loss = train_losses[end]
+            println("Finale Training Loss: $(round(final_train_loss, digits=6))")
+        else
+            println("Keine Training-Losses verfügbar")
+        end
         
-        println("Training Statistiken:")
-        println("  Finale Training Loss: $(round(final_train_loss, digits=6))")
-        println("  Finale Validation Loss: $(round(final_val_loss, digits=6))")
-        println("  Beste Validation Loss: $(round(best_val_loss, digits=6)) (Epoche $best_epoch)")
-        println("  Training Epochen: $(length(train_losses))")
+        if length(val_losses) > 0
+            final_val_loss = val_losses[end]
+            best_val_loss = minimum(val_losses)
+            best_epoch = argmin(val_losses)
+            
+            println("Finale Validation Loss: $(round(final_val_loss, digits=6))")
+            println("Beste Validation Loss: $(round(best_val_loss, digits=6)) (Epoche $best_epoch)")
+        else
+            println("Keine Validation-Losses verfügbar")
+        end
         
         # Speichere Ergebnisse
-        
         results_data = Dict(
             "train_losses" => train_losses,
             "val_losses" => val_losses,
-            "config" => config,
             "server_config" => SERVER_CONFIG,
-            "final_stats" => Dict(
-                "final_train_loss" => final_train_loss,
-                "final_val_loss" => final_val_loss,
-                "best_val_loss" => best_val_loss,
-                "best_epoch" => best_epoch
-            )
+            "model" => trained_model
         )
         
         results_path = joinpath(SERVER_CONFIG.results_dir, "training_results.bson")
@@ -211,44 +205,31 @@ function run_server_batch_job()
         println("="^60)
         
         if length(dataset) > 0
-            # Test mit mehreren Samples
-            n_test_samples = min(5, length(dataset))
-            total_mse_vx = 0.0
-            total_mse_vz = 0.0
+            # Test mit einem Sample
+            test_sample = dataset[1]
+            x, z, phase, vx, vz, exx, ezz, v_stokes = test_sample
             
-            for i in 1:n_test_samples
-                test_sample = dataset[i]
-                x, z, phase, vx, vz, exx, ezz, v_stokes = test_sample
-                
-                phase_tensor, velocity_tensor = preprocess_lamem_sample(
-                    x, z, phase, vx, vz, v_stokes,
-                    target_resolution=SERVER_CONFIG.target_resolution
-                )
-                
-                prediction = cpu(trained_model(phase_tensor))
-                
-                mse_vx = mean((prediction[:,:,1,1] .- velocity_tensor[:,:,1,1]).^2)
-                mse_vz = mean((prediction[:,:,2,1] .- velocity_tensor[:,:,2,1]).^2)
-                
-                total_mse_vx += mse_vx
-                total_mse_vz += mse_vz
-            end
+            phase_tensor, velocity_tensor = preprocess_lamem_sample(
+                x, z, phase, vx, vz, v_stokes,
+                target_resolution=SERVER_CONFIG.target_resolution
+            )
             
-            avg_mse_vx = total_mse_vx / n_test_samples
-            avg_mse_vz = total_mse_vz / n_test_samples
-            avg_mse_total = (avg_mse_vx + avg_mse_vz) / 2
+            prediction = cpu(trained_model(phase_tensor))
             
-            println("Final Test Ergebnisse ($(n_test_samples) Samples):")
-            println("  Durchschnitt MSE Vx: $(round(avg_mse_vx, digits=6))")
-            println("  Durchschnitt MSE Vz: $(round(avg_mse_vz, digits=6))")
-            println("  Durchschnitt MSE Total: $(round(avg_mse_total, digits=6))")
+            mse_vx = mean((prediction[:,:,1,1] .- velocity_tensor[:,:,1,1]).^2)
+            mse_vz = mean((prediction[:,:,2,1] .- velocity_tensor[:,:,2,1]).^2)
+            mse_total = (mse_vx + mse_vz) / 2
+            
+            println("Final Test Ergebnisse (1 Sample):")
+            println("  MSE Vx: $(round(mse_vx, digits=6))")
+            println("  MSE Vz: $(round(mse_vz, digits=6))")
+            println("  MSE Total: $(round(mse_total, digits=6))")
             
             # Speichere Test-Ergebnisse
             test_results = Dict(
-                "avg_mse_vx" => avg_mse_vx,
-                "avg_mse_vz" => avg_mse_vz,
-                "avg_mse_total" => avg_mse_total,
-                "n_test_samples" => n_test_samples
+                "mse_vx" => mse_vx,
+                "mse_vz" => mse_vz,
+                "mse_total" => mse_total
             )
             
             test_path = joinpath(SERVER_CONFIG.results_dir, "test_results.bson")
@@ -261,9 +242,9 @@ function run_server_batch_job()
         total_time = end_time - start_time
         
         println("\n" * "="^80)
-        println("BATCH-JOB ERFOLGREICH ABGESCHLOSSEN")
+        println("SICHERER BATCH-JOB ERFOLGREICH ABGESCHLOSSEN")
         println("="^80)
-        println("Gesamtzeit: $(round(total_time/3600, digits=2)) Stunden")
+        println("Gesamtzeit: $(round(total_time/60, digits=2)) Minuten")
         println("Checkpoints: $(SERVER_CONFIG.checkpoint_dir)")
         println("Ergebnisse: $(SERVER_CONFIG.results_dir)")
         
@@ -274,7 +255,7 @@ function run_server_batch_job()
         total_time = end_time - start_time
         
         println("\n" * "="^80)
-        println("BATCH-JOB FEHLGESCHLAGEN")
+        println("SICHERER BATCH-JOB FEHLGESCHLAGEN")
         println("="^80)
         println("Fehler: $e")
         println("Laufzeit bis Fehler: $(round(total_time/60, digits=1)) Minuten")
@@ -290,9 +271,9 @@ function run_server_batch_job()
 end
 
 """
-Server-optimierter System-Test
+Sicherer System-Test mit vereinfachtem UNet
 """
-function quick_test_server()
+function quick_test_safe()
     try
         # LaMEM Test
         x, z, phase, vx, vz, exx, ezz, v_stokes = LaMEM_Multi_crystal(
@@ -304,57 +285,108 @@ function quick_test_server()
         
         # Preprocessing Test
         phase_tensor, velocity_tensor = preprocess_lamem_sample(
-            x, z, phase, vx, vz, v_stokes, target_resolution=128
+            x, z, phase, vx, vz, v_stokes, target_resolution=64
         )
         
-        # UNet Test
-        config = design_adaptive_unet(128)
-        model = create_final_corrected_unet(config)
-        test_input = randn(Float32, 128, 128, 1, 2)
+        # Vereinfachtes UNet Test
+        model = create_simplified_unet()
+        test_input = randn(Float32, 64, 64, 1, 1)
         output = model(test_input)
         
-        return size(output) == (128, 128, 2, 2)
+        return size(output) == (64, 64, 2, 1)
         
     catch e
-        println("System-Test Fehler: $e")
+        println("Sicherer System-Test Fehler: $e")
         return false
     end
 end
 
 """
-Server-optimierte UNet-Test-Funktion
+Demo für sicheres Training
 """
-function test_final_corrected_unet(resolution::Int=256; batch_size::Int=2, verbose::Bool=false)
-    config = design_adaptive_unet(resolution)
-    model = create_final_corrected_unet(config)
-    test_input = randn(Float32, resolution, resolution, 1, batch_size)
+function demo_safe_training(;
+    n_samples = 10,
+    target_resolution = 128,
+    num_epochs = 3
+)
+    println("=== SICHERES TRAINING DEMO ===")
     
-    try
-        output = model(test_input)
-        expected_shape = (resolution, resolution, 2, batch_size)
-        success = size(output) == expected_shape
-        
-        return success, size(output)
-    catch e
-        return false, nothing
+    # 1. Daten generieren
+    println("\n1. Generiere wenige Trainingsdaten...")
+    dataset = generate_mixed_resolution_dataset(
+        n_samples, 
+        resolutions=[target_resolution],
+        verbose=true
+    )
+    
+    if length(dataset) < 2
+        error("Zu wenige Samples generiert!")
     end
+    
+    # 2. Vereinfachtes UNet erstellen
+    println("\n2. Erstelle vereinfachtes UNet...")
+    model = create_simplified_unet()
+    
+    # 3. Training-Konfiguration
+    train_config = create_training_config(
+        num_epochs = num_epochs,
+        learning_rate = 0.001f0,
+        batch_size = 2,
+        checkpoint_dir = "demo_safe_checkpoints",
+        use_gpu = false
+    )
+    
+    # 4. Sicheres Training
+    println("\n3. Starte sicheres Training...")
+    trained_model, train_losses, val_losses = train_velocity_unet_safe(
+        model, dataset, target_resolution, config=train_config
+    )
+    
+    # 5. Evaluierung
+    println("\n4. Evaluiere trainiertes Modell...")
+    if length(dataset) > 0
+        test_sample = dataset[1]
+        x, z, phase, vx, vz, exx, ezz, v_stokes = test_sample
+        
+        phase_tensor, velocity_tensor = preprocess_lamem_sample(
+            x, z, phase, vx, vz, v_stokes,
+            target_resolution=target_resolution
+        )
+        
+        prediction = cpu(trained_model(phase_tensor))
+        
+        mse_vx = mean((prediction[:,:,1,1] .- velocity_tensor[:,:,1,1]).^2)
+        mse_vz = mean((prediction[:,:,2,1] .- velocity_tensor[:,:,2,1]).^2)
+        
+        println("Test-Evaluierung:")
+        println("  MSE Vx: $(round(mse_vx, digits=6))")
+        println("  MSE Vz: $(round(mse_vz, digits=6))")
+        println("  MSE Gesamt: $(round((mse_vx + mse_vz)/2, digits=6))")
+    end
+    
+    println("\n✓ Sicheres Training Demo abgeschlossen!")
+    return trained_model, train_losses, val_losses
 end
 
 # =============================================================================
-# SERVER BATCH-JOB START
+# SICHERER SERVER BATCH-JOB START
 # =============================================================================
 
 println("="^80)
-println("SERVER BATCH-JOB INITIALISIERUNG")
+println("SICHERER SERVER BATCH-JOB INITIALISIERUNG")
 println("="^80)
 
-# Führe Batch-Job aus
-success = run_server_batch_job()
+# Führe sicheren Batch-Job aus
+success = run_safe_server_batch_job()
 
 if success
-    println(" SERVER BATCH-JOB ERFOLGREICH ABGESCHLOSSEN! ")
+    println("\n" * "="^80)
+    println(" SICHERER SERVER BATCH-JOB ERFOLGREICH ABGESCHLOSSEN!")
+    println("="^80)
     exit(0)
 else
-    println(" SERVER BATCH-JOB FEHLGESCHLAGEN! ")
+    println("\n" * "="^80)
+    println(" SICHERER SERVER BATCH-JOB FEHLGESCHLAGEN!")
+    println("="^80)
     exit(1)
 end
