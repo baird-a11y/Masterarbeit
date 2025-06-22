@@ -294,7 +294,7 @@ function demo_training(;
     # 2. UNet erstellen
     println("\n2. Erstelle UNet...")
     config = design_adaptive_unet(target_resolution)
-    model = create_corrected_adaptive_unet(config)
+    model = create_final_corrected_unet(config)
     
     # 3. Training-Konfiguration
     train_config = create_training_config(

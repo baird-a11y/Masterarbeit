@@ -1,3 +1,7 @@
-Modelle
+src/Demo/markers/
+src/Demo/Timestep_*/
+src/Demo/Model3D.vts
+src/Demo/output.dat
+src/Demo/output.pvd
 .gitignore
 

@@ -52,7 +52,7 @@ function demo_complete_pipeline(;
     
     # 3. UNet-Erstellung
     println("\n3. UNET-ERSTELLUNG")
-    model = create_corrected_adaptive_unet(config)
+    model = create_final_corrected_unet(config)
     
     # 4. Test des UNet
     println("\n4. UNET-TEST")
@@ -176,7 +176,7 @@ function demo_all_resolutions()
             config = design_adaptive_unet(res)
             
             # UNet erstellen
-            model = create_corrected_adaptive_unet(config)
+            model = create_final_corrected_unet(config)
             
             # Test
             success, output_shape = test_corrected_unet(res, verbose=true)
@@ -228,7 +228,7 @@ function quick_test()
         # 3. UNet Test
         println("3. Teste UNet...")
         config = design_adaptive_unet(128)
-        model = create_corrected_adaptive_unet(config)
+        model = create_final_corrected_unet(config)
         test_input = randn(Float32, 128, 128, 1, 2)
         output = model(test_input)
         println("   ✓ UNet erfolgreich")
@@ -265,7 +265,7 @@ println("  preprocess_lamem_sample(...)    - Sample für UNet vorbereiten")
 println()
 println("UNET:")
 println("  design_adaptive_unet(resolution) - UNet-Konfiguration erstellen")
-println("  create_corrected_adaptive_unet(config) - UNet erstellen")
+println("  create_final_corrected_unet(config) - UNet erstellen")
 println("  test_corrected_unet(resolution)  - UNet testen")
 println()
 println("BATCH-MANAGEMENT:")
