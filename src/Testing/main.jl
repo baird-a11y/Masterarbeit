@@ -29,9 +29,9 @@ include("batch_management.jl")
 # Einfache Server-Konfiguration
 const SERVER_CONFIG = (
     target_crystal_count = 10,
-    n_training_samples = 6,        # Mindestens 4 für Batch-Größe 2
-    num_epochs = 20,               # Weniger Epochen für Test
-    learning_rate = 0.00005f0,       # Etwas höhere Lernrate
+    n_training_samples = 200,        # Mindestens 4 für Batch-Größe 2
+    num_epochs = 40,               # Weniger Epochen für Test
+    learning_rate = 0.001f0,       # Etwas höhere Lernrate
     batch_size = 1,                # Kleinere Batch-Größe
     eval_crystal_range = 9:10,     # Nur 2 Kristallanzahlen
     n_eval_samples_per_count = 1,
