@@ -1,13 +1,14 @@
 # =============================================================================
-# TRAINING MODULE - ZYGOTE-SICHER
+# TRAINING MODULE - ZYGOTE-SICHER (BSON IMPORT KORRIGIERT)
 # =============================================================================
-# Speichern als: training_safe.jl
+# 
 
 using Flux
 using Flux: mse
 using CUDA
 using Optimisers
-using BSON: @save
+using BSON
+using BSON: @load, @save
 using Statistics
 using Random
 
@@ -68,7 +69,7 @@ function split_dataset(dataset, validation_split=0.1)
 end
 
 """
-Sichere Evaluierung auf CPU - KORRIGIERT
+Sichere Evaluierung auf CPU
 """
 function evaluate_model_safe(model, val_dataset, target_resolution)
     if length(val_dataset) == 0
@@ -82,7 +83,7 @@ function evaluate_model_safe(model, val_dataset, target_resolution)
     val_batch_size = min(2, length(val_dataset))
     max_batches = min(5, length(val_dataset))  # Maximal 5 Batches für Validation
     
-    # KORRIGIERT: Sichere Range-Erstellung
+    # Sichere Range-Erstellung
     for i in 1:val_batch_size:max_batches
         end_idx = min(i + val_batch_size - 1, length(val_dataset))
         
@@ -125,7 +126,7 @@ function evaluate_model_safe(model, val_dataset, target_resolution)
 end
 
 """
-KORRIGIERTE Haupttraining-Funktion - CPU-fokussiert und Zygote-sicher
+Haupttraining-Funktion - CPU-fokussiert und Zygote-sicher
 """
 function train_velocity_unet_safe(
     model, 
@@ -152,9 +153,6 @@ function train_velocity_unet_safe(
     train_dataset, val_dataset = split_dataset(dataset, config.validation_split)
     println("  Training: $(length(train_dataset)) Samples")
     println("  Validation: $(length(val_dataset)) Samples")
-    
-    # CPU-Modell für Stabilität
-    # model = cpu(model)
     
     # Optimizer setup
     opt_state = Optimisers.setup(Optimisers.Adam(config.learning_rate), model)
@@ -194,10 +192,6 @@ function train_velocity_unet_safe(
                 if successful == 0
                     continue  # Skip leere Batches
                 end
-                
-                # Alle Daten auf CPU
-                # phase_batch = cpu(phase_batch)
-                # velocity_batch = cpu(velocity_batch)
                 
                 # ZYGOTE-SICHERE Verlustfunktion
                 function loss_fn(m)
@@ -293,7 +287,7 @@ function train_velocity_unet_safe(
 end
 
 """
-Lädt ein gespeichertes Modell
+Lädt ein gespeichertes Modell - KORRIGIERT
 """
 function load_trained_model(model_path::String)
     println("Lade Modell: $model_path")
@@ -302,6 +296,7 @@ function load_trained_model(model_path::String)
         error("Modelldatei nicht gefunden: $model_path")
     end
     
+    # KORRIGIERT: Verwende BSON.load() statt model_dict
     model_dict = BSON.load(model_path)
     
     # Versuche verschiedene Schlüssel
