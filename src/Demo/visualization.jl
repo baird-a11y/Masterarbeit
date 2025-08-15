@@ -10,6 +10,26 @@ using Colors
 # Module laden
 include("evaluate_model.jl")  # Für Metriken-Berechnung
 
+# Konstante für Ausgabeverzeichnis
+const OUTPUT_DIR = "H:\\Masterarbeit\\Auswertung\\Ten_Crystals"
+
+"""
+Stelle sicher, dass das Ausgabeverzeichnis existiert
+"""
+function ensure_output_directory()
+    if !isdir(OUTPUT_DIR)
+        try
+            mkpath(OUTPUT_DIR)
+            println("✓ Ausgabeverzeichnis erstellt: $OUTPUT_DIR")
+        catch e
+            println("⚠️  Warnung: Kann Verzeichnis nicht erstellen: $e")
+            println("   Verwende aktuelles Verzeichnis als Fallback")
+            return "."
+        end
+    end
+    return OUTPUT_DIR
+end
+
 """
 Erstellt 3-Panel Visualisierung wie in deinem Beispielbild
 """
@@ -85,10 +105,13 @@ function create_three_panel_plot(model, sample;
         
         println("  $coord_text")
         
-        # 6. Speichern falls gewünscht
+        # 6. Speichern falls gewünscht mit korrektem Pfad
         if save_path !== nothing
-            savefig(final_plot, save_path)
-            println("✓ Plot gespeichert: $save_path")
+            output_dir = ensure_output_directory()
+            full_save_path = joinpath(output_dir, save_path)
+            
+            savefig(final_plot, full_save_path)
+            println("✓ Plot gespeichert: $full_save_path")
         end
         
         return final_plot, crystal_centers, gt_minima, pred_minima
@@ -231,7 +254,8 @@ function debug_minima_positions(model, sample; target_resolution=256)
     
     return crystal_centers
 end
-function test_visualization(model_path="ten_crystal_checkpoints/best_model.bson")
+
+function test_visualization(model_path="H:/Masterarbeit/Modelle/ten_crystal_modells/best_model.bson")
     println("=== TEST: 3-PANEL VISUALISIERUNG ===")
     
     try
@@ -285,7 +309,7 @@ end
 """
 Interaktive Visualisierung für verschiedene Kristallanzahlen
 """
-function interactive_visualization(model_path="ten_crystal_checkpoints/best_model.bson")
+function interactive_visualization(model_path="H:/Masterarbeit/Modelle/ten_crystal_modells/best_model.bson")
     println("=== INTERAKTIVE KRISTALL-VISUALISIERUNG ===")
     
     # Modell laden
@@ -298,6 +322,7 @@ function interactive_visualization(model_path="ten_crystal_checkpoints/best_mode
         return
     end
     
+    println("\nBilder werden gespeichert in: $OUTPUT_DIR")
     println("\nInteraktive Visualisierung gestartet...")
     println("Gib eine Kristallanzahl ein (1-15) oder 0 zum Beenden.")
     
@@ -382,7 +407,7 @@ function interactive_visualization(model_path="ten_crystal_checkpoints/best_mode
                 )
                 
                 if plot_result !== nothing
-                    println("✓ Visualisierung erstellt und gespeichert: $save_name")
+                    println("✓ Visualisierung erstellt und gespeichert: $(joinpath(OUTPUT_DIR, save_name))")
                     display(plot_result)
                 else
                     println("❌ Visualisierung fehlgeschlagen")
@@ -411,6 +436,7 @@ function create_crystal_comparison_plots(model_path="ten_crystal_checkpoints/bes
                                         crystal_counts=[1, 3, 5, 8, 10])
     println("=== BATCH-VISUALISIERUNG ===")
     println("Erstelle Plots für Kristallanzahlen: $crystal_counts")
+    println("Speichern in: $OUTPUT_DIR")
     
     model = load_trained_model(model_path)
     
@@ -439,7 +465,7 @@ function create_crystal_comparison_plots(model_path="ten_crystal_checkpoints/bes
             )
             
             if plot_result !== nothing
-                println("✓ $save_name erstellt")
+                println("✓ $(joinpath(OUTPUT_DIR, save_name)) erstellt")
             else
                 println("❌ Fehler bei $n_crystals Kristallen")
             end
@@ -451,9 +477,11 @@ function create_crystal_comparison_plots(model_path="ten_crystal_checkpoints/bes
     end
     
     println("\n✓ Batch-Visualisierung abgeschlossen")
+    println("Alle Bilder gespeichert in: $OUTPUT_DIR")
 end
 
 println("Visualization Module geladen!")
+println("Ausgabeverzeichnis: $OUTPUT_DIR")
 println("Verfügbare Funktionen:")
 println("  - test_visualization() - Einfacher Test")
 println("  - interactive_visualization() - Interaktive Eingabe") 
