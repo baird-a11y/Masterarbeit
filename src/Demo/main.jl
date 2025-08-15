@@ -41,10 +41,6 @@ const SERVER_CONFIG = (
     batch_size = 1,                     # Kleine Batches für 10-Kristall Komplexität
     early_stopping_patience = 8,        # Mehr Patience
     
-    # Evaluierung
-    eval_crystal_range = 8:10,          # Teste 8, 9, 10 Kristalle
-    n_eval_samples_per_count = 3,       # Mehr Evaluierungssamples
-    
     # Output-Parameter
     checkpoint_dir = "ten_crystal_checkpoints",
     results_dir = "ten_crystal_results",
@@ -220,111 +216,20 @@ function generate_simple_ten_crystal_grid()
 end
 
 # =============================================================================
-# EVALUIERUNG AUF VERSCHIEDENE KRISTALLANZAHLEN
+# EVALUIERUNG ENTFERNT - FOKUS AUF TRAINING
 # =============================================================================
-
-"""
-Evaluiert trainiertes Modell auf verschiedene Kristallanzahlen
-"""
-function evaluate_generalization(model, crystal_counts; n_samples_per_count=3, resolution=256)
-    println("\n=== GENERALISIERUNGS-EVALUIERUNG ===")
-    println("Teste Kristallanzahlen: $crystal_counts")
-    println("Samples pro Anzahl: $n_samples_per_count")
-    
-    results = Dict()
-    
-    for crystal_count in crystal_counts
-        println("\n--- Teste $crystal_count Kristalle ---")
-        
-        mae_values = []
-        r2_values = []
-        
-        for sample_idx in 1:n_samples_per_count
-            try
-                # Generiere Testsample
-                test_sample = if crystal_count == 10
-                    # Verwende 10-Kristall Generator
-                    samples = generate_ten_crystal_dataset(1, resolution=resolution, verbose=false)
-                    length(samples) > 0 ? samples[1] : nothing
-                else
-                    # Verwende Standard-Generator für andere Anzahlen
-                    LaMEM_Multi_crystal(
-                        resolution=(resolution, resolution),
-                        n_crystals=crystal_count,
-                        radius_crystal=fill(0.05, crystal_count),
-                        cen_2D=[(rand(-0.5:0.1:0.5), rand(0.2:0.1:0.8)) for _ in 1:crystal_count]
-                    )
-                end
-                
-                if test_sample === nothing
-                    continue
-                end
-                
-                x, z, phase, vx, vz, exx, ezz, v_stokes = test_sample
-                
-                # Preprocessing
-                phase_tensor, velocity_tensor = preprocess_lamem_sample(
-                    x, z, phase, vx, vz, v_stokes,
-                    target_resolution=resolution
-                )
-                
-                # Vorhersage
-                prediction = cpu(model(phase_tensor))
-                
-                # Metriken berechnen
-                mae_vx = mean(abs.(prediction[:,:,1,1] .- velocity_tensor[:,:,1,1]))
-                mae_vz = mean(abs.(prediction[:,:,2,1] .- velocity_tensor[:,:,2,1]))
-                mae_total = (mae_vx + mae_vz) / 2
-                
-                # R² berechnen
-                gt_flat = vcat(vec(velocity_tensor[:,:,1,1]), vec(velocity_tensor[:,:,2,1]))
-                pred_flat = vcat(vec(prediction[:,:,1,1]), vec(prediction[:,:,2,1]))
-                
-                ss_res = sum((gt_flat .- pred_flat).^2)
-                ss_tot = sum((gt_flat .- mean(gt_flat)).^2)
-                r2 = 1 - ss_res / ss_tot
-                
-                push!(mae_values, mae_total)
-                push!(r2_values, r2)
-                
-                println("  Sample $sample_idx: MAE = $(round(mae_total, digits=6)), R² = $(round(r2, digits=3))")
-                
-            catch e
-                println("  Sample $sample_idx fehlgeschlagen: $e")
-                continue
-            end
-        end
-        
-        if length(mae_values) > 0
-            avg_mae = mean(mae_values)
-            avg_r2 = mean(r2_values)
-            
-            results[crystal_count] = (
-                mae = avg_mae,
-                r2 = avg_r2,
-                n_samples = length(mae_values)
-            )
-            
-            println("  Durchschnitt: MAE = $(round(avg_mae, digits=6)), R² = $(round(avg_r2, digits=3))")
-        else
-            println("  Keine erfolgreichen Samples für $crystal_count Kristalle")
-            results[crystal_count] = (mae = NaN, r2 = NaN, n_samples = 0)
-        end
-    end
-    
-    return results
-end
+# Evaluierung wird später separat implementiert
 
 # =============================================================================
 # HAUPTFUNKTION
 # =============================================================================
 
 """
-Vollständiges 10-Kristall Training und Generalisierungstest
+Vollständiges 10-Kristall Training (ohne Evaluierung)
 """
-function run_ten_crystal_study()
+function run_ten_crystal_training()
     println("="^80)
-    println("STARTE 10-KRISTALL UNET STUDIE")
+    println("STARTE 10-KRISTALL UNET TRAINING")
     println("="^80)
     
     start_time = time()
@@ -402,68 +307,58 @@ function run_ten_crystal_study()
         
         println("✓ 10-Kristall Training abgeschlossen")
         
-        # 5. GENERALISIERUNGS-EVALUIERUNG
-        println("\n5. GENERALISIERUNGS-EVALUIERUNG")
-        println("-"^50)
-        
-        generalization_results = evaluate_generalization(
-            trained_model,
-            collect(SERVER_CONFIG.eval_crystal_range),
-            n_samples_per_count=SERVER_CONFIG.n_eval_samples_per_count,
-            resolution=SERVER_CONFIG.target_resolution
-        )
-        
-        # 6. ERGEBNISSE ZUSAMMENFASSUNG
-        println("\n6. ERGEBNISSE")
+        # 5. TRAINING-ERGEBNISSE
+        println("\n5. TRAINING-ERGEBNISSE")
         println("-"^50)
         
         if length(train_losses) > 0
             println("Training - Finale Loss: $(round(train_losses[end], digits=6))")
+            println("Training - Beste Loss: $(round(minimum(train_losses), digits=6))")
         end
         
         if length(val_losses) > 0
             best_val_loss = minimum(val_losses)
-            println("Training - Beste Validation Loss: $(round(best_val_loss, digits=6))")
+            best_epoch = argmin(val_losses)
+            println("Validation - Beste Loss: $(round(best_val_loss, digits=6)) (Epoche $best_epoch)")
+            println("Validation - Finale Loss: $(round(val_losses[end], digits=6))")
         end
         
-        println("\nGeneralisierung:")
-        for crystal_count in sort(collect(keys(generalization_results)))
-            result = generalization_results[crystal_count]
-            if result.n_samples > 0
-                println("  $crystal_count Kristalle: MAE = $(round(result.mae, digits=6)), R² = $(round(result.r2, digits=3))")
-            else
-                println("  $crystal_count Kristalle: Keine erfolgreichen Tests")
+        # Zeige Training-Verlauf
+        if length(train_losses) > 5
+            println("\nTraining-Verlauf (letzte 5 Epochen):")
+            for i in (length(train_losses)-4):length(train_losses)
+                println("  Epoche $i: Train = $(round(train_losses[i], digits=6)), Val = $(round(val_losses[i], digits=6))")
             end
         end
         
-        # 7. SPEICHERN
-        println("\n7. ERGEBNISSE SPEICHERN")
+        # 6. ERGEBNISSE SPEICHERN
+        println("\n6. ERGEBNISSE SPEICHERN")
         println("-"^50)
         
         results_data = Dict(
             "trained_model" => trained_model,
             "train_losses" => train_losses,
             "val_losses" => val_losses,
-            "generalization_results" => generalization_results,
             "config" => SERVER_CONFIG,
-            "dataset_size" => length(dataset)
+            "dataset_size" => length(dataset),
+            "training_completed" => true
         )
         
-        results_path = joinpath(SERVER_CONFIG.results_dir, "ten_crystal_study_results.bson")
+        results_path = joinpath(SERVER_CONFIG.results_dir, "ten_crystal_training_results.bson")
         @save results_path results_data
         
-        println("✓ Alle Ergebnisse gespeichert: $results_path")
+        println("✓ Trainingsergebnisse gespeichert: $results_path")
         
         # Erfolgreicher Abschluss
         end_time = time()
         total_time = end_time - start_time
         
         println("\n" * "="^80)
-        println("10-KRISTALL STUDIE ERFOLGREICH ABGESCHLOSSEN")
+        println("10-KRISTALL TRAINING ERFOLGREICH ABGESCHLOSSEN")
         println("="^80)
         println("Gesamtzeit: $(round(total_time/60, digits=2)) Minuten")
-        println("Checkpoints: $(SERVER_CONFIG.checkpoint_dir)")
-        println("Ergebnisse: $(SERVER_CONFIG.results_dir)")
+        println("Trainiertes Modell: $(SERVER_CONFIG.checkpoint_dir)/best_model.bson")
+        println("Ergebnisse: $results_path")
         
         return true
         
@@ -472,7 +367,7 @@ function run_ten_crystal_study()
         total_time = end_time - start_time
         
         println("\n" * "="^80)
-        println("10-KRISTALL STUDIE FEHLGESCHLAGEN")
+        println("10-KRISTALL TRAINING FEHLGESCHLAGEN")
         println("="^80)
         println("Fehler: $e")
         println("Laufzeit bis Fehler: $(round(total_time/60, digits=1)) Minuten")
@@ -529,8 +424,8 @@ for (key, value) in pairs(SERVER_CONFIG)
     println("  $key: $value")
 end
 
-# Führe 10-Kristall Studie aus
-success = run_ten_crystal_study()
+# Führe 10-Kristall Training aus
+success = run_ten_crystal_training()
 
 if success
     println("\n" * "="^80)
