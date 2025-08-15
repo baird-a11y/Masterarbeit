@@ -1,14 +1,19 @@
 # =============================================================================
-# VISUALIZATION MODULE - 3-PANEL PLOTS
+# VISUALIZATION MODULE - 3-PANEL PLOTS (KORRIGIERT)
 # =============================================================================
 # Speichern als: visualization.jl
 
 using Plots
 using Statistics
 using Colors
+using BSON
 
-# Module laden
-include("evaluate_model.jl")  # Für Metriken-Berechnung
+# Module laden (alle erforderlichen Abhängigkeiten)
+include("lamem_interface.jl")     # Für LaMEM_Multi_crystal
+include("data_processing.jl")     # Für preprocess_lamem_sample
+include("unet_architecture.jl")   # Für SimplifiedUNet Definition
+include("training.jl")            # Für load_trained_model
+include("evaluate_model.jl")      # Für Metriken-Berechnung
 
 # Konstante für Ausgabeverzeichnis
 const OUTPUT_DIR = "H:\\Masterarbeit\\Auswertung\\Ten_Crystals"
@@ -20,10 +25,10 @@ function ensure_output_directory()
     if !isdir(OUTPUT_DIR)
         try
             mkpath(OUTPUT_DIR)
-            println("✓ Ausgabeverzeichnis erstellt: $OUTPUT_DIR")
+            println("Ausgabeverzeichnis erstellt: $OUTPUT_DIR")
         catch e
-            println("⚠️  Warnung: Kann Verzeichnis nicht erstellen: $e")
-            println("   Verwende aktuelles Verzeichnis als Fallback")
+            println("Warnung: Kann Verzeichnis nicht erstellen: $e")
+            println("Verwende aktuelles Verzeichnis als Fallback")
             return "."
         end
     end
@@ -31,7 +36,47 @@ function ensure_output_directory()
 end
 
 """
-Erstellt 3-Panel Visualisierung wie in deinem Beispielbild
+Lädt ein gespeichertes Modell (falls load_trained_model nicht verfügbar)
+"""
+function load_model_safe(model_path::String)
+    println("Lade Modell: $model_path")
+    
+    if !isfile(model_path)
+        error("Modelldatei nicht gefunden: $model_path")
+    end
+    
+    try
+        # Versuche die training.jl Funktion zu verwenden
+        return load_trained_model(model_path)
+    catch e
+        println("load_trained_model nicht verfügbar, verwende BSON.load...")
+        
+        # Fallback: Direktes BSON laden
+        model_dict = BSON.load(model_path)
+        
+        # Versuche verschiedene Schlüssel
+        for key in [:model, :best_model, :final_model, :trained_model]
+            if haskey(model_dict, key)
+                model = model_dict[key]
+                println("Modell unter Schlüssel '$key' gefunden")
+                return model
+            end
+        end
+        
+        # Fallback: Nehme ersten Wert der ein Modell sein könnte
+        for (key, value) in model_dict
+            if isa(value, Flux.Chain) || hasproperty(value, :layers) || string(typeof(value)) |> x -> contains(x, "UNet")
+                println("Modell unter Schlüssel '$key' gefunden")
+                return value
+            end
+        end
+        
+        error("Kein Modell in der BSON-Datei gefunden")
+    end
+end
+
+"""
+Erstellt 3-Panel Visualisierung
 """
 function create_three_panel_plot(model, sample; 
                                  target_resolution=256, 
@@ -96,7 +141,7 @@ function create_three_panel_plot(model, sample;
                          size=(1200, 400),
                          plot_title=layout_title)
         
-        # Koordinaten-Info als separater Text-Plot hinzufügen
+        # Koordinaten-Info ausgeben
         coord_text = "Koordinaten-Analyse ($(target_resolution), $(target_resolution)):\n"
         coord_text *= "GT Alignment: $(round(calculate_alignment_error(crystal_centers, gt_minima), digits=1)) px\n"
         coord_text *= "UNet Alignment: $(round(alignment_error, digits=1)) px\n"
@@ -111,7 +156,7 @@ function create_three_panel_plot(model, sample;
             full_save_path = joinpath(output_dir, save_path)
             
             savefig(final_plot, full_save_path)
-            println("✓ Plot gespeichert: $full_save_path")
+            println("Plot gespeichert: $full_save_path")
         end
         
         return final_plot, crystal_centers, gt_minima, pred_minima
@@ -146,7 +191,7 @@ function create_phase_plot(phase_2d, crystal_centers, resolution)
                 markerstrokewidth=2,
                 label=i==1 ? "Kristall-Zentren" : "")
         
-        # Rote Punkte als Alternative (wie in deinem Bild)
+        # Rote Punkte als Alternative
         if i <= 2  # Nur erste 2 rot markieren
             scatter!(p, [x_coord], [y_coord], 
                     markersize=6, 
@@ -168,7 +213,7 @@ function create_velocity_plot(vz_field, velocity_minima, resolution, plot_title)
     
     # Velocity Heatmap mit verfügbarer Farbpalette
     p = heatmap(1:resolution, 1:resolution, vz_field,
-                c=:RdBu,  # Standard Rot-Blau Farbschema (ohne _r)
+                c=:RdBu,  # Standard Rot-Blau Farbschema
                 aspect_ratio=:equal,
                 title=plot_title,
                 xlabel="x", ylabel="z",
@@ -192,77 +237,16 @@ function create_velocity_plot(vz_field, velocity_minima, resolution, plot_title)
 end
 
 """
-Debug-Funktion: Detaillierte Analyse der Minima-Positionen
+Test-Funktion für Visualisierung (korrigiert)
 """
-function debug_minima_positions(model, sample; target_resolution=256)
-    println("=== DEBUG: MINIMA-POSITIONEN ANALYSE ===")
-    
-    # Sample verarbeiten
-    x, z, phase, vx, vz, exx, ezz, v_stokes = sample
-    phase_tensor, velocity_tensor = preprocess_lamem_sample(x, z, phase, vx, vz, v_stokes, target_resolution=target_resolution)
-    prediction = cpu(model(phase_tensor))
-    
-    # Arrays extrahieren
-    phase_2d = phase_tensor[:,:,1,1]
-    gt_vz = velocity_tensor[:,:,2,1]
-    pred_vz = prediction[:,:,2,1]
-    
-    # Kristall-Zentren
-    crystal_centers = find_crystal_centers(phase_2d)
-    println("Kristall-Zentren: $crystal_centers")
-    
-    # Für jeden Kristall: Finde lokale Umgebung
-    for (i, center) in enumerate(crystal_centers)
-        println("\n--- KRISTALL $i ---")
-        println("Zentrum: $center")
-        
-        cx, cy = round(Int, center[1]), round(Int, center[2])
-        
-        # Definiere Suchbereich um Kristall (20x20 Pixel)
-        search_radius = 20
-        x_range = max(1, cx-search_radius):min(target_resolution, cx+search_radius)
-        y_range = max(1, cy-search_radius):min(target_resolution, cy+search_radius)
-        
-        # Extrahiere lokale Geschwindigkeitsfelder
-        local_gt_vz = gt_vz[y_range, x_range]
-        local_pred_vz = pred_vz[y_range, x_range]
-        
-        # Finde lokale Minima
-        gt_min_idx = argmin(local_gt_vz)
-        pred_min_idx = argmin(local_pred_vz)
-        
-        # Konvertiere zu globalen Koordinaten
-        gt_min_global = (x_range[gt_min_idx[2]], y_range[gt_min_idx[1]])
-        pred_min_global = (x_range[pred_min_idx[2]], y_range[pred_min_idx[1]])
-        
-        println("GT lokales Minimum: $gt_min_global")
-        println("UNet lokales Minimum: $pred_min_global")
-        println("GT Wert am Minimum: $(local_gt_vz[gt_min_idx])")
-        println("UNet Wert am Minimum: $(local_pred_vz[pred_min_idx])")
-        
-        # Distanzen zum Kristall-Zentrum
-        gt_dist = sqrt((gt_min_global[1] - center[1])^2 + (gt_min_global[2] - center[2])^2)
-        pred_dist = sqrt((pred_min_global[1] - center[1])^2 + (pred_min_global[2] - center[2])^2)
-        
-        println("GT Distanz zum Kristall: $(round(gt_dist, digits=2)) Pixel")
-        println("UNet Distanz zum Kristall: $(round(pred_dist, digits=2)) Pixel")
-        
-        # Geschwindigkeits-Statistiken in der Umgebung
-        println("GT Vz in Umgebung: min=$(round(minimum(local_gt_vz), digits=4)), max=$(round(maximum(local_gt_vz), digits=4))")
-        println("UNet Vz in Umgebung: min=$(round(minimum(local_pred_vz), digits=4)), max=$(round(maximum(local_pred_vz), digits=4))")
-    end
-    
-    return crystal_centers
-end
-
 function test_visualization(model_path="H:/Masterarbeit/Modelle/ten_crystal_modells/best_model.bson")
     println("=== TEST: 3-PANEL VISUALISIERUNG ===")
     
     try
-        # 1. Modell laden
+        # 1. Modell laden (mit Fallback)
         println("1. Lade Modell...")
-        model = load_trained_model(model_path)
-        println("✓ Modell geladen")
+        model = load_model_safe(model_path)
+        println("Modell geladen")
         
         # 2. Test-Sample generieren
         println("2. Generiere Test-Sample...")
@@ -272,7 +256,7 @@ function test_visualization(model_path="H:/Masterarbeit/Modelle/ten_crystal_mode
             radius_crystal=[0.05, 0.05],
             cen_2D=[(0.0, 0.3), (0.0, 0.7)]
         )
-        println("✓ Test-Sample generiert")
+        println("Test-Sample generiert")
         
         # 3. Visualisierung erstellen
         println("3. Erstelle 3-Panel Plot...")
@@ -283,7 +267,7 @@ function test_visualization(model_path="H:/Masterarbeit/Modelle/ten_crystal_mode
         )
         
         if plot_result !== nothing
-            println("✓ Visualisierung erfolgreich erstellt")
+            println("Visualisierung erfolgreich erstellt")
             
             # Zeige Details
             println("\nDetails:")
@@ -296,12 +280,17 @@ function test_visualization(model_path="H:/Masterarbeit/Modelle/ten_crystal_mode
             
             return true
         else
-            println("❌ Visualisierung fehlgeschlagen")
+            println("Visualisierung fehlgeschlagen")
             return false
         end
         
     catch e
-        println("❌ Fehler bei Visualisierung-Test: $e")
+        println("Fehler bei Visualisierung-Test: $e")
+        println("Stacktrace:")
+        for (exc, bt) in Base.catch_stack()
+            showerror(stdout, exc, bt)
+            println()
+        end
         return false
     end
 end
@@ -313,12 +302,12 @@ function interactive_visualization(model_path="H:/Masterarbeit/Modelle/ten_cryst
     println("=== INTERAKTIVE KRISTALL-VISUALISIERUNG ===")
     
     # Modell laden
-    local model  # Explizite Variable-Deklaration
+    local model
     try
-        model = load_trained_model(model_path)
-        println("✓ Modell geladen: $model_path")
+        model = load_model_safe(model_path)
+        println("Modell geladen: $model_path")
     catch e
-        println("❌ Fehler beim Laden des Modells: $e")
+        println("Fehler beim Laden des Modells: $e")
         return
     end
     
@@ -339,14 +328,14 @@ function interactive_visualization(model_path="H:/Masterarbeit/Modelle/ten_cryst
             n_crystals = parse(Int, input)
             
             if n_crystals < 1 || n_crystals > 15
-                println("⚠️  Bitte Zahl zwischen 1 und 15 eingeben!")
+                println("Bitte Zahl zwischen 1 und 15 eingeben!")
                 continue
             end
             
             println("\nGeneriere $n_crystals-Kristall System...")
             
             # Sample generieren mit besserer Kristall-Verteilung
-            local sample  # Explizite Variable-Deklaration
+            local sample
             try
                 if n_crystals <= 2
                     # Für 1-2 Kristalle: Links-Rechts Layout
@@ -391,14 +380,14 @@ function interactive_visualization(model_path="H:/Masterarbeit/Modelle/ten_cryst
                 )
                 
             catch e
-                println("❌ Fehler bei Sample-Generierung: $e")
+                println("Fehler bei Sample-Generierung: $e")
                 continue
             end
             
             # Visualisierung erstellen
             save_name = "visualization_$(n_crystals)_crystals.png"
             
-            local plot_result  # Explizite Variable-Deklaration
+            local plot_result
             try
                 plot_result, _, _, _ = create_three_panel_plot(
                     model, sample,
@@ -407,22 +396,22 @@ function interactive_visualization(model_path="H:/Masterarbeit/Modelle/ten_cryst
                 )
                 
                 if plot_result !== nothing
-                    println("✓ Visualisierung erstellt und gespeichert: $(joinpath(OUTPUT_DIR, save_name))")
+                    println("Visualisierung erstellt und gespeichert: $(joinpath(OUTPUT_DIR, save_name))")
                     display(plot_result)
                 else
-                    println("❌ Visualisierung fehlgeschlagen")
+                    println("Visualisierung fehlgeschlagen")
                 end
                 
             catch e
-                println("❌ Fehler bei Visualisierung: $e")
+                println("Fehler bei Visualisierung: $e")
                 continue
             end
             
         catch e
             if isa(e, ArgumentError) && contains(string(e), "invalid base 10 digit")
-                println("❌ Bitte nur Zahlen eingeben (z.B. 5)")
+                println("Bitte nur Zahlen eingeben (z.B. 5)")
             else
-                println("❌ Fehler: $e")
+                println("Fehler: $e")
             end
             continue
         end
@@ -431,6 +420,7 @@ end
 
 """
 Batch-Visualisierung für mehrere Kristallanzahlen
+
 """
 function create_crystal_comparison_plots(model_path="H:/Masterarbeit/Modelle/ten_crystal_modells/best_model.bson", 
                                         crystal_counts=[1, 3, 5, 8, 10])
@@ -438,7 +428,7 @@ function create_crystal_comparison_plots(model_path="H:/Masterarbeit/Modelle/ten
     println("Erstelle Plots für Kristallanzahlen: $crystal_counts")
     println("Speichern in: $OUTPUT_DIR")
     
-    model = load_trained_model(model_path)
+    model = load_model_safe(model_path)
     
     for n_crystals in crystal_counts
         println("\nErstelle Plot für $n_crystals Kristalle...")
@@ -465,18 +455,18 @@ function create_crystal_comparison_plots(model_path="H:/Masterarbeit/Modelle/ten
             )
             
             if plot_result !== nothing
-                println("✓ $(joinpath(OUTPUT_DIR, save_name)) erstellt")
+                println("$(joinpath(OUTPUT_DIR, save_name)) erstellt")
             else
-                println("❌ Fehler bei $n_crystals Kristallen")
+                println("Fehler bei $n_crystals Kristallen")
             end
             
         catch e
-            println("❌ Fehler bei $n_crystals Kristallen: $e")
+            println("Fehler bei $n_crystals Kristallen: $e")
             continue
         end
     end
     
-    println("\n✓ Batch-Visualisierung abgeschlossen")
+    println("\nBatch-Visualisierung abgeschlossen")
     println("Alle Bilder gespeichert in: $OUTPUT_DIR")
 end
 
