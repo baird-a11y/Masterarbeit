@@ -432,7 +432,7 @@ end
 """
 Batch-Visualisierung für mehrere Kristallanzahlen
 """
-function create_crystal_comparison_plots(model_path="ten_crystal_checkpoints/best_model.bson", 
+function create_crystal_comparison_plots(model_path="H:/Masterarbeit/Modelle/ten_crystal_modells/best_model.bson", 
                                         crystal_counts=[1, 3, 5, 8, 10])
     println("=== BATCH-VISUALISIERUNG ===")
     println("Erstelle Plots für Kristallanzahlen: $crystal_counts")
