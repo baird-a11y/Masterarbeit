@@ -12,3 +12,4 @@ src/Demo/safe_server_checkpoints/final_model.bson
 src/Demo/safe_server_results/dataset.jls
 src/Demo/safe_server_results/test_results.bson
 src/Demo/safe_server_results/training_results.bson
+src/Testing/final_model.bson

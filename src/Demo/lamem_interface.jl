@@ -12,7 +12,7 @@ Erstellt ein LaMEM-Modell mit mehreren Kristallphasen
 """
 function LaMEM_Multi_crystal(;
     resolution = (64, 64),              
-    n_crystals = 1,                     
+    n_crystals = 10,                     
     radius_crystal = [0.05],            
     η_magma = 1e20,                     
     ρ_magma = 2700,                     

@@ -23,7 +23,7 @@ struct TrainingConfig
     save_every_n_epochs::Int
     use_gpu::Bool
     validation_split::Float32
-    early_stopping_patience::Int
+    
 end
 
 """
@@ -37,11 +37,11 @@ function create_training_config(;
     save_every_n_epochs = 10,
     use_gpu = false,  # Default auf CPU für Stabilität
     validation_split = 0.1f0,
-    early_stopping_patience = 10
+    
 )
     return TrainingConfig(
         learning_rate, num_epochs, batch_size, checkpoint_dir,
-        save_every_n_epochs, use_gpu, validation_split, early_stopping_patience
+        save_every_n_epochs, use_gpu, validation_split
     )
 end
 
@@ -239,25 +239,6 @@ function train_velocity_unet_safe(
         println("  Training Loss: $(round(avg_train_loss, digits=6))")
         println("  Validation Loss: $(round(val_loss, digits=6))")
         
-        # Early Stopping Check
-        if val_loss < best_val_loss
-            best_val_loss = val_loss
-            patience_counter = 0
-            
-            # Speichere bestes Modell
-            best_model_path = joinpath(config.checkpoint_dir, "best_model.bson")
-            @save best_model_path model
-            println("  Neues bestes Modell gespeichert!")
-            
-        else
-            patience_counter += 1
-            println("  Validation Loss nicht verbessert (Patience: $patience_counter/$(config.early_stopping_patience))")
-            
-            if patience_counter >= config.early_stopping_patience
-                println("  Early Stopping aktiviert!")
-                break
-            end
-        end
         
         # Checkpoint speichern
         if epoch % config.save_every_n_epochs == 0
