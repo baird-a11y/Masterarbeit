@@ -32,13 +32,13 @@ println("Alle Module erfolgreich geladen!")
 const SERVER_CONFIG = (
     # 10-Kristall spezifische Parameter
     target_crystal_count = 10,          # Hauptziel: 10 Kristalle
-    n_training_samples = 200,            # Mehr Samples für komplexere Daten
+    n_training_samples = 500,            # Mehr Samples für komplexere Daten
     target_resolution = 256,            # Höhere Auflösung für 10 Kristalle
     
     # Training-Parameter  
     num_epochs = 30,                    # Mehr Epochen für komplexere Aufgabe
-    learning_rate = 0.0005f0,           # Kleinere Lernrate für Stabilität
-    batch_size = 1,                     # Kleine Batches für 10-Kristall Komplexität
+    learning_rate = 0.001f0,           # Kleinere Lernrate für Stabilität
+    batch_size = 2,                     # Kleine Batches für 10-Kristall Komplexität
     early_stopping_patience = 10,        # Mehr Patience
     
     # Output-Parameter
