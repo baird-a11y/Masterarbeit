@@ -4,10 +4,10 @@
 # Speichern als: advanced_visualization.jl
 
 using Plots
+gr()  # Explizit GR-Backend verwenden für bessere Kompatibilität
 using Colors
 using ColorSchemes
 using Statistics
-using JSON3
 using Dates
 
 # Konfiguration für konsistente Visualisierung
@@ -273,9 +273,10 @@ function create_enhanced_velocity_plot(vz_field, velocity_minima, resolution, pl
     for (i, minimum) in enumerate(velocity_minima)
         x_coord, y_coord = minimum
         
+        # Verwende diamond statt star5 für Kompatibilität
         scatter!(p, [x_coord], [y_coord], 
                 markersize=VIZ_CONFIG.marker_size_minima, 
-                markershape=:star5,
+                markershape=:diamond,
                 markercolor=:yellow, 
                 markerstrokecolor=:black,
                 markerstrokewidth=2,

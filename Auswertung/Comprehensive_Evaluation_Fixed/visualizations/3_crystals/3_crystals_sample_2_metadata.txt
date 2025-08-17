@@ -1,0 +1,15 @@
+Visualisierungs-Metadaten
+========================
+Zeitstempel: 2025-08-17T13:27:32.226
+Bildpfad: H:/Masterarbeit/Auswertung/Comprehensive_Evaluation_Fixed\visualizations\3_crystals\3_crystals_sample_2.png
+
+Evaluierungsergebnisse:
+  Kristallanzahl: 3
+  MAE Total: 0.493119
+  Korrelation v_z: 0.7177
+  Alignment-Fehler: 2.74 px
+  SSIM v_z: 0.0309
+  Komplexitäts-Index: 0.001
+
+Sample-Information:
+  Stokes-Geschwindigkeit: 4.01215752576e-5 cm/Jahr

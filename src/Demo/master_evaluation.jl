@@ -64,7 +64,7 @@ println("✓ Alle verfügbaren Module erfolgreich geladen!")
 println("\n2. KONFIGURATION...")
 
 # Pfade
-const MODEL_PATH = "H:/Masterarbeit/Modelle/ten_crystal_modells/best_model.bson"
+const MODEL_PATH = "H:/Masterarbeit/Modelle/ten_crystal_modells/final_model.bson"
 const OUTPUT_BASE_DIR = "H:/Masterarbeit/Auswertung/Comprehensive_Evaluation_Fixed"
 
 # Evaluierungs-Parameter
