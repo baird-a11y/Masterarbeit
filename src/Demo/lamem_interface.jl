@@ -29,7 +29,7 @@ function LaMEM_Multi_crystal(;
     # Create model
     model = Model(
         Grid(nel=(resolution[1]-1, resolution[2]-1), x=[-1,1], z=[-1,1]), 
-        Time(nstep_max=1), 
+        LaMEM.Time(nstep_max=1), # Von Time(nstep_max=1) zu LaMEM.Time(nstep_max=1) geändert
         Output(out_strain_rate=1)
     )
     

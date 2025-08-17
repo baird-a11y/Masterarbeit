@@ -15,3 +15,5 @@ src/Demo/safe_server_results/training_results.bson
 src/Testing/final_model.bson
 src/Demo/ten_crystal_checkpoints/best_model.bson
 Modelle/ten_crystal_modells/best_model.bson
+
+.gitignore
