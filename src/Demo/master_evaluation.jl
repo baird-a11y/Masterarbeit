@@ -1,38 +1,4 @@
 # =============================================================================
-# SCHNELLE NAMENSKONFLIKT-BEHEBUNG
-# =============================================================================
-# Führe dies VOR dem Laden der Module aus
-
-println("=== BEHEBE NAMENSKONFLIKTE ===")
-
-# Löse Time-Konflikt zwischen Dates und LaMEM
-using Dates
-using LaMEM
-using GeophysicalModelGenerator
-
-# Explizite Alias-Definition
-const LaMEMTime = LaMEM.Time
-const DatesTime = Dates.Time
-
-println("✓ Namenskonflikte behoben:")
-println("  LaMEM.Time → LaMEMTime")
-println("  Dates.Time → DatesTime")
-
-# Test ob Konflikt behoben
-try
-    test_model = LaMEM.Model(
-        LaMEM.Grid(nel=(63, 63), x=[-1,1], z=[-1,1]),
-        LaMEMTime(nstep_max=1),
-        LaMEM.Output(out_strain_rate=1)
-    )
-    println("✓ LaMEM-Time-Zugriff funktioniert")
-catch e
-    println("⚠ LaMEM-Time-Problem weiterhin vorhanden: $e")
-end
-
-println("✓ Namenskonflikt-Fix abgeschlossen")
-
-# =============================================================================
 # MASTER EVALUATION SCRIPT - VOLLSTÄNDIGE UNET MULTI-KRISTALL EVALUIERUNG (FIXED)
 # =============================================================================
 # Speichern als: master_evaluation_fixed.jl
@@ -76,16 +42,17 @@ include("comprehensive_evaluation.jl")   # Umfassende Evaluierung
 include("advanced_visualization.jl")     # Erweiterte Visualisierung
 
 # Verwende vereinfachtes Export-Modul statt problematischem data_management_system.jl
-# include("simple_data_export.jl")        # Vereinfachtes Datenmanagement
+include("simple_data_export.jl")        # Vereinfachtes Datenmanagement
 
 # Lade statistische Analyse separat (falls vorhanden)
+STATISTICAL_MODULE_LOADED = false  # Default-Wert setzen
 try
     include("statistical_analysis.jl")
     println("  Statistisches Analyse-Modul geladen")
-    STATISTICAL_MODULE_LOADED = true
+    global STATISTICAL_MODULE_LOADED = true
 catch e
     println("  Warnung: Statistisches Analyse-Modul nicht geladen: $e")
-    STATISTICAL_MODULE_LOADED = false
+    global STATISTICAL_MODULE_LOADED = false
 end
 
 println("✓ Alle verfügbaren Module erfolgreich geladen!")

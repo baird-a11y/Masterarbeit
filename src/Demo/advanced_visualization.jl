@@ -1,23 +1,21 @@
 # =============================================================================
-# ADVANCED VISUALIZATION MODULE
+# ADVANCED VISUALIZATION MODULE (KORRIGIERT)
 # =============================================================================
-
+# Speichern als: advanced_visualization.jl
 
 using Plots
 using Colors
 using ColorSchemes
 using Statistics
-using StatsPlots
-using PlotlyJS
-using Printf, JSON3, Statistics, LinearAlgebra, Random, Dates, BSON, CSV, DataFrames, Plots, Colors, Serialization, StatsBase, Distributions, HypothesisTests, Flux, CUDA, LaMEM, GeophysicalModelGenerator
-plotlyjs()
+using JSON3
+using Dates
 
 # Konfiguration für konsistente Visualisierung
 const VIZ_CONFIG = (
     figure_size = (1200, 400),
     dpi = 300,
     font_size = 12,
-    colormap_velocity = :RdBu_r,
+    colormap_velocity = :RdBu,  # Korrigiert: RdBu statt RdBu_r
     colormap_phase = :grays,
     marker_size_crystal = 8,
     marker_size_minima = 10,
@@ -37,11 +35,7 @@ function create_advanced_three_panel_plot(model, sample;
     println("Erstelle erweiterte 3-Panel Visualisierung...")
     
     try
-        # 1. Sample verarbeiten und Evaluierung
-        evaluation_result = evaluate_model_comprehensive(model, sample, 
-                                                       target_resolution=target_resolution)
-        
-        # Daten extrahieren für Visualisierung
+        # 1. Sample verarbeiten
         x, z, phase, vx, vz, exx, ezz, v_stokes = sample
         
         phase_tensor, velocity_tensor = preprocess_lamem_sample(
@@ -52,31 +46,36 @@ function create_advanced_three_panel_plot(model, sample;
         
         # 2D Arrays extrahieren
         phase_2d = phase_tensor[:,:,1,1]
+        gt_vx = velocity_tensor[:,:,1,1]
         gt_vz = velocity_tensor[:,:,2,1]
+        pred_vx = prediction[:,:,1,1]
         pred_vz = prediction[:,:,2,1]
         
-        # 2. Kristall-Analyse
+        # 2. Evaluierung durchführen
+        eval_result = evaluate_single_sample(phase_2d, gt_vx, gt_vz, pred_vx, pred_vz)
+        
+        # 3. Kristall-Analyse
         crystal_centers = find_crystal_centers(phase_2d)
         gt_minima = find_velocity_minima(gt_vz, length(crystal_centers))
         pred_minima = find_velocity_minima(pred_vz, length(crystal_centers))
         
-        # 3. Bestimme globale Farbskala für konsistente Darstellung
+        # 4. Bestimme globale Farbskala für konsistente Darstellung
         vz_max = max(maximum(abs.(gt_vz)), maximum(abs.(pred_vz)))
         colormap = custom_colormap !== nothing ? custom_colormap : VIZ_CONFIG.colormap_velocity
         
-        # 4. Panel 1: Phasenfeld mit Kristall-Zentren
-        p1 = create_enhanced_phase_plot(phase_2d, crystal_centers, target_resolution, evaluation_result)
+        # 5. Panel 1: Phasenfeld mit Kristall-Zentren
+        p1 = create_enhanced_phase_plot(phase_2d, crystal_centers, target_resolution, eval_result)
         
-        # 5. Panel 2: LaMEM Ground Truth
+        # 6. Panel 2: LaMEM Ground Truth
         p2 = create_enhanced_velocity_plot(gt_vz, gt_minima, target_resolution, 
                                          "LaMEM Ground Truth v_z", vz_max, colormap)
         
-        # 6. Panel 3: UNet Vorhersage  
+        # 7. Panel 3: UNet Vorhersage  
         p3 = create_enhanced_velocity_plot(pred_vz, pred_minima, target_resolution, 
                                          "UNet Vorhersage v_z", vz_max, colormap)
         
-        # 7. Layout mit erweiterten Metriken
-        layout_title = create_comprehensive_title(title_prefix, evaluation_result, show_metrics)
+        # 8. Layout mit erweiterten Metriken
+        layout_title = create_comprehensive_title(title_prefix, eval_result, show_metrics)
         
         final_plot = plot(p1, p2, p3, 
                          layout=(1, 3), 
@@ -85,18 +84,18 @@ function create_advanced_three_panel_plot(model, sample;
                          titlefontsize=VIZ_CONFIG.font_size+2,
                          dpi=VIZ_CONFIG.dpi)
         
-        # 8. Speichern mit Metadaten
+        # 9. Speichern mit Metadaten
         if save_path !== nothing
             full_path = ensure_output_path(save_path)
             savefig(final_plot, full_path)
             
-            # Zusätzlich Metadaten speichern
-            save_visualization_metadata(full_path, evaluation_result, sample)
+            # Metadaten speichern
+            save_visualization_metadata(full_path, eval_result, sample)
             
             println("Erweiterte Visualisierung gespeichert: $full_path")
         end
         
-        return final_plot, evaluation_result
+        return final_plot, eval_result
         
     catch e
         println("Fehler bei erweiterter Visualisierung: $e")
@@ -105,10 +104,117 @@ function create_advanced_three_panel_plot(model, sample;
 end
 
 """
+Vereinfachte Evaluierung für einzelnes Sample
+"""
+function evaluate_single_sample(phase_2d, gt_vx, gt_vz, pred_vx, pred_vz)
+    # MAE und RMSE berechnen
+    mae_vx = mean(abs.(pred_vx .- gt_vx))
+    mae_vz = mean(abs.(pred_vz .- gt_vz))
+    mae_total = (mae_vx + mae_vz) / 2
+    
+    rmse_vx = sqrt(mean((pred_vx .- gt_vx).^2))
+    rmse_vz = sqrt(mean((pred_vz .- gt_vz).^2))
+    rmse_total = (rmse_vx + rmse_vz) / 2
+    
+    # Pearson Korrelation
+    correlation_vx = cor(vec(gt_vx), vec(pred_vx))
+    correlation_vz = cor(vec(gt_vz), vec(pred_vz))
+    
+    # Kristall-Analyse
+    crystal_centers = find_crystal_centers(phase_2d)
+    gt_minima = find_velocity_minima(gt_vz, length(crystal_centers))
+    pred_minima = find_velocity_minima(pred_vz, length(crystal_centers))
+    
+    alignment_error = calculate_alignment_error(crystal_centers, pred_minima)
+    
+    # Strukturelle Ähnlichkeit (vereinfacht)
+    ssim_vz = calculate_simple_ssim(gt_vz, pred_vz)
+    
+    # Ergebnis-Dictionary
+    return (
+        mae_total = mae_total,
+        mae_vx = mae_vx,
+        mae_vz = mae_vz,
+        rmse_total = rmse_total,
+        rmse_vx = rmse_vx,
+        rmse_vz = rmse_vz,
+        pearson_correlation_vx = correlation_vx,
+        pearson_correlation_vz = correlation_vz,
+        alignment_error_mean = alignment_error,
+        crystal_count = length(crystal_centers),
+        crystal_detection_rate = length(pred_minima) / max(1, length(crystal_centers)),
+        interaction_complexity_index = calculate_complexity_index(phase_2d, gt_vz),
+        ssim_vz = ssim_vz
+    )
+end
+
+"""
+Berechnet vereinfachten SSIM (Structural Similarity Index)
+"""
+function calculate_simple_ssim(img1, img2; window_size=11)
+    # Vereinfachte SSIM-Berechnung
+    mu1 = mean(img1)
+    mu2 = mean(img2)
+    
+    sigma1 = std(img1)
+    sigma2 = std(img2)
+    
+    sigma12 = cov(vec(img1), vec(img2))
+    
+    C1 = (0.01 * 1.0)^2  # Kleine Konstante für Stabilität
+    C2 = (0.03 * 1.0)^2
+    
+    ssim = ((2*mu1*mu2 + C1) * (2*sigma12 + C2)) / 
+           ((mu1^2 + mu2^2 + C1) * (sigma1^2 + sigma2^2 + C2))
+    
+    return ssim
+end
+
+"""
+Berechnet Komplexitäts-Index basierend auf Kristallinteraktionen
+"""
+function calculate_complexity_index(phase_field, velocity_field)
+    # Anzahl der Kristalle
+    crystal_centers = find_crystal_centers(phase_field)
+    n_crystals = length(crystal_centers)
+    
+    if n_crystals <= 1
+        return 0.0
+    end
+    
+    # Mittlerer Abstand zwischen Kristallen
+    mean_distance = 0.0
+    count = 0
+    for i in 1:n_crystals
+        for j in i+1:n_crystals
+            dist = sqrt((crystal_centers[i][1] - crystal_centers[j][1])^2 + 
+                       (crystal_centers[i][2] - crystal_centers[j][2])^2)
+            mean_distance += dist
+            count += 1
+        end
+    end
+    
+    if count > 0
+        mean_distance /= count
+    end
+    
+    # Geschwindigkeitsfeld-Komplexität (Gradient-basiert)
+    grad_x = diff(velocity_field, dims=1)
+    grad_z = diff(velocity_field, dims=2)
+    
+    gradient_complexity = mean(abs.(grad_x)) + mean(abs.(grad_z))
+    
+    # Kombinierter Index
+    complexity_index = n_crystals * gradient_complexity / max(mean_distance, 0.1)
+    
+    return complexity_index
+end
+
+"""
 Erstellt verbessertes Phasenfeld-Panel mit detaillierter Kristall-Information
 """
 function create_enhanced_phase_plot(phase_2d, crystal_centers, resolution, eval_result)
-    # Basis Heatmap mit verbesserter Farbpalette
+    # Basis Heatmap
     p = heatmap(1:resolution, 1:resolution, phase_2d,
                 c=VIZ_CONFIG.colormap_phase, 
                 aspect_ratio=:equal,
@@ -118,11 +224,10 @@ function create_enhanced_phase_plot(phase_2d, crystal_centers, resolution, eval_
                 titlefontsize=VIZ_CONFIG.font_size,
                 guidefontsize=VIZ_CONFIG.font_size-1)
     
-    # Kristall-Zentren mit verbesserter Markierung
+    # Kristall-Zentren markieren
     for (i, center) in enumerate(crystal_centers)
         x_coord, y_coord = center
         
-        # Hauptmarkierung: Weiße Kreise mit schwarzem Rand
         scatter!(p, [x_coord], [y_coord], 
                 markersize=VIZ_CONFIG.marker_size_crystal, 
                 markercolor=:white, 
@@ -142,7 +247,7 @@ function create_enhanced_phase_plot(phase_2d, crystal_centers, resolution, eval_
         complexity = round(eval_result.interaction_complexity_index, digits=2)
         
         annotate!(p, 0.05*resolution, 0.95*resolution, 
-                 text("Erkennungsrate: $(detection_rate)%\nKomplexität: $complexity", 
+                 text("Erkennung: $(detection_rate)%\nKomplexität: $complexity", 
                       :black, 8, :left))
     end
     
@@ -150,10 +255,10 @@ function create_enhanced_phase_plot(phase_2d, crystal_centers, resolution, eval_
 end
 
 """
-Erstellt verbessertes Geschwindigkeitsfeld-Panel mit erweiterten Features
+Erstellt verbessertes Geschwindigkeitsfeld-Panel
 """
 function create_enhanced_velocity_plot(vz_field, velocity_minima, resolution, plot_title, vz_max, colormap)
-    # Erweiterte Heatmap mit wissenschaftlicher Farbskala
+    # Heatmap mit wissenschaftlicher Farbskala
     p = heatmap(1:resolution, 1:resolution, vz_field,
                 c=colormap,
                 aspect_ratio=:equal,
@@ -164,11 +269,10 @@ function create_enhanced_velocity_plot(vz_field, velocity_minima, resolution, pl
                 titlefontsize=VIZ_CONFIG.font_size,
                 guidefontsize=VIZ_CONFIG.font_size-1)
     
-    # Geschwindigkeits-Minima mit verbesserter Sichtbarkeit
+    # Geschwindigkeits-Minima markieren
     for (i, minimum) in enumerate(velocity_minima)
         x_coord, y_coord = minimum
         
-        # Sterne mit Kontrast-optimierter Darstellung
         scatter!(p, [x_coord], [y_coord], 
                 markersize=VIZ_CONFIG.marker_size_minima, 
                 markershape=:star5,
@@ -210,33 +314,60 @@ function create_comprehensive_title(title_prefix, eval_result, show_metrics)
 end
 
 """
-Speichert Visualisierungs-Metadaten für Nachverfolgbarkeit
+Speichert Visualisierungs-Metadaten
 """
 function save_visualization_metadata(image_path, eval_result, sample)
-    metadata_path = replace(image_path, ".png" => "_metadata.json")
-    
-    metadata = Dict(
-        "timestamp" => string(now()),
-        "image_path" => image_path,
-        "crystal_count" => eval_result.crystal_count,
-        "mae_total" => eval_result.mae_total,
-        "correlation_vz" => eval_result.pearson_correlation_vz,
-        "alignment_error" => eval_result.alignment_error_mean,
-        "sample_info" => Dict(
-            "v_stokes" => length(sample) >= 8 ? sample[8] : "unknown"
-        )
-    )
+    metadata_path = replace(image_path, ".png" => "_metadata.txt")
     
     open(metadata_path, "w") do f
-        JSON3.pretty(f, metadata)
+        println(f, "Visualisierungs-Metadaten")
+        println(f, "========================")
+        println(f, "Zeitstempel: $(Dates.now())")
+        println(f, "Bildpfad: $image_path")
+        println(f, "")
+        println(f, "Evaluierungsergebnisse:")
+        println(f, "  Kristallanzahl: $(eval_result.crystal_count)")
+        println(f, "  MAE Total: $(round(eval_result.mae_total, digits=6))")
+        println(f, "  Korrelation v_z: $(round(eval_result.pearson_correlation_vz, digits=4))")
+        println(f, "  Alignment-Fehler: $(round(eval_result.alignment_error_mean, digits=2)) px")
+        println(f, "  SSIM v_z: $(round(eval_result.ssim_vz, digits=4))")
+        println(f, "  Komplexitäts-Index: $(round(eval_result.interaction_complexity_index, digits=3))")
+        
+        if length(sample) >= 8
+            println(f, "")
+            println(f, "Sample-Information:")
+            println(f, "  Stokes-Geschwindigkeit: $(sample[8]) cm/Jahr")
+        end
+    end
+    
+    println("  Metadaten gespeichert: $metadata_path")
+end
+
+"""
+Stellt sicheren Output-Pfad sicher
+"""
+function ensure_output_path(save_path)
+    if isabspath(save_path)
+        dir = dirname(save_path)
+        if !isdir(dir)
+            mkpath(dir)
+        end
+        return save_path
+    else
+        # Standardverzeichnis verwenden
+        output_dir = "advanced_visualizations"
+        mkpath(output_dir)
+        return joinpath(output_dir, save_path)
     end
 end
 
 """
 Batch-Visualisierung für systematischen Vergleich
 """
-function create_systematic_crystal_comparison(model_path, crystal_counts=[1, 3, 5, 8, 10, 15];
-                                            samples_per_count=3, output_dir="systematic_comparison")
+function create_systematic_crystal_comparison(model_path; 
+                                            crystal_counts=[1, 3, 5, 8, 10, 15],
+                                            samples_per_count=3, 
+                                            output_dir="systematic_comparison")
     
     println("=== SYSTEMATISCHER KRISTALL-VERGLEICH ===")
     println("Kristallanzahlen: $crystal_counts")
@@ -247,12 +378,16 @@ function create_systematic_crystal_comparison(model_path, crystal_counts=[1, 3, 
     # Modell laden
     model = load_trained_model(model_path)
     
+    all_results = []
+    
     # Für jede Kristallanzahl
     for n_crystals in crystal_counts
         println("\nErstelle Visualisierungen für $n_crystals Kristalle...")
         
         crystal_dir = joinpath(output_dir, "$(n_crystals)_crystals")
         mkpath(crystal_dir)
+        
+        crystal_results = []
         
         for sample_id in 1:samples_per_count
             try
@@ -271,7 +406,8 @@ function create_systematic_crystal_comparison(model_path, crystal_counts=[1, 3, 
                 )
                 
                 if plot_result !== nothing && eval_result !== nothing
-                    println("  Sample $sample_id: MAE=$(round(eval_result.mae_total, digits=4))")
+                    push!(crystal_results, eval_result)
+                    println("  Sample $sample_id: MAE=$(round(eval_result.mae_total, digits=4)), Korr=$(round(eval_result.pearson_correlation_vz, digits=3))")
                 else
                     println("  Sample $sample_id: Fehler bei Erstellung")
                 end
@@ -281,172 +417,71 @@ function create_systematic_crystal_comparison(model_path, crystal_counts=[1, 3, 
                 continue
             end
         end
+        
+        # Statistiken für diese Kristallanzahl
+        if !isempty(crystal_results)
+            mean_mae = mean([r.mae_total for r in crystal_results])
+            mean_corr = mean([r.pearson_correlation_vz for r in crystal_results])
+            println("  Durchschnitt für $n_crystals Kristalle: MAE=$(round(mean_mae, digits=4)), Korr=$(round(mean_corr, digits=3))")
+            
+            push!(all_results, (n_crystals=n_crystals, results=crystal_results))
+        end
+    end
+    
+    # Zusammenfassungs-Plot erstellen
+    if !isempty(all_results)
+        summary_plot = create_scaling_summary_plot(all_results)
+        savefig(summary_plot, joinpath(output_dir, "scaling_summary.png"))
+        println("\nZusammenfassungs-Plot erstellt: $(joinpath(output_dir, "scaling_summary.png"))")
     end
     
     println("\nSystematischer Vergleich abgeschlossen in: $output_dir")
+    
+    return all_results
 end
 
 """
-Erstellt Skalierungs-Analyse-Plots
+Erstellt Zusammenfassungs-Plot für Skalierungsanalyse
 """
-function create_scaling_analysis_plots(batch_results::BatchEvaluationResults, output_dir="scaling_analysis")
+function create_scaling_summary_plot(all_results)
+    crystal_counts = [r.n_crystals for r in all_results]
+    mean_mae = [mean([res.mae_total for res in r.results]) for r in all_results]
+    mean_corr = [mean([res.pearson_correlation_vz for res in r.results]) for r in all_results]
     
-    println("=== SKALIERUNGS-ANALYSE PLOTS ===")
-    mkpath(output_dir)
-    
-    # 1. Performance vs. Kristallanzahl
-    p1 = create_performance_scaling_plot(batch_results)
-    savefig(p1, joinpath(output_dir, "performance_scaling.png"))
-    
-    # 2. Korrelations-Heatmap zwischen Metriken
-    p2 = create_metrics_correlation_heatmap(batch_results)
-    savefig(p2, joinpath(output_dir, "metrics_correlation.png"))
-    
-    # 3. Fehler-Verteilungs-Histogramme
-    p3 = create_error_distribution_histograms(batch_results)
-    savefig(p3, joinpath(output_dir, "error_distributions.png"))
-    
-    # 4. Komplexitäts-Index vs. Performance
-    p4 = create_complexity_performance_scatter(batch_results)
-    savefig(p4, joinpath(output_dir, "complexity_vs_performance.png"))
-    
-    println("Skalierungs-Analyse-Plots erstellt in: $output_dir")
-    
-    return [p1, p2, p3, p4]
-end
-
-"""
-Performance-Skalierungs-Plot
-"""
-function create_performance_scaling_plot(batch_results)
-    crystal_counts = batch_results.scaling_metrics["crystal_counts"]
-    mae_progression = batch_results.scaling_metrics["mae_progression"]
-    correlation_progression = batch_results.scaling_metrics["correlation_progression"]
-    
-    # Dual-Achsen Plot
-    p = plot(crystal_counts, mae_progression, 
-             label="MAE", 
+    # Zwei-Achsen-Plot
+    p1 = plot(crystal_counts, mean_mae,
+             label="MAE",
              linewidth=3,
              marker=:circle,
-             markersize=6,
+             markersize=8,
              color=:red,
              ylabel="Mean Absolute Error",
              xlabel="Anzahl Kristalle",
              title="Performance-Skalierung mit Kristallanzahl",
-             legend=:topleft)
+             legend=:topleft,
+             grid=true,
+             minorgrid=true)
     
-    # Zweite Y-Achse für Korrelation
-    p2 = twinx(p)
-    plot!(p2, crystal_counts, correlation_progression,
-          label="Korrelation v_z",
-          linewidth=3,
-          marker=:square,
-          markersize=6,
-          color=:blue,
-          ylabel="Pearson Korrelation",
-          legend=:topright)
+    p2 = plot(crystal_counts, mean_corr,
+             label="Korrelation v_z",
+             linewidth=3,
+             marker=:square,
+             markersize=8,
+             color=:blue,
+             ylabel="Pearson Korrelation",
+             xlabel="Anzahl Kristalle",
+             legend=:topright,
+             grid=true,
+             minorgrid=true)
     
-    return p
+    # Kombinierter Plot
+    final_plot = plot(p1, p2, layout=(2, 1), size=(800, 800))
+    
+    return final_plot
 end
 
 """
-Metriken-Korrelations-Heatmap
-"""
-function create_metrics_correlation_heatmap(batch_results)
-    # Sammle alle Metriken aus allen Kristallanzahlen
-    all_results = []
-    for (n_crystals, results) in batch_results.results_per_crystal
-        append!(all_results, results)
-    end
-    
-    if isempty(all_results)
-        return plot(title="Keine Daten für Korrelations-Heatmap")
-    end
-    
-    # Extrahiere numerische Metriken
-    metrics_data = hcat(
-        [r.mae_total for r in all_results],
-        [r.rmse_total for r in all_results],
-        [r.pearson_correlation_vz for r in all_results],
-        [r.alignment_error_mean for r in all_results if !isinf(r.alignment_error_mean)],
-        [r.ssim_vz for r in all_results],
-        [r.crystal_detection_rate for r in all_results]
-    )
-    
-    metric_names = ["MAE", "RMSE", "Correlation", "Alignment", "SSIM", "Detection Rate"]
-    
-    # Korrelationsmatrix berechnen
-    correlation_matrix = cor(metrics_data)
-    
-    # Heatmap erstellen
-    return heatmap(correlation_matrix,
-                  xticks=(1:length(metric_names), metric_names),
-                  yticks=(1:length(metric_names), metric_names),
-                  c=:RdBu,
-                  aspect_ratio=:equal,
-                  title="Metriken-Korrelations-Matrix",
-                  clims=(-1, 1))
-end
-
-"""
-Fehler-Verteilungs-Histogramme
-"""
-function create_error_distribution_histograms(batch_results)
-    plots_array = []
-    
-    for (n_crystals, results) in sort(collect(batch_results.results_per_crystal))
-        if length(results) < 3
-            continue
-        end
-        
-        mae_values = [r.mae_total for r in results]
-        
-        p = histogram(mae_values,
-                     bins=10,
-                     alpha=0.7,
-                     title="$n_crystals Kristalle",
-                     xlabel="MAE",
-                     ylabel="Häufigkeit",
-                     legend=false)
-        
-        push!(plots_array, p)
-    end
-    
-    if isempty(plots_array)
-        return plot(title="Keine Daten für Histogramme")
-    end
-    
-    return plot(plots_array..., layout=(2, 3), size=(900, 600))
-end
-
-"""
-Komplexitäts-Performance-Scatter
-"""
-function create_complexity_performance_scatter(batch_results)
-    complexity_values = Float64[]
-    mae_values = Float64[]
-    crystal_counts = Int[]
-    
-    for (n_crystals, results) in batch_results.results_per_crystal
-        for result in results
-            push!(complexity_values, result.interaction_complexity_index)
-            push!(mae_values, result.mae_total)
-            push!(crystal_counts, n_crystals)
-        end
-    end
-    
-    return scatter(complexity_values, mae_values,
-                  color=crystal_counts,
-                  markersize=6,
-                  alpha=0.7,
-                  xlabel="Interaktions-Komplexitäts-Index",
-                  ylabel="Mean Absolute Error",
-                  title="Komplexität vs. Performance",
-                  colorbar_title="Anzahl Kristalle")
-end
-
-"""
-Hilfsfunktion: Optimierte Sample-Generierung für Visualisierung
+Optimierte Sample-Generierung für Visualisierung
 """
 function generate_optimized_crystal_sample(n_crystals, resolution)
     # Adaptive Radius-Bestimmung
@@ -480,8 +515,8 @@ function generate_optimized_crystal_sample(n_crystals, resolution)
         spacing = 1.6 / (grid_size + 1)
         
         for i in 1:n_crystals
-            x_pos = -0.8 + (i-1) % grid_size * spacing
-            z_pos = -0.8 + div(i-1, grid_size) * spacing
+            x_pos = -0.8 + (i-1) % grid_size * spacing + spacing
+            z_pos = -0.8 + div(i-1, grid_size) * spacing + spacing
             push!(centers, (x_pos, z_pos))
         end
     end
@@ -494,59 +529,9 @@ function generate_optimized_crystal_sample(n_crystals, resolution)
     )
 end
 
-"""
-Stellt sicheren Output-Pfad sicher
-"""
-function ensure_output_path(save_path)
-    if isabspath(save_path)
-        return save_path
-    else
-        # Standardverzeichnis verwenden
-        output_dir = "advanced_visualizations"
-        mkpath(output_dir)
-        return joinpath(output_dir, save_path)
-    end
-end
-
-"""
-Interaktive Dashboard-Erstellung (für Jupyter/Pluto)
-"""
-function create_interactive_dashboard(batch_results::BatchEvaluationResults)
-    println("=== INTERAKTIVES DASHBOARD ===")
-    
-    # Sammle alle Daten
-    crystal_counts = []
-    mae_values = []
-    correlations = []
-    
-    for (n_crystals, results) in batch_results.results_per_crystal
-        for result in results
-            push!(crystal_counts, n_crystals)
-            push!(mae_values, result.mae_total)
-            push!(correlations, result.pearson_correlation_vz)
-        end
-    end
-    
-    # Interaktiver Scatter-Plot mit PlotlyJS
-    p = plot(crystal_counts, mae_values,
-             seriestype=:scatter,
-             color=correlations,
-             markersize=8,
-             alpha=0.7,
-             xlabel="Anzahl Kristalle",
-             ylabel="Mean Absolute Error",
-             title="Interaktive Performance-Analyse",
-             colorbar_title="Korrelation v_z",
-             hover=true)
-    
-    return p
-end
-
 println("Advanced Visualization Module geladen!")
 println("Verfügbare Funktionen:")
 println("  - create_advanced_three_panel_plot() - Erweiterte 3-Panel Visualisierung")
 println("  - create_systematic_crystal_comparison() - Systematischer Batch-Vergleich")
-println("  - create_scaling_analysis_plots() - Skalierungs-Analyse-Plots")
-println("  - create_interactive_dashboard() - Interaktives Dashboard")
 println("")
 println("Haupteinstiegspunkt: create_systematic_crystal_comparison(model_path)")
