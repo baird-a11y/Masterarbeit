@@ -119,7 +119,7 @@ function create_adaptive_batch(samples, target_resolution; max_gpu_memory_percen
             end
             
             # Preprocessing
-            phase_tensor, velocity_tensor = preprocess_lamem_sample(
+            phase_tensor, velocity_tensor = preprocess_lamem_sample_normalized(
                 x, z, phase, vx, vz, v_stokes,
                 target_resolution=target_resolution
             )

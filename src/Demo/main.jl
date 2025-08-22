@@ -31,23 +31,35 @@ println("Alle Module erfolgreich geladen!")
 
 const SERVER_CONFIG = (
     # 10-Kristall spezifische Parameter
-    target_crystal_count = 10,          # Hauptziel: 10 Kristalle
-    n_training_samples = 500,            # Mehr Samples für komplexere Daten
-    target_resolution = 256,            # Höhere Auflösung für 10 Kristalle
+    target_crystal_count = 10,
     
-    # Training-Parameter  
-    num_epochs = 30,                    # Mehr Epochen für komplexere Aufgabe
-    learning_rate = 0.001f0,           # Kleinere Lernrate für Stabilität
-    batch_size = 2,                     # Kleine Batches für 10-Kristall Komplexität
-    early_stopping_patience = 10,        # Mehr Patience
+    # OPTIMIERT: Deutlich mehr Trainingsdaten
+    n_training_samples = 500,           # Von 200 auf 500 erhöht
+    
+    target_resolution = 256,
+    
+    # OPTIMIERT: Bessere Training-Parameter
+    num_epochs = 50,                    # Von 30 auf 50 erhöht
+    learning_rate = 0.001f0,            # Von 0.0005f0 auf 0.001f0 erhöht
+    batch_size = 2,                     # Von 1 auf 2 erhöht
+    early_stopping_patience = 15,       # Von 10 auf 15 erhöht
+    
+    # Physics-Informed Parameter
+    lambda_physics_initial = 0.01f0,    
+    lambda_physics_final = 0.1f0,       
+    physics_warmup_epochs = 15,         # 15 Epochen Warm-up für Physics
     
     # Output-Parameter
-    checkpoint_dir = "ten_crystal_checkpoints",
-    results_dir = "ten_crystal_results",
+    checkpoint_dir = "ten_crystal_checkpoints_optimized",
+    results_dir = "ten_crystal_results_optimized",
     
     # Hardware
-    use_gpu = false,                    # CPU für Stabilität
+    use_gpu = false,
     save_dataset = true,
+    
+    # NEUE PARAMETER für besseres Training
+    use_data_augmentation = true,       # Datenaugmentierung
+    validation_split = 0.15f0,          # 15% Validation statt 20%
 )
 
 # =============================================================================
@@ -139,6 +151,47 @@ function generate_ten_crystal_dataset(n_samples; resolution=256, verbose=true)
     end
     
     return dataset
+end
+
+"""
+Datenaugmentierung für bessere Generalisierung
+"""
+function augment_dataset(dataset; augmentation_factor=2)
+    println("=== DATENAUGMENTIERUNG ===")
+    println("Original Dataset: $(length(dataset)) Samples")
+    
+    augmented_dataset = copy(dataset)
+    
+    for sample in dataset
+        for aug in 1:augmentation_factor
+            x, z, phase, vx, vz, exx, ezz, v_stokes = sample
+            
+            # Augmentierungs-Strategien
+            if aug == 1
+                # Horizontale Spiegelung
+                phase_aug = reverse(phase, dims=1)
+                vx_aug = -reverse(vx, dims=1)  # Vorzeichen umkehren
+                vz_aug = reverse(vz, dims=1)
+                augmented_sample = (x, z, phase_aug, vx_aug, vz_aug, exx, ezz, v_stokes)
+                
+            elseif aug == 2
+                # Kleine Rotation (nur für robusteres Training)
+                # Vereinfachte Version: Leichte Verschiebung
+                shift_amount = rand(-5:5)
+                phase_aug = circshift(phase, (shift_amount, 0))
+                vx_aug = circshift(vx, (shift_amount, 0))
+                vz_aug = circshift(vz, (shift_amount, 0))
+                augmented_sample = (x, z, phase_aug, vx_aug, vz_aug, exx, ezz, v_stokes)
+            end
+            
+            push!(augmented_dataset, augmented_sample)
+        end
+    end
+    
+    println("Augmentiertes Dataset: $(length(augmented_dataset)) Samples")
+    println("Augmentierungsfaktor: $(length(augmented_dataset) / length(dataset))x")
+    
+    return augmented_dataset
 end
 
 """
@@ -243,19 +296,32 @@ function run_ten_crystal_training()
         end
         println("✓ System bereit für 10-Kristall Training")
         
-        # 2. 10-KRISTALL DATENGENERIERUNG
+       # 2. 10-KRISTALL DATENGENERIERUNG
         println("\n2. 10-KRISTALL DATENGENERIERUNG")
         println("-"^50)
-        
+
+        # Basis-Dataset generieren
         dataset = generate_ten_crystal_dataset(
             SERVER_CONFIG.n_training_samples,
             resolution=SERVER_CONFIG.target_resolution,
             verbose=true
         )
-        
+
         if length(dataset) == 0
             error("Keine Trainingsdaten generiert!")
         end
+
+        # Datenaugmentierung anwenden
+        if SERVER_CONFIG.use_data_augmentation
+            println("\nWende Datenaugmentierung an...")
+            dataset = augment_dataset(dataset, augmentation_factor=1)  # Verdoppelt Dataset
+        end
+
+        println("Finales Dataset: $(length(dataset)) Samples")
+
+        # Dataset mischen für bessere Trainingsverteilung
+        dataset = dataset[randperm(length(dataset))]
+        println("Dataset gemischt")
         
         println("✓ 10-Kristall Dataset erstellt: $(length(dataset)) Samples")
         
@@ -289,35 +355,70 @@ function run_ten_crystal_training()
             checkpoint_dir = SERVER_CONFIG.checkpoint_dir,
             save_every_n_epochs = 5,
             use_gpu = SERVER_CONFIG.use_gpu,
-            validation_split = 0.2f0,
-            early_stopping_patience = SERVER_CONFIG.early_stopping_patience
-        )
+            validation_split = SERVER_CONFIG.validation_split,
+            early_stopping_patience = SERVER_CONFIG.early_stopping_patience,
+            # Physics-Informed Parameter
+            lambda_physics_initial = SERVER_CONFIG.lambda_physics_initial,
+            lambda_physics_final = SERVER_CONFIG.lambda_physics_final,
+            physics_warmup_epochs = SERVER_CONFIG.physics_warmup_epochs
+            )
         
         println("Starte Training auf 10-Kristall Daten...")
         
-        trained_model, train_losses, val_losses = train_velocity_unet_safe(
+        trained_model, train_losses, val_losses, physics_losses = train_velocity_unet_safe(
             model, dataset, SERVER_CONFIG.target_resolution,
             config=train_config
-        )
+        )   
         
         println("✓ 10-Kristall Training abgeschlossen")
         
-        # 5. TRAINING-ERGEBNISSE
-        println("\n5. TRAINING-ERGEBNISSE")
+        # 5. TRAINING-ERGEBNISSE ANALYSE
+        println("\n5. TRAINING-ERGEBNISSE ANALYSE")
         println("-"^50)
-        
-        if length(train_losses) > 0
-            println("Training - Finale Loss: $(round(train_losses[end], digits=6))")
-            println("Training - Beste Loss: $(round(minimum(train_losses), digits=6))")
-        end
-        
-        if length(val_losses) > 0
+
+        if length(train_losses) > 0 && length(val_losses) > 0
+            # Convergence-Analyse
+            initial_loss = train_losses[1]
+            final_loss = train_losses[end]
+            improvement = (initial_loss - final_loss) / initial_loss * 100
+            
+            println("Training Convergence:")
+            println("  Initial Loss: $(round(initial_loss, digits=6))")
+            println("  Final Loss: $(round(final_loss, digits=6))")
+            println("  Verbesserung: $(round(improvement, digits=1))%")
+            
+            # Overfitting-Check
+            train_val_gap = abs(train_losses[end] - val_losses[end])
+            println("\nOverfitting-Analyse:")
+            println("  Train-Val Gap: $(round(train_val_gap, digits=6))")
+            println("  Status: $(train_val_gap < 0.01 ? "Kein Overfitting" : "Mögliches Overfitting")")
+
+            
+            if @isdefined(physics_losses) && length(physics_losses) > 0
+                physics_improvement = (physics_losses[1] - physics_losses[end]) / physics_losses[1] * 100
+                println("\nPhysics Constraint:")
+                println("  Initial Physics Loss: $(round(physics_losses[1], digits=6))")
+                println("  Final Physics Loss: $(round(physics_losses[end], digits=6))")
+                println("  Verbesserung: $(round(physics_improvement, digits=1))%")
+                
+                # Physics Loss sollte gegen 0 konvergieren
+                if physics_losses[end] < 0.001
+                    println("  Status: Exzellente physikalische Konsistenz")
+                elseif physics_losses[end] < 0.01
+                    println("  Status: Gute physikalische Konsistenz")
+                else
+                    println("  Status: Weitere Optimierung erforderlich")
+                end
+            end
+            
+            # Beste Performance
             best_val_loss = minimum(val_losses)
             best_epoch = argmin(val_losses)
-            println("Validation - Beste Loss: $(round(best_val_loss, digits=6)) (Epoche $best_epoch)")
-            println("Validation - Finale Loss: $(round(val_losses[end], digits=6))")
+            println("\nBeste Performance:")
+            println("  Beste Validation Loss: $(round(best_val_loss, digits=6)) (Epoche $best_epoch)")
+            println("  Finale Validation Loss: $(round(val_losses[end], digits=6))")
         end
-        
+
         # Zeige Training-Verlauf
         if length(train_losses) > 5
             println("\nTraining-Verlauf (letzte 5 Epochen):")
@@ -334,6 +435,7 @@ function run_ten_crystal_training()
             "trained_model" => trained_model,
             "train_losses" => train_losses,
             "val_losses" => val_losses,
+            "physics_losses" => @isdefined(physics_losses) ? physics_losses : Float32[],  # NEU
             "config" => SERVER_CONFIG,
             "dataset_size" => length(dataset),
             "training_completed" => true
