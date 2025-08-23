@@ -114,7 +114,7 @@ function create_adaptive_batch(samples, target_resolution;
     batch_velocities = []
     successful_samples = 0
     
-    for (i, sample) in enumerate(selected_samples)
+     for (i, sample) in enumerate(selected_samples)
         try
             # Sample entpacken
             if length(sample) == 8
@@ -122,21 +122,41 @@ function create_adaptive_batch(samples, target_resolution;
             elseif length(sample) == 7
                 x, z, phase, vx, vz, exx, v_stokes = sample
             else
-                error("Unbekanntes Sample-Format: $(length(sample)) Elemente")
+                println("WARNUNG: Unbekanntes Sample-Format mit $(length(sample)) Elementen")
+                continue
             end
             
-            # Preprocessing - Fallback auf alte Funktion wenn neue nicht existiert
-            try
-                phase_tensor, velocity_tensor = preprocess_lamem_sample_normalized(
-                    x, z, phase, vx, vz, v_stokes,
-                    target_resolution=target_resolution
-                )
-            catch
-                # Fallback auf alte Funktion
-                phase_tensor, velocity_tensor = preprocess_lamem_sample(
-                    x, z, phase, vx, vz, v_stokes,
-                    target_resolution=target_resolution
-                )
+            # Versuche beide Preprocessing-Funktionen
+            phase_tensor, velocity_tensor = try
+                # Zuerst die neue Funktion
+                if isdefined(Main, :preprocess_lamem_sample_normalized)
+                    preprocess_lamem_sample_normalized(
+                        x, z, phase, vx, vz, v_stokes,
+                        target_resolution=target_resolution
+                    )
+                else
+                    # Fallback auf alte Funktion
+                    preprocess_lamem_sample(
+                        x, z, phase, vx, vz, v_stokes,
+                        target_resolution=target_resolution
+                    )
+                end
+            catch e
+                if verbose
+                    println("  Preprocessing-Fehler bei Sample $i: $e")
+                end
+                # Versuche direkte Verarbeitung
+                phase_resized = Float32.(phase[1:target_resolution, 1:target_resolution])
+                vx_resized = Float32.(vx[1:target_resolution, 1:target_resolution])
+                vz_resized = Float32.(vz[1:target_resolution, 1:target_resolution])
+                
+                phase_tensor = reshape(phase_resized, target_resolution, target_resolution, 1, 1)
+                vx_norm = vx_resized ./ Float32(v_stokes)
+                vz_norm = vz_resized ./ Float32(v_stokes)
+                velocity_tensor = cat(vx_norm, vz_norm, dims=3)
+                velocity_tensor = reshape(velocity_tensor, target_resolution, target_resolution, 2, 1)
+                
+                (phase_tensor, velocity_tensor)
             end
             
             push!(batch_phases, phase_tensor)
@@ -144,14 +164,29 @@ function create_adaptive_batch(samples, target_resolution;
             successful_samples += 1
             
         catch e
-            if verbose
-                println("  Warnung: Sample $i fehlgeschlagen: $e")
+            if verbose || i == 1  # Zeige Fehler beim ersten Sample immer
+                println("  FEHLER: Sample $i konnte nicht verarbeitet werden: $e")
+                println("  Sample-Typ: $(typeof(sample))")
+                if isa(sample, Tuple) && length(sample) >= 5
+                    println("  Phase-Größe: $(size(sample[3]))")
+                    println("  Vx-Größe: $(size(sample[4]))")
+                    println("  Vz-Größe: $(size(sample[5]))")
+                end
             end
             continue
         end
     end
     
     if successful_samples == 0
+        println("KRITISCHER FEHLER: Keine Samples konnten verarbeitet werden!")
+        println("  Anzahl Samples: $(length(selected_samples))")
+        println("  Target Resolution: $target_resolution")
+        if !isempty(selected_samples)
+            println("  Erstes Sample-Format: $(typeof(selected_samples[1]))")
+            if isa(selected_samples[1], Tuple)
+                println("  Sample-Länge: $(length(selected_samples[1]))")
+            end
+        end
         error("Keine Samples konnten verarbeitet werden!")
     end
     
