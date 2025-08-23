@@ -54,8 +54,7 @@ function create_training_config(;
 end
 
 """
-GPU-kompatible Divergenz-Berechnung
-Kontinuitätsgleichung: ∂vx/∂x + ∂vz/∂z = 0 für inkompressible Strömung
+GPU-kompatible Divergenz-Berechnung (vereinfacht)
 """
 function compute_divergence(velocity_pred)
     # velocity_pred hat Shape: (H, W, 2, B)
@@ -64,21 +63,17 @@ function compute_divergence(velocity_pred)
     
     H, W, B = size(vx)
     
-    # GPU-sichere Initialisierung
-    if isa(vx, CuArray)
-        dvx_dx = CUDA.zeros(Float32, H, W, B)
-        dvz_dz = CUDA.zeros(Float32, H, W, B)
-    else
-        dvx_dx = zeros(Float32, H, W, B)
-        dvz_dz = zeros(Float32, H, W, B)
-    end
+    # Vereinfachte Differenzen ohne explizite GPU-Arrays
+    # Verwende Padding um Größenprobleme zu vermeiden
+    dvx_dx = (vx[2:end, :, :] .- vx[1:end-1, :, :])
+    dvz_dz = (vz[:, 2:end, :] .- vz[:, 1:end-1, :])
     
-    # Zentrale Differenzen mit view statt Slicing
-    @views dvx_dx[2:end-1, :, :] .= (vx[3:end, :, :] .- vx[1:end-2, :, :]) ./ 2.0f0
-    @views dvz_dz[:, 2:end-1, :] .= (vz[:, 3:end, :] .- vz[:, 1:end-2, :]) ./ 2.0f0
+    # Padding hinzufügen um gleiche Größe zu behalten
+    dvx_dx_padded = vcat(zeros(eltype(vx), 1, W, B), dvx_dx)
+    dvz_dz_padded = hcat(zeros(eltype(vz), H, 1, B), dvz_dz)
     
     # Divergenz
-    divergence = dvx_dx .+ dvz_dz
+    divergence = dvx_dx_padded .+ dvz_dz_padded
     
     return divergence
 end
