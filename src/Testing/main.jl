@@ -338,9 +338,25 @@ function run_ten_crystal_training()
         println("\n3. UNET-MODELL ERSTELLUNG")
         println("-"^50)
         
-        model = create_simplified_unet_bn(1, 2, 32)
-        
-        success, _ = test_simplified_unet(SERVER_CONFIG.target_resolution, batch_size=1)
+        model = try
+            create_simplified_unet_bn(1, 2, 32)  # Neue Version mit Batch Norm
+            println("Verwende UNet mit Batch Normalization")
+            create_simplified_unet_bn(1, 2, 32)
+        catch e
+            println("Batch Norm Version nicht verfügbar, verwende Standard UNet")
+            create_simplified_unet(1, 2, 32)     # Fallback auf alte Version
+        end
+
+        # Test des Modells
+        success = try
+            test_input = randn(Float32, SERVER_CONFIG.target_resolution, SERVER_CONFIG.target_resolution, 1, 1)
+            output = model(test_input)
+            size(output) == (SERVER_CONFIG.target_resolution, SERVER_CONFIG.target_resolution, 2, 1)
+        catch e
+            println("UNet-Test Fehler: $e")
+            false
+        end
+
         if !success
             error("UNet-Test fehlgeschlagen!")
         end
@@ -515,7 +531,14 @@ function quick_test_safe()
             x, z, phase, vx, vz, v_stokes, target_resolution=64
         )
         
-        model = create_simplified_unet()
+        # KORRIGIERT: Verwende die richtige Funktion
+        # Versuche zuerst die neue BN-Version, dann Fallback auf alte Version
+        model = try
+            create_simplified_unet_bn(1, 2, 32)  # Neue Version mit Batch Norm
+        catch
+            create_simplified_unet(1, 2, 32)     # Fallback auf alte Version
+        end
+        
         test_input = randn(Float32, 64, 64, 1, 1)
         output = model(test_input)
         
