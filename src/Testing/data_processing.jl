@@ -4,6 +4,7 @@
 # Speichern als: data_processing.jl
 
 using Statistics
+using StatsBase  # HINZUGEFÜGT für percentile Funktion
 
 """
 Downsampling durch Mittelwertbildung über factor×factor Blöcke
@@ -123,8 +124,9 @@ Robuste Normalisierung mit Clipping für Outlier
 """
 function robust_normalize(data; percentile_clip=99.5)
     # Berechne Perzentile für robuste Normalisierung
-    lower_bound = percentile(vec(data), 100 - percentile_clip)
-    upper_bound = percentile(vec(data), percentile_clip)
+    data_vec = vec(data)
+    lower_bound = StatsBase.percentile(data_vec, 100 - percentile_clip)
+    upper_bound = StatsBase.percentile(data_vec, percentile_clip)
     
     # Clip extreme Werte
     data_clipped = clamp.(data, lower_bound, upper_bound)
@@ -135,7 +137,7 @@ function robust_normalize(data; percentile_clip=99.5)
     
     # Verhindere Division durch 0
     if σ < 1e-8
-        return zeros(size(data)), μ, σ
+        return zeros(Float32, size(data)), Float32(μ), Float32(σ)
     end
     
     data_normalized = (data_clipped .- μ) ./ σ
@@ -195,4 +197,6 @@ println("Data Processing Module geladen!")
 println("Verfügbare Funktionen:")
 println("  - resize_power_of_2(data, target_size)")
 println("  - preprocess_lamem_sample(...)")
+println("  - preprocess_lamem_sample_normalized(...)")
+println("  - robust_normalize(data)")
 println("  - detect_resolution(data)")

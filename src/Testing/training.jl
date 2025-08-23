@@ -11,6 +11,8 @@ using BSON: @save
 using Statistics
 using Random
 
+include("gpu_utils.jl")  # GPU Utilities laden
+
 """
 Training-Konfiguration
 """
@@ -52,27 +54,31 @@ function create_training_config(;
 end
 
 """
-Berechnet die Divergenz des Geschwindigkeitsfeldes
+GPU-kompatible Divergenz-Berechnung
 Kontinuitätsgleichung: ∂vx/∂x + ∂vz/∂z = 0 für inkompressible Strömung
 """
 function compute_divergence(velocity_pred)
     # velocity_pred hat Shape: (H, W, 2, B)
-    # Kanal 1: vx, Kanal 2: vz
-    
     vx = velocity_pred[:, :, 1, :]
     vz = velocity_pred[:, :, 2, :]
     
-    # Zentrale Differenzen für Ableitungen
-    # ∂vx/∂x
-    dvx_dx = zeros(eltype(vx), size(vx))
-    dvx_dx[2:end-1, :, :] = (vx[3:end, :, :] - vx[1:end-2, :, :]) / 2.0
+    H, W, B = size(vx)
     
-    # ∂vz/∂z 
-    dvz_dz = zeros(eltype(vz), size(vz))
-    dvz_dz[:, 2:end-1, :] = (vz[:, 3:end, :] - vz[:, 1:end-2, :]) / 2.0
+    # GPU-sichere Initialisierung
+    if isa(vx, CuArray)
+        dvx_dx = CUDA.zeros(Float32, H, W, B)
+        dvz_dz = CUDA.zeros(Float32, H, W, B)
+    else
+        dvx_dx = zeros(Float32, H, W, B)
+        dvz_dz = zeros(Float32, H, W, B)
+    end
     
-    # Divergenz = ∂vx/∂x + ∂vz/∂z
-    divergence = dvx_dx + dvz_dz
+    # Zentrale Differenzen mit view statt Slicing
+    @views dvx_dx[2:end-1, :, :] .= (vx[3:end, :, :] .- vx[1:end-2, :, :]) ./ 2.0f0
+    @views dvz_dz[:, 2:end-1, :] .= (vz[:, 3:end, :] .- vz[:, 1:end-2, :]) ./ 2.0f0
+    
+    # Divergenz
+    divergence = dvx_dx .+ dvz_dz
     
     return divergence
 end
@@ -196,7 +202,19 @@ function train_velocity_unet_safe(
     target_resolution;
     config = create_training_config()
 )
+    
+    
     println("=== STARTE PHYSICS-INFORMED UNET TRAINING ===")
+    # GPU-Check
+    use_gpu = config.use_gpu && check_gpu_availability()
+    
+    if use_gpu
+        println("GPU-Training aktiviert")
+        model = safe_gpu(model)
+    else
+        println("CPU-Training aktiviert")
+        model = safe_cpu(model)
+    end
     println("Konfiguration:")
     println("  Epochen: $(config.num_epochs)")
     println("  Lernrate: $(config.learning_rate)")
@@ -271,7 +289,16 @@ function train_velocity_unet_safe(
                     continue
                 end
                 
-                # Loss-Funktion mit Physics
+                # Device-Transfer
+                if use_gpu
+                    phase_batch = safe_gpu(phase_batch)
+                    velocity_batch = safe_gpu(velocity_batch)
+                else
+                    phase_batch = safe_cpu(phase_batch)
+                    velocity_batch = safe_cpu(velocity_batch)
+                end
+                
+                # GPU-sichere Loss-Funktion (NUR EINMAL DEFINIEREN)
                 function loss_fn(m)
                     pred = m(phase_batch)
                     total_loss, _, _ = physics_informed_loss(
@@ -281,8 +308,25 @@ function train_velocity_unet_safe(
                     return total_loss
                 end
                 
-                # Gradient-Berechnung
-                loss_val, grads = Flux.withgradient(loss_fn, model)
+                # Gradient-Berechnung mit GPU-Fehlerbehandlung (NUR EINMAL)
+                loss_val = nothing
+                grads = nothing
+                
+                try
+                    loss_val, grads = Flux.withgradient(loss_fn, model)
+                catch gpu_error
+                    if use_gpu && occursin("CUDA", string(gpu_error))
+                        println("  GPU-Fehler, wechsle zu CPU für diesen Batch")
+                        model = safe_cpu(model)
+                        phase_batch = safe_cpu(phase_batch)
+                        velocity_batch = safe_cpu(velocity_batch)
+                        opt_state = Optimisers.setup(Optimisers.Adam(config.learning_rate), model)  # Optimizer neu setup für CPU
+                        loss_val, grads = Flux.withgradient(loss_fn, model)
+                        use_gpu = false  # Bleibe bei CPU für Rest des Trainings
+                    else
+                        rethrow(gpu_error)
+                    end
+                end
                 
                 # Für Logging: Separate Berechnung der Loss-Komponenten
                 pred_for_logging = model(phase_batch)
@@ -315,7 +359,21 @@ function train_velocity_unet_safe(
                 println("  Fehler bei Batch $i: $e")
                 continue
             end
+            
+            # Periodisches GPU-Memory Cleanup
+            if use_gpu && i % 10 == 0
+                gpu_memory_cleanup()
+            end
+        end  # Ende der Batch-Schleife
+
+        # Nach der Batch-Schleife, aber noch in der Epochen-Schleife:
+        # Memory cleanup am Ende jeder Epoche
+        if use_gpu
+            gpu_memory_cleanup()
+        else
+            GC.gc()
         end
+        
         
         # Durchschnittliche Training Losses
         avg_train_loss = n_batches > 0 ? Float32(epoch_loss / n_batches) : Inf32
@@ -361,27 +419,34 @@ function train_velocity_unet_safe(
             @save checkpoint_path model epoch train_losses val_losses physics_losses
             println("  Checkpoint gespeichert: $checkpoint_path")
         end
-        
-        # Memory cleanup
-        GC.gc()
-    end
-    
-    # Finales Modell speichern
-    final_path = joinpath(config.checkpoint_dir, "final_model.bson")
-    @save final_path model train_losses val_losses physics_losses
-    
-    println("\n" * "="^50)
-    println("TRAINING ABGESCHLOSSEN")
-    println("="^50)
-    println("Beste Validation Loss: $(round(best_val_loss, digits=6))")
-    if length(train_losses) > 0
-        println("Finale Training Loss: $(round(train_losses[end], digits=6))")
-        println("Finale Physics Loss: $(round(physics_losses[end], digits=6))")
-    end
-    println("Modelle gespeichert in: $(config.checkpoint_dir)")
-    
-    # In training.jl, am Ende von train_velocity_unet_safe:
-    return model, train_losses, val_losses, physics_losses  # physics_losses hinzugefügt
+
+        # Memory cleanup am Ende jeder Epoche (INNERHALB der Epochen-Schleife)
+        if use_gpu
+            gpu_memory_cleanup()
+        else
+            GC.gc()
+        end
+
+        end  # Ende der Epochen-Schleife
+
+        # Modell zurück auf CPU für Speicherung
+        model = safe_cpu(model)
+
+        # Finales Modell speichern
+        final_path = joinpath(config.checkpoint_dir, "final_model.bson")
+        @save final_path model train_losses val_losses physics_losses
+
+        println("\n" * "="^50)
+        println("TRAINING ABGESCHLOSSEN")
+        println("="^50)
+        println("Beste Validation Loss: $(round(best_val_loss, digits=6))")
+        if length(train_losses) > 0
+            println("Finale Training Loss: $(round(train_losses[end], digits=6))")
+            println("Finale Physics Loss: $(round(physics_losses[end], digits=6))")
+        end
+        println("Modelle gespeichert in: $(config.checkpoint_dir)")
+
+        return model, train_losses, val_losses, physics_losses
 end
 
 """

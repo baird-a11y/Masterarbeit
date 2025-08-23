@@ -22,6 +22,7 @@ include("unet_config.jl")
 include("unet_architecture.jl")
 include("training.jl")
 include("batch_management.jl")
+include("gpu_utils.jl")
 
 println("Alle Module erfolgreich geladen!")
 
@@ -54,7 +55,8 @@ const SERVER_CONFIG = (
     results_dir = "ten_crystal_results_optimized",
     
     # Hardware
-    use_gpu = false,
+    use_gpu = check_gpu_availability(),  # Automatische GPU-Erkennung
+    # use_gpu = false,
     save_dataset = true,
     
     # NEUE PARAMETER für besseres Training

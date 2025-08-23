@@ -4,15 +4,13 @@
 # Speichern als: unet_architecture_zygote_safe.jl
 
 using Flux
-
 """
-ZYGOTE-SICHERE Skip-Dimensionen-Anpassung
+GPU-kompatible Skip-Dimensionen-Anpassung
 """
 function adapt_skip_dimensions_safe(skip_features, decoder_features)
     skip_size = size(skip_features)
     decoder_size = size(decoder_features)
     
-    # Wenn Dimensionen bereits passen
     if skip_size[1:2] == decoder_size[1:2]
         return skip_features
     end
@@ -20,22 +18,29 @@ function adapt_skip_dimensions_safe(skip_features, decoder_features)
     target_h, target_w = decoder_size[1:2]
     current_h, current_w = skip_size[1:2]
     
-    # IMMER Center-Crop auf exakte Decoder-Größe
+    # Center-Crop für GPU-Kompatibilität
     if current_h >= target_h && current_w >= target_w
         h_start = (current_h - target_h) ÷ 2 + 1
         w_start = (current_w - target_w) ÷ 2 + 1
-        h_end = h_start + target_h - 1
-        w_end = w_start + target_w - 1
         
-        return skip_features[h_start:h_end, w_start:w_end, :, :]
+        # GPU-sicheres Slicing mit @views
+        @views cropped = skip_features[h_start:(h_start+target_h-1), 
+                                      w_start:(w_start+target_w-1), :, :]
+        return cropped
     else
-        # Falls Skip kleiner als Decoder: Zero-Padding
-        padded = zeros(eltype(skip_features), target_h, target_w, skip_size[3], skip_size[4])
+        # GPU-sichere Zero-Padding
+        T = eltype(skip_features)
+        
+        if isa(skip_features, CuArray)
+            padded = CUDA.zeros(T, target_h, target_w, skip_size[3], skip_size[4])
+        else
+            padded = zeros(T, target_h, target_w, skip_size[3], skip_size[4])
+        end
         
         h_copy = min(current_h, target_h)
         w_copy = min(current_w, target_w)
         
-        padded[1:h_copy, 1:w_copy, :, :] .= skip_features[1:h_copy, 1:w_copy, :, :]
+        @views padded[1:h_copy, 1:w_copy, :, :] .= skip_features[1:h_copy, 1:w_copy, :, :]
         
         return padded
     end

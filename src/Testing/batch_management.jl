@@ -6,6 +6,10 @@
 using CUDA
 using Statistics
 using StatsBase
+using Random  # HINZUGEFÜGT für shuffle
+
+include("gpu_utils.jl")
+include("data_processing.jl")  # HINZUGEFÜGT für preprocess_lamem_sample_normalized
 
 # Batch-Größen nach Auflösung
 const BATCH_SIZES = Dict(
@@ -77,7 +81,10 @@ end
 """
 Bestimme optimale Batch-Größe und erstelle Batch ohne GPU-OOM
 """
-function create_adaptive_batch(samples, target_resolution; max_gpu_memory_percent=80, verbose=false)
+function create_adaptive_batch(samples, target_resolution; 
+                              max_gpu_memory_percent=80, 
+                              verbose=false,
+                              use_gpu=false)
     if isempty(samples)
         error("Keine Samples für Batch-Erstellung!")
     end
@@ -118,11 +125,19 @@ function create_adaptive_batch(samples, target_resolution; max_gpu_memory_percen
                 error("Unbekanntes Sample-Format: $(length(sample)) Elemente")
             end
             
-            # Preprocessing
-            phase_tensor, velocity_tensor = preprocess_lamem_sample_normalized(
-                x, z, phase, vx, vz, v_stokes,
-                target_resolution=target_resolution
-            )
+            # Preprocessing - Fallback auf alte Funktion wenn neue nicht existiert
+            try
+                phase_tensor, velocity_tensor = preprocess_lamem_sample_normalized(
+                    x, z, phase, vx, vz, v_stokes,
+                    target_resolution=target_resolution
+                )
+            catch
+                # Fallback auf alte Funktion
+                phase_tensor, velocity_tensor = preprocess_lamem_sample(
+                    x, z, phase, vx, vz, v_stokes,
+                    target_resolution=target_resolution
+                )
+            end
             
             push!(batch_phases, phase_tensor)
             push!(batch_velocities, velocity_tensor)
@@ -140,10 +155,24 @@ function create_adaptive_batch(samples, target_resolution; max_gpu_memory_percen
         error("Keine Samples konnten verarbeitet werden!")
     end
     
-    # Tensoren zusammenfügen
+    # Tensoren zusammenfügen mit GPU-Support
     try
         phase_batch = cat(batch_phases..., dims=4)
         velocity_batch = cat(batch_velocities..., dims=4)
+        
+        # Optionaler GPU-Transfer
+        if use_gpu && CUDA.functional()
+            # Prüfe ob genug GPU-Speicher
+            batch_bytes = sizeof(phase_batch) + sizeof(velocity_batch)
+            if batch_bytes < CUDA.available_memory() * 0.8
+                phase_batch = safe_gpu(phase_batch)
+                velocity_batch = safe_gpu(velocity_batch)
+            else
+                if verbose
+                    println("Batch zu groß für GPU, bleibe bei CPU")
+                end
+            end
+        end
         
         if verbose
             println("Batch erstellt: $(size(phase_batch)), $(size(velocity_batch))")
@@ -153,7 +182,19 @@ function create_adaptive_batch(samples, target_resolution; max_gpu_memory_percen
         return phase_batch, velocity_batch, successful_samples
         
     catch e
-        error("Fehler beim Zusammenfügen der Tensoren: $e")
+        if occursin("out of memory", lowercase(string(e)))
+            println("Memory-Fehler beim Batch-Erstellen, versuche kleineren Batch")
+            # Rekursiver Aufruf mit halbierter Sample-Anzahl
+            if length(samples) > 1
+                return create_adaptive_batch(samples[1:end÷2], target_resolution, 
+                                           max_gpu_memory_percent=max_gpu_memory_percent,
+                                           verbose=verbose, use_gpu=use_gpu)
+            else
+                error("Kann keinen Batch erstellen, selbst mit einem Sample!")
+            end
+        else
+            error("Fehler beim Zusammenfügen der Tensoren: $e")
+        end
     end
 end
 
@@ -232,7 +273,7 @@ function smart_batch_manager(dataset, target_resolution; max_memory_percent=80, 
     # Generator für Batches
     batches = Channel{Tuple}(32) do ch
         batch_count = 0
-        dataset_shuffled = shuffle(dataset)
+        dataset_shuffled = Random.shuffle(dataset)  # Explizit Random.shuffle
         
         while batch_count * manager.current_batch_size < length(dataset_shuffled)
             batch_count += 1
@@ -268,14 +309,9 @@ function smart_batch_manager(dataset, target_resolution; max_memory_percent=80, 
                 phase_batch, velocity_batch, successful = create_adaptive_batch(
                     batch_samples, target_resolution,
                     max_gpu_memory_percent=max_memory_percent,
-                    verbose=false
+                    verbose=false,
+                    use_gpu=CUDA.functional()  # GPU nutzen wenn verfügbar
                 )
-                
-                # GPU-Transfer falls verfügbar
-                if CUDA.functional()
-                    phase_batch = gpu(phase_batch)
-                    velocity_batch = gpu(velocity_batch)
-                end
                 
                 put!(ch, (phase_batch, velocity_batch, successful, batch_count))
                 
