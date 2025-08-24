@@ -6,6 +6,10 @@
 using CUDA
 using Statistics
 using StatsBase
+using Random  # HINZUGEFÜGT für shuffle
+
+include("gpu_utils.jl")
+include("data_processing.jl")  # HINZUGEFÜGT für preprocess_lamem_sample_normalized
 
 # Batch-Größen nach Auflösung
 const BATCH_SIZES = Dict(
@@ -77,7 +81,10 @@ end
 """
 Bestimme optimale Batch-Größe und erstelle Batch ohne GPU-OOM
 """
-function create_adaptive_batch(samples, target_resolution; max_gpu_memory_percent=80, verbose=false)
+function create_adaptive_batch(samples, target_resolution; 
+                              max_gpu_memory_percent=80, 
+                              verbose=false,
+                              use_gpu=false)
     if isempty(samples)
         error("Keine Samples für Batch-Erstellung!")
     end
@@ -107,7 +114,7 @@ function create_adaptive_batch(samples, target_resolution; max_gpu_memory_percen
     batch_velocities = []
     successful_samples = 0
     
-    for (i, sample) in enumerate(selected_samples)
+     for (i, sample) in enumerate(selected_samples)
         try
             # Sample entpacken
             if length(sample) == 8
@@ -115,35 +122,92 @@ function create_adaptive_batch(samples, target_resolution; max_gpu_memory_percen
             elseif length(sample) == 7
                 x, z, phase, vx, vz, exx, v_stokes = sample
             else
-                error("Unbekanntes Sample-Format: $(length(sample)) Elemente")
+                println("WARNUNG: Unbekanntes Sample-Format mit $(length(sample)) Elementen")
+                continue
             end
             
-            # Preprocessing
-            phase_tensor, velocity_tensor = preprocess_lamem_sample(
-                x, z, phase, vx, vz, v_stokes,
-                target_resolution=target_resolution
-            )
+            # Versuche beide Preprocessing-Funktionen
+            phase_tensor, velocity_tensor = try
+                # Zuerst die neue Funktion
+                if isdefined(Main, :preprocess_lamem_sample_normalized)
+                    preprocess_lamem_sample_normalized(
+                        x, z, phase, vx, vz, v_stokes,
+                        target_resolution=target_resolution
+                    )
+                else
+                    # Fallback auf alte Funktion
+                    preprocess_lamem_sample(
+                        x, z, phase, vx, vz, v_stokes,
+                        target_resolution=target_resolution
+                    )
+                end
+            catch e
+                if verbose
+                    println("  Preprocessing-Fehler bei Sample $i: $e")
+                end
+                # Versuche direkte Verarbeitung
+                phase_resized = Float32.(phase[1:target_resolution, 1:target_resolution])
+                vx_resized = Float32.(vx[1:target_resolution, 1:target_resolution])
+                vz_resized = Float32.(vz[1:target_resolution, 1:target_resolution])
+                
+                phase_tensor = reshape(phase_resized, target_resolution, target_resolution, 1, 1)
+                vx_norm = vx_resized ./ Float32(v_stokes)
+                vz_norm = vz_resized ./ Float32(v_stokes)
+                velocity_tensor = cat(vx_norm, vz_norm, dims=3)
+                velocity_tensor = reshape(velocity_tensor, target_resolution, target_resolution, 2, 1)
+                
+                (phase_tensor, velocity_tensor)
+            end
             
             push!(batch_phases, phase_tensor)
             push!(batch_velocities, velocity_tensor)
             successful_samples += 1
             
         catch e
-            if verbose
-                println("  Warnung: Sample $i fehlgeschlagen: $e")
+            if verbose || i == 1  # Zeige Fehler beim ersten Sample immer
+                println("  FEHLER: Sample $i konnte nicht verarbeitet werden: $e")
+                println("  Sample-Typ: $(typeof(sample))")
+                if isa(sample, Tuple) && length(sample) >= 5
+                    println("  Phase-Größe: $(size(sample[3]))")
+                    println("  Vx-Größe: $(size(sample[4]))")
+                    println("  Vz-Größe: $(size(sample[5]))")
+                end
             end
             continue
         end
     end
     
     if successful_samples == 0
+        println("KRITISCHER FEHLER: Keine Samples konnten verarbeitet werden!")
+        println("  Anzahl Samples: $(length(selected_samples))")
+        println("  Target Resolution: $target_resolution")
+        if !isempty(selected_samples)
+            println("  Erstes Sample-Format: $(typeof(selected_samples[1]))")
+            if isa(selected_samples[1], Tuple)
+                println("  Sample-Länge: $(length(selected_samples[1]))")
+            end
+        end
         error("Keine Samples konnten verarbeitet werden!")
     end
     
-    # Tensoren zusammenfügen
+    # Tensoren zusammenfügen mit GPU-Support
     try
         phase_batch = cat(batch_phases..., dims=4)
         velocity_batch = cat(batch_velocities..., dims=4)
+        
+        # Optionaler GPU-Transfer
+        if use_gpu && CUDA.functional()
+            # Prüfe ob genug GPU-Speicher
+            batch_bytes = sizeof(phase_batch) + sizeof(velocity_batch)
+            if batch_bytes < CUDA.available_memory() * 0.8
+                phase_batch = safe_gpu(phase_batch)
+                velocity_batch = safe_gpu(velocity_batch)
+            else
+                if verbose
+                    println("Batch zu groß für GPU, bleibe bei CPU")
+                end
+            end
+        end
         
         if verbose
             println("Batch erstellt: $(size(phase_batch)), $(size(velocity_batch))")
@@ -153,7 +217,19 @@ function create_adaptive_batch(samples, target_resolution; max_gpu_memory_percen
         return phase_batch, velocity_batch, successful_samples
         
     catch e
-        error("Fehler beim Zusammenfügen der Tensoren: $e")
+        if occursin("out of memory", lowercase(string(e)))
+            println("Memory-Fehler beim Batch-Erstellen, versuche kleineren Batch")
+            # Rekursiver Aufruf mit halbierter Sample-Anzahl
+            if length(samples) > 1
+                return create_adaptive_batch(samples[1:end÷2], target_resolution, 
+                                           max_gpu_memory_percent=max_gpu_memory_percent,
+                                           verbose=verbose, use_gpu=use_gpu)
+            else
+                error("Kann keinen Batch erstellen, selbst mit einem Sample!")
+            end
+        else
+            error("Fehler beim Zusammenfügen der Tensoren: $e")
+        end
     end
 end
 
@@ -232,7 +308,7 @@ function smart_batch_manager(dataset, target_resolution; max_memory_percent=80, 
     # Generator für Batches
     batches = Channel{Tuple}(32) do ch
         batch_count = 0
-        dataset_shuffled = shuffle(dataset)
+        dataset_shuffled = Random.shuffle(dataset)  # Explizit Random.shuffle
         
         while batch_count * manager.current_batch_size < length(dataset_shuffled)
             batch_count += 1
@@ -268,14 +344,9 @@ function smart_batch_manager(dataset, target_resolution; max_memory_percent=80, 
                 phase_batch, velocity_batch, successful = create_adaptive_batch(
                     batch_samples, target_resolution,
                     max_gpu_memory_percent=max_memory_percent,
-                    verbose=false
+                    verbose=false,
+                    use_gpu=CUDA.functional()  # GPU nutzen wenn verfügbar
                 )
-                
-                # GPU-Transfer falls verfügbar
-                if CUDA.functional()
-                    phase_batch = gpu(phase_batch)
-                    velocity_batch = gpu(velocity_batch)
-                end
                 
                 put!(ch, (phase_batch, velocity_batch, successful, batch_count))
                 

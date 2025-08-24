@@ -4,6 +4,7 @@
 # Speichern als: data_processing.jl
 
 using Statistics
+using StatsBase  # HINZUGEFÜGT für percentile Funktion
 
 """
 Downsampling durch Mittelwertbildung über factor×factor Blöcke
@@ -118,8 +119,84 @@ function preprocess_lamem_sample(x, z, phase, vx, vz, v_stokes; target_resolutio
     return phase_tensor, velocity_tensor
 end
 
+"""
+Robuste Normalisierung mit Clipping für Outlier
+"""
+function robust_normalize(data; percentile_clip=99.5)
+    # Berechne Perzentile für robuste Normalisierung
+    data_vec = vec(data)
+    lower_bound = StatsBase.percentile(data_vec, 100 - percentile_clip)
+    upper_bound = StatsBase.percentile(data_vec, percentile_clip)
+    
+    # Clip extreme Werte
+    data_clipped = clamp.(data, lower_bound, upper_bound)
+    
+    # Z-Score Normalisierung
+    μ = mean(data_clipped)
+    σ = std(data_clipped)
+    
+    # Verhindere Division durch 0
+    if σ < 1e-8
+        return zeros(Float32, size(data)), Float32(μ), Float32(σ)
+    end
+    
+    data_normalized = (data_clipped .- μ) ./ σ
+    
+    return Float32.(data_normalized), Float32(μ), Float32(σ)
+end
+
+"""
+Inverse Normalisierung für Vorhersagen
+"""
+function denormalize(data_normalized, μ, σ)
+    return data_normalized .* σ .+ μ
+end
+
+"""
+Speichert Normalisierungs-Parameter für spätere Verwendung
+"""
+mutable struct NormalizationParams
+    vx_mean::Float32
+    vx_std::Float32
+    vz_mean::Float32
+    vz_std::Float32
+    v_stokes::Float32
+end
+
+"""
+Verbesserte Vorverarbeitung mit Normalisierungs-Tracking
+"""
+function preprocess_lamem_sample_normalized(x, z, phase, vx, vz, v_stokes; 
+                                           target_resolution=128,
+                                           return_norm_params=false)
+    # Größenanpassung
+    phase_resized = resize_power_of_2(phase, target_resolution)
+    vx_resized = resize_power_of_2(vx, target_resolution)
+    vz_resized = resize_power_of_2(vz, target_resolution)
+    
+    # Robuste Normalisierung statt einfacher Stokes-Division
+    vx_norm, vx_mean, vx_std = robust_normalize(vx_resized)
+    vz_norm, vz_mean, vz_std = robust_normalize(vz_resized)
+    
+    phase_float = Float32.(phase_resized)
+    
+    # Tensor-Format für UNet (H, W, C, B)
+    phase_tensor = reshape(phase_float, target_resolution, target_resolution, 1, 1)
+    velocity_tensor = cat(vx_norm, vz_norm, dims=3)
+    velocity_tensor = reshape(velocity_tensor, target_resolution, target_resolution, 2, 1)
+    
+    if return_norm_params
+        norm_params = NormalizationParams(vx_mean, vx_std, vz_mean, vz_std, Float32(v_stokes))
+        return phase_tensor, velocity_tensor, norm_params
+    else
+        return phase_tensor, velocity_tensor
+    end
+end
+
 println("Data Processing Module geladen!")
 println("Verfügbare Funktionen:")
 println("  - resize_power_of_2(data, target_size)")
 println("  - preprocess_lamem_sample(...)")
+println("  - preprocess_lamem_sample_normalized(...)")
+println("  - robust_normalize(data)")
 println("  - detect_resolution(data)")
