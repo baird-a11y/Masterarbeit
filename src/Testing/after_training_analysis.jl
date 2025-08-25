@@ -2,11 +2,11 @@
 # AFTER TRAINING ANALYSIS - VOLLSTÄNDIGE AUSWERTUNG
 # =============================================================================
 
-
 using Dates
 using BSON
 using Statistics
 using Plots
+using LinearAlgebra  # Für cor() Funktion
 
 println("=== AFTER TRAINING ANALYSIS ===")
 println("Lade alle Module...")
@@ -28,55 +28,13 @@ include("statistical_analysis.jl")
 
 println("✓ Alle Module geladen")
 
+# Server-Modus für Plots
+ENV["GKSwstype"] = "100"
+
 # =============================================================================
 # HAUPTANALYSE-FUNKTION
 # =============================================================================
-"""
-Vereinfachte Visualisierung ohne komplexe Pfad-Probleme
-"""
-function simple_crystal_visualization(model_path, output_dir)
-    println("Erstelle vereinfachte Visualisierungen...")
-    
-    mkpath(output_dir)
-    model = load_trained_model(model_path)
-    
-    # Test mit verschiedenen Kristallanzahlen
-    for n_crystals in [1, 3, 5, 10]
-        println("  $n_crystals Kristalle...")
-        
-        try
-            # Generiere Sample
-            sample = LaMEM_Multi_crystal(
-                resolution=(256, 256),
-                n_crystals=n_crystals,
-                radius_crystal=fill(0.05, n_crystals)
-            )
-            
-            # Evaluiere
-            x, z, phase, vx, vz, exx, ezz, v_stokes = sample
-            phase_tensor, velocity_tensor = preprocess_lamem_sample(
-                x, z, phase, vx, vz, v_stokes, target_resolution=256
-            )
-            
-            prediction = model(phase_tensor)
-            
-            # Einfacher Plot
-            p1 = heatmap(phase[:,:], title="Phase ($n_crystals Kristalle)")
-            p2 = heatmap(vz[:,:], title="LaMEM v_z")
-            p3 = heatmap(prediction[:,:,2,1], title="UNet v_z")
-            
-            combined = plot(p1, p2, p3, layout=(1,3), size=(1200,400))
-            
-            # Speichere
-            save_path = joinpath(output_dir, "comparison_$(n_crystals)_crystals.png")
-            savefig(combined, save_path)
-            println("    ✓ Gespeichert: $save_path")
-            
-        catch e
-            println("    ✗ Fehler: $e")
-        end
-    end
-end
+
 """
 Führt alle Analysen nach dem Training aus
 """
@@ -130,32 +88,146 @@ function analyze_training_results(;
         println("✗ Quick Test fehlgeschlagen: $e")
     end
     
-    # 2. SYSTEMATISCHER KRISTALL-VERGLEICH
-    println("\n2. SYSTEMATISCHER KRISTALL-VERGLEICH")
+    # 2. VISUALISIERUNGEN (NEUE IMPLEMENTATION)
+    println("\n2. KRISTALL-VISUALISIERUNGEN")
     println("-"^50)
-
+    
     viz_output_dir = joinpath(output_base_dir, "visualizations")
-    mkpath(viz_output_dir)  # WICHTIG: Verzeichnis erstellen!
-
+    mkpath(viz_output_dir)
+    
     try
-        # Korrigierter Aufruf mit explizitem output_dir
-        crystal_comparison_results = create_systematic_crystal_comparison(
-            model_path,
-            crystal_counts=[1, 2, 3, 4, 5, 8, 10, 12, 15],
-            samples_per_count=3,
-            output_dir=viz_output_dir  # Explizit setzen
-        )
+        # Lade Modell nur einmal
+        println("Lade Modell für Visualisierungen...")
+        model = load_trained_model(model_path)
         
-        println("✓ Visualisierungen erstellt in: $viz_output_dir")
+        # Teste verschiedene Kristallanzahlen
+        test_configs = [
+            (1, [(0.0, 0.5)]),
+            (2, [(-0.3, 0.5), (0.3, 0.5)]),
+            (3, [(-0.3, 0.3), (0.0, 0.6), (0.3, 0.3)]),
+            (5, [(-0.4, 0.2), (-0.2, 0.5), (0.0, 0.3), (0.2, 0.5), (0.4, 0.2)]),
+            (10, nothing)  # Automatische Positionierung
+        ]
+        
+        for (n_crystals, positions) in test_configs
+            println("\nErstelle Visualisierung für $n_crystals Kristalle...")
+            
+            try
+                # Generiere Sample
+                if positions === nothing
+                    # Automatische Grid-Positionierung für viele Kristalle
+                    centers = []
+                    for i in 1:n_crystals
+                        x_pos = -0.6 + (i-1) % 5 * 0.3
+                        z_pos = 0.2 + div(i-1, 5) * 0.3
+                        push!(centers, (x_pos, z_pos))
+                    end
+                else
+                    centers = positions
+                end
+                
+                # LaMEM Simulation
+                sample = LaMEM_Multi_crystal(
+                    resolution=(256, 256),
+                    n_crystals=n_crystals,
+                    radius_crystal=fill(0.05, n_crystals),
+                    cen_2D=centers
+                )
+                
+                x, z, phase, vx, vz, exx, ezz, v_stokes = sample
+                
+                # Preprocessing
+                phase_tensor, velocity_tensor = preprocess_lamem_sample(
+                    x, z, phase, vx, vz, v_stokes, target_resolution=256
+                )
+                
+                # UNet Vorhersage
+                prediction = cpu(model(phase_tensor))
+                
+                # Extrahiere 2D Arrays
+                phase_2d = phase_tensor[:,:,1,1]
+                gt_vx = velocity_tensor[:,:,1,1]
+                gt_vz = velocity_tensor[:,:,2,1]
+                pred_vx = prediction[:,:,1,1]
+                pred_vz = prediction[:,:,2,1]
+                
+                # Berechne Metriken
+                mae_vz = mean(abs.(pred_vz - gt_vz))
+                correlation_vz = cor(vec(gt_vz), vec(pred_vz))
+                
+                # Erstelle Plots
+                # Plot 1: Phasenfeld
+                p1 = heatmap(1:256, 1:256, phase_2d,
+                            c=:grays,
+                            title="Phasenfeld\n($n_crystals Kristalle)",
+                            xlabel="x", ylabel="z",
+                            aspect_ratio=:equal)
+                
+                # Plot 2: LaMEM v_z
+                vz_max = max(maximum(abs.(gt_vz)), maximum(abs.(pred_vz)))
+                p2 = heatmap(1:256, 1:256, gt_vz,
+                            c=:RdBu,
+                            clims=(-vz_max, vz_max),
+                            title="LaMEM v_z\n(Ground Truth)",
+                            xlabel="x", ylabel="z",
+                            aspect_ratio=:equal)
+                
+                # Plot 3: UNet v_z
+                p3 = heatmap(1:256, 1:256, pred_vz,
+                            c=:RdBu,
+                            clims=(-vz_max, vz_max),
+                            title="UNet v_z\n(MAE: $(round(mae_vz, digits=4)))",
+                            xlabel="x", ylabel="z",
+                            aspect_ratio=:equal)
+                
+                # Kombiniere Plots
+                combined_plot = plot(p1, p2, p3,
+                                   layout=(1, 3),
+                                   size=(1500, 500),
+                                   plot_title="$n_crystals Kristalle | Korrelation: $(round(correlation_vz, digits=3))")
+                
+                # DIREKTES SPEICHERN
+                output_file = joinpath(viz_output_dir, "comparison_$(n_crystals)_crystals.png")
+                savefig(combined_plot, output_file)
+                println("  ✓ Gespeichert: $output_file")
+                
+                # Auch als PDF für Masterarbeit
+                pdf_file = joinpath(viz_output_dir, "comparison_$(n_crystals)_crystals.pdf")
+                savefig(combined_plot, pdf_file)
+                
+                # Speichere Metriken
+                metrics_file = joinpath(viz_output_dir, "metrics_$(n_crystals)_crystals.txt")
+                open(metrics_file, "w") do f
+                    println(f, "Kristalle: $n_crystals")
+                    println(f, "MAE v_z: $(round(mae_vz, digits=6))")
+                    println(f, "Korrelation v_z: $(round(correlation_vz, digits=4))")
+                    println(f, "MAE v_x: $(round(mean(abs.(pred_vx - gt_vx)), digits=6))")
+                end
+                
+            catch e
+                println("  ✗ Fehler bei $n_crystals Kristallen: $e")
+            end
+        end
+        
+        println("\n✓ Alle Visualisierungen abgeschlossen")
+        println("  Gespeichert in: $viz_output_dir")
         
     catch e
         println("✗ Visualisierung fehlgeschlagen: $e")
-        println("Stacktrace:")
-        for (exc, bt) in Base.catch_stack()
-            showerror(stdout, exc, bt)
-            println()
-        end
     end
+    
+    # ALTE VERSION AUSKOMMENTIERT (hatte Pfad-Probleme)
+    # try
+    #     crystal_comparison_results = create_systematic_crystal_comparison(
+    #         model_path,
+    #         crystal_counts=[1, 2, 3, 4, 5, 8, 10, 12, 15],
+    #         samples_per_count=3,
+    #         output_dir=viz_output_dir
+    #     )
+    #     println("✓ Visualisierungen erstellt in: $viz_output_dir")
+    # catch e
+    #     println("✗ Visualisierung fehlgeschlagen: $e")
+    # end
     
     # 3. VOLLSTÄNDIGE EVALUIERUNG
     println("\n3. VOLLSTÄNDIGE MULTI-KRISTALL EVALUIERUNG")

@@ -347,18 +347,26 @@ end
 """
 Stellt sicheren Output-Pfad sicher
 """
+"""
+Stellt sicheren Output-Pfad sicher (KORRIGIERT)
+"""
 function ensure_output_path(save_path)
+    # Prüfe ob absoluter oder relativer Pfad
     if isabspath(save_path)
+        # Bei absolutem Pfad: nur Verzeichnis erstellen
         dir = dirname(save_path)
         if !isdir(dir)
             mkpath(dir)
         end
         return save_path
     else
-        # Standardverzeichnis verwenden
-        output_dir = "advanced_visualizations"
-        mkpath(output_dir)
-        return joinpath(output_dir, save_path)
+        # Bei relativem Pfad: NICHT in "advanced_visualizations" speichern
+        # Sondern direkt verwenden
+        dir = dirname(save_path)
+        if !isempty(dir) && !isdir(dir)
+            mkpath(dir)
+        end
+        return save_path
     end
 end
 
