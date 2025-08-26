@@ -425,7 +425,8 @@ function print_robust_statistical_summary(analysis::RobustStatisticalAnalysis)
     
     # Sample-Größen
     println("\n📊 STICHPROBENGRÖSZEN:")
-    for (k, n) in sort(collect(analysis.sample_sizes))
+    for k in sort(collect(keys(analysis.sample_sizes)))
+        n = analysis.sample_sizes[k]
         println("  $k Kristalle: $n Samples")
     end
     
@@ -434,7 +435,9 @@ function print_robust_statistical_summary(analysis::RobustStatisticalAnalysis)
     println(@sprintf("%-10s %-10s %-10s %-10s %-10s", "Kristalle", "Mean", "Median", "Std", "MAD"))
     println("-"^50)
     
-    for (k, stats) in sort(collect(analysis.descriptive_stats))
+    # KORRIGIERT: Sortiere Keys, nicht die Dictionary-Paare
+    for k in sort(collect(keys(analysis.descriptive_stats)))
+        stats = analysis.descriptive_stats[k]
         println(@sprintf("%-10d %-10.4f %-10.4f %-10.4f %-10.4f", 
                 k, stats["mean"], stats["median"], stats["std"], stats["mad"]))
     end
@@ -444,7 +447,9 @@ function print_robust_statistical_summary(analysis::RobustStatisticalAnalysis)
     println(@sprintf("%-10s %-25s %-25s", "Kristalle", "Mean CI", "Median CI"))
     println("-"^60)
     
-    for (k, intervals) in sort(collect(analysis.confidence_intervals))
+    # KORRIGIERT: Sortiere Keys
+    for k in sort(collect(keys(analysis.confidence_intervals)))
+        intervals = analysis.confidence_intervals[k]
         mean_ci = intervals["mean"]
         median_ci = intervals["median"]
         println(@sprintf("%-10d [%.4f, %.4f]      [%.4f, %.4f]", 
