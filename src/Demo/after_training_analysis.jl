@@ -1,12 +1,12 @@
 # =============================================================================
-# AFTER TRAINING ANALYSIS - VOLLSTÄNDIGE AUSWERTUNG (KORRIGIERT)
+# AFTER TRAINING ANALYSIS - VOLLSTÄNDIGE AUSWERTUNG
 # =============================================================================
 
 using Dates
 using BSON
 using Statistics
 using Plots
-using LinearAlgebra
+using LinearAlgebra  # Für cor() Funktion
 
 println("=== AFTER TRAINING ANALYSIS ===")
 println("Lade alle Module...")
@@ -51,10 +51,6 @@ function analyze_training_results(;
     println("")
     
     mkpath(output_base_dir)
-    
-    # WICHTIG: Initialisiere Variablen am Anfang
-    batch_results = nothing
-    stat_analysis = nothing
     
     # Prüfe ob Modell existiert
     if !isfile(model_path)
@@ -220,6 +216,19 @@ function analyze_training_results(;
         println("✗ Visualisierung fehlgeschlagen: $e")
     end
     
+    # ALTE VERSION AUSKOMMENTIERT (hatte Pfad-Probleme)
+    # try
+    #     crystal_comparison_results = create_systematic_crystal_comparison(
+    #         model_path,
+    #         crystal_counts=[1, 2, 3, 4, 5, 8, 10, 12, 15],
+    #         samples_per_count=3,
+    #         output_dir=viz_output_dir
+    #     )
+    #     println("✓ Visualisierungen erstellt in: $viz_output_dir")
+    # catch e
+    #     println("✗ Visualisierung fehlgeschlagen: $e")
+    # end
+    
     # 3. VOLLSTÄNDIGE EVALUIERUNG
     println("\n3. VOLLSTÄNDIGE MULTI-KRISTALL EVALUIERUNG")
     println("-"^50)
@@ -249,8 +258,7 @@ function analyze_training_results(;
         
     catch e
         println("✗ Evaluierung fehlgeschlagen: $e")
-        println("  Details: ", e)
-        # batch_results bleibt nothing
+        batch_results = nothing
     end
     
     # 4. STATISTISCHE ANALYSE
@@ -309,12 +317,11 @@ function analyze_training_results(;
     summary_file = joinpath(output_base_dir, "analysis_summary.md")
     
     try
-        # Übergebe möglicherweise nothing-Werte
         create_analysis_summary(
             summary_file,
             model_path,
-            batch_results,  # kann nothing sein
-            stat_analysis   # kann nothing sein
+            batch_results,
+            stat_analysis
         )
         
         println("✓ Zusammenfassung erstellt: $summary_file")
@@ -332,10 +339,8 @@ function analyze_training_results(;
     println("Verzeichnisstruktur:")
     println("  📁 $output_base_dir/")
     println("  ├── 📊 visualizations/     # Strömungsfeld-Vergleiche")
-    if batch_results !== nothing
-        println("  ├── 📈 evaluation/         # Detaillierte Metriken")
-        println("  ├── 💾 exports/            # CSV, JSON, LaTeX")
-    end
+    println("  ├── 📈 evaluation/         # Detaillierte Metriken")
+    println("  ├── 💾 exports/            # CSV, JSON, LaTeX")
     println("  └── 📄 analysis_summary.md # Zusammenfassung")
     
     return batch_results
@@ -411,6 +416,3 @@ else
     println("      output_base_dir = \"my_results\"")
     println("  )")
 end
-
-
-
