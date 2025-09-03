@@ -1,0 +1,54 @@
+% ============================================================================
+% KAPITEL 1: EINLEITUNG UND FORSCHUNGSMOTIVATION
+% ============================================================================
+
+\chapter{Einleitung und Forschungsmotivation}
+\label{ch:introduction}
+
+\section{Geowissenschaftlicher Kontext}
+
+Die Sedimentation von Kristallen in Flüssigkeiten ist ein fundamentaler Prozess in der Geophysik und Petrologie. Von der Kristallisation in Magmakammern bis hin zur Partikelablagerung in sedimentären Systemen beeinflussen diese Prozesse die Struktur und Zusammensetzung geologischer Formationen \parencite{martin1988crystal}. Bereits in den späten 1980er Jahren zeigten Martin und Nokes, dass Kristallsedimentation selbst in vigorös konvektierenden Magmakammern auftreten kann, wenn das Verhältnis der Stokes-Sedimentationsgeschwindigkeit zur Konvektionsgeschwindigkeit ausreichend groß ist \parencite{martin1988crystal,martin1989fluid}.\\
+\\
+In magmatischen Systemen führt die Sedimentation von Mineralkristallen zur Bildung kumulativer Schichten, die wichtige Informationen über die Entwicklungsgeschichte von Magmakammern liefern. Die komplexen Strömungsmuster, die durch sinkende Kristalle entstehen, beeinflussen Wärmetransport, chemische Differentiation und die räumliche Verteilung von Mineralkomponenten. Moderne Studien haben gezeigt, dass numerische Modellierung dieser Prozesse zu asymmetrischen Partikelverteilungen am Kammerboden führt, was primäre Sedimentstrukturen in Plutonen erklärt \parencite{verhoeven2009crystal}.
+
+\section{Computational Challenges}
+
+Traditionelle numerische Simulationen von Multi-Partikel Sedimentationssystemen stehen vor erheblichen rechnerischen Herausforderungen:
+
+\begin{itemize}
+	\item \textbf{Skalierungsprobleme}: Die Rechenzeit steigt exponentiell mit der Anzahl der Partikel
+	\item \textbf{Multi-Scale Physik}: Gleichzeitige Behandlung von Partikel- und Kontinuumsskalen
+	\item \textbf{Parametrische Studien}: Exploration des Parameterraums erfordert tausende von Simulationen
+\end{itemize}
+
+Für ein System mit $N$ Kristallen ergibt sich eine Komplexität von $\mathcal{O}(N^2)$ für paarweise Interaktionen, was bei $N > 10$ zu prohibitiven Rechenzeiten führt. Dies zeigt sich besonders deutlich in modernen LBM-DEM Studien, wo die Auflösung einzelner Partikel mindestens 24 Rechenzellen pro Durchmesser erfordert \parencite{zeng2014coupled}.
+
+\section{Machine Learning als Lösungsansatz}
+
+Machine Learning Methoden, insbesondere Convolutional Neural Networks (CNNs), haben in der Fluid-Dynamik bemerkenswerte Erfolge erzielt \parencite{thuerey2020deep}. U-Net-LSTM Hybrid-Architekturen können eine Größenordnung Reduktion des Mean Square Errors gegenüber traditionellen CNN-LSTM-Ansätzen erreichen, bei gleichzeitig sechs Größenordnungen Kosteneinsparung versus CFD \parencite{hou2022unet_lstm}.\\
+\\
+UNet-Architekturen eignen sich besonders für die Vorhersage räumlicher Felder aufgrund ihrer Encoder-Decoder Struktur mit Skip-Connections \parencite{ronneberger2015unet}. Neuere Entwicklungen zeigen, dass Gated Residual U-Net Architekturen mit Domänen-Dekomposition erfolgreich auf beliebig große Domänen ohne Neutraining skalieren können \parencite{rana2024scalable_cnn}.\\
+\\
+Die zentrale Forschungsfrage dieser Arbeit lautet:\\
+\\
+\begin{quote}
+\textit{Können UNet-Architekturen zuverlässig von Ein-Kristall auf Multi-Kristall Sedimentationssysteme generalisieren, und wenn nicht, welche fundamentalen Limitationen begrenzen diese Generalisierungsfähigkeit?}
+\end{quote}
+
+% Definition der Haupthypothese
+\begin{hypothesis}[UNet-Generalisierung]
+\label{hyp:generalization}
+UNet-Architekturen können erfolgreich von Ein-Kristall auf Multi-Kristall Sedimentationssysteme (bis zu 15 Kristalle) generalisieren, wenn die Trainingsverteilung ausreichend diverse Konfigurationen enthält und physikalische Constraints in die Verlustfunktion integriert werden.
+\end{hypothesis}
+
+\section{Zielsetzung und Scope}
+
+Die Zielsetzung dieser explorativen Studie gliedert sich in drei Hauptaspekte:
+
+\begin{enumerate}
+	\item \textbf{Primärziel}: Systematische Evaluierung der Generalisierungsfähigkeit von UNet-Architekturen über verschiedene Kristallanzahlen (1-15)
+	\item \textbf{Sekundärziel}: Charakterisierung der Failure Modes und Identifikation kritischer Limitationen
+	\item \textbf{Tertiärziel}: Entwicklung von Empfehlungen für zukünftige physics-informed machine learning Ansätze
+\end{enumerate}
+
+Der Scope umfasst 2D-Strömungsfelder im Stokes-Flow Regime mit sphärischen Kristallen variabler Größe und Position. 3D-Erweiterungen und komplexe Partikelformen bleiben zukünftigen Arbeiten vorbehalten.

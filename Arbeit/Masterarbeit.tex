@@ -1,272 +1,52 @@
 \documentclass[12pt,twoside,openright]{scrreprt}
 
-% Grundlegende Pakete
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage[ngerman,english]{babel}
-\usepackage{lmodern}
-\usepackage{csquotes}
+% ============================================================================
+% PRÄAMBEL - Alle Pakete und Einstellungen
+% ============================================================================
+\input{config/commands}
+\input{config/packages}
+% \input{config/julia_listing}
 
-% Mathematik und Wissenschaft
-\usepackage{amsmath,amssymb,amsthm,mathtools}
-\usepackage{siunitx}
-\usepackage{booktabs}
-
-% Manuelle Definition häufig verwendeter Befehle
-\newcommand{\grad}{\nabla}
-\newcommand{\divg}{\nabla \cdot}
-\newcommand{\curl}{\nabla \times}
-\newcommand{\laplacian}{\nabla^2}
-
-% Grafiken und Visualisierung
-\usepackage{graphicx}
-\usepackage{subcaption}
-\usepackage{tikz}
-\usepackage{pgfplots}
-\pgfplotsset{compat=1.18}
-
-% Code und Algorithmen
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{algorithm2e}
-
-% Literatur und Verweise
-\usepackage[style=authoryear,backend=biber,maxbibnames=3]{biblatex}
-\addbibresource{references.bib}
-
-% Layout-Anpassungen
-\usepackage{geometry}
-\geometry{a4paper,left=3cm,right=2.5cm,top=2.5cm,bottom=2.5cm}
-\usepackage{setspace}
-\onehalfspacing
-
-% Hyperref sollte fast zuletzt geladen werden
-\usepackage{hyperref}
-\hypersetup{
-	colorlinks=true,
-	linkcolor=black,
-	citecolor=blue,
-	urlcolor=blue,
-	pdftitle={Machine Learning für Multi-Kristall Strömungsfelder},
-	pdfauthor={Paul Baselt}
-}
-
-% cleveref NACH hyperref laden
-\usepackage{cleveref}
-
-% Wissenschaftliche Formatierung
-\usepackage{abstract}
-\renewcommand{\abstractname}{Abstract}
-
-% Theorem-Umgebungen
-\theoremstyle{definition}
-\newtheorem{definition}{Definition}[chapter]
-\newtheorem{hypothesis}{Hypothesis}[chapter]
-
-\theoremstyle{plain}
-\newtheorem{theorem}{Theorem}[chapter]
-\newtheorem{lemma}[theorem]{Lemma}
-
-% Julia-Code Highlighting - VEREINFACHT
-\lstdefinelanguage{Julia}{
-	keywords={function,end,if,else,elseif,while,for,begin,let,try,catch,finally,return,break,continue,global,local,const,struct,mutable,abstract,primitive,type,where,using,import,export,module,baremodule,macro,quote,do},
-	keywordstyle=\color{blue}\bfseries,
-	sensitive=true,
-	comment=[l]{\#},
-	commentstyle=\color{gray},
-	string=[b]",
-	stringstyle=\color{red},
-	morestring=[b]',
-	basicstyle=\ttfamily\small,
-	frame=single,
-	numbers=left,
-	numberstyle=\tiny\color{gray},
-	breaklines=true,
-	breakatwhitespace=true,
-	tabsize=4,
-	inputencoding=utf8,
-	extendedchars=true,
-	literate={η}{{$\eta$}}1 {Δ}{{$\Delta$}}1 {ρ}{{$\rho$}}1
-}
-
-% Spezielle Definitionen für Geowissenschaften
-\newcommand{\reynolds}{\text{Re}}
-\newcommand{\stokes}{\text{St}}
-\newcommand{\peclet}{\text{Pe}}
-
-% Titel und Metadaten
+% ============================================================================
+% METADATEN
+% ============================================================================
 \title{Machine Learning zur Vorhersage von Strömungsfeldern um sinkende Kristalle: Generalisierungsfähigkeit von UNet-Architekturen für Multi-Kristall Sedimentationssysteme}
 \author{Paul Baselt}
 \date{\today}
 
+% ============================================================================
+% DOKUMENT
+% ============================================================================
 \begin{document}
-	
-	% Titelseite
-	\maketitle
-	
-	% Abstrakt (Deutsch und Englisch)
-	\begin{abstract}
-		Diese Masterarbeit untersucht die Generalisierungsfähigkeit von UNet-Architekturen zur Vorhersage von Strömungsfeldern in Multi-Kristall Sedimentationssystemen. Während traditionelle computational fluid dynamics (CFD) Methoden für komplexe Multi-Partikel Systeme rechenzeitintensiv sind, bieten machine learning Ansätze das Potenzial für erhebliche Beschleunigungen. Die vorliegende explorative Studie evaluiert systematisch, ob UNet-Netzwerke, die auf Ein-Kristall Konfigurationen trainiert wurden, erfolgreich auf Systeme mit 2-15 Kristallen generalisieren können. 
-		
-		Mithilfe von LaMEM-Simulationen als Ground Truth werden kontrollierte Experimente zur Komplexitätssteigerung durchgeführt. Die Ergebnisse zeigen [Platzhalter für tatsächliche Resultate], wodurch sowohl die Möglichkeiten als auch die fundamentalen Limitationen von UNet-Generalisierung in Multi-Partikel Strömungssystemen charakterisiert werden. Diese Arbeit leistet einen methodischen Beitrag zur physics-informed machine learning Forschung und bietet praktische Erkenntnisse für geowissenschaftliche Modellierungsanwendungen.
-	\end{abstract}
-	
-	\begin{otherlanguage}{english}
-		\begin{abstract}
-			This master's thesis investigates the generalization capability of UNet architectures for predicting flow fields in multi-crystal sedimentation systems. While traditional computational fluid dynamics (CFD) methods are computationally intensive for complex multi-particle systems, machine learning approaches offer the potential for significant acceleration.
-			
-			This exploratory study systematically evaluates whether UNet networks trained on single-crystal configurations can successfully generalize to systems with 2-15 crystals. Using LaMEM simulations as ground truth, controlled experiments with increasing complexity are conducted. The results demonstrate [placeholder for actual findings], thereby characterizing both the possibilities and fundamental limitations of UNet generalization in multi-particle flow systems.
-			
-			This work contributes methodologically to physics-informed machine learning research and provides practical insights for geoscientific modeling applications.
-		\end{abstract}
-	\end{otherlanguage}
-	
-	% Verzeichnisse
-	\tableofcontents
-	\listoffigures
-	\listoftables
-	
-	% Hauptteil
-	\chapter{Einleitung und Forschungsmotivation}
-	\label{ch:introduction}
-	
-	\section{Geowissenschaftlicher Kontext}
-	
-	Die Sedimentation von Kristallen in Flüssigkeiten ist ein fundamentaler Prozess in der Geophysik und Petrologie. Von der Kristallisation in Magmakammern bis hin zur Partikelablagerung in sedimentären Systemen beeinflussen diese Prozesse die Struktur und Zusammensetzung geologischer Formationen.
-	
-	In magmatischen Systemen führt die Sedimentation von Mineralkristallen zur Bildung kumulativer Schichten, die wichtige Informationen über die Entwicklungsgeschichte von Magmakammern liefern. Die komplexen Strömungsmuster, die durch sinkende Kristalle entstehen, beeinflussen Wärmetransport, chemische Differentiation und die räumliche Verteilung von Mineralkomponenten.
-	
-	\section{Computational Challenges}
-	
-	Traditionelle numerische Simulationen von Multi-Partikel Sedimentationssystemen stehen vor erheblichen rechnerischen Herausforderungen:
-	
-	\begin{itemize}
-		\item \textbf{Skalierungsprobleme}: Die Rechenzeit steigt exponentiell mit der Anzahl der Partikel
-		\item \textbf{Multi-Scale Physik}: Gleichzeitige Behandlung von Partikel- und Kontinuumsskalen
-		\item \textbf{Parametrische Studien}: Exploration des Parameterraums erfordert tausende von Simulationen
-	\end{itemize}
-	
-	Für ein System mit $N$ Kristallen ergibt sich eine Komplexität von $\mathcal{O}(N^2)$ für paarweise Interaktionen, was bei $N > 10$ zu prohibitiven Rechenzeiten führt.
-	
-	\section{Machine Learning als Lösungsansatz}
-	
-	Machine Learning Methoden, insbesondere Convolutional Neural Networks (CNNs), haben in der Fluid-Dynamik bemerkenswerte Erfolge erzielt. UNet-Architekturen eignen sich besonders für die Vorhersage räumlicher Felder aufgrund ihrer Encoder-Decoder Struktur mit Skip-Connections.
-	
-	Die zentrale Forschungsfrage dieser Arbeit lautet:
-	
-	\begin{quote}
-		\textit{Können UNet-Architekturen zuverlässig von Ein-Kristall auf Multi-Kristall Sedimentationssysteme generalisieren, und wenn nicht, welche fundamentalen Limitationen begrenzen diese Generalisierungsfähigkeit?}
-	\end{quote}
-	
-	% Definition der Haupthypothese
-	\begin{hypothesis}[UNet-Generalisierung]
-		\label{hyp:generalization}
-		UNet-Architekturen können erfolgreich von Ein-Kristall auf Multi-Kristall Sedimentationssysteme (bis zu 15 Kristalle) generalisieren, wenn die Trainingsverteilung ausreichend diverse Konfigurationen enthält und physikalische Constraints in die Verlustfunktion integriert werden.
-	\end{hypothesis}
-	
-	\section{Zielsetzung und Scope}
-	
-	Die Zielsetzung dieser explorativen Studie gliedert sich in drei Hauptaspekte:
-	
-	\begin{enumerate}
-		\item \textbf{Primärziel}: Systematische Evaluierung der Generalisierungsfähigkeit von UNet-Architekturen über verschiedene Kristallanzahlen (1-15)
-		\item \textbf{Sekundärziel}: Charakterisierung der Failure Modes und Identifikation kritischer Limitationen
-		\item \textbf{Tertiärziel}: Entwicklung von Empfehlungen für zukünftige physics-informed machine learning Ansätze
-	\end{enumerate}
-	
-	Der Scope umfasst 2D-Strömungsfelder im Stokes-Flow Regime mit sphärischen Kristallen variabler Größe und Position. 3D-Erweiterungen und komplexe Partikelformen bleiben zukünftigen Arbeiten vorbehalten.
-	
-	\chapter{Theoretische Grundlagen}
-	\label{ch:theory}
-	
-	\section{Fluid-Dynamik sinkender Partikel}
-	
-	Die Bewegung sinkender Partikel in viskosen Fluiden wird durch die Navier-Stokes-Gleichungen beschrieben:
-	
-	\begin{equation}
-		\rho \left( \frac{\partial \mathbf{v}}{\partial t} + (\mathbf{v} \cdot \grad) \mathbf{v} \right) = -\grad p + \mu \laplacian \mathbf{v} + \rho \mathbf{g}
-	\end{equation}
-	
-	Für niedrige Reynolds-Zahlen ($\reynolds \ll 1$) vereinfacht sich dies zu den Stokes-Gleichungen:
-	
-	\begin{align}
-		\grad p &= \mu \laplacian \mathbf{v} + \rho \mathbf{g} \\
-		\divg \mathbf{v} &= 0
-	\end{align}
-	
-	Die charakteristische Reynolds-Zahl für sinkende Kristalle ist:
-	\begin{equation}
-		\reynolds = \frac{\rho v_s d}{\mu}
-	\end{equation}
-	
-	wobei $v_s$ die Sedimentationsgeschwindigkeit, $d$ der Kristalldurchmesser, $\rho$ die Fluiddichte und $\mu$ die dynamische Viskosität ist.
-	
-	\section{UNet-Architekturen für Strömungsfeld-Vorhersage}
-	
-	Die UNet-Architektur besteht aus einem kontrahierenden Pfad (Encoder) und einem expandierenden Pfad (Decoder). Für Strömungsfeld-Anwendungen wird das Netzwerk wie folgt konfiguriert:
-	
-	\begin{itemize}
-		\item \textbf{Input}: Phasenfeld $\phi(x,z) \in \{0,1\}^{H \times W}$ 
-		\item \textbf{Output}: Geschwindigkeitsfeld $\mathbf{v}(x,z) = (v_x, v_z) \in \mathbb{R}^{H \times W \times 2}$
-		\item \textbf{Verlustfunktion}: $\mathcal{L} = \text{MSE}(\mathbf{v}_{\text{pred}}, \mathbf{v}_{\text{LaMEM}}) + \lambda \mathcal{L}_{\text{physics}}$
-	\end{itemize}
-	
-	Der physikalische Constraint-Term enforced die Kontinuitätsgleichung:
-	\begin{equation}
-		\mathcal{L}_{\text{physics}} = \left\| \frac{\partial v_x}{\partial x} + \frac{\partial v_z}{\partial z} \right\|_2^2
-	\end{equation}
-	
-	% Code-Beispiel mit vereinfachter Syntax
 
-	
-	\chapter{Methodologie und experimenteller Aufbau}
-	\label{ch:methodology}
-	
-	In diesem Kapitel wird die systematische Herangehensweise zur Untersuchung der Generalisierungsfähigkeit von UNet-Architekturen beschrieben. Der experimentelle Aufbau folgt einem kontrollierten Ansatz zur schrittweisen Komplexitätssteigerung.
-	
-	\section{Experimentelles Design}
-	
-	Das experimentelle Design basiert auf drei Hauptkomponenten:
-	\begin{enumerate}
-		\item Datengenerierung mit LaMEM-Simulationen
-		\item UNet-Training mit verschiedenen Strategien
-		\item Systematische Evaluierung der Generalisierungsperformance
-	\end{enumerate}
-	
-	\chapter{Implementation und technische Umsetzung}
-	\label{ch:implementation}
-	
-	Die technische Umsetzung erfolgt in Julia unter Verwendung des Flux.jl Machine Learning Frameworks in Kombination mit LaMEM.jl für die Generierung der Simulationsdaten.
-	
-	\chapter{Experimentelle Ergebnisse}
-	\label{ch:results}
-	
-	[Inhalte werden mit tatsächlichen Experimentergebnissen gefüllt...]
-	
-	\chapter{Physikalische Validierung und Limitationen}
-	\label{ch:validation}
-	
-	[Inhalte zur physikalischen Konsistenz und Modell-Limitationen...]
-	
-	\chapter{Diskussion und Interpretation}
-	\label{ch:discussion}
-	
-	[Interpretation der Ergebnisse und Einordnung in den wissenschaftlichen Kontext...]
-	
-	\chapter{Schlussfolgerungen und Ausblick}
-	\label{ch:conclusions}
-	
-	[Zusammenfassung der Erkenntnisse und zukünftige Forschungsrichtungen...]
-	
-	% Anhänge
-	\appendix
-	\chapter{Zusätzliche Ergebnisse}
-	\label{app:additional}
-	
-	\chapter{Code-Dokumentation}
-	\label{app:code}
-	
-	% Literaturverzeichnis
-	\printbibliography
-	
+% Titelseite und Präliminaries
+\input{frontmatter/titlepage}
+\input{frontmatter/declaration}
+\input{frontmatter/abstract_de}
+\input{frontmatter/abstract_en}
+
+% Verzeichnisse
+\tableofcontents
+\listoffigures
+\listoftables
+\lstlistoflistings  % Optional: Codeverzeichnis
+
+% Hauptkapitel
+\input{chapters/01_introduction}
+\input{chapters/02_theory}
+\input{chapters/03_methodology}
+\input{chapters/04_implementation}
+\input{chapters/05_results}
+\input{chapters/06_validation}
+\input{chapters/07_discussion}
+\input{chapters/08_conclusions}
+
+% Anhänge
+\appendix
+\input{appendix/A_additional_results}
+\input{appendix/B_code_documentation}
+
+% Literaturverzeichnis
+\printbibliography
+
 \end{document}
