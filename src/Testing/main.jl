@@ -35,13 +35,13 @@ const SERVER_CONFIG = (
     target_crystal_count = 10,
     
     # OPTIMIERT: Deutlich mehr Trainingsdaten
-    n_training_samples = 20,           # Von 200 auf 500 erhöht
+    n_training_samples = 300,           # Von 200 auf 500 erhöht
     
     target_resolution = 256,
     
     # OPTIMIERT: Bessere Training-Parameter
     num_epochs = 50,                    # Von 30 auf 50 erhöht
-    learning_rate = 0.001f0,            # Von 0.0005f0 auf 0.001f0 erhöht
+    learning_rate = 0.0001f0,            # Von 0.0005f0 auf 0.001f0 erhöht
     batch_size = 2,                     # Von 1 auf 2 erhöht
     early_stopping_patience = 15,       # Von 10 auf 15 erhöht
     

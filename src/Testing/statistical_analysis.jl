@@ -1,7 +1,7 @@
 # =============================================================================
 # ROBUSTE STATISTISCHE ANALYSE FÜR KLEINE STICHPROBEN
 # =============================================================================
-# Speichern als: robust_statistical_analysis.jl
+
 
 using Statistics
 using StatsBase

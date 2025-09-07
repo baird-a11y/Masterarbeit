@@ -39,7 +39,7 @@ ENV["GKSwstype"] = "100"
 Führt alle Analysen nach dem Training aus
 """
 function analyze_training_results(;
-    model_path = "ten_crystal_checkpoints_optimized/best_model.bson",
+    model_path = "H:/Masterarbeit/Modelle/final_model_run_1.bson",
     output_base_dir = "analysis_results_$(Dates.format(now(), "yyyymmdd_HHMMSS"))"
 )
     
@@ -89,7 +89,7 @@ function analyze_training_results(;
         println("✓ Quick Test abgeschlossen")
         
     catch e
-        println("✗ Quick Test fehlgeschlagen: $e")
+        println("Quick Test fehlgeschlagen: $e")
     end
     
     # 2. VISUALISIERUNGEN (NEUE IMPLEMENTATION)
@@ -248,7 +248,7 @@ function analyze_training_results(;
         end
         
     catch e
-        println("✗ Evaluierung fehlgeschlagen: $e")
+        println("Evaluierung fehlgeschlagen: $e")
         println("  Details: ", e)
         # batch_results bleibt nothing
     end
@@ -265,14 +265,14 @@ function analyze_training_results(;
                 verbose=true
             )
             
-            println("✓ Statistische Analyse abgeschlossen")
+            println("Statistische Analyse abgeschlossen")
             
         catch e
-            println("✗ Statistische Analyse fehlgeschlagen: $e")
+            println("Statistische Analyse fehlgeschlagen: $e")
             stat_analysis = nothing
         end
     else
-        println("⚠ Überspringe statistische Analyse (keine Batch-Ergebnisse)")
+        println("Überspringe statistische Analyse (keine Batch-Ergebnisse)")
         stat_analysis = nothing
     end
     
@@ -290,16 +290,16 @@ function analyze_training_results(;
             )
             
             if export_success
-                println("✓ Daten exportiert nach: $export_dir")
+                println("Daten exportiert nach: $export_dir")
             else
-                println("⚠ Export teilweise fehlgeschlagen")
+                println("Export teilweise fehlgeschlagen")
             end
             
         catch e
-            println("✗ Export fehlgeschlagen: $e")
+            println("Export fehlgeschlagen: $e")
         end
     else
-        println("⚠ Überspringe Export (keine Batch-Ergebnisse)")
+        println("Überspringe Export (keine Batch-Ergebnisse)")
     end
     
     # 6. ZUSAMMENFASSUNGSBERICHT
@@ -317,10 +317,10 @@ function analyze_training_results(;
             stat_analysis   # kann nothing sein
         )
         
-        println("✓ Zusammenfassung erstellt: $summary_file")
+        println("Zusammenfassung erstellt: $summary_file")
         
     catch e
-        println("✗ Zusammenfassung fehlgeschlagen: $e")
+        println("Zusammenfassung fehlgeschlagen: $e")
     end
     
     # ABSCHLUSS
@@ -330,13 +330,13 @@ function analyze_training_results(;
     println("Alle Ergebnisse in: $output_base_dir")
     println("")
     println("Verzeichnisstruktur:")
-    println("  📁 $output_base_dir/")
-    println("  ├── 📊 visualizations/     # Strömungsfeld-Vergleiche")
+    println("  $output_base_dir/")
+    println("  ├── visualizations/     # Strömungsfeld-Vergleiche")
     if batch_results !== nothing
-        println("  ├── 📈 evaluation/         # Detaillierte Metriken")
-        println("  ├── 💾 exports/            # CSV, JSON, LaTeX")
+        println("  ├── evaluation/         # Detaillierte Metriken")
+        println("  ├── exports/            # CSV, JSON, LaTeX")
     end
-    println("  └── 📄 analysis_summary.md # Zusammenfassung")
+    println("  └── analysis_summary.md # Zusammenfassung")
     
     return batch_results
 end
@@ -366,19 +366,19 @@ function create_analysis_summary(output_path, model_path, batch_results, stat_an
                 corr = round(stats["correlation_vz_mean"], digits=3)
                 
                 status = if mae < 0.05
-                    "✅ Exzellent"
+                    "Exzellent"
                 elseif mae < 0.1
-                    "👍 Gut"
+                    "Gut"
                 elseif mae < 0.2
-                    "⚠️ Akzeptabel"
+                    "Akzeptabel"
                 else
-                    "❌ Verbesserung nötig"
+                    "Verbesserung nötig"
                 end
                 
                 write(f, "| $n | $mae | $corr | $status |\n")
             end
         else
-            write(f, "⚠️ Keine Evaluierungsergebnisse verfügbar\n")
+            write(f, "Keine Evaluierungsergebnisse verfügbar\n")
         end
         
         if stat_analysis !== nothing
