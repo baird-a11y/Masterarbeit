@@ -1,0 +1,4 @@
+Kristalle: 3
+MAE v_z: 0.517447
+Korrelation v_z: 0.6752
+MAE v_x: 0.381129
