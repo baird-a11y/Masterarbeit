@@ -315,7 +315,7 @@ function run_ten_crystal_training()
         # Datenaugmentierung anwenden
         if SERVER_CONFIG.use_data_augmentation
             println("\nWende Datenaugmentierung an...")
-            dataset = augment_dataset(dataset, augmentation_factor=1)  # Verdoppelt Dataset
+            dataset = augment_lamem_dataset(dataset)
         end
 
         println("Finales Dataset: $(length(dataset)) Samples")

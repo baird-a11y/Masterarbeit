@@ -193,6 +193,90 @@ function preprocess_lamem_sample_normalized(x, z, phase, vx, vz, v_stokes;
     end
 end
 
+
+# Ganz am Ende von data_processing.jl:
+
+function translate_sample(phase, velocity, offset)
+    """Hilfsfunktion für Verschiebung"""
+    dx, dz = offset
+    
+    # Zirkuläre Verschiebung
+    phase_shifted = circshift(phase, (dx, dz))
+    vel_shifted = circshift(velocity, (dx, dz, 0, 0))
+    
+    return phase_shifted, vel_shifted
+end
+
+function enhanced_augmentation(phase_data, velocity_data)
+    augmented = []
+
+    for (phase, vel) in zip(phase_data, velocity_data)
+        # Original
+        push!(augmented, (phase, vel))
+
+        # Horizontal flip mit Geschwindigkeits-Korrektur
+        phase_flip = reverse(phase, dims=1)
+        vel_flip = reverse(vel, dims=1)
+        vel_flip[:, :, 1, :] *= -1  # vx umkehren
+        push!(augmented, (phase_flip, vel_flip))
+
+        # Kleine Verschiebungen (5-10 Pixel)
+        for (dx, dz) in [(5, 0), (-5, 0), (0, 5), (0, -5)]
+            phase_shift, vel_shift = translate_sample(phase, vel, (dx, dz))
+            push!(augmented, (phase_shift, vel_shift))
+        end
+    end
+
+    return augmented
+end
+
+
+
+function augment_lamem_dataset(dataset)
+    """
+    Wendet enhanced_augmentation auf LaMEM-Dataset an
+    """
+    println("=== ERWEITERTE DATENAUGMENTIERUNG ===")
+    println("Original Dataset: $(length(dataset)) Samples")
+    
+    # Extrahiere Phase und Velocity
+    phase_data = [sample[3] for sample in dataset]
+    velocity_data = []
+    
+    for sample in dataset
+        _, _, _, vx, vz, _, _, _ = sample
+        # Kombiniere vx und vz zu 4D Array: (H, W, 2, 1)
+        vel_combined = cat(reshape(vx, size(vx)..., 1), 
+                          reshape(vz, size(vz)..., 1), dims=3)
+        vel_combined = reshape(vel_combined, size(vel_combined, 1), size(vel_combined, 2), 2, 1)
+        push!(velocity_data, vel_combined)
+    end
+    
+    # Wende Augmentierung an
+    augmented = enhanced_augmentation(phase_data, velocity_data)
+    
+    # Konvertiere zurück
+    augmented_dataset = []
+    for (i, (phase_aug, vel_aug)) in enumerate(augmented)
+        original_idx = ((i-1) ÷ 6) + 1  # 6 augmentations per sample
+        if original_idx <= length(dataset)
+            x, z, _, _, _, exx, ezz, v_stokes = dataset[original_idx]
+            
+            vx_aug = vel_aug[:, :, 1, 1]
+            vz_aug = vel_aug[:, :, 2, 1]
+            
+            augmented_sample = (x, z, phase_aug, vx_aug, vz_aug, exx, ezz, v_stokes)
+            push!(augmented_dataset, augmented_sample)
+        end
+    end
+    
+    println("Augmentiertes Dataset: $(length(augmented_dataset)) Samples")
+    return augmented_dataset
+end
+
+
+
+
 println("Data Processing Module geladen!")
 println("Verfügbare Funktionen:")
 println("  - resize_power_of_2(data, target_size)")
