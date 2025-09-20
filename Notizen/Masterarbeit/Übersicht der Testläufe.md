@@ -10,3 +10,7 @@
 | Test_Run_7 07.09 | 300              | 0.00005f0     | 2          | 75      |
 | Test_Run_8 07.09 | 300              | 0.0002f0      | 2          | 50      |
 
+Workshop angebote für lehrende
+Hintergrund google schoolar
+Limits von Agenten 
+Pro Student 10 bis 15 cent pro Monat
