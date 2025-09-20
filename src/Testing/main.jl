@@ -34,19 +34,19 @@ const SERVER_CONFIG = (
     target_crystal_count = 10,
     
     # OPTIMIERT: Deutlich mehr Trainingsdaten
-    n_training_samples = 300,           # Von 200 auf 500 erhöht
+    n_training_samples = 750,           # Von 200 auf 500 erhöht
     
     target_resolution = 256,
     
     # OPTIMIERT: Bessere Training-Parameter
     num_epochs = 50,                    # Von 30 auf 50 erhöht
-    learning_rate = 0.0002f0,            # Von 0.0005f0 auf 0.001f0 erhöht
-    batch_size = 2,                     # Von 1 auf 2 erhöht
+    learning_rate = 0.0005f0,            # Von 0.0005f0 auf 0.001f0 erhöht
+    batch_size = 4,                     # Von 1 auf 2 erhöht
     early_stopping_patience = 15,       # Von 10 auf 15 erhöht
     
     # Physics-Informed Parameter
     lambda_physics_initial = 0.01f0,    
-    lambda_physics_final = 0.1f0,       
+    lambda_physics_final = 0.15f0,       
     physics_warmup_epochs = 15,         # 15 Epochen Warm-up für Physics
     
     # Output-Parameter

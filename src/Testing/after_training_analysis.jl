@@ -39,8 +39,8 @@ ENV["GKSwstype"] = "100"
 Führt alle Analysen nach dem Training aus
 """
 function analyze_training_results(;
-    model_path = "H:/Masterarbeit/Modelle/final_model_run_8.bson",
-    output_base_dir = "H:/Masterarbeit/Auswertung/Modell_Evaluation_8"
+    model_path = "H:/Masterarbeit/Modelle/final_model_run_9.bson",
+    output_base_dir = "H:/Masterarbeit/Auswertung/Modell_Evaluation_9"
 )
     
     println("\n" * "="^80)
