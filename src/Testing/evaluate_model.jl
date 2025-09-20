@@ -1,7 +1,7 @@
 # =============================================================================
 # FEHLENDE FUNKTIONEN FÜR KRISTALL-ERKENNUNG UND ALIGNMENT
 # =============================================================================
-# Diese Funktionen zu evaluate_model.jl hinzufügen oder als separates Modul
+
 
 using Statistics
 
