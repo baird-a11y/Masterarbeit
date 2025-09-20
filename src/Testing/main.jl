@@ -1,7 +1,6 @@
 # =============================================================================
 # HAUPTSCRIPT - 10-KRISTALL UNET TRAINING (EMPFOHLENER ANSATZ)
 # =============================================================================
-# Speichern als: main.jl
 
 using Flux
 using CUDA
