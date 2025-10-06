@@ -1,0 +1,1391 @@
+% Theoretical Framework for Master's Thesis
+
+
+\chapter{Theoretical Framework for UNet Architectures in Crystal Sedimentation Prediction}
+
+\section{Executive Summary}
+
+This comprehensive theoretical framework integrates four domains essential for this Master's thesis: \textbf{physical foundations of crystal sedimentation}, \textbf{computational fluid dynamics methods}, \textbf{machine learning approaches for physics}, and \textbf{generalization theory}. The framework bridges traditional geological/magmatic systems understanding through modern deep learning applications, with specific focus on the central research question: \textbf{Can UNet architectures generalize from single-crystal to multi-crystal (up to 15) sedimentation systems in 2D Stokes flow?}
+
+\part{Physical Foundations}
+
+\chapter{Crystal Sedimentation in Magmatic Systems}
+
+\section{Fundamental Physics of Crystal Settling}
+
+\subsection{Governing Equations}
+The Navier-Stokes equations reduce to Stokes equations at low Reynolds numbers ($\text{Re} \ll 1$):
+\begin{equation}
+\mathbf{0} = -\nabla p + \mu \nabla^2 \mathbf{u} \quad \text{with} \quad \nabla \cdot \mathbf{u} = 0
+\end{equation}
+
+\subsection{Stokes' Law}
+Terminal settling velocity is given by:
+\begin{equation}
+v_s = \frac{1}{18} \cdot \frac{(\rho_p - \rho_f)}{\mu} \cdot g \cdot D^2
+\end{equation}
+
+\subsection{Force Balance}
+Three forces govern crystal motion:
+\begin{itemize}
+    \item \textbf{Gravitational force}: $F_g = \frac{4}{3}\pi R^3 \rho_p g$
+    \item \textbf{Buoyancy force}: $F_b = \frac{4}{3}\pi R^3 \rho_f g$
+    \item \textbf{Drag force}: $F_d = 6\pi\mu R v$
+\end{itemize}
+
+\subsection{Reynolds Number}
+The Reynolds number determines the flow regime:
+\begin{equation}
+\text{Re} = \frac{\rho_f \cdot v_p \cdot D}{\mu}
+\end{equation}
+Magmatic systems typically exhibit $\text{Re} \sim 10^{-4}$ to $10^{-2}$.
+
+\subsection{Key Parameters}
+\begin{itemize}
+    \item Crystal density contrast: $\Delta\rho \sim 600$ kg/m$^3$ (olivine-basalt)
+    \item Magma viscosity: $\mu \sim 10^1$ to $10^3$ Pa·s (basalt)
+    \item Crystal size: $D \sim 0.1$ to 10 mm
+    \item Settling velocities: $v_s \sim 10^{-8}$ to $10^{-4}$ m/s
+\end{itemize}
+
+\section{Convection and Crystal Settling: Martin \& Nokes Framework}
+
+Martin and Nokes \cite{martin1988,martin1989} resolved the paradox of settling in vigorous convection through their seminal work.
+
+\subsection{The S Parameter}
+\begin{equation}
+S = \frac{v_s}{W}
+\end{equation}
+where $v_s$ is the Stokes velocity and $W$ is the convective velocity.
+
+\subsection{Critical Threshold}
+Effective settling occurs when $S < 0.5$, even when convection exceeds Stokes velocities.
+
+\subsection{Exponential Decay}
+The number of suspended crystals decays exponentially:
+\begin{equation}
+N(t) = N_0 \exp\left(-\frac{v_s \cdot t}{h}\right)
+\end{equation}
+
+\subsection{Rayleigh Number}
+The Rayleigh number characterizes convection vigor:
+\begin{equation}
+\text{Ra} = \frac{\rho_0 \cdot g \cdot \beta \cdot \Delta T \cdot H^3}{\mu \cdot \kappa}
+\end{equation}
+For basaltic magma, $\text{Ra} \sim 10^6$ to $10^{12}$ indicates turbulent convection.
+
+\subsection{Timescale Comparison}
+\begin{itemize}
+    \item Settling: Years
+    \item Convective overturn: $\sim$100 days
+    \item Crystallization: Millennia
+\end{itemize}
+Basaltic crystals settle in approximately 30 years versus $10^4$ to $10^5$ year crystallization timescales.
+
+\section{Numerical Validation: Verhoeven (2009)}
+
+Verhoeven and Schmalzl \cite{verhoeven2009} developed a coupled DEM-thermochemical model combining finite volume methods for fluid and Discrete Element Method for crystals.
+
+\subsection{Regime Classification}
+\begin{itemize}
+    \item \textbf{T Regime}: Thermal convection dominates, crystals remain suspended
+    \item \textbf{C Regime}: Sediment layer forms, particles accumulate
+    \item \textbf{TC Transition}: Power-law boundaries between regimes
+\end{itemize}
+
+\subsection{Physical Insights}
+The model validated agreement with Stokes law, hindered settling, and Martin \& Nokes experiments. Key insight: particles reduce convection vigor, with re-entrainment balancing settling in equilibrium states.
+
+\chapter{Multi-Particle Systems and Collective Dynamics}
+
+\section{Hydrodynamic Coupling Mechanisms}
+
+\subsection{Far-Field Interactions}
+Described by the Oseen tensor, velocity disturbances decay as $1/r$.
+
+\subsection{Near-Field Lubrication}
+Forces scale as:
+\begin{equation}
+F \sim \mu V \frac{R}{\delta}
+\end{equation}
+when the gap $\delta \ll R$, preventing contact between particles.
+
+\subsection{Method of Reflections}
+Iterative solution method for N-body Stokes problems.
+
+\subsection{Stokesian Dynamics}
+Combines multipole expansions with lubrication corrections. Computational cost: $O(N^3)$.
+
+\textbf{Key insight}: Stokes linearity allows superposition, but many-body effects emerge from collective coupling through resistance matrix inversion.
+
+\section{Wake Effects and Drafting-Kissing-Tumbling (DKT)}
+
+\subsection{Wake Structure Reynolds Dependence}
+\begin{itemize}
+    \item $\text{Re} < 1$: No separation, fore-aft symmetry
+    \item $1 < \text{Re} < 100$: Steady wake, symmetry breaking
+    \item $\text{Re} > 250$: Unsteady vortex shedding
+\end{itemize}
+
+\subsection{DKT Dynamics}
+The benchmark validation case consists of three phases:
+\begin{enumerate}
+    \item \textbf{Drafting}: Trailing particle accelerates in wake (reduced drag)
+    \item \textbf{Kissing}: Close approach enters lubrication regime
+    \item \textbf{Tumbling}: Symmetry breaking, lateral separation, role reversal
+\end{enumerate}
+
+\subsection{Clustering}
+Clustering occurs at critical Galileo number $\text{Ga} \geq 178$, forming columnar structures with 12\% velocity enhancement through preferential downflow sampling \cite{uhlmann2014,liu2021}.
+
+\section{Scaling from Single to Multiple Particles}
+
+\subsection{Hindered Settling}
+Richardson-Zaki correlation:
+\begin{equation}
+\frac{v}{v_0} = (1-\phi)^n
+\end{equation}
+where $n \approx 5$ to 6 for Stokes flow.
+
+\subsection{Batchelor Dilute Theory}
+For volume fractions $\phi < 3\%$:
+\begin{equation}
+\frac{v}{v_0} = 1 - 6.55\phi
+\end{equation}
+
+\subsection{Velocity Fluctuations}
+Up to 46\% of mean velocity in multi-particle systems.
+
+\subsection{Interaction Threshold}
+Significant interactions occur when particle separation $< 5$ to 10 diameters.
+
+\subsection{Configuration Sensitivity}
+\begin{itemize}
+    \item Vertical alignment $\rightarrow$ DKT behavior
+    \item Side-by-side arrangement $\rightarrow$ mutual repulsion
+    \item Initial arrangement critically affects dynamics
+\end{itemize}
+
+\subsection{Concentration Regimes}
+\begin{itemize}
+    \item \textbf{Dilute} ($\phi < 1\%$): Occasional interactions
+    \item \textbf{Intermediate} (1--10\%): Collective effects, microstructure formation
+    \item \textbf{Dense} ($>10\%$): Zone sedimentation, structural forces
+\end{itemize}
+
+\textbf{Critical for thesis}: Understanding $1 \rightarrow 15$ crystal transitions requires comprehensive multi-body interaction physics.
+
+\part{Computational Fluid Dynamics Methods}
+
+\chapter{Traditional CFD Approaches for Particle-Laden Flows}
+
+\section{Lattice Boltzmann Method (LBM)}
+
+\subsection{Mesoscopic Kinetic Approach}
+LBM evolves particle distribution functions on a discrete lattice.
+
+\subsection{Advantages}
+\begin{itemize}
+    \item Natural parallelism
+    \item Simple boundary condition implementation
+    \item Automatic mass conservation
+    \item No Poisson equation solution required
+\end{itemize}
+
+\subsection{Lattice Models}
+\begin{itemize}
+    \item \textbf{D2Q9}: 2D applications (relevant for this thesis)
+    \item \textbf{D3Q19}: 3D applications
+\end{itemize}
+
+\subsection{MRT Collision}
+Multiple-Relaxation-Time models improve stability over BGK single-relaxation schemes.
+
+\subsection{Macroscopic Recovery}
+Density $\rho$ and velocity $\mathbf{u}$ are recovered from distribution function moments.
+
+\section{Discrete Element Method (DEM)}
+
+\subsection{Lagrangian Particle Tracking}
+Newton's equations govern translation and rotation of each particle.
+
+\subsection{Contact Mechanics Models}
+\begin{itemize}
+    \item Hertz (nonlinear elastic)
+    \item Linear spring-dashpot (simplified)
+    \item Adhesion models (JKR, DMT)
+\end{itemize}
+
+\subsection{Collision Detection}
+Spatial data structures (cell lists, octrees) achieve $O(N \log N)$ computational efficiency.
+
+\subsection{Multi-Sphere Method}
+Non-spherical particles represented as overlapping sphere assemblies.
+
+\section{LBM-DEM Coupling Strategies}
+
+\subsection{Momentum Exchange Method}
+Ladd's method \cite{ladd1994}: Hydrodynamic force from distribution function changes at boundaries; enables two-way coupling.
+
+\subsection{Immersed Boundary Method (IBM)}
+No-slip condition enforced via forcing terms; produces smoother forces. Variants include direct forcing, indirect, and penalty methods.
+
+\subsection{Immersed Moving Boundary (IMB)}
+Handles moving particles via interface lattice solid fraction.
+
+\subsection{Resolved vs. Unresolved Simulations}
+\begin{itemize}
+    \item \textbf{Resolved}: Grid finer than particle ($D/\Delta x \geq 8$ to 20)
+    \begin{itemize}
+        \item Fully resolves flow field
+        \item High accuracy
+        \item Computationally expensive
+    \end{itemize}
+    \item \textbf{Unresolved}: Empirical drag correlations
+    \begin{itemize}
+        \item Faster computation
+        \item Less accurate for heterogeneous flows
+    \end{itemize}
+\end{itemize}
+
+\section{Alternative Methods}
+
+\subsection{Finite Element Method (FEM)}
+\begin{itemize}
+    \item Higher-order accuracy
+    \item Unstructured meshes
+    \item Complex implementation
+\end{itemize}
+
+\subsection{Finite Volume Method (FVM)}
+\begin{itemize}
+    \item Conservative formulation
+    \item Widely used commercially
+    \item Intuitive flux calculations
+\end{itemize}
+
+\subsection{Smoothed Particle Hydrodynamics (SPH)}
+\begin{itemize}
+    \item Meshless Lagrangian approach
+    \item Excellent for free surfaces
+    \item Variable smoothing length
+\end{itemize}
+
+\subsection{Method Comparison}
+LBM excels for particle flows (parallelization, moving boundaries), FEM for complex geometries, FVM for general CFD applications.
+
+\section{Computational Challenges}
+
+\subsection{Resolution Requirements}
+$D/\Delta x \geq 8$ minimum, 15 to 20 recommended for accurate results.
+
+\subsection{Cost Scaling}
+\begin{itemize}
+    \item Single resolved particle: $\sim 10^3$ to $10^6$ fluid nodes
+    \item 15 particles in 2D domain: $\sim 10^6$ to $10^7$ nodes (manageable with modern GPUs)
+\end{itemize}
+
+\subsection{Parallelization}
+LBM exhibits excellent GPU performance (8--100$\times$ speedup); domain decomposition enables multi-GPU scaling.
+
+\subsection{Time Step Constraints}
+CFL condition: $\Delta t \sim \Delta x / c$. Lubrication forces introduce stiffness.
+
+\subsection{Validation}
+Limited experimental data for multi-particle systems; DKT benchmark is standard validation case.
+
+\part{Machine Learning for Fluid Dynamics}
+
+\chapter{Neural Networks as CFD Surrogates}
+
+\section{Motivation for ML in Fluid Dynamics}
+
+\subsection{Speed Imperative}
+\begin{itemize}
+    \item Traditional CFD: hours to days
+    \item ML inference: milliseconds to seconds
+    \item Demonstrated speedups: $10^2$ to $10^6\times$ faster with 1--5\% accuracy
+\end{itemize}
+
+\subsection{Enabling Applications}
+\begin{itemize}
+    \item Real-time design optimization
+    \item Parametric studies
+    \item Interactive simulation
+    \item Control systems
+\end{itemize}
+
+\subsection{Trade-offs}
+Accuracy versus speed, interpolation versus extrapolation, data requirements.
+
+\section{Convolutional Neural Networks for Spatial Fields}
+
+\subsection{Why CNNs for Physics}
+\begin{itemize}
+    \item \textbf{Translation invariance}: Suits spatially homogeneous physics laws
+    \item \textbf{Local receptive fields}: Capture spatial correlations
+    \item \textbf{Parameter efficiency}: $10^2$ to $10^3\times$ fewer parameters versus fully-connected networks
+    \item \textbf{Multi-scale hierarchical features}: Natural for physics
+\end{itemize}
+
+\subsection{Input Representations}
+\begin{itemize}
+    \item Binary geometry masks
+    \item Boundary condition encodings
+    \item Initial flow fields
+    \item Normalized physical quantities
+\end{itemize}
+
+\subsection{Output Predictions}
+\begin{itemize}
+    \item Velocity components ($u$, $v$)
+    \item Pressure $p$
+    \item Vorticity $\omega$
+    \item Derived quantities
+\end{itemize}
+
+\subsection{Data Normalization}
+Critical for training stability. Methods include min-max scaling, standardization, and physics-based scaling (Reynolds number, characteristic length/velocity).
+
+\section{Surrogate Modeling and Reduced-Order Models}
+
+\subsection{Proper Orthogonal Decomposition (POD)}
+Approximation:
+\begin{equation}
+\mathbf{u}(\mathbf{x},t) \approx \sum_{k} a_k(t) \cdot \boldsymbol{\Phi}_k(\mathbf{x})
+\end{equation}
+
+\begin{itemize}
+    \item Optimal basis functions $\boldsymbol{\Phi}_k$ from SVD of snapshot matrix
+    \item Dimensionality reduction: $\sim 10^5 \rightarrow \sim 10^2$ (99\% energy retained)
+    \item POD modes capture dominant spatial structures
+\end{itemize}
+
+\subsection{POD-DL-ROM Framework}
+\begin{itemize}
+    \item \textbf{Offline phase}: CFD simulations $\rightarrow$ POD decomposition $\rightarrow$ Train NN on parameters$\rightarrow$coefficients mapping
+    \item \textbf{Online phase}: Query NN (milliseconds) $\rightarrow$ Reconstruct via $\mathbf{u} = \boldsymbol{\Phi} \cdot \mathbf{a}_{\text{NN}}$
+    \item \textbf{Speedup}: $10^3$ to $10^6\times$ with $<5\%$ error
+\end{itemize}
+
+\subsection{Alternative ROMs}
+\begin{itemize}
+    \item Dynamic Mode Decomposition (DMD) for temporal evolution
+    \item Autoencoders for nonlinear manifolds
+\end{itemize}
+
+\chapter{UNet Architecture for Physics Applications}
+
+\section{Original UNet}
+
+Ronneberger et al. \cite{ronneberger2015} introduced the UNet architecture with encoder-decoder structure and skip connections.
+
+\subsection{Encoder}
+\begin{itemize}
+    \item $3 \times 3$ convolutions with ReLU activation
+    \item $2 \times 2$ max pooling
+    \item Channels double each level: $64 \rightarrow 128 \rightarrow 256 \rightarrow 512$
+    \item Spatial dimensions halve, feature depth increases
+    \item Captures context and abstract features
+\end{itemize}
+
+\subsection{Decoder}
+\begin{itemize}
+    \item $2 \times 2$ up-convolutions
+    \item Concatenation with encoder features via skip connections
+    \item Restores spatial resolution
+    \item Combines high-level and low-level features
+\end{itemize}
+
+\subsection{Bottleneck}
+Lowest resolution with most compressed representation (typically 1024 channels).
+
+\subsection{Skip Connections (Critical Innovation)}
+\begin{itemize}
+    \item Long connections preserve fine-grained spatial information lost during downsampling
+    \item Combine high-level contextual features with low-level spatial details
+    \item Enable gradient flow (address vanishing gradients)
+    \item Essential for boundary preservation and sharp gradients
+\end{itemize}
+
+\subsection{Training}
+Strong data augmentation enables efficient learning from few samples with fast inference ($<1$s for $512 \times 512$ images).
+
+\section{Why UNet Excels for Physics Simulations}
+
+\subsection{Multi-Scale Feature Learning}
+Hierarchical spatial patterns essential for multi-scale phenomena:
+\begin{itemize}
+    \item Turbulence
+    \item Vortices
+    \item Boundary layers
+    \item Wakes
+\end{itemize}
+
+\subsection{Spatial Information Preservation}
+Skip connections maintain sharp gradients, discontinuities, and boundaries critical for CFD.
+
+\subsection{Translation Invariance}
+Generalizes across spatial locations, suitable for homogeneous physics laws.
+
+\subsection{Efficient Architecture}
+Processes high-resolution grids ($256 \times 256$, $512 \times 512$) with reduced dimensionality at bottleneck.
+
+\subsection{Proven Track Record}
+State-of-the-art for image segmentation, now widely adopted for physics simulations.
+
+\section{UNet Variants for Physics}
+
+\subsection{ResUNet}
+\begin{itemize}
+    \item Residual blocks in encoder/decoder
+    \item Enables deeper networks
+    \item Better gradient flow
+    \item $\sim 5\%$ improvement
+    \item Effective for complex spatial patterns
+\end{itemize}
+
+\subsection{Attention UNet}
+\begin{itemize}
+    \item Attention gates in skip connections
+    \item Selectively emphasizes relevant features
+    \item Focuses on important regions (shock fronts, boundary layers)
+    \item $\sim 12\%$ improvement
+    \item Reduces noise amplification
+\end{itemize}
+
+\subsection{Gated Residual UNet}
+Rana et al. \cite{rana2024}:
+\begin{itemize}
+    \item Gated residual units
+    \item ELU activations
+    \item Best performance for fluid dynamics
+    \item $\sim 18\%$ improvement over standard UNet
+\end{itemize}
+
+\subsection{3D UNet}
+\begin{itemize}
+    \item $3 \times 3 \times 3$ convolutions
+    \item $2 \times 2 \times 2$ pooling
+    \item Volumetric data processing
+    \item 3D turbulence applications
+    \item Higher memory requirements, longer training
+\end{itemize}
+
+\subsection{UNet++}
+\begin{itemize}
+    \item Nested skip connections
+    \item Dense connection paths
+    \item Multi-scale fusion
+    \item Reduces semantic gap between encoder and decoder
+\end{itemize}
+
+\section{Temporal Extensions: UNet-LSTM Hybrid}
+
+Hou et al. \cite{hou2022} developed a Deep U-Net-LSTM framework highly relevant for this thesis.
+
+\subsection{Architecture}
+\begin{itemize}
+    \item U-Net for spatial feature extraction
+    \item LSTM for temporal sequence modeling
+\end{itemize}
+
+\subsection{Application}
+SUBOFF submarine hydrodynamics time-series prediction.
+
+\subsection{Performance}
+\begin{itemize}
+    \item MSE/MAE reduced by 1--2 orders of magnitude versus CNN-LSTM
+    \item Speed: $10^6\times$ faster than CFD (0.33s GPU versus hours)
+    \item Excellent stability for future time predictions beyond training horizon
+\end{itemize}
+
+\subsection{Alternative Temporal Models}
+\begin{itemize}
+    \item ConvLSTM: Replaces convolutions with LSTM cells
+    \item 3D-UNet-LSTM: Spatiotemporal extractor with seq2seq forecaster
+\end{itemize}
+
+\subsection{Design Choices}
+Skip connections prevent feature loss during pooling; multiple LSTM layers handle different time horizons.
+
+\section{Domain Decomposition for Scalability}
+
+Rana et al. \cite{rana2024} developed a scalable CNN approach critical for $1 \rightarrow 15$ crystal generalization.
+
+\subsection{Problem Statement}
+Predicting flows in arbitrarily large domains without retraining.
+
+\subsection{Solution}
+Train on single-domain (single obstacle), apply via decomposition.
+
+\subsection{Architecture}
+\begin{itemize}
+    \item Gated residual U-Net
+    \item 9 input channels (geometry, boundary conditions, velocity)
+    \item ELU activations
+\end{itemize}
+
+\subsection{Two-Stage Modeling}
+\begin{enumerate}
+    \item \textbf{Stage 1 -- Local Contiguous}: Predict on subdomains ($128 \times 128$), naive patching
+    \item \textbf{Stage 2 -- Continuous}: Second network smooths boundary discontinuities (18\% MSE reduction)
+\end{enumerate}
+
+\subsection{LOVE Metric}
+\textbf{Local Orientational Vector Field Entropy}: Information-theoretic determination of optimal subdomain size via Shannon entropy of flow orientations:
+\begin{equation}
+H = -\sum_i p_i \log(p_i)
+\end{equation}
+Identifies decorrelation scale where flow returns to unperturbed state.
+
+\subsection{Scalability Results}
+\begin{itemize}
+    \item Demonstrated up to $1280 \times 640$ pixels (10$\times$ training domain)
+    \item Error propagates linearly: $\text{MSE}(n) = n \cdot \Delta\varepsilon$
+    \item Gated residual U-Net outperformed standard, nested, and recurrent variants
+    \item Near-instantaneous prediction versus hours for CFD
+    \item Reynolds numbers 2--350
+\end{itemize}
+
+\textbf{Key insight for thesis}: Demonstrates single-object training can scale to multiple objects---direct precedent for $1 \rightarrow 15$ crystal generalization through spatial decomposition.
+
+\chapter{Physics-Informed Neural Networks}
+
+\section{Physics-Informed Learning Framework}
+
+\subsection{Core Concept}
+Incorporate governing PDEs directly into the loss function.
+
+\subsection{Loss Function Structure}
+\begin{equation}
+\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{data}} + \lambda_{\text{PDE}} \cdot \mathcal{L}_{\text{PDE}} + \lambda_{\text{BC}} \cdot \mathcal{L}_{\text{BC}} + \lambda_{\text{IC}} \cdot \mathcal{L}_{\text{IC}}
+\end{equation}
+
+\begin{itemize}
+    \item $\mathcal{L}_{\text{data}}$: Supervised loss from labeled data (velocity, pressure observations)
+    \item $\mathcal{L}_{\text{PDE}}$: PDE residuals (Navier-Stokes, Stokes equations)
+    \item $\mathcal{L}_{\text{BC}}$: Boundary condition violations (no-slip at walls, inlet/outlet)
+    \item $\mathcal{L}_{\text{IC}}$: Initial condition matching
+    \item $\lambda$ weights: Balance terms (adaptive or fixed)
+\end{itemize}
+
+\subsection{Implementation}
+Automatic differentiation computes derivatives for PDE residuals; collocation points sample the space-time domain.
+
+\section{Advantages for Fluid Dynamics}
+
+\subsection{Data Efficiency}
+Physics constraints reduce sample complexity by orders of magnitude. 100--1000 samples often sufficient versus 10,000+ for purely data-driven approaches.
+
+\subsection{Physical Consistency}
+Enforces conservation laws:
+\begin{itemize}
+    \item Mass: $\nabla \cdot \mathbf{u} = 0$
+    \item Momentum
+    \item Energy
+\end{itemize}
+
+\subsection{Extrapolation}
+Better performance outside training distribution when physics is known.
+
+\subsection{Inverse Problems}
+Parameter estimation (viscosity, boundary conditions) from sparse measurements.
+
+\subsection{Multi-Fidelity}
+Combines low-fidelity simulations with sparse high-fidelity data.
+
+\section{Challenges and Solutions}
+
+\subsection{Gradient Imbalance Problem}
+Different loss terms have vastly different magnitudes ($\mathcal{L}_{\text{data}} \sim 10^{-2}$, $\mathcal{L}_{\text{PDE}} \sim 10^4$).
+
+\subsection{Solutions}
+\begin{itemize}
+    \item \textbf{Self-adaptive loss balancing (lbPINNs)}: Gaussian probabilistic models per term; weights updated via backpropagation
+    \item \textbf{Neural Tangent Kernel (NTK)}: Adaptive weighting based on gradient magnitudes
+    \item \textbf{Residual-based adaptive sampling}: Automatically add collocation points where PDE residuals are high
+    \item \textbf{Dynamic weight strategies}: Minimax alternating optimization
+\end{itemize}
+
+\subsection{Limitations}
+\begin{itemize}
+    \item Struggle with stiff problems (high Reynolds numbers)---not an issue for Stokes flow
+    \item Require many collocation points in space-time domain
+    \item Computational cost of automatic differentiation
+    \item Soft constraints without guaranteed physics satisfaction
+    \item Training time can be substantial (hours to days)
+\end{itemize}
+
+\section{Physics-Based Loss Functions}
+
+Thuerey et al. \cite{thuerey2020} contributed significantly to differentiable physics simulations.
+
+\subsection{Key Contributions}
+\begin{itemize}
+    \item Differentiable physics simulations (solver-in-the-loop)
+    \item Gradient-based loss terms for field derivatives
+    \item Deep Fluids framework with divergence-free guarantees
+    \item 40--80$\times$ computational speedup with comparable accuracy
+\end{itemize}
+
+\subsection{Loss Components for Stokes Flow}
+\begin{itemize}
+    \item \textbf{Continuity}: $\mathcal{L}_{\text{cont}} = \|\nabla \cdot \mathbf{u}\|^2$ (divergence-free for incompressible)
+    \item \textbf{Momentum}: $\mathcal{L}_{\text{mom}} = \|\nabla p - \mu \nabla^2 \mathbf{u}\|^2$ (steady Stokes)
+    \item \textbf{Boundary conditions}: $\mathcal{L}_{\text{BC}} = \sum \|\mathbf{u}(\mathbf{x}_{\text{boundary}}) - \mathbf{u}_{\text{prescribed}}\|^2$
+    \item \textbf{Gradient smoothness}: $\mathcal{L}_{\text{grad}} = \|\nabla\mathbf{u} - \nabla\mathbf{u}_{\text{true}}\|^2$ (reduces spurious oscillations)
+\end{itemize}
+
+\subsection{Adaptive Weighting}
+Essential for balancing terms; NTK approach balances gradient magnitudes.
+
+\part{Generalization in Machine Learning}
+
+\chapter{Theoretical Foundations of Generalization}
+
+\section{Classical Learning Theory}
+
+\subsection{Bias-Variance Tradeoff}
+\begin{itemize}
+    \item \textbf{Bias}: Underfitting; model too simple; high training and test error
+    \item \textbf{Variance}: Overfitting; memorization; low training error, high test error
+    \item \textbf{Optimal model}: Balances complexity to minimize both
+    \item \textbf{Generalization gap}: $\delta_{\text{gen}} = R(\hat{f}) - \hat{R}(\hat{f})$ where $R$ is expected risk, $\hat{R}$ is empirical risk
+\end{itemize}
+
+\subsection{PAC Learning}
+Probably Approximately Correct (PAC) learning framework defines when and how algorithms generalize.
+
+\begin{itemize}
+    \item Sample complexity bounds
+    \item Concept class is PAC-learnable if algorithm achieves high probability and small error given sufficient samples
+\end{itemize}
+
+\subsection{VC Dimension}
+Vapnik-Chervonenkis dimension measures hypothesis class capacity:
+\begin{itemize}
+    \item Largest set of points the model can shatter (all labelings achievable)
+    \item Higher VC dimension requires more training data
+    \item Provides generalization error bounds
+\end{itemize}
+
+\subsection{Double Descent Phenomenon}
+Overparameterized deep networks generalize beyond classical theory. Test error decreases, increases at interpolation threshold, then decreases again with more parameters \cite{zhang2017,belkin2019}.
+
+\section{Neural Scaling Laws}
+
+\subsection{Power-Law Relationships}
+Performance scales as:
+\begin{align}
+\mathcal{L} &\propto N^{-\alpha} \quad \text{(model size)} \\
+\mathcal{L} &\propto D^{-\beta} \quad \text{(dataset size)} \\
+\mathcal{L} &\propto C^{-\gamma} \quad \text{(compute)}
+\end{align}
+where $\mathcal{L}$ is loss, $N$ is number of parameters, $D$ is data size, $C$ is compute.
+
+\subsection{Four Scaling Regimes}
+\begin{itemize}
+    \item Variance-limited (data)
+    \item Resolution-limited (data)
+    \item Variance-limited (model)
+    \item Resolution-limited (model)
+\end{itemize}
+
+\subsection{Key Findings}
+\begin{itemize}
+    \item Larger models are more sample-efficient
+    \item Optimal compute allocation trains very large models on modest data
+    \item Scaling persists across 7+ orders of magnitude
+\end{itemize}
+
+\subsection{Implications for Physics}
+Physics constraints effectively increase data size. Power-law exponents depend on intrinsic data manifold dimension \cite{kaplan2020}.
+
+\chapter{Generalization Challenges in Physics-Informed ML}
+
+\section{Interpolation vs. Extrapolation}
+
+\subsection{Neural Network Capabilities}
+\begin{itemize}
+    \item \textbf{Excel at interpolation}: Accurate predictions within training data distribution
+    \item \textbf{Poor extrapolation}: Unreliable outside training range
+\end{itemize}
+
+\subsection{Root Cause}
+Learn patterns specific to training distribution, not underlying mechanisms.
+
+\subsection{Behavioral Characteristics}
+Asymptotic behavior defined by architecture, not training. Standard activations (ReLU, sigmoid) lead to unreliable extrapolation.
+
+\textbf{Critical challenge for thesis}: Training on 1--5 crystals and testing on 6--15 crystals constitutes \textbf{extrapolation in configuration space}---the network must compose learned physics rather than merely interpolate.
+
+\section{Strategies for Improved Extrapolation}
+
+\subsection{Physics-Informed Constraints}
+\begin{itemize}
+    \item Use Stokes equation residuals to guide predictions
+    \item Enforce divergence-free condition $\nabla \cdot \mathbf{u} = 0$
+    \item Boundary conditions at crystal surfaces
+    \item \textbf{Theoretical advantage}: Reduces data requirements, improves extrapolation beyond training domain
+\end{itemize}
+
+\subsection{Hybrid Models}
+Combine neural networks with physical models; NN learns corrections to simplified physics.
+
+\subsection{Physics-Encoded Networks (PeNNs)}
+Build physics into architecture (not just loss):
+\begin{itemize}
+    \item \textbf{Performance}: MSE $100$ to $1000\times$ smaller than standard NNs for extrapolation ($p < 0.0002$)
+    \item Always outperform standard NNs
+    \item Better handling of multi-scale systems
+\end{itemize}
+
+\subsection{Curriculum Learning}
+Train progressively $1 \rightarrow 2 \rightarrow 3 \rightarrow \ldots \rightarrow 15$ crystals. Each stage builds on previous, reducing extrapolation gap at each step.
+
+\subsection{Neural ODEs}
+Learn differential equations from data; better asymptotic behavior.
+
+\subsection{Reliable Extrapolation Methods}
+\begin{itemize}
+    \item Fine-tune with PDE loss (when physics known)
+    \item Multifidelity learning (with new observations)
+    \item Gaussian process regression as low-fidelity model
+\end{itemize}
+
+\section{Transfer Learning for Physics}
+
+\subsection{Strategy}
+\begin{itemize}
+    \item \textbf{Pre-train}: Simpler geometries, lower complexity (single crystal, abundant data)
+    \item \textbf{Fine-tune}: Target application (multiple crystals, limited data)
+    \item \textbf{Layer-wise adaptation}: Freeze early layers (low-level features), train later layers (high-level composition)
+\end{itemize}
+
+\subsection{Performance Gains}
+\begin{itemize}
+    \item 97.3\% performance boost demonstrated \cite{pellegrin2022}
+    \item 1--5\% accuracy improvement in SST prediction
+    \item Significant reduction in training iterations
+\end{itemize}
+
+\subsection{TL-PINN Approach}
+Transfer physics-informed networks across problems with different source terms without retraining from scratch.
+
+\subsection{Domain Similarity}
+Transfer effectiveness depends on relatedness. Single$\rightarrow$double crystal more similar than single$\rightarrow$15 crystals.
+
+\subsection{Applications}
+\begin{itemize}
+    \item Nuclear reactor transients
+    \item PDE solving (low$\rightarrow$high frequency)
+    \item Fluid dynamics (across Reynolds numbers)
+    \item Structural analysis
+\end{itemize}
+
+\section{Physics-Informed Generalization Theory}
+
+\subsection{Affine Variety Dimensions}
+PINN generalization governed by dimension of affine variety associated with physical constraint, not just parameter count.
+
+\subsection{Sample Efficiency}
+Physics constraints act as regularization, reducing estimation error but not eliminating approximation error.
+
+\subsection{Total Error Decomposition}
+\begin{equation}
+E_{\text{total}} = E_{\text{approximation}} + E_{\text{estimation}}
+\end{equation}
+\begin{itemize}
+    \item Physics reduces $E_{\text{estimation}}$ (fewer samples needed)
+    \item But $E_{\text{approximation}}$ remains (network capacity limits)
+\end{itemize}
+
+\subsection{Collocation Points}
+Act as ``free'' training data. Large numbers needed for enforcing physics in spatio-temporal domain.
+
+\subsection{Challenges}
+\begin{itemize}
+    \item Basis function misspecification degrades performance
+    \item High-frequency problems are difficult
+    \item Extrapolation limitations persist
+\end{itemize}
+
+\chapter{Compositional and Systematic Generalization}
+
+\section{The Compositional Challenge}
+
+\subsection{Definition}
+Ability to understand and produce novel combinations from known components in systematic, algebraic ways.
+
+\subsection{The Problem for Neural Networks}
+\begin{itemize}
+    \item \textbf{Combinatorial explosion}: 1 crystal = 3 DOF, 15 crystals = 45 DOF
+    \item \textbf{Interaction complexity}: 1 crystal = 0 interactions, 15 crystals = 105 pairwise
+    \item \textbf{Lack of explicit object representations}
+    \item \textbf{Poor systematic composition} of learned components
+\end{itemize}
+
+\subsection{Physics-Specific Challenges}
+\begin{itemize}
+    \item N-body problems (particle interactions scale as $N^2$)
+    \item Multi-scale phenomena (individual wakes $\rightarrow$ collective flow patterns)
+    \item Emergent collective behavior (clustering, DKT not predictable from single particle)
+    \item Conservation laws across varying numbers of entities
+\end{itemize}
+
+\textbf{Direct relevance}: Single crystal $\rightarrow$ 15 crystals requires compositional understanding---the network must learn to compose single-crystal physics into multi-crystal scenarios.
+
+\section{Meta-Learning for Compositionality}
+
+Lake and Baroni \cite{lake2023} demonstrated meta-learning for compositional generalization (MLC).
+
+\subsection{Approach}
+Train through dynamic stream of compositional tasks varying in structure and complexity.
+
+\subsection{Architecture}
+Standard transformer without symbolic machinery.
+
+\subsection{Success Metrics}
+\begin{itemize}
+    \item $>99\%$ accuracy on SCAN and COGS compositional benchmarks
+    \item 80.7\% exact match with human responses
+\end{itemize}
+
+\subsection{Key Capabilities}
+\begin{itemize}
+    \item Handles novel compositions not seen in training
+    \item Captures human inductive biases (one-to-one mapping, iconic concatenation, mutual exclusivity)
+    \item Achieves both systematicity and flexibility
+\end{itemize}
+
+\subsection{Comparison}
+Outperforms purely symbolic and purely neural models.
+
+\textbf{Implication for thesis}: Standard architectures CAN achieve systematicity with appropriate training strategy---training on diverse $1$--$15$ crystal configurations may enable compositional generalization.
+
+\section{Graph Neural Networks for Multi-Particle Systems}
+
+\subsection{Advantages for Particle Systems}
+\begin{itemize}
+    \item Natural framework for pairwise and higher-order interactions
+    \item Permutation invariance built-in (crystal order doesn't matter)
+    \item Message passing between particles models hydrodynamic coupling
+    \item Scalable to variable numbers of objects
+\end{itemize}
+
+\subsection{Architectures}
+\begin{itemize}
+    \item \textbf{Graph U-Net}: Encoder-decoder on graphs with graph pooling/unpooling
+    \item \textbf{MAgNET}: Multi-channel Aggregation Network; 95\% error reduction with Gaussian-mixture-model convolutions \cite{deshpande2024}
+    \item \textbf{Attention mechanisms}: Self-attention for object interactions; transformers for sequence-to-sequence
+    \item \textbf{Relational Networks (RNs)}: Explicit relational reasoning
+\end{itemize}
+
+\subsection{Set-Based Architectures}
+\begin{itemize}
+    \item \textbf{DeepSets}: Permutation-invariant operations suitable for particle sets
+    \item \textbf{PointNet}: Direct point cloud processing
+    \item \textbf{Physics-informed PointNet (PIPN)}: Combines PointNet with physics constraints; handles multiple geometries \cite{kashefi2021}
+\end{itemize}
+
+\subsection{Applications}
+Molecular dynamics, fluid particles, granular materials, unstructured meshes, non-linear mechanics.
+
+\textbf{Potential for thesis}: Graph networks could explicitly model crystal-crystal interactions; attention weights reveal which particles influence predictions.
+
+\section{Inductive Biases for Physics}
+
+\subsection{Human-Like Biases}
+\begin{itemize}
+    \item One-to-one mapping
+    \item Iconic concatenation
+    \item Mutual exclusivity
+\end{itemize}
+
+\subsection{Physics-Specific Biases}
+\begin{itemize}
+    \item \textbf{Locality}: Interactions primarily with nearby entities (neighbor crystals matter most)
+    \item \textbf{Causality}: Causes precede effects (current configuration determines next state)
+    \item \textbf{Conservation}: Mass, momentum, energy preservation ($\nabla \cdot \mathbf{u} = 0$, force balance)
+    \item \textbf{Symmetry}: Invariance under transformations (rotation, translation, permutation of identical crystals)
+    \item \textbf{Smoothness}: Continuous dynamics (no discontinuous jumps)
+\end{itemize}
+
+\subsection{Incorporation Strategies}
+\begin{itemize}
+    \item Build into architecture (convolutional for locality, permutation-invariant layers)
+    \item Enforce via loss functions (conservation penalties)
+    \item Data augmentation (rotations, reflections, crystal permutations)
+    \item Physics-informed training (PDE residuals)
+\end{itemize}
+
+\textbf{Application}: Training strategy should leverage locality (domain decomposition), symmetry (data augmentation), and conservation (physics-informed loss).
+
+\chapter{Metrics for Evaluating Generalization}
+
+\section{Standard Performance Metrics}
+
+\subsection{Test Error}
+Out-of-sample performance on held-out data. Metrics include MSE, MAE, $R^2$ for regression.
+
+\subsection{Generalization Gap}
+Difference between training and test error; monitors overfitting.
+
+\subsection{Cross-Validation}
+K-fold CV for robust performance estimation (typical $K=5$ or 10).
+
+\subsection{Nested CV}
+Outer loop for model selection, inner loop for hyperparameter tuning.
+
+\subsection{Task-Specific Metrics}
+\begin{itemize}
+    \item \textbf{Velocity fields}: $L_2$ norm $\|\mathbf{u}_{\text{pred}} - \mathbf{u}_{\text{true}}\|$, relative error, pointwise MSE
+    \item \textbf{Pressure}: Relative $L_2$ error (pressure magnitude varies spatially)
+    \item \textbf{Vorticity}: Captures rotational flow structures
+\end{itemize}
+
+\section{Domain Shift Metrics}
+
+\subsection{Measuring Distribution Shift}
+\begin{itemize}
+    \item \textbf{Wasserstein distance}: Optimal transport cost between single-crystal and multi-crystal flow distributions
+    \item \textbf{KL divergence}: Information-theoretic difference (asymmetric)
+    \item \textbf{H-divergence}: Domain adaptation theory metric
+    \item \textbf{Jensen-Shannon divergence}: Symmetric KL variant
+\end{itemize}
+
+\subsection{Representation-Based Metrics}
+\begin{itemize}
+    \item \textbf{Centered Kernel Alignment (CKA)}: Measures similarity of learned representations at different layers; values $0$--$1$ ($1$=identical)
+    \item \textbf{Representation shift}: Quantifies model-specific domain shift magnitude
+    \item \textbf{DS-diff (Domain Shift Difference)}: Based on CKA analysis between domains
+\end{itemize}
+
+\subsection{Performance-Based Proxies}
+\begin{itemize}
+    \item \textbf{Cross-domain accuracy}: Performance degradation from $N_{\text{train}}$ to $N_{\text{test}}$ crystals
+    \item \textbf{Transfer learning gain}: Improvement from pre-training versus training from scratch
+    \item \textbf{Calibration metrics}: How well predicted flow fields match actual physics
+\end{itemize}
+
+\textbf{Application to thesis}: Measure CKA between single-crystal and multi-crystal learned representations; Wasserstein distance between velocity field distributions; track performance degradation versus crystal count.
+
+\section{Physics-Specific Validation}
+
+\subsection{Conservation Law Checking}
+\begin{itemize}
+    \item \textbf{Mass conservation}: $\iint \nabla \cdot \mathbf{u} \, dA$ (should be $\approx 0$ everywhere)
+    \item \textbf{Momentum balance}: Forces on each crystal should match hydrodynamic forces
+\end{itemize}
+
+\subsection{Symmetry Tests}
+\begin{itemize}
+    \item \textbf{Rotation equivariance}: Rotate configuration 90°, predict, compare with rotated original prediction
+    \item \textbf{Translation invariance}: Shift crystal positions, verify predictions shift accordingly
+    \item \textbf{Permutation invariance}: Swap identical crystals, predictions should be equivalent
+\end{itemize}
+
+\subsection{Boundary Condition Validation}
+\begin{itemize}
+    \item \textbf{No-slip at walls}: $\mathbf{u}(\mathbf{x}_{\text{wall}}) = \mathbf{0}$
+    \item \textbf{Crystal surfaces}: $\mathbf{u}(\mathbf{x}_{\text{crystal}}) = \mathbf{0}$
+    \item \textbf{Inlet/outlet}: $\mathbf{u}(\mathbf{x}_{\text{inlet}}) = \mathbf{u}_{\text{prescribed}}$
+\end{itemize}
+
+\subsection{Physical Plausibility Checks}
+\begin{itemize}
+    \item No negative pressures (unless cavitation expected)
+    \item No reverse flows (unless recirculation zones expected)
+    \item Velocity magnitudes consistent with Stokes law
+    \item Wake structures consistent with Reynolds number
+\end{itemize}
+
+\subsection{Benchmark Comparisons}
+\begin{itemize}
+    \item \textbf{DKT validation}: Does model capture drafting-kissing-tumbling for 2 crystals?
+    \item \textbf{Hindered settling}: Does mean velocity follow Richardson-Zaki for multiple crystals?
+    \item \textbf{LBM-DEM comparison}: Quantitative agreement with high-fidelity simulations
+\end{itemize}
+
+\part{Synthesis and Research Design}
+
+\chapter{Integrating Theory for Crystal Sedimentation Prediction}
+
+\section{Problem Formulation}
+
+\subsection{Physical System}
+1 to 15 circular crystals settling in 2D Stokes flow ($\text{Re} \ll 1$).
+
+\subsection{Governing Equations}
+Steady or unsteady Stokes equations:
+\begin{align}
+\text{Momentum (steady):} \quad & \mathbf{0} = -\nabla p + \mu \nabla^2 \mathbf{u} \\
+\text{Momentum (unsteady):} \quad & \frac{\partial \mathbf{u}}{\partial t} = -\nabla p + \mu \nabla^2 \mathbf{u} \\
+\text{Continuity:} \quad & \nabla \cdot \mathbf{u} = 0
+\end{align}
+Boundary conditions include no-slip at crystal surfaces and prescribed inlet/outlet conditions.
+
+\subsection{Input}
+Initial crystal positions $(x_i, y_i)$, orientations $\theta_i$, geometries $R_i$, boundary conditions.
+
+\subsection{Output}
+Spatiotemporal evolution of velocity field $\mathbf{u}(\mathbf{x},t)$ and pressure field $p(\mathbf{x},t)$.
+
+\subsection{Central Challenge}
+Generalization from single to multi-crystal ($1 \rightarrow 15$) configurations:
+\begin{itemize}
+    \item \textbf{Configuration space}: 1 crystal = 3 DOF, 15 crystals = 45 DOF
+    \item \textbf{Interaction complexity}: $0 \rightarrow 105$ pairwise interactions
+    \item \textbf{Wake patterns}: Individual wakes $\rightarrow$ collective multi-body wakes
+\end{itemize}
+
+\section{Why UNet for This Problem}
+
+\subsection{Multi-Scale Features}
+Captures wake effects (local), boundary layers (fine-scale), far-field flows (coarse-scale).
+
+\subsection{Skip Connections}
+Preserves sharp gradients at crystal boundaries essential for no-slip condition.
+
+\subsection{Proven Success}
+\begin{itemize}
+    \item \textbf{Hou (2022) \cite{hou2022}}: UNet-LSTM for hydrodynamics; order-of-magnitude improvements; $10^6\times$ speedup
+    \item \textbf{Rana (2024) \cite{rana2024}}: Gated residual UNet for scalable flow prediction; domain decomposition for single$\rightarrow$multiple obstacles
+    \item \textbf{Chen (2019)}: UNet for incompressible laminar flows around arbitrary geometries
+\end{itemize}
+
+\subsection{Temporal Extension}
+UNet-LSTM can handle time-series crystal trajectories and unsteady wakes.
+
+\subsection{Architecture Choices}
+\begin{itemize}
+    \item \textbf{Encoder depth}: 4--5 levels (capture scales from crystal diameter to domain size)
+    \item \textbf{Initial channels}: 32--64 (balance capacity versus overfitting)
+    \item \textbf{Skip connection type}: Concatenation (preserve all encoder information)
+    \item \textbf{Activation}: ELU or ReLU (ELU for smooth gradients)
+    \item \textbf{Grid resolution}: $256 \times 256$ or $512 \times 512$ (balance resolution versus computational cost)
+\end{itemize}
+
+\section{The Generalization Challenge}
+
+\subsection{Configuration Space Explosion}
+\begin{itemize}
+    \item 1 crystal: 3 DOF $(x, y, \theta)$
+    \item 15 crystals: 45 DOF
+    \item Potential configurations: Infinite (continuous space)
+    \item Training coverage: Cannot sample all configurations; must generalize
+\end{itemize}
+
+\subsection{Interaction Complexity Scaling}
+\begin{itemize}
+    \item 1 crystal: 0 interactions
+    \item 2 crystals: 1 pairwise interaction (DKT)
+    \item 15 crystals: 105 pairwise + higher-order interactions
+    \item Network must learn composition: predict 105 interactions from learning fewer
+\end{itemize}
+
+\subsection{Wake Interference Patterns}
+\begin{itemize}
+    \item Single crystal: Individual wake structure (well-characterized)
+    \item Multiple crystals: Collective wake interactions (emergent phenomena)
+    \item Clustering, drafting chains, vortex interactions not predictable from single-crystal data
+\end{itemize}
+
+\subsection{Data Requirements}
+\begin{itemize}
+    \item Naive approach: Sample all 15-crystal configurations (intractable)
+    \item Smart approach: Leverage single-crystal data + progressive complexity + physics constraints
+\end{itemize}
+
+\subsection{Extrapolation Nature}
+Training on $N_{\text{train}}$ crystals and testing on $N_{\text{test}} > N_{\text{train}}$ is \textbf{extrapolation}. Neural networks perform poorly at extrapolation without constraints. Requires physics-informed approach or compositional learning.
+
+\section{Proposed Theoretical Approaches}
+
+\subsection{Approach 1: Physics-Informed UNet}
+
+\subsubsection{Rationale}
+\begin{itemize}
+    \item Integrate Stokes equation residuals into loss function
+    \item Enforce divergence-free condition $\nabla \cdot \mathbf{u} = 0$ at every point
+    \item Boundary conditions at crystal surfaces via penalty terms
+\end{itemize}
+
+\subsubsection{Architecture}
+\begin{itemize}
+    \item \textbf{Input} ($256 \times 256$): Crystal geometry mask + boundary conditions
+    \item \textbf{Encoder}: Standard UNet encoder (4 levels)
+    \item \textbf{Bottleneck}: 512 channels
+    \item \textbf{Decoder}: Standard UNet decoder with skip connections
+    \item \textbf{Output}: $u$, $v$, $p$ fields ($256 \times 256 \times 3$)
+\end{itemize}
+
+\subsubsection{Loss Function}
+\begin{equation}
+\mathcal{L} = \mathcal{L}_{\text{data}} + \lambda_{\text{PDE}} \cdot \mathcal{L}_{\text{PDE}} + \lambda_{\text{BC}} \cdot \mathcal{L}_{\text{BC}} + \lambda_{\text{div}} \cdot \mathcal{L}_{\text{div}}
+\end{equation}
+\begin{itemize}
+    \item $\mathcal{L}_{\text{data}} = \text{MSE}(\mathbf{u}_{\text{pred}}, \mathbf{u}_{\text{true}})$ for labeled data
+    \item $\mathcal{L}_{\text{PDE}} = \|\nabla p - \mu \nabla^2 \mathbf{u}\|^2$ over collocation points
+    \item $\mathcal{L}_{\text{BC}} = \|\mathbf{u}(\mathbf{x}_{\text{crystal}})\|^2$ no-slip at surfaces
+    \item $\mathcal{L}_{\text{div}} = \|\nabla \cdot \mathbf{u}\|^2$ divergence-free constraint
+\end{itemize}
+
+\subsubsection{Theoretical Advantages}
+\begin{itemize}
+    \item Reduces data requirements (physics acts as regularization)
+    \item Improves extrapolation beyond training crystal counts
+    \item Ensures physical consistency (conservation laws satisfied)
+    \item Can train with fewer multi-crystal examples
+\end{itemize}
+
+\subsubsection{Challenges}
+\begin{itemize}
+    \item Automatic differentiation computational cost
+    \item Balancing loss term weights (adaptive weighting needed)
+    \item Collocation point sampling strategy
+\end{itemize}
+
+\subsection{Approach 2: Domain Decomposition}
+
+\subsubsection{Rationale}
+Inspired by Rana et al. \cite{rana2024}:
+\begin{itemize}
+    \item Train on local regions around individual or small groups of crystals
+    \item Use LOVE metric to determine optimal subdomain size (decorrelation length)
+    \item Stitch predictions with continuous smoothing network
+\end{itemize}
+
+\subsubsection{Architecture}
+\textbf{Stage 1 -- Local Model:}
+\begin{itemize}
+    \item \textbf{Input}: Local subdomain ($128 \times 128$) around 1--3 crystals
+    \item \textbf{Architecture}: Gated residual UNet (Rana architecture)
+    \item \textbf{Output}: Local velocity/pressure fields
+    \item \textbf{Training}: Single and few-crystal configurations
+\end{itemize}
+
+\textbf{Stage 2 -- Continuous Model:}
+\begin{itemize}
+    \item \textbf{Input}: Concatenated local predictions from multiple subdomains
+    \item \textbf{Architecture}: Shallow CNN for boundary smoothing
+    \item \textbf{Output}: Globally continuous flow field
+    \item \textbf{Training}: Enforce $C^1$ continuity at subdomain boundaries
+\end{itemize}
+
+\subsubsection{LOVE Metric Application}
+\begin{itemize}
+    \item Compute Shannon entropy of velocity orientations: $H = -\sum_i p_i \log(p_i)$
+    \item Identify distance where $H$ plateaus (decorrelation scale)
+    \item Set subdomain size accordingly (e.g., 5--10 crystal diameters)
+\end{itemize}
+
+\subsubsection{Theoretical Advantages}
+\begin{itemize}
+    \item \textbf{Scalability}: Train on simple cases (1--3 crystals), apply to complex (15 crystals)
+    \item \textbf{Direct precedent}: Rana demonstrated single$\rightarrow$multiple obstacles
+    \item \textbf{Error propagation predictable}: $\text{MSE}(n) = n \cdot \Delta\varepsilon$
+    \item Reduced training data requirements
+\end{itemize}
+
+\subsubsection{Challenges}
+\begin{itemize}
+    \item Boundary artifacts at subdomain interfaces
+    \item Choosing subdomain overlap strategy
+    \item Computational overhead of stitching stage
+\end{itemize}
+
+\subsection{Approach 3: Curriculum Learning with Transfer}
+
+\subsubsection{Rationale}
+\begin{itemize}
+    \item Train progressively: $1 \rightarrow 2 \rightarrow 3 \rightarrow 5 \rightarrow 10 \rightarrow 15$ crystals
+    \item Each stage pre-trained on previous stage (transfer learning)
+    \item Reduces extrapolation gap at each step
+\end{itemize}
+
+\subsubsection{Training Strategy}
+\begin{enumerate}
+    \item \textbf{Stage 1}: Train UNet on single-crystal data (abundant)
+    \begin{itemize}
+        \item 10,000 configurations, varied positions/sizes
+    \end{itemize}
+    \item \textbf{Stage 2}: Fine-tune on 2-crystal data (DKT validation)
+    \begin{itemize}
+        \item 5,000 configurations, freeze early layers
+    \end{itemize}
+    \item \textbf{Stage 3}: Fine-tune on 3--5 crystal data
+    \begin{itemize}
+        \item 2,000 configurations, selective layer unfreezing
+    \end{itemize}
+    \item \textbf{Stage 4}: Fine-tune on 10--15 crystal data
+    \begin{itemize}
+        \item 500 configurations, all layers trainable
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Layer-Wise Adaptation}
+\begin{itemize}
+    \item \textbf{Early layers}: Low-level features (edges, boundaries)---transfer well
+    \item \textbf{Middle layers}: Mid-level features (individual wakes)---partially transfer
+    \item \textbf{Late layers}: High-level features (multi-body interactions)---retrain
+\end{itemize}
+
+\subsubsection{Theoretical Advantages}
+\begin{itemize}
+    \item Leverages abundant simple-case data
+    \item Each stage builds on previous (less extrapolation per step)
+    \item Transfer learning reduces data requirements for complex cases (97\% boost demonstrated \cite{pellegrin2022})
+    \item Progressive difficulty matches curriculum learning principles
+\end{itemize}
+
+\subsubsection{Challenges}
+\begin{itemize}
+    \item Sequential training is time-consuming
+    \item Risk of catastrophic forgetting (earlier stages)
+    \item Hyperparameter tuning per stage (learning rates, layer freezing)
+\end{itemize}
+
+\subsection{Approach 4: Graph Neural Network with Attention}
+
+\subsubsection{Rationale}
+\begin{itemize}
+    \item Explicit crystal-crystal interaction modeling
+    \item Permutation invariance for symmetric configurations
+    \item Self-attention weights relevant interactions
+\end{itemize}
+
+\subsubsection{Architecture}
+\textbf{Input representation:}
+\begin{itemize}
+    \item \textbf{Node features}: Crystal positions $(x_i, y_i)$, radii $R_i$, velocities $v_i$
+    \item \textbf{Edge features}: Pairwise distances $r_{ij}$, relative orientations
+    \item \textbf{Global features}: Domain boundaries, Reynolds number
+\end{itemize}
+
+\textbf{Graph construction:}
+\begin{itemize}
+    \item \textbf{Nodes}: Crystals
+    \item \textbf{Edges}: Connect crystals within interaction radius (5--10 diameters)
+\end{itemize}
+
+\textbf{Message passing} (3--5 layers):
+\begin{itemize}
+    \item Aggregate neighbor information via attention mechanism
+    \item Update node embeddings with hydrodynamic coupling
+\end{itemize}
+
+\textbf{Field generation:}
+\begin{itemize}
+    \item Decode graph embeddings to spatial flow field
+    \item Use U-Net decoder or PointNet-like architecture
+\end{itemize}
+
+\subsubsection{Theoretical Advantages}
+\begin{itemize}
+    \item \textbf{Compositional}: Learns pairwise interactions, composes for N-body
+    \item \textbf{Permutation invariant}: Crystal order doesn't matter (built-in symmetry)
+    \item \textbf{Scalable}: Handles variable crystal counts naturally
+    \item \textbf{Interpretable}: Attention weights show which crystals influence predictions
+\end{itemize}
+
+\subsubsection{Challenges}
+\begin{itemize}
+    \item More complex implementation than standard UNet
+    \item Requires graph library (PyTorch Geometric, DGL)
+    \item Training stability (message passing can be unstable)
+    \item Mapping graph embeddings to spatial fields non-trivial
+\end{itemize}
+
+\section{Recommended Hybrid Approach}
+
+The optimal strategy combines multiple approaches:
+
+\begin{enumerate}
+    \item \textbf{Base architecture}: Physics-informed gated residual UNet
+    \begin{itemize}
+        \item Incorporates Stokes equation residuals (Approach 1)
+        \item Best-performing architecture \cite{rana2024}
+    \end{itemize}
+    
+    \item \textbf{Training strategy}: Curriculum learning with transfer
+    \begin{itemize}
+        \item Progressive complexity $1 \rightarrow$ few $\rightarrow$ many crystals (Approach 3)
+        \item Each stage fine-tunes previous
+    \end{itemize}
+    
+    \item \textbf{Scalability}: Domain decomposition for large crystal counts
+    \begin{itemize}
+        \item LOVE-based subdomain sizing (Approach 2)
+        \item Continuous smoothing network
+    \end{itemize}
+    
+    \item \textbf{Optional enhancement}: Attention mechanisms
+    \begin{itemize}
+        \item Multi-head self-attention in bottleneck (Approach 4)
+        \item Focus on relevant crystal interactions
+    \end{itemize}
+\end{enumerate}
+
+\section{Evaluation Strategy}
+
+\subsection{Test Scenarios}
+\begin{enumerate}
+    \item \textbf{Interpolation (baseline)}: Random N-crystal configurations, $N$ in training range
+    \item \textbf{Extrapolation (key test)}: $N > N_{\text{train}}$ crystals
+    \item \textbf{Systematic generalization}: Novel spatial arrangements (e.g., triangular lattice if trained on random)
+    \item \textbf{DKT validation}: Two-crystal drafting-kissing-tumbling
+    \item \textbf{Hindered settling}: Multiple crystals, compare velocity with Richardson-Zaki
+    \item \textbf{Clustering test}: High crystal count, check for collective phenomena
+\end{enumerate}
+
+\subsection{Metrics}
+\begin{itemize}
+    \item \textbf{Standard}: MSE, MAE, $R^2$ for velocity/pressure fields
+    \item \textbf{Domain shift}: CKA between single and multi-crystal representations
+    \item \textbf{Physics}: Conservation law violations, boundary condition errors
+    \item \textbf{Comparative}: Performance versus pure data-driven UNet, versus pure physics-informed
+    \item \textbf{Scaling}: Performance as function of crystal count (1 to 15)
+\end{itemize}
+
+\subsection{Validation}
+\begin{itemize}
+    \item \textbf{Ground truth}: High-fidelity LBM-DEM simulations
+    \item \textbf{Benchmarks}: DKT literature results, Stokes law, hindered settling correlations
+    \item \textbf{Ablation}: Remove physics loss / domain decomposition / transfer learning to quantify contributions
+\end{itemize}
+
+\chapter{Conclusion}
+
+This theoretical framework provides comprehensive justification for using UNet architectures to predict crystal sedimentation with specific focus on the generalization challenge from single to multiple crystals.
+
+\section{Key Theoretical Pillars}
+
+\begin{enumerate}
+    \item \textbf{Physical Foundation}: Stokes flow regime ($\text{Re} \ll 1$) enables linear superposition, but N-body effects arise from collective coupling. Martin \& Nokes framework validates settling despite convection. Multi-particle dynamics show rich collective behavior (DKT, clustering).
+
+    \item \textbf{Computational Methods}: LBM-DEM coupling provides high-fidelity ground truth. Resolved simulations capture full physics but are expensive ($10^6$ nodes for 15 crystals), motivating ML surrogate approach for $10^2$ to $10^6\times$ speedup.
+
+    \item \textbf{Machine Learning Architecture}: UNet excels for physics through multi-scale features, skip connections (boundary preservation), and proven success. Hou (2022): order-of-magnitude improvements. Rana (2024): scalability via domain decomposition. Temporal extension UNet-LSTM handles time-series.
+
+    \item \textbf{Generalization Challenge}: $1 \rightarrow 15$ crystals is extrapolation in $3$D $\rightarrow$ $45$D configuration space with $0 \rightarrow 105$ interactions. Neural networks perform poorly at extrapolation without constraints. Requires compositional learning (compose single-crystal physics into multi-crystal scenarios).
+
+    \item \textbf{Proposed Solutions}: Physics-informed loss (enforce Stokes equations, $\nabla \cdot \mathbf{u} = 0$), domain decomposition with LOVE metric (scale from local to global), curriculum transfer learning (progressive $1 \rightarrow$ few $\rightarrow$ many), optional graph/attention mechanisms (explicit interactions).
+\end{enumerate}
+
+\section{Strongest Research Justifications}
+
+\begin{itemize}
+    \item \textbf{Rana (2024) \cite{rana2024}} demonstrates single-domain training scales to arbitrary complexity via decomposition---direct precedent for $1 \rightarrow 15$ generalization
+    \item \textbf{Hou (2022) \cite{hou2022}} validates UNet-LSTM architecture choice with order-of-magnitude improvements and $10^6\times$ speedup
+    \item \textbf{Physics constraints \cite{raissi2019,thuerey2020}} reduce data requirements and improve extrapolation
+    \item \textbf{Transfer learning \cite{pellegrin2022}} leverages simple cases (97\% boost) to bootstrap complex scenarios
+    \item \textbf{Compositional generalization \cite{lake2023}} shows standard architectures can achieve systematic generalization with appropriate training
+\end{itemize}
+
+\section{Novel Contribution}
+
+This thesis addresses a fundamental ML question: \textbf{Can networks compose learned single-object physics for multi-object scenarios in fluid dynamics?} The research has direct applications to geological systems and broader implications for physics-informed machine learning.
+
+This framework provides the theoretical foundation to justify methodology, position research within the literature, and identify the specific generalization challenge as the key scientific contribution.
