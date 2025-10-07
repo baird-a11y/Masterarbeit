@@ -32,13 +32,13 @@ UNet architectures are particularly well-suited for predicting spatial fields du
 The central research question of this thesis is:
 
 \begin{quote}
-\textit{Can UNet architectures reliably generalize from single-crystal to multi-crystal sedimentation systems, and if not, what fundamental limitations constrain this generalization capability?}
+\textit{Can UNet architectures trained on a fixed number of crystals ($N$) reliably generalize to arbitrary crystal configurations ranging from 1 to $N$ crystals, and if not, what fundamental limitations constrain this generalization capability?}
 \end{quote}
 
 % Definition of main hypothesis
-\begin{hypothesis}[UNet Generalization]
+\begin{hypothesis}[UNet Generalization Across Crystal Numbers]
 \label{hyp:generalization}
-UNet architectures can successfully generalize from single-crystal to multi-crystal sedimentation systems (up to 15 crystals) when the training distribution contains sufficiently diverse configurations and physical constraints are integrated into the loss function.
+UNet architectures trained on a fixed number of crystals ($N$) can successfully generalize to arbitrary crystal configurations ranging from 1 to $N$ crystals, provided the training distribution contains sufficiently diverse spatial arrangements and physical constraints are integrated into the loss function.
 \end{hypothesis}
 
 \section{Objectives and Scope}

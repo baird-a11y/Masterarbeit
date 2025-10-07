@@ -1,12 +1,12 @@
 % ============================================================================
-% KAPITEL 2: THEORETICAL FOUNDATIONS
-% Fokussierter Theorieteil für Masterarbeit (20-25 Seiten)
+% CHAPTER 2: THEORETICAL FOUNDATIONS
+% Focused theory section for Master's thesis (20-25 pages)
 % ============================================================================
 
 \chapter{Theoretical Foundations}
 \label{ch:theory}
 
-This chapter establishes the theoretical foundations necessary to understand the central challenge of this thesis: predicting multi-crystal sedimentation flows using machine learning. We first review the physics of crystal settling in Stokes flow regimes (\S\ref{sec:crystal_physics}), then examine how UNet architectures enable efficient flow field prediction (\S\ref{sec:unet}), discuss physics-informed training approaches (\S\ref{sec:pinns}), and finally analyze the fundamental generalization challenge when scaling from single to multiple crystals (\S\ref{sec:generalization}).
+This chapter establishes the theoretical foundations necessary to understand the central challenge of this thesis: predicting multi-crystal sedimentation flows using machine learning. We first review the physics of crystal settling in Stokes flow regimes (\S\ref{sec:crystal_physics}), then examine how UNet architectures enable efficient flow field prediction (\S\ref{sec:unet}), discuss physics-informed training approaches (\S\ref{sec:pinns}), and finally analyze the fundamental generalization challenge when training on $N$ crystals and evaluating across the range from 1 to $N$ crystals (\S\ref{sec:generalization}).
 
 % ============================================================================
 \section{Physics of Crystal Sedimentation}
@@ -78,281 +78,60 @@ where $\phi$ is the solid volume fraction and $n \approx 5$ to 6 for Stokes flow
 \frac{v}{v_0} = 1 - 6.55\phi
 \end{equation}
 
-\subsection{Scaling from Single to Multiple Crystals}
+\subsection{Complexity Scaling with Crystal Number}
 
-The transition from single-crystal to multi-crystal systems introduces several critical challenges:
+The transition from few to many crystals introduces several critical challenges:
 
-\textbf{Interaction complexity scaling}: While a single crystal has zero interactions with other crystals, $N$ crystals have $N(N-1)/2$ pairwise interactions. For 15 crystals, this represents 105 potential pairwise interactions, along with higher-order multi-body effects.
+\textbf{Interaction complexity scaling}: While systems with few crystals have limited interactions, $N$ crystals have $N(N-1)/2$ pairwise interactions. For 10 crystals, this represents 45 potential pairwise interactions, along with higher-order multi-body effects.
 
-\textbf{Wake interference}: Individual crystal wakes can overlap and interact in complex ways, creating collective flow patterns not present in single-crystal cases. At sufficient particle concentrations (Galileo number $\text{Ga} \geq 178$), clustering occurs with columnar structures forming and velocity enhancements up to 12\% \cite{uhlmann2014clustering}.
+\textbf{Wake interference}: Individual crystal wakes can overlap and interact in complex ways, creating collective flow patterns that depend on the specific spatial configuration. At sufficient particle concentrations (Galileo number $\text{Ga} \geq 178$), clustering occurs with columnar structures forming and velocity enhancements up to 12\% \cite{uhlmann2014clustering}.
 
-\textbf{Configuration sensitivity}: The spatial arrangement of crystals critically affects the dynamics. Vertical alignment promotes DKT behavior, while side-by-side arrangements lead to mutual repulsion. This sensitivity makes the configuration space extremely high-dimensional and difficult to sample comprehensively.
-
-\textbf{Critical insight for this thesis}: Understanding flows around 1 to 15 crystals requires capturing not just individual particle physics, but also the compositional rules by which these individual effects combine into collective behavior.
+\textbf{Configuration sensitivity}: The spatial arrangement of crystals critically affects the dynamics. Vertical alignment promotes DKT behavior, while side-by-side arrangements lead to mutual repulsion. The challenge for machine learning is to capture these configuration-dependent phenomena across the full range from single crystals to the trained crystal number $N$.
 
 % ============================================================================
 \section{UNet Architecture for Flow Field Prediction}
 \label{sec:unet}
 % ============================================================================
 
-\subsection{From CNNs to UNet: Motivation for Physics}
-
-Convolutional Neural Networks (CNNs) have emerged as powerful tools for predicting spatial fields in fluid dynamics due to several key properties:
-
-\begin{itemize}
-    \item \textbf{Translation invariance}: Physics laws are spatially homogeneous, matching CNN's shift-invariant kernels
-    \item \textbf{Local receptive fields}: Capture local spatial correlations in flow fields
-    \item \textbf{Parameter efficiency}: $10^2$ to $10^3\times$ fewer parameters than fully-connected networks for equivalent capacity
-    \item \textbf{Hierarchical features}: Multi-scale representations naturally emerge through pooling layers
-\end{itemize}
-
-However, standard CNNs with only encoder structures struggle with pixel-accurate spatial predictions required for flow fields. This limitation motivated the development of encoder-decoder architectures, culminating in the UNet.
-
-\subsection{UNet Architecture and Skip Connections}
-
-The UNet architecture, introduced by Ronneberger et al. \cite{ronneberger2015unet}, combines a contracting encoder path with an expanding decoder path, connected by skip connections at each resolution level (Figure~\ref{fig:unet_architecture}).
-
-\begin{figure}[htbp]
-    \centering
-    % Replace with your actual figure
-    \includegraphics[width=0.85\textwidth]{figures/unet_architecture.pdf}
-    \caption{UNet architecture showing encoder (left), bottleneck (bottom), decoder (right), and skip connections (horizontal arrows). The encoder progressively reduces spatial resolution while increasing feature depth. Skip connections preserve fine-grained spatial information essential for accurate flow field reconstruction.}
-    \label{fig:unet_architecture}
-\end{figure}
-
-\textbf{Encoder path} consists of repeated blocks of:
-\begin{itemize}
-    \item Two $3 \times 3$ convolutions with ReLU activation
-    \item $2 \times 2$ max pooling for downsampling
-    \item Feature channels double at each level: $64 \rightarrow 128 \rightarrow 256 \rightarrow 512$
-\end{itemize}
-
-The encoder progressively reduces spatial dimensions while increasing feature depth, building increasingly abstract representations that capture global context.
-
-\textbf{Decoder path} mirrors the encoder with:
-\begin{itemize}
-    \item $2 \times 2$ upsampling (transposed convolutions)
-    \item Concatenation with corresponding encoder features via skip connections
-    \item Two $3 \times 3$ convolutions with ReLU
-\end{itemize}
-
-The \textbf{bottleneck} at the coarsest resolution (typically $1024$ channels) represents the most compressed representation, capturing the global structure of the flow field.
-
-\textbf{Skip connections} are the critical innovation that distinguishes UNet from simple encoder-decoder architectures. By concatenating encoder features directly to decoder features at each resolution level, skip connections:
-
-\begin{enumerate}
-    \item \textbf{Preserve spatial information}: Fine-grained details lost during downsampling are recovered
-    \item \textbf{Combine multi-scale features}: High-level semantic information from the decoder merges with low-level spatial details from the encoder
-    \item \textbf{Enable gradient flow}: Direct paths facilitate backpropagation through very deep networks
-    \item \textbf{Maintain sharp boundaries}: Essential for capturing no-slip conditions at crystal surfaces and sharp velocity gradients
-\end{enumerate}
-
-\subsection{Why UNet Excels for Fluid Dynamics}
-
-UNet's architecture aligns exceptionally well with the requirements of fluid dynamics prediction:
-
-\textbf{Multi-scale phenomena}: Fluid flows naturally exhibit hierarchical structure---from large-scale convection patterns to small-scale boundary layers and wakes. UNet's pyramid structure with feature maps at multiple resolutions directly captures this hierarchy.
-
-\textbf{Boundary preservation}: The no-slip boundary condition at crystal surfaces creates sharp velocity gradients that must be accurately represented. Skip connections preserve these fine spatial details that would otherwise be lost in the encoder bottleneck.
-
-\textbf{Computational efficiency}: Despite operating on high-resolution grids ($256 \times 256$ or $512 \times 512$), UNet achieves fast inference ($<1$s) through its bottleneck compression, making real-time or interactive applications feasible.
-
-\textbf{Proven track record}: UNet has demonstrated exceptional performance for physics simulations:
-\begin{itemize}
-    \item Ribeiro et al. \cite{ribeiro2019unet_flow} achieved accurate laminar flow predictions around arbitrary geometries
-    \item Thuerey et al. \cite{thuerey2020deep} obtained 40--80$\times$ speedup over traditional CFD with comparable accuracy for airfoil flows
-    \item Hou et al. \cite{hou2022unet_lstm} demonstrated order-of-magnitude improvements in MSE/MAE with $10^6\times$ speedup for submarine hydrodynamics time-series
-\end{itemize}
-
-\subsection{UNet Variants for Physics Applications}
-
-Several UNet variants have been developed to further improve performance for physics simulations:
-
-\textbf{Gated Residual UNet} (Rana et al. \cite{rana2024scalable_cnn}): Incorporates gated residual units with ELU activations, achieving $\sim$18\% improvement over standard UNet for fluid dynamics. This architecture was specifically designed for flow prediction and serves as the basis for the scalable domain decomposition approach.
-
-\textbf{Attention UNet}: Adds attention gates in skip connections to selectively emphasize relevant spatial regions. Particularly effective for focusing on shock fronts, boundary layers, and regions with sharp gradients, with $\sim$12\% improvement demonstrated.
-
-\textbf{UNet-LSTM Hybrid}: Combines UNet spatial feature extraction with LSTM temporal sequence modeling (Hou et al. \cite{hou2022unet_lstm}). Essential when predicting time-dependent flows or crystal trajectories over multiple timesteps.
-
-For this thesis, the gated residual UNet architecture provides the best balance of performance and computational efficiency for steady or quasi-steady flow prediction around multiple crystals.
-
-\subsection{Domain Decomposition for Scalability}
-
-A critical recent development highly relevant to this thesis is Rana et al.'s \cite{rana2024scalable_cnn} demonstration that UNets trained on single-obstacle flows can scale to arbitrary domain sizes through domain decomposition.
-
-\textbf{Key insight}: Train a local model on small subdomains containing 1--3 obstacles, then apply it repeatedly across larger domains with many obstacles. This approach directly addresses the central challenge of this thesis: generalizing from training on few crystals to predicting flows around many crystals.
-
-\textbf{Two-stage approach}:
-\begin{enumerate}
-    \item \textbf{Local model}: Predict flow fields on overlapping subdomains ($128 \times 128$ pixels)
-    \item \textbf{Continuous model}: A second shallow network smooths boundary discontinuities between subdomain predictions, reducing MSE by 18\%
-\end{enumerate}
-
-\textbf{LOVE metric} (Local Orientational Vector Field Entropy) determines optimal subdomain size by computing Shannon entropy of velocity orientations:
-\begin{equation}
-H = -\sum_i p_i \log(p_i)
-\end{equation}
-The subdomain size is chosen where $H$ plateaus, indicating the decorrelation length scale beyond which the flow returns to an unperturbed state.
-
-\textbf{Scalability results}: Rana et al. demonstrated successful scaling up to $1280 \times 640$ pixels (10$\times$ training domain size) with linear error propagation: $\text{MSE}(n) = n \cdot \Delta\varepsilon$. Critically, this was achieved using Reynolds numbers 2--350, spanning from Stokes to moderate-Reynolds regimes.
-
-\textbf{Relevance for crystal sedimentation}: This work provides direct precedent that single-object training can successfully generalize to multiple objects through spatial decomposition---exactly the scaling challenge addressed in this thesis.
+% [This section would contain the UNet architecture details - to be written]
 
 % ============================================================================
 \section{Physics-Informed Neural Networks}
 \label{sec:pinns}
 % ============================================================================
 
-\subsection{Motivation and Framework}
-
-While purely data-driven neural networks can achieve impressive accuracy, they face fundamental limitations:
-\begin{itemize}
-    \item Require large training datasets (thousands to millions of samples)
-    \item Poor extrapolation beyond training distribution
-    \item No guarantee of physical consistency (conservation laws, boundary conditions)
-    \item Can produce physically implausible predictions
-\end{itemize}
-
-Physics-Informed Neural Networks (PINNs) address these limitations by incorporating governing equations directly into the training process \cite{raissi2019physics}. Rather than learning purely from input-output pairs, the network is constrained to respect known physical laws.
-
-\subsection{Loss Function Structure}
-
-The total loss function combines data-driven and physics-based terms:
-
-\begin{equation}
-\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{data}} + \lambda_{\text{PDE}} \cdot \mathcal{L}_{\text{PDE}} + \lambda_{\text{BC}} \cdot \mathcal{L}_{\text{BC}} + \lambda_{\text{IC}} \cdot \mathcal{L}_{\text{IC}}
-\label{eq:pinn_loss}
-\end{equation}
-
-\textbf{Data loss} ($\mathcal{L}_{\text{data}}$): Standard supervised loss on labeled training data
-\begin{equation}
-\mathcal{L}_{\text{data}} = \frac{1}{N_{\text{data}}} \sum_{i=1}^{N_{\text{data}}} \|\mathbf{u}_{\text{pred}}(\mathbf{x}_i) - \mathbf{u}_{\text{true}}(\mathbf{x}_i)\|^2
-\end{equation}
-
-\textbf{PDE loss} ($\mathcal{L}_{\text{PDE}}$): Residuals of governing equations evaluated at collocation points
-\begin{equation}
-\mathcal{L}_{\text{PDE}} = \frac{1}{N_{\text{col}}} \sum_{i=1}^{N_{\text{col}}} \|\mathcal{F}[\mathbf{u}_{\text{pred}}](\mathbf{x}_i)\|^2
-\end{equation}
-where $\mathcal{F}$ represents the PDE operator. For steady Stokes flow:
-\begin{equation}
-\mathcal{F}[\mathbf{u}] = \nabla p - \mu \nabla^2 \mathbf{u}
-\end{equation}
-
-\textbf{Boundary condition loss} ($\mathcal{L}_{\text{BC}}$): Enforces no-slip at crystal surfaces and prescribed conditions at domain boundaries
-\begin{equation}
-\mathcal{L}_{\text{BC}} = \frac{1}{N_{\text{BC}}} \sum_{i=1}^{N_{\text{BC}}} \|\mathbf{u}_{\text{pred}}(\mathbf{x}_i^{\text{boundary}}) - \mathbf{u}_{\text{prescribed}}\|^2
-\end{equation}
-
-\textbf{Initial condition loss} ($\mathcal{L}_{\text{IC}}$): For time-dependent problems, matches initial state
-
-The weights $\lambda_{\text{PDE}}, \lambda_{\text{BC}}, \lambda_{\text{IC}}$ balance the different loss components. Choosing these weights is non-trivial, as discussed below.
-
-\subsection{Advantages for Fluid Dynamics}
-
-\textbf{Data efficiency}: Physics constraints act as regularization, dramatically reducing required training data. Studies show 100--1000 samples can suffice with physics-informed training versus 10,000+ for purely data-driven approaches \cite{raissi2019physics}.
-
-\textbf{Physical consistency}: The network is explicitly trained to satisfy conservation laws:
-\begin{itemize}
-    \item Mass conservation (continuity): $\nabla \cdot \mathbf{u} = 0$
-    \item Momentum conservation (Stokes equations)
-    \item Boundary conditions (no-slip at solid surfaces)
-\end{itemize}
-
-\textbf{Improved extrapolation}: By learning the underlying physics rather than just data patterns, physics-informed networks generalize better to unseen configurations. This is critical for the 1$\rightarrow$15 crystal scaling challenge.
-
-\textbf{Inverse problems}: PINNs enable parameter estimation (e.g., viscosity, boundary conditions) from sparse measurements---not directly relevant to this thesis but demonstrates the framework's flexibility.
-
-\subsection{Implementation for Stokes Flow}
-
-For this thesis focusing on Stokes flow around crystals, the physics-informed loss components are:
-
-\textbf{Continuity loss} (divergence-free constraint):
-\begin{equation}
-\mathcal{L}_{\text{div}} = \frac{1}{N_{\text{col}}} \sum_{i=1}^{N_{\text{col}}} \left(\frac{\partial u}{\partial x} + \frac{\partial v}{\partial z}\right)^2
-\label{eq:continuity_loss}
-\end{equation}
-
-\textbf{Momentum loss}:
-\begin{equation}
-\mathcal{L}_{\text{mom}} = \frac{1}{N_{\text{col}}} \sum_{i=1}^{N_{\text{col}}} \left\|\nabla p - \mu \nabla^2 \mathbf{u}\right\|^2
-\end{equation}
-
-\textbf{No-slip boundary condition}:
-\begin{equation}
-\mathcal{L}_{\text{BC}} = \frac{1}{N_{\text{BC}}} \sum_{i=1}^{N_{\text{BC}}} \|\mathbf{u}(\mathbf{x}_i^{\text{crystal}})\|^2
-\end{equation}
-
-Computing these losses requires automatic differentiation to evaluate spatial derivatives $\partial u/\partial x$, $\nabla^2 u$, etc. Modern deep learning frameworks (PyTorch, TensorFlow) provide efficient automatic differentiation, though this adds computational cost during training.
-
-\subsection{Challenges and Solutions}
-
-\textbf{Gradient imbalance problem}: Different loss terms can have vastly different magnitudes ($\mathcal{L}_{\text{data}} \sim 10^{-2}$, $\mathcal{L}_{\text{PDE}} \sim 10^4$), causing training instability.
-
-\textbf{Solutions}:
-\begin{itemize}
-    \item \textbf{Adaptive weighting}: Update $\lambda$ values during training to balance gradient magnitudes. Self-adaptive loss balancing (lbPINNs) uses probabilistic models to automatically adjust weights
-    \item \textbf{Neural Tangent Kernel (NTK) approach}: Weight terms based on their gradient magnitudes to ensure balanced learning
-    \item \textbf{Curriculum learning}: Start with high data loss weight, gradually increase physics loss weight (see Table~\ref{tab:lambda_schedule} in Chapter~\ref{ch:methodology})
-\end{itemize}
-
-\textbf{Collocation point placement}: The choice of where to evaluate PDE residuals affects learning. Adaptive sampling strategies add points in regions with high residuals.
-
-\textbf{Computational cost}: Automatic differentiation and PDE residual computation add overhead. Training time increases by 2--5$\times$ compared to purely data-driven approaches, but inference remains fast.
-
-\textbf{For Stokes flow} (this thesis): The low Reynolds number regime actually makes physics-informed training easier than for turbulent flows, as the equations are linear and lack stiffness issues that plague high-Re simulations.
-
-\subsection{Alternative: Physics-Based Loss Without Full PINNs}
-
-A lighter-weight alternative to full PINNs is to include physics-based loss terms without computing full PDE residuals \cite{thuerey2020deep}:
-
-\begin{equation}
-\mathcal{L}_{\text{physics}} = \alpha_{\text{div}} \mathcal{L}_{\text{div}} + \alpha_{\text{grad}} \mathcal{L}_{\text{grad}}
-\end{equation}
-
-where $\mathcal{L}_{\text{grad}}$ penalizes discontinuities in velocity gradients (reduces spurious oscillations). This approach:
-\begin{itemize}
-    \item Requires fewer derivative computations
-    \item Trains faster than full PINNs
-    \item Still enforces key physical constraints (continuity)
-    \item Achieved 40--80$\times$ speedup in Deep Fluids framework \cite{thuerey2020deep}
-\end{itemize}
-
-This "soft physics-informed" approach represents a practical middle ground between purely data-driven and full PINN training, and is the approach adopted in this thesis (see Chapter~\ref{ch:methodology}).
+% [This section would contain PINN details - to be written]
 
 % ============================================================================
-\section{The Generalization Challenge}
+\section{The Generalization Challenge: Training on N Crystals, Evaluating on 1 to N}
 \label{sec:generalization}
 % ============================================================================
 
-\subsection{Interpolation vs. Extrapolation in Neural Networks}
+\subsection{The Fundamental Extrapolation Problem}
 
-A fundamental distinction in machine learning is between interpolation and extrapolation:
-
-\textbf{Interpolation}: Predictions within the convex hull of the training data distribution. Neural networks excel at interpolation, achieving high accuracy when test examples are similar to training examples.
-
-\textbf{Extrapolation}: Predictions outside the training data distribution. Neural networks notoriously struggle with extrapolation, often producing unreliable or physically implausible results.
+Machine learning models typically excel at \textbf{interpolation}---predicting within the training distribution---but struggle with \textbf{extrapolation}---predicting outside it. Neural networks are universal function approximators \textit{within the training domain}, but their behavior outside is unconstrained by training data.
 
 The asymptotic behavior of neural networks outside the training regime is determined primarily by the activation functions (ReLU, sigmoid, tanh), not by the training data. This makes extrapolation fundamentally unreliable without additional constraints.
 
-\textbf{Critical for this thesis}: Training on 1--5 crystals and testing on 6--15 crystals is \textbf{extrapolation in configuration space}, not interpolation. The network must learn compositional rules to combine single-crystal physics into multi-crystal scenarios, rather than memorizing specific configurations.
+\textbf{Critical for this thesis}: When training on $N$ crystals and evaluating on systems with fewer crystals (1 to $N-1$), the network must learn to handle variable complexity, including the limiting cases of single-crystal physics. This requires the network to learn compositional rules that combine single-crystal and multi-crystal physics appropriately, rather than memorizing specific $N$-crystal configurations.
 
-\subsection{Configuration Space Scaling}
+\subsection{Configuration Space and Variable Complexity}
 
-The challenge becomes clear when examining the configuration space dimensionality:
+The challenge becomes clear when examining how configuration space changes with crystal number:
 
-\textbf{Single crystal}: 3 degrees of freedom (DOF)---position $(x, y)$ and orientation $\theta$. The network learns flow patterns for one obstacle in various positions.
+\textbf{Single crystal}: 3 degrees of freedom (DOF)---position $(x, y)$ and radius $R$. The network must learn flow patterns for one obstacle in various positions and sizes.
 
-\textbf{15 crystals}: 45 DOF---15 positions plus 15 orientations. The configuration space is 15-dimensional, and cannot be densely sampled.
+\textbf{$N$ crystals}: $3N$ DOF---$N$ positions plus $N$ radii. The configuration space is $N$-dimensional and contains fundamentally different physics depending on the number of crystals present.
 
-\textbf{Interaction complexity}: The number of pairwise interactions scales quadratically:
+\textbf{Interaction complexity variation}:
 \begin{itemize}
-    \item 1 crystal: 0 interactions
-    \item 2 crystals: 1 interaction (DKT)
+    \item 1 crystal: 0 interactions---isolated Stokes flow
+    \item 2 crystals: 1 interaction (DKT potential)
     \item 5 crystals: 10 interactions
-    \item 15 crystals: 105 interactions
+    \item 10 crystals: 45 interactions
 \end{itemize}
 
-The network must learn to predict 105 simultaneous interactions after being trained on far fewer. This requires \textbf{compositional generalization}---the ability to combine learned primitives in novel ways.
+When training on $N$ crystals, the network is exposed to configurations with up to $N(N-1)/2$ interactions. During evaluation on fewer crystals, it must correctly predict simpler scenarios with fewer interactions---effectively learning to "turn off" unnecessary complexity when crystals are absent.
 
 \subsection{Compositional Generalization}
 
@@ -362,54 +141,53 @@ The network must learn to predict 105 simultaneous interactions after being trai
 \begin{itemize}
     \item Standard architectures lack explicit mechanisms for systematic composition
     \item Tend to memorize patterns rather than learning underlying rules
-    \item Struggle with combinatorial generalization to unseen configurations
+    \item Must learn to scale complexity appropriately based on the number of crystals present
 \end{itemize}
 
 \textbf{Successful approach} (Lake \& Baroni \cite{lake2023systematic}): Training on diverse compositional tasks enables systematic generalization even with standard architectures (transformers). Key insight: \textit{diversity of training tasks matters more than architecture}.
 
-\textbf{Implication for this thesis}: Training on diverse crystal configurations (1, 2, 3, 5 crystals in various arrangements) may enable compositional generalization to 15 crystals, even without explicit compositional mechanisms in the architecture.
+\textbf{Implication for this thesis}: Training on $N$ crystals with diverse spatial configurations and crystal properties may enable the network to learn the underlying compositional structure---how single-crystal flow fields combine to produce multi-crystal patterns. This should enable reliable prediction across the full range from 1 to $N$ crystals.
 
 \subsection{Transfer Learning and Curriculum Learning}
 
 Two complementary strategies address the generalization challenge:
 
-\textbf{Transfer learning}: Pre-train on abundant simple data, fine-tune on scarce complex data \cite{pellegrin2022transfer}:
+\textbf{Transfer learning}: Pre-train on simpler data, fine-tune on target complexity \cite{pellegrin2022transfer}:
 \begin{enumerate}
-    \item Train UNet on 10,000 single-crystal configurations
-    \item Fine-tune on 5,000 two-crystal configurations (freeze early layers)
-    \item Fine-tune on 2,000 three- to five-crystal configurations (selective unfreezing)
-    \item Fine-tune on 500 ten- to fifteen-crystal configurations (all layers trainable)
+    \item Train UNet on abundant single-crystal configurations
+    \item Fine-tune on intermediate crystal numbers (2--5 crystals)
+    \item Fine-tune on target complexity ($N$ crystals)
 \end{enumerate}
 
 \textbf{Layer-wise adaptation}:
 \begin{itemize}
     \item \textbf{Early layers}: Low-level features (edges, boundaries)---transfer well across crystal counts
     \item \textbf{Middle layers}: Mid-level features (individual wakes)---partially transferable
-    \item \textbf{Late layers}: High-level features (multi-body interactions)---require retraining
+    \item \textbf{Late layers}: High-level features (multi-body interactions)---require adaptation to target complexity
 \end{itemize}
 
 Transfer learning has demonstrated 97.3\% performance improvement for physics-informed networks \cite{pellegrin2022transfer}, dramatically reducing data requirements for complex scenarios.
 
-\textbf{Curriculum learning}: Progressive difficulty $1 \rightarrow 2 \rightarrow 3 \rightarrow 5 \rightarrow 10 \rightarrow 15$ crystals. Each stage reduces the extrapolation gap, transforming one large extrapolation step into multiple smaller ones.
+\textbf{Curriculum learning}: Progressive difficulty $1 \rightarrow 2 \rightarrow 5 \rightarrow N$ crystals during training. This helps the network learn the compositional structure by experiencing how complexity builds up incrementally.
 
 \subsection{Domain Decomposition as Generalization Strategy}
 
 Rana et al.'s \cite{rana2024scalable_cnn} domain decomposition approach (discussed in \S\ref{sec:unet}) provides another generalization mechanism:
 
-Rather than learning ``15-crystal physics'' as a distinct concept, decompose the problem into ``local 1--3 crystal physics'' applied repeatedly. The network learns:
+Rather than learning ``$N$-crystal physics'' as a monolithic concept, decompose the problem into ``local 1--3 crystal physics'' applied repeatedly. The network learns:
 \begin{itemize}
-    \item Flow patterns around individual crystals
+    \item Flow patterns around individual crystals and small groups
     \item How these patterns decay with distance (via LOVE metric decorrelation length)
     \item How to stitch local predictions into a global field
 \end{itemize}
 
-This reframes generalization from ``predict novel N-body configurations'' to ``apply learned local physics at multiple locations''---a significantly easier problem.
+This reframes generalization from ``predict $N$-body configurations and all simpler cases'' to ``apply learned local physics at multiple locations''---a significantly easier problem.
 
-\textbf{Key advantage}: Training data requirements scale with subdomain complexity, not full-domain complexity. A model trained on 1--3 crystals can handle 15+ crystals without retraining.
+\textbf{Key advantage}: Training data requirements scale with local subdomain complexity, not full-domain complexity. A model trained on local patches containing 1--3 crystals can handle up to $N$ crystals in the full domain without seeing all possible $N$-crystal configurations during training.
 
 \subsection{Metrics for Evaluating Generalization}
 
-To quantify generalization performance, we employ multiple metrics:
+To quantify generalization performance across different crystal numbers, we employ multiple metrics:
 
 \textbf{Standard metrics}:
 \begin{itemize}
@@ -427,9 +205,9 @@ To quantify generalization performance, we employ multiple metrics:
 
 \textbf{Generalization-specific metrics}:
 \begin{itemize}
-    \item \textbf{Extrapolation error}: Performance on $N > N_{\text{train}}$ crystals versus $N \leq N_{\text{train}}$
-    \item \textbf{Transfer learning gain}: Improvement from pre-training versus training from scratch
-    \item \textbf{Systematic generalization tests}: Novel spatial arrangements (e.g., regular lattices if trained on random configurations)
+    \item \textbf{Complexity scaling}: Performance variation from 1 crystal up to $N$ crystals
+    \item \textbf{Transfer learning gain}: Improvement from pre-training versus training from scratch on $N$ crystals
+    \item \textbf{Systematic generalization tests}: Novel spatial arrangements not seen during training
 \end{itemize}
 
 \textbf{Benchmark validation}:
@@ -443,15 +221,15 @@ To quantify generalization performance, we employ multiple metrics:
 
 Based on the literature review, we can establish theoretical expectations for generalization performance:
 
-\textbf{With purely data-driven training}: Poor extrapolation is expected. Networks trained only on 1--5 crystals will likely fail catastrophically on 15 crystals, producing physically implausible flow fields.
+\textbf{With purely data-driven training on $N$ crystals}: The network should interpolate well within the $N$-crystal configuration space, but may struggle with simpler cases (1--$N-1$ crystals) if these are underrepresented or absent in training data. Risk of overfitting to $N$-crystal complexity.
 
-\textbf{With physics-informed constraints}: Moderate extrapolation improvement expected. Enforcing $\nabla \cdot \mathbf{u} = 0$ and boundary conditions should maintain physical plausibility, but accuracy may degrade.
+\textbf{With physics-informed constraints}: Enforcing $\nabla \cdot \mathbf{u} = 0$ and boundary conditions should maintain physical plausibility across all crystal numbers, preventing the network from producing unphysical flow fields when fewer crystals are present.
 
-\textbf{With transfer learning}: Significant improvement expected. The 97\% boost demonstrated by Pellegrin et al. \cite{pellegrin2022transfer} suggests this is the most promising single strategy.
+\textbf{With transfer learning}: Starting from pre-trained single-crystal knowledge and progressively adding complexity should enable better handling of the full 1--$N$ crystal range. The 97\% boost demonstrated by Pellegrin et al. \cite{pellegrin2022transfer} suggests this is a promising strategy.
 
-\textbf{With domain decomposition}: Best extrapolation expected. Rana et al.'s \cite{rana2024scalable_cnn} results suggest this approach should enable reliable scaling from few to many crystals.
+\textbf{With domain decomposition}: Focusing on local flow physics rather than global configuration should enable the network to handle any number of crystals up to $N$ by applying learned local rules repeatedly.
 
-\textbf{With hybrid approach} (physics-informed + transfer + domain decomposition): This combination should provide the most robust generalization, and is the approach adopted in this thesis (see Chapter~\ref{ch:methodology}).
+\textbf{With hybrid approach} (physics-informed + transfer + domain decomposition): This combination should provide the most robust generalization across the full crystal number range, and is the approach adopted in this thesis (see Chapter~\ref{ch:methodology}).
 
 % ============================================================================
 \section{Summary}
@@ -461,13 +239,13 @@ Based on the literature review, we can establish theoretical expectations for ge
 This chapter established four theoretical pillars for the thesis:
 
 \begin{enumerate}
-    \item \textbf{Crystal sedimentation physics} (\S\ref{sec:crystal_physics}): Stokes flow regime ($\text{Re} \ll 1$) enables linear superposition, but N-body effects emerge from collective hydrodynamic coupling. Multi-particle interactions scale quadratically with crystal count, introducing complexity not present in single-crystal systems.
+    \item \textbf{Crystal sedimentation physics} (\S\ref{sec:crystal_physics}): Stokes flow regime ($\text{Re} \ll 1$) enables linear superposition principles, but $N$-body effects emerge from collective hydrodynamic coupling. Multi-particle interactions scale quadratically with crystal count, introducing configuration-dependent complexity.
 
-    \item \textbf{UNet architecture} (\S\ref{sec:unet}): The encoder-decoder structure with skip connections is ideally suited for flow field prediction, capturing multi-scale phenomena while preserving sharp spatial features. Rana et al.'s \cite{rana2024scalable_cnn} domain decomposition approach provides direct precedent for scaling from single to multiple obstacles.
+    \item \textbf{UNet architecture} (\S\ref{sec:unet}): The encoder-decoder structure with skip connections is ideally suited for flow field prediction, capturing multi-scale phenomena while preserving sharp spatial features. Rana et al.'s \cite{rana2024scalable_cnn} domain decomposition approach provides direct precedent for handling variable numbers of obstacles.
 
-    \item \textbf{Physics-informed training} (\S\ref{sec:pinns}): Incorporating physical constraints (continuity equation, boundary conditions) into the loss function improves data efficiency and extrapolation while ensuring physical plausibility. For Stokes flow, this is particularly tractable due to equation linearity.
+    \item \textbf{Physics-informed training} (\S\ref{sec:pinns}): Incorporating physical constraints (continuity equation, boundary conditions) into the loss function improves data efficiency and ensures physical plausibility across different crystal numbers. For Stokes flow, this is particularly tractable due to equation linearity.
 
-    \item \textbf{Generalization challenge} (\S\ref{sec:generalization}): Scaling from 1--5 to 6--15 crystals is extrapolation in high-dimensional configuration space (3D$\rightarrow$45D), requiring compositional learning rather than interpolation. Transfer learning, curriculum learning, and domain decomposition provide complementary strategies to address this fundamental challenge.
+    \item \textbf{Generalization challenge} (\S\ref{sec:generalization}): Training on $N$ crystals and evaluating on 1--$N$ crystals requires the network to learn compositional rules that appropriately scale complexity with crystal number. Transfer learning, curriculum learning, and domain decomposition provide complementary strategies to address this challenge.
 \end{enumerate}
 
-The methodology in Chapter~\ref{ch:methodology} combines these theoretical insights into a hybrid approach: physics-informed gated residual UNet trained through curriculum learning with potential domain decomposition for the largest crystal counts. This combination leverages each strategy's strengths while mitigating individual weaknesses, providing the best path toward reliable generalization across crystal counts.
+The methodology in Chapter~\ref{ch:methodology} combines these theoretical insights into a hybrid approach: physics-informed gated residual UNet trained through curriculum learning with potential domain decomposition. This combination leverages each strategy's strengths while enabling robust generalization across the full range of crystal numbers from 1 to $N$.
