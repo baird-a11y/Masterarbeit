@@ -14,12 +14,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Paper/Comprehensive Literature List for Master's Thesis.md",
+                "file": "Übersicht der Testläufe.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Comprehensive Literature List for Master's Thesis"
+              "title": "Übersicht der Testläufe"
             }
           }
         ]
@@ -193,9 +193,9 @@
   },
   "active": "e1bef16d0b2fe62d",
   "lastOpenFiles": [
+    "Paper/Comprehensive Literature List for Master's Thesis.md",
     "Paper/DeepCFD Efficient Steady-State Laminar Flow Approximation with Deep Convolutional Neural Networks.md",
     "Paper/NSFnets (Navier-Stokes Flow nets) Physics-informed neural networks for the incompressible Navier-Stokes equations.md",
-    "Paper/Comprehensive Literature List for Master's Thesis.md",
     "Paper/Physics-informed neural networks A deep learning framework for solving forward and inverse problems involving nonlinear partial differential.md",
     "Paper/Physics-informed machine learning.md",
     "Paper",
