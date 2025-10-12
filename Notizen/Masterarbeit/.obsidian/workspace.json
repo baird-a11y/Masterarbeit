@@ -20,8 +20,21 @@
               "icon": "lucide-file",
               "title": "Übersicht der Testläufe"
             }
+          },
+          {
+            "id": "0a154d47c64e886e",
+            "type": "leaf",
+            "state": {
+              "type": "release-notes",
+              "state": {
+                "currentVersion": "1.9.14"
+              },
+              "icon": "lucide-book-up",
+              "title": "Release Notes 1.9.14"
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -169,7 +182,7 @@
       "command-palette:Befehlspalette öffnen": false
     }
   },
-  "active": "e1bef16d0b2fe62d",
+  "active": "0a154d47c64e886e",
   "lastOpenFiles": [
     "Pasted image 20250815160612.png",
     "Pasted image 20250815160552.png",
