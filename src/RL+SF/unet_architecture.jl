@@ -1,9 +1,12 @@
 # =============================================================================
-# ZYGOTE-SICHERE UNET ARCHITECTURE
+# ZYGOTE-SICHERE UNET ARCHITECTURE MIT RESIDUAL LEARNING
 # =============================================================================
 
-
 using Flux
+
+# Lade Stokes-Modul (muss vorher included werden)
+# include("stokes_analytical.jl") wird in main.jl gemacht
+
 """
 GPU-kompatible Skip-Dimensionen-Anpassung
 """
@@ -23,12 +26,10 @@ function adapt_skip_dimensions_safe(skip_features, decoder_features)
         h_start = (current_h - target_h) ÷ 2 + 1
         w_start = (current_w - target_w) ÷ 2 + 1
         
-        # GPU-sicheres Slicing mit @views
         @views cropped = skip_features[h_start:(h_start+target_h-1), 
                                       w_start:(w_start+target_w-1), :, :]
         return cropped
     else
-        # GPU-sichere Zero-Padding
         T = eltype(skip_features)
         
         if isa(skip_features, CuArray)
@@ -45,6 +46,10 @@ function adapt_skip_dimensions_safe(skip_features, decoder_features)
         return padded
     end
 end
+
+# =============================================================================
+# STANDARD UNET MIT BATCH NORMALIZATION
+# =============================================================================
 
 """
 Vereinfachte UNet-Struktur mit Batch Normalization
@@ -94,14 +99,14 @@ struct SimplifiedUNetBN
     dec1_conv2::Conv
     dec1_bn2::BatchNorm
     
-    # Output mit Tanh für begrenzte Ausgabe
+    # Output
     output_conv::Conv
 end
 
 Flux.@layer SimplifiedUNetBN
 
 """
-Erstellt UNet mit Batch Normalization und Output-Skalierung
+Erstellt UNet mit Batch Normalization
 """
 function create_simplified_unet_bn(input_channels=1, output_channels=2, base_filters=32)
     f = base_filters
@@ -155,7 +160,7 @@ function create_simplified_unet_bn(input_channels=1, output_channels=2, base_fil
         Conv((3, 3), f => f, pad=SamePad()),
         BatchNorm(f, relu),
         
-        # Output - KEIN Tanh, damit Modell freien Wertebereich lernen kann
+        # Output
         Conv((1, 1), f => output_channels)
     )
 end
@@ -209,11 +214,164 @@ function (model::SimplifiedUNetBN)(x)
     
     return output
 end
+
+# =============================================================================
+# RESIDUAL UNET - ANSATZ 3
+# =============================================================================
+
 """
-Test-Funktion für vereinfachtes UNet
+ResidualUNet: Lernt nur Abweichung von analytischer Stokes-Lösung
+v_total = v_stokes(analytisch) + Δv(gelernt)
+"""
+struct ResidualUNet
+    base_unet::SimplifiedUNetBN  # Das UNet das Residuen lernt
+    use_stream_function::Bool    # Optional: Stream Function für Residuum
+    η_matrix::Float64            # Viskosität für Stokes-Berechnung
+    Δρ::Float64                  # Dichtedifferenz für Stokes-Berechnung
+    g::Float64                   # Gravitation
+end
+
+Flux.@layer ResidualUNet
+
+"""
+Erstellt ResidualUNet
+"""
+function create_residual_unet(;
+    input_channels=1,
+    output_channels=2,
+    base_filters=32,
+    use_stream_function=false,
+    η_matrix=1e20,
+    Δρ=200.0,
+    g=9.81)
+    
+    # Passe Output-Kanäle an: Stream Function braucht nur 1 Kanal
+    unet_output_channels = use_stream_function ? 1 : output_channels
+    
+    base_unet = create_simplified_unet_bn(input_channels, unet_output_channels, base_filters)
+    
+    return ResidualUNet(base_unet, use_stream_function, η_matrix, Δρ, g)
+end
+
+"""
+Forward-Pass für ResidualUNet: Stokes + Gelerntes Residuum
+"""
+function (model::ResidualUNet)(phase_field)
+    # 1. Berechne analytische Stokes-Baseline
+    v_stokes = compute_stokes_from_phase(
+        phase_field[:, :, 1, 1],  # Extrahiere 2D Phase aus (H, W, 1, B)
+        η_matrix=model.η_matrix,
+        Δρ=model.Δρ,
+        g=model.g,
+        verbose=false
+    )
+    
+    # Stelle sicher dass v_stokes gleiche Batch-Größe hat
+    batch_size = size(phase_field, 4)
+    if batch_size > 1
+        # Repliziere für alle Batches
+        v_stokes_batch = repeat(v_stokes, 1, 1, 1, batch_size)
+    else
+        v_stokes_batch = v_stokes
+    end
+    
+    # 2. UNet berechnet Residuum
+    if model.use_stream_function
+        # UNet gibt Stream Function zurück → berechne divergenzfreies Residuum
+        ψ_residual = model.base_unet(phase_field)
+        Δv = compute_velocities_from_stream(ψ_residual)
+    else
+        # UNet gibt direkt Residual-Geschwindigkeit zurück
+        Δv = model.base_unet(phase_field)
+    end
+    
+    # 3. Gesamtgeschwindigkeit = Stokes + Residuum
+    v_total = v_stokes_batch .+ Δv
+    
+    return v_total
+end
+
+"""
+Forward-Pass der auch Stokes und Residuum separat zurückgibt (für Loss-Berechnung)
+"""
+function forward_with_components(model::ResidualUNet, phase_field)
+    # 1. Stokes-Baseline
+    v_stokes = compute_stokes_from_phase(
+        phase_field[:, :, 1, 1],
+        η_matrix=model.η_matrix,
+        Δρ=model.Δρ,
+        g=model.g,
+        verbose=false
+    )
+    
+    batch_size = size(phase_field, 4)
+    if batch_size > 1
+        v_stokes_batch = repeat(v_stokes, 1, 1, 1, batch_size)
+    else
+        v_stokes_batch = v_stokes
+    end
+    
+    # 2. Residuum
+    if model.use_stream_function
+        ψ_residual = model.base_unet(phase_field)
+        Δv = compute_velocities_from_stream(ψ_residual)
+    else
+        Δv = model.base_unet(phase_field)
+    end
+    
+    # 3. Total
+    v_total = v_stokes_batch .+ Δv
+    
+    return v_total, v_stokes_batch, Δv
+end
+
+# =============================================================================
+# STREAM FUNCTION UTILITIES
+# =============================================================================
+
+"""
+Berechnet Geschwindigkeiten aus Stream Function
+vx = ∂ψ/∂z, vz = -∂ψ/∂x
+"""
+function compute_velocities_from_stream(ψ::AbstractArray{T,4}) where T
+    # ψ hat Shape: (H, W, 1, B)
+    
+    H, W, _, B = size(ψ)
+    
+    # Zentrale Differenzen für Ableitungen
+    # ∂ψ/∂z (vertikale Ableitung)
+    function ∂z(field)
+        # Padding oben und unten
+        padded = cat(field[end:end, :, :, :], field, field[1:1, :, :, :], dims=1)
+        return (padded[3:end, :, :, :] .- padded[1:end-2, :, :, :]) ./ 2.0f0
+    end
+    
+    # ∂ψ/∂x (horizontale Ableitung)
+    function ∂x(field)
+        # Padding links und rechts
+        padded = cat(field[:, end:end, :, :], field, field[:, 1:1, :, :], dims=2)
+        return (padded[:, 3:end, :, :] .- padded[:, 1:end-2, :, :]) ./ 2.0f0
+    end
+    
+    # Berechne Geschwindigkeiten
+    vx = ∂z(ψ)
+    vz = -∂x(ψ)
+    
+    # Kombiniere zu (H, W, 2, B)
+    velocities = cat(vx, vz, dims=3)
+    
+    return velocities
+end
+
+# =============================================================================
+# TEST-FUNKTIONEN
+# =============================================================================
+
+"""
+Test für Standard UNet
 """
 function test_simplified_unet(resolution=256; batch_size=2)
-    model = create_simplified_unet()
+    model = create_simplified_unet_bn()
     test_input = randn(Float32, resolution, resolution, 1, batch_size)
     
     try
@@ -221,7 +379,7 @@ function test_simplified_unet(resolution=256; batch_size=2)
         expected_shape = (resolution, resolution, 2, batch_size)
         success = size(output) == expected_shape
         
-        println("Test UNet:")
+        println("Test Standard UNet:")
         println("  Input: $(size(test_input))")
         println("  Output: $(size(output))")
         println("  Erwartet: $expected_shape")
@@ -229,10 +387,112 @@ function test_simplified_unet(resolution=256; batch_size=2)
         
         return success, model
     catch e
-        println("UNet Test fehlgeschlagen: $e")
+        println("Standard UNet Test fehlgeschlagen: $e")
         return false, nothing
     end
 end
 
-println("Zygote-sichere UNet Architecture geladen!")
-println("Verwende: create_simplified_unet()")
+"""
+Test für ResidualUNet
+"""
+function test_residual_unet(resolution=256; batch_size=2, use_stream_function=false)
+    println("\n=== TEST: RESIDUAL UNET $(use_stream_function ? "(mit Stream Function)" : "") ===")
+    
+    # Erstelle Modell
+    model = create_residual_unet(
+        use_stream_function=use_stream_function,
+        base_filters=32
+    )
+    
+    # Test-Input: Phasenfeld mit einem Kristall
+    phase_field = zeros(Float32, resolution, resolution, 1, batch_size)
+    
+    # Füge Kristall hinzu (Kreis in der Mitte)
+    center = resolution ÷ 2
+    radius = resolution ÷ 8
+    
+    for i in 1:resolution
+        for j in 1:resolution
+            if sqrt((i - center)^2 + (j - center)^2) <= radius
+                phase_field[i, j, 1, :] .= 1.0f0
+            end
+        end
+    end
+    
+    try
+        # Standard Forward-Pass
+        output = model(phase_field)
+        expected_shape = (resolution, resolution, 2, batch_size)
+        
+        println("Forward-Pass:")
+        println("  Input: $(size(phase_field))")
+        println("  Output: $(size(output))")
+        println("  Erwartet: $expected_shape")
+        println("  Shape korrekt: $(size(output) == expected_shape)")
+        
+        # Forward mit Komponenten
+        v_total, v_stokes, Δv = forward_with_components(model, phase_field)
+        
+        println("\nKomponenten-Analyse:")
+        println("  v_stokes magnitude: $(mean(sqrt.(v_stokes[:,:,1,:].^2 + v_stokes[:,:,2,:].^2)))")
+        println("  Δv magnitude: $(mean(sqrt.(Δv[:,:,1,:].^2 + Δv[:,:,2,:].^2)))")
+        println("  v_total magnitude: $(mean(sqrt.(v_total[:,:,1,:].^2 + v_total[:,:,2,:].^2)))")
+        println("  Residuum/Stokes ratio: $(mean(abs.(Δv)) / mean(abs.(v_stokes)))")
+        
+        success = size(output) == expected_shape
+        if success
+            println("\n✓ ResidualUNet Test erfolgreich")
+        end
+        
+        return success, model
+        
+    catch e
+        println("✗ ResidualUNet Test fehlgeschlagen: $e")
+        println("Stack trace:")
+        bt = catch_backtrace()
+        showerror(stdout, e, bt)
+        println()
+        return false, nothing
+    end
+end
+
+"""
+Vollständiger Test aller Architekturen
+"""
+function test_all_architectures()
+    println("="^80)
+    println("TESTE ALLE UNET-ARCHITEKTUREN")
+    println("="^80)
+    
+    # Test 1: Standard UNet
+    println("\n1. STANDARD UNET MIT BATCH NORMALIZATION")
+    success1, _ = test_simplified_unet(128, batch_size=2)
+    
+    # Test 2: ResidualUNet (ohne Stream Function)
+    println("\n2. RESIDUAL UNET (DIREKTES RESIDUUM)")
+    success2, _ = test_residual_unet(128, batch_size=2, use_stream_function=false)
+    
+    # Test 3: ResidualUNet (mit Stream Function)
+    println("\n3. RESIDUAL UNET (MIT STREAM FUNCTION)")
+    success3, _ = test_residual_unet(128, batch_size=2, use_stream_function=true)
+    
+    println("\n" * "="^80)
+    println("ZUSAMMENFASSUNG")
+    println("="^80)
+    println("Standard UNet: $(success1 ? "✓ PASS" : "✗ FAIL")")
+    println("Residual UNet (direkt): $(success2 ? "✓ PASS" : "✗ FAIL")")
+    println("Residual UNet (Stream): $(success3 ? "✓ PASS" : "✗ FAIL")")
+    
+    all_success = success1 && success2 && success3
+    println("\n$(all_success ? "✓ ALLE TESTS BESTANDEN" : "✗ EINIGE TESTS FEHLGESCHLAGEN")")
+    
+    return all_success
+end
+
+println("Zygote-sichere UNet Architecture mit Residual Learning geladen!")
+println("Verfügbare Funktionen:")
+println("  - create_simplified_unet_bn() - Standard UNet")
+println("  - create_residual_unet() - ResidualUNet (Ansatz 3)")
+println("  - test_all_architectures() - Vollständiger Test")
+println("")
+println("Zum Testen aller Architekturen: test_all_architectures()")
