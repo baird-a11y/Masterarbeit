@@ -217,34 +217,27 @@ function compute_stokes_velocity(
     g::Real = DEFAULT_GRAVITY,
     verbose::Bool = false
 )
-    # Extrahiere Dimensionen
     H, W = size(phase_field)[1:2]
     
     if verbose
         println("=== STOKES VELOCITY COMPUTATION ===")
         println("Grid: $(H)×$(W)")
         println("Kristalle: $(length(crystal_params))")
-        println("η_matrix: $(η_matrix) Pa·s")
-        println("Δρ: $(Δρ) kg/m³")
     end
     
-    # Erstelle Koordinaten-Gitter (normalisiert: -1 bis 1)
+    # Koordinaten-Gitter
     x_range = range(-1.0, 1.0, length=W)
     z_range = range(-1.0, 1.0, length=H)
     
     x_grid = repeat(reshape(collect(x_range), 1, W), H, 1)
     z_grid = repeat(reshape(collect(z_range), H, 1), 1, W)
     
-    # Initialisiere Gesamt-Geschwindigkeitsfelder
+    # Initialisiere
     vx_total = zeros(Float64, H, W)
     vz_total = zeros(Float64, H, W)
     
-    # Superposition: Addiere Beiträge aller Kristalle
-    for (i, crystal) in enumerate(crystal_params)
-        if verbose
-            println("  Kristall $i: pos=($(round(crystal.x, digits=3)), $(round(crystal.z, digits=3))), R=$(round(crystal.radius, digits=4))")
-        end
-        
+    # Superposition aller Kristalle
+    for crystal in crystal_params
         vx_single, vz_single = analytical_stokes_field_single(
             x_grid, z_grid, crystal;
             η_matrix = η_matrix,
@@ -252,29 +245,33 @@ function compute_stokes_velocity(
             g = g
         )
         
-        vx_total .+= vx_single
-        vz_total .+= vz_single
+        # ZYGOTE-SICHER: Verwende + statt .+=
+        vx_total = vx_total + vx_single
+        vz_total = vz_total + vz_single
     end
     
-    # Konvertiere zu Float32 für Konsistenz mit UNet
+    # Konvertiere zu Float32
     vx_f32 = Float32.(vx_total)
     vz_f32 = Float32.(vz_total)
     
-    # Kombiniere zu 4D-Tensor: (H, W, 2, 1)
-    velocity_field = zeros(Float32, H, W, 2, 1)
-    velocity_field[:, :, 1, 1] .= vx_f32
-    velocity_field[:, :, 2, 1] .= vz_f32
+    # KRITISCH: ZYGOTE-SICHERE KONSTRUKTION ohne .=
+    # Statt velocity_field[:, :, 1, 1] .= vx_f32
+    # Nutze cat() für direkte Konstruktion
+    velocity_field = cat(
+        reshape(vx_f32, H, W, 1, 1),
+        reshape(vz_f32, H, W, 1, 1),
+        dims=3
+    )
     
     if verbose
         v_mag = sqrt.(vx_f32.^2 .+ vz_f32.^2)
         println("  |v| mean: $(mean(v_mag)) m/s")
         println("  |v| max: $(maximum(v_mag)) m/s")
-        println("  vx range: [$(minimum(vx_f32)), $(maximum(vx_f32))] m/s")
-        println("  vz range: [$(minimum(vz_f32)), $(maximum(vz_f32))] m/s")
     end
     
     return velocity_field
 end
+
 
 # =============================================================================
 # ALL-IN-ONE FUNKTION (für einfache Verwendung)
@@ -314,8 +311,7 @@ function compute_stokes_from_phase(
     min_crystal_size::Int = 10,
     verbose::Bool = false
 )
-    # Extrahiere Kristall-Parameter aus Phasenfeld
-    # Nutze die Funktion aus lamem_interface.jl
+    # Extrahiere Kristalle
     crystal_params = extract_crystal_params(
         phase_field;
         min_crystal_size = min_crystal_size,
@@ -327,12 +323,11 @@ function compute_stokes_from_phase(
         if verbose
             println("Warnung: Keine Kristalle gefunden!")
         end
-        # Gebe Null-Feld zurück
         H, W = size(phase_field)[1:2]
+        # ZYGOTE-SICHER: Direkte Konstruktion statt zeros + mutation
         return zeros(Float32, H, W, 2, 1)
     end
     
-    # Berechne Stokes-Feld
     return compute_stokes_velocity(
         phase_field,
         crystal_params;
@@ -342,6 +337,7 @@ function compute_stokes_from_phase(
         verbose = verbose
     )
 end
+
 
 # =============================================================================
 # NORMALISIERUNG (für Training)
@@ -399,12 +395,11 @@ function compute_stokes_batch(
 ) where T
     H, W, C, B = size(phase_batch)
     @assert C == 1 "Phase batch sollte 1 Kanal haben"
-    @assert length(crystal_params_batch) == B "Crystal params batch Länge muss zu Batch-Size passen"
+    @assert length(crystal_params_batch) == B "Batch size mismatch"
     
-    # Initialisiere Output
-    v_stokes_batch = zeros(Float32, H, W, 2, B)
+    # ZYGOTE-SICHER: Sammle alle Batch-Elemente in Vector
+    batch_results = []
     
-    # Berechne für jedes Batch-Element
     for b in 1:B
         phase_2d = phase_batch[:, :, 1, b]
         crystal_params = crystal_params_batch[b]
@@ -418,14 +413,14 @@ function compute_stokes_batch(
             verbose = false
         )
         
-        v_stokes_batch[:, :, :, b] .= v_stokes[:, :, :, 1]
+        push!(batch_results, v_stokes[:, :, :, 1])  # Shape: (H, W, 2)
     end
     
-    if verbose
-        println("Batch Stokes computation: $(B) samples processed")
-    end
+    # ZYGOTE-SICHER: Nutze cat statt mutation
+    v_stokes_batch = cat(batch_results..., dims=4)  # Shape: (H, W, 2, B)
     
-    return v_stokes_batch
+    # Reshaping für korrekte Dimensionen
+    return reshape(v_stokes_batch, H, W, 2, B)
 end
 
 # =============================================================================

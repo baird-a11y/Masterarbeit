@@ -22,6 +22,7 @@ include("unet_architecture.jl")
 include("training.jl")
 include("batch_management.jl")
 include("gpu_utils.jl")
+include("stokes_analytical.jl")
 
 println("Alle Module erfolgreich geladen!")
 
@@ -34,12 +35,12 @@ const SERVER_CONFIG = (
     target_crystal_count = 10,
     
     # OPTIMIERT: Deutlich mehr Trainingsdaten
-    n_training_samples = 750,           # Von 200 auf 500 erhöht
+    n_training_samples = 10,           # Von 200 auf 500 erhöht
     
     target_resolution = 256,
     
     # OPTIMIERT: Bessere Training-Parameter
-    num_epochs = 50,                    # Von 30 auf 50 erhöht
+    num_epochs = 1,                    # Von 30 auf 50 erhöht
     learning_rate = 0.0005f0,            # Von 0.0005f0 auf 0.001f0 erhöht
     batch_size = 4,                     # Von 1 auf 2 erhöht
     early_stopping_patience = 15,       # Von 10 auf 15 erhöht
@@ -604,27 +605,358 @@ end
 # PROGRAMMSTART
 # =============================================================================
 
-println("="^80)
-println("10-KRISTALL UNET TRAINING INITIALISIERUNG")
-println("="^80)
+# println("="^80)
+# println("10-KRISTALL UNET TRAINING INITIALISIERUNG")
+# println("="^80)
 
-# Konfiguration anzeigen
-println("KONFIGURATION:")
-for (key, value) in pairs(SERVER_CONFIG)
-    println("  $key: $value")
+# # Konfiguration anzeigen
+# println("KONFIGURATION:")
+# for (key, value) in pairs(SERVER_CONFIG)
+#     println("  $key: $value")
+# end
+
+# # Führe 10-Kristall Training aus
+# success = run_ten_crystal_training()
+
+# if success
+#     println("\n" * "="^80)
+#     println("10-KRISTALL UNET TRAINING ERFOLGREICH!")
+#     println("="^80)
+#     exit(0)
+# else
+#     println("\n" * "="^80)
+#     println("10-KRISTALL UNET TRAINING FEHLGESCHLAGEN!")
+#     println("="^80)
+#     exit(1)
+# end
+
+
+# =============================================================================
+# MAIN.JL ERWEITERUNG FÜR RESIDUAL LEARNING
+# =============================================================================
+# Füge diese Funktion zu deiner main.jl hinzu (am Ende)
+
+"""
+Kompletter Residual UNet Workflow für 10-Kristall System
+Analog zu run_complete_10_crystal_training() aber mit ResidualUNet
+"""
+function run_residual_10_crystal_training(;
+    use_stream_function=false,
+    config_override=nothing
+)
+    println("\n" * "="^80)
+    println("RESIDUAL UNET 10-KRISTALL TRAINING PIPELINE")
+    println("="^80)
+    println("Stream Function: $use_stream_function")
+    
+    # =============================================================================
+    # 1. SYSTEM-CHECK
+    # =============================================================================
+    println("\n1. SYSTEM-CHECK")
+    println("-"^50)
+    
+    if !quick_test_safe()
+        error("System-Test fehlgeschlagen!")
+    end
+    println("✓ System bereit für Residual Training")
+    
+    # =============================================================================
+    # 2. DATENGENERIERUNG (gleich wie Standard)
+    # =============================================================================
+    println("\n2. 10-KRISTALL DATENGENERIERUNG")
+    println("-"^50)
+    
+    dataset = generate_ten_crystal_dataset(
+        SERVER_CONFIG.n_training_samples,
+        resolution=SERVER_CONFIG.target_resolution,
+        verbose=true
+    )
+    
+    if length(dataset) == 0
+        error("Keine Trainingsdaten generiert!")
+    end
+    
+    # Augmentierung
+    if SERVER_CONFIG.use_data_augmentation
+        println("\nWende Datenaugmentierung an...")
+        dataset = augment_lamem_dataset(dataset)
+    end
+    
+    dataset = dataset[randperm(length(dataset))]
+    println("✓ Dataset: $(length(dataset)) Samples")
+    
+    # Dataset speichern
+    if SERVER_CONFIG.save_dataset
+        dataset_path = joinpath(SERVER_CONFIG.results_dir, "residual_dataset.jls")
+        serialize(dataset_path, dataset)
+        println("✓ Dataset gespeichert: $dataset_path")
+    end
+    
+    # =============================================================================
+    # 3. RESIDUAL UNET ERSTELLEN
+    # =============================================================================
+    println("\n3. RESIDUAL UNET ERSTELLUNG")
+    println("-"^50)
+    
+    model = create_residual_unet(
+        input_channels=1,
+        output_channels=2,
+        base_filters=32,
+        use_stream_function=use_stream_function,
+        η_matrix=1e20,
+        Δρ=200.0,
+        g=9.81
+    )
+    
+    println("✓ ResidualUNet erstellt")
+    println("  Base UNet: $(typeof(model.base_unet))")
+    println("  Stream Function: $(model.use_stream_function)")
+    
+    # Test des Modells
+    success = try
+        test_input = randn(Float32, SERVER_CONFIG.target_resolution, 
+                          SERVER_CONFIG.target_resolution, 1, 1)
+        output = model(test_input)
+        v_total, v_stokes, Δv = forward_with_components(model, test_input)
+        
+        size(output) == (SERVER_CONFIG.target_resolution, 
+                        SERVER_CONFIG.target_resolution, 2, 1)
+    catch e
+        println("ResidualUNet-Test Fehler: $e")
+        false
+    end
+    
+    if !success
+        error("ResidualUNet-Test fehlgeschlagen!")
+    end
+    println("✓ ResidualUNet funktioniert")
+    
+    # =============================================================================
+    # 4. TRAINING KONFIGURATION
+    # =============================================================================
+    println("\n4. TRAINING KONFIGURATION")
+    println("-"^50)
+    
+    # Basis-Config von SERVER_CONFIG
+    if config_override === nothing
+        train_config = create_training_config(
+            learning_rate = SERVER_CONFIG.learning_rate,
+            num_epochs = SERVER_CONFIG.num_epochs,
+            batch_size = SERVER_CONFIG.batch_size,
+            checkpoint_dir = use_stream_function ? 
+                            "residual_stream_checkpoints" : 
+                            "residual_direct_checkpoints",
+            save_every_n_epochs = 5,
+            use_gpu = SERVER_CONFIG.use_gpu,
+            validation_split = SERVER_CONFIG.validation_split,
+            early_stopping_patience = SERVER_CONFIG.early_stopping_patience,
+            lambda_physics_initial = SERVER_CONFIG.lambda_physics_initial,
+            lambda_physics_final = SERVER_CONFIG.lambda_physics_final,
+            physics_warmup_epochs = SERVER_CONFIG.physics_warmup_epochs
+        )
+    else
+        train_config = config_override
+    end
+    
+    println("✓ Training Config:")
+    println("  Epochen: $(train_config.num_epochs)")
+    println("  Batch Size: $(train_config.batch_size)")
+    println("  Learning Rate: $(train_config.learning_rate)")
+    println("  Checkpoint Dir: $(train_config.checkpoint_dir)")
+    
+    # =============================================================================
+    # 5. RESIDUAL TRAINING
+    # =============================================================================
+    println("\n5. RESIDUAL TRAINING")
+    println("-"^50)
+    
+    trained_model, train_losses, val_losses, components_history = train_residual_unet(
+        model, 
+        dataset, 
+        SERVER_CONFIG.target_resolution,
+        config=train_config,
+        use_adaptive=true,
+        monitor_residuals=true
+    )
+    
+    println("✓ Training abgeschlossen")
+    
+    # =============================================================================
+    # 6. ERGEBNISSE ANALYSE
+    # =============================================================================
+    println("\n6. TRAINING-ERGEBNISSE ANALYSE")
+    println("-"^50)
+    
+    if length(train_losses) > 0 && length(val_losses) > 0
+        # Convergence
+        initial_loss = train_losses[1]
+        final_loss = train_losses[end]
+        improvement = (initial_loss - final_loss) / initial_loss * 100
+        
+        println("Training Convergence:")
+        println("  Initial Loss: $(round(initial_loss, digits=6))")
+        println("  Final Loss: $(round(final_loss, digits=6))")
+        println("  Verbesserung: $(round(improvement, digits=1))%")
+        
+        # Overfitting
+        train_val_gap = abs(train_losses[end] - val_losses[end])
+        println("\nOverfitting-Analyse:")
+        println("  Train-Val Gap: $(round(train_val_gap, digits=6))")
+        println("  Status: $(train_val_gap < 0.01 ? "✓ Gut" : "⚠️  Overfitting möglich")")
+        
+        # Loss-Komponenten
+        if !isempty(components_history)
+            println("\nLoss-Komponenten (finale Epoche):")
+            for (key, val) in components_history[end]
+                println("  $key: $(round(val, digits=6))")
+            end
+        end
+    end
+    
+    # =============================================================================
+    # 7. ERGEBNISSE SPEICHERN
+    # =============================================================================
+    println("\n7. ERGEBNISSE SPEICHERN")
+    println("-"^50)
+    
+    results_dir = use_stream_function ? "residual_stream_results" : "residual_direct_results"
+    mkpath(results_dir)
+    
+    # Training-Ergebnisse
+    results = Dict(
+        :model => trained_model,
+        :train_losses => train_losses,
+        :val_losses => val_losses,
+        :components_history => components_history,
+        :config => train_config,
+        :use_stream_function => use_stream_function
+    )
+    
+    results_path = joinpath(results_dir, "training_results.bson")
+    @save results_path results
+    println("✓ Ergebnisse gespeichert: $results_path")
+    
+    # =============================================================================
+    # ZUSAMMENFASSUNG
+    # =============================================================================
+    println("\n" * "="^80)
+    println("TRAINING ABGESCHLOSSEN")
+    println("="^80)
+    println("\n✓ Alle Schritte erfolgreich")
+    println("✓ Modell: $(train_config.checkpoint_dir)/best_residual_model.bson")
+    println("✓ Ergebnisse: $results_dir")
+    
+    return trained_model, train_losses, val_losses, components_history
 end
 
-# Führe 10-Kristall Training aus
-success = run_ten_crystal_training()
-
-if success
+"""
+Vergleicht Standard-UNet mit Residual-UNet
+"""
+function compare_standard_vs_residual()
     println("\n" * "="^80)
-    println("10-KRISTALL UNET TRAINING ERFOLGREICH!")
+    println("VERGLEICH: STANDARD UNET VS RESIDUAL UNET")
     println("="^80)
-    exit(0)
-else
+    
+    # Generiere gemeinsames Test-Dataset
+    println("\n1. Generiere Test-Dataset...")
+    test_dataset = generate_ten_crystal_dataset(20, resolution=256)
+    
+    # Training 1: Standard UNet
+    println("\n2. Trainiere Standard UNet...")
+    println("-"^50)
+    
+    model_standard = create_simplified_unet_bn(1, 2, 32)
+    config_short = create_training_config(
+        num_epochs=10,
+        batch_size=4,
+        checkpoint_dir="comparison_standard"
+    )
+    
+    _, train_std, val_std, _ = train_velocity_unet_safe(
+        model_standard, test_dataset, 256,
+        config=config_short
+    )
+    
+    # Training 2: Residual UNet (ohne Stream Function)
+    println("\n3. Trainiere Residual UNet (direkt)...")
+    println("-"^50)
+    
+    model_residual = create_residual_unet(use_stream_function=false)
+    config_res = create_training_config(
+        num_epochs=10,
+        batch_size=4,
+        checkpoint_dir="comparison_residual_direct"
+    )
+    
+    _, train_res, val_res, comp_res = train_residual_unet(
+        model_residual, test_dataset, 256,
+        config=config_res
+    )
+    
+    # Training 3: Residual UNet (mit Stream Function)
+    println("\n4. Trainiere Residual UNet (Stream Function)...")
+    println("-"^50)
+    
+    model_stream = create_residual_unet(use_stream_function=true)
+    config_stream = create_training_config(
+        num_epochs=10,
+        batch_size=4,
+        checkpoint_dir="comparison_residual_stream"
+    )
+    
+    _, train_stream, val_stream, comp_stream = train_residual_unet(
+        model_stream, test_dataset, 256,
+        config=config_stream
+    )
+    
+    # Vergleich
     println("\n" * "="^80)
-    println("10-KRISTALL UNET TRAINING FEHLGESCHLAGEN!")
+    println("VERGLEICH ERGEBNISSE")
     println("="^80)
-    exit(1)
+    
+    println("\nFinale Validation Loss:")
+    println("  Standard UNet:              $(round(val_std[end], digits=6))")
+    println("  Residual UNet (direkt):     $(round(val_res[end], digits=6))")
+    println("  Residual UNet (Stream):     $(round(val_stream[end], digits=6))")
+    
+    println("\nKonvergenz-Geschwindigkeit:")
+    println("  Standard UNet:              $(round((train_std[1]-train_std[end])/train_std[1]*100, digits=1))%")
+    println("  Residual UNet (direkt):     $(round((train_res[1]-train_res[end])/train_res[1]*100, digits=1))%")
+    println("  Residual UNet (Stream):     $(round((train_stream[1]-train_stream[end])/train_stream[1]*100, digits=1))%")
+    
+    # Bester Ansatz
+    best_val = minimum([val_std[end], val_res[end], val_stream[end]])
+    winner = if best_val == val_std[end]
+        "Standard UNet"
+    elseif best_val == val_res[end]
+        "Residual UNet (direkt)"
+    else
+        "Residual UNet (Stream Function)"
+    end
+    
+    println("\n🏆 Bester Ansatz: $winner")
+    
+    return (
+        standard = (model_standard, train_std, val_std),
+        residual = (model_residual, train_res, val_res),
+        stream = (model_stream, train_stream, val_stream)
+    )
 end
+
+# =============================================================================
+# USAGE EXAMPLES
+# =============================================================================
+
+println("\n" * "="^80)
+println("RESIDUAL LEARNING FUNKTIONEN GELADEN")
+println("="^80)
+println("\nVerfügbare Funktionen:")
+println("\n1. Residual Training:")
+println("   julia> run_residual_10_crystal_training()")
+println("   julia> run_residual_10_crystal_training(use_stream_function=true)")
+println("\n2. Vergleich aller Ansätze:")
+println("   julia> compare_standard_vs_residual()")
+println("\n3. Individuelles Training:")
+println("   julia> model = create_residual_unet(use_stream_function=false)")
+println("   julia> train_residual_unet(model, dataset, 256)")
+println("="^80)
