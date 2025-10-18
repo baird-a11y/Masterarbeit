@@ -13,7 +13,7 @@
 
 ---
 
-## Ansatz 1: Direktes Lernen (Ihr aktueller Ansatz)
+## Ansatz 1: Direktes Lernen (aktueller Ansatz)
 
 ### Konzept
 
@@ -202,7 +202,7 @@ velocity_pred = model(phase_new)  # Automatisch ∇·v = 0!
 
 ---
 
-## Ansatz 3: Residual Learning (Empfohlen für Sie!)
+## Ansatz 3: Residual Learning
 
 ### Konzept
 
@@ -331,7 +331,7 @@ println("Gelerntes Residuum: $(mean(abs, Δv))")
 println("Gesamt: $(mean(abs, v_pred))")
 ```
 
-### ✅ Vorteile (für Ihr Problem!)
+### Vorteile
 
 - **Einfachere Lernaufgabe**: Kleine Residuen statt große absolute Werte
 - **Physikalische Basis**: 90% der Physik bereits eingebaut
@@ -339,39 +339,7 @@ println("Gesamt: $(mean(abs, v_pred))")
 - **Interpretierbar**: Kann Stokes vs. Interaktionseffekte separieren
 - **Einfache Implementierung**: Nur analytische Funktion hinzufügen
 
-### ❌ Nachteile
+### Nachteile
 
-- Benötigt analytische Stokes-Lösung (aber Sie haben diese bereits!)
+- Benötigt analytische Stokes-Lösung
 - Massenerhaltung weiterhin Soft Constraint (kann mit Stream Function kombiniert werden)
-
----
-
-## 🎯 Empfehlung für Ihre Masterarbeit
-
-### Phase 1: Residual Learning (2-3 Wochen)
-
-1. Implementieren Sie `compute_stokes_velocity()`
-2. Modifizieren Sie Ihr bestehendes UNet minimal
-3. Trainieren und vergleichen mit Ansatz 1
-4. **Erwartung**: 50-70% bessere Generalisierung auf 2-15 Kristalle
-
-### Phase 2 (Optional): Hybrid-Ansatz (2-3 Wochen)
-
-Kombinieren Sie Residual + Stream Function:
-
-```julia
-# Beste aller Welten:
-v_total = v_stokes(analytisch) + compute_velocities_from_stream(a_residual)
-#          ↑                      ↑
-#     Physikalische Basis    Gelernte Interaktionen mit ∇·v=0
-```
-
-### Warum Residual für Sie optimal ist:
-
-1. ✅ **Minimal-invasiv**: Nutzt Ihr bestehendes UNet
-2. ✅ **Schnelle Iteration**: Keine komplexe neue Architektur
-3. ✅ **Starke Story**: "Von Physik inspiriert, durch ML verfeinert"
-4. ✅ **Skalierbar**: Funktioniert für 1-15 Kristalle
-5. ✅ **Interpretierbar**: Ideal für wissenschaftliche Publikation
-
-Der reine Stream Function Ansatz wäre **akademisch elegant**, aber der Residual-Ansatz ist **praktisch überlegen** für Kristallsedimentation.

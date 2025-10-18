@@ -1,0 +1,184 @@
+{
+  "main": {
+    "id": "d96eebfa506bb46b",
+    "type": "split",
+    "children": [
+      {
+        "id": "7a35a73b75a52231",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "e93ca2b7ffa954cc",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Arbeitsplan Residual Learning + Stream Function.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Arbeitsplan Residual Learning + Stream Function"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "3a03c3108434af61",
+    "type": "split",
+    "children": [
+      {
+        "id": "e8c7484cbfe66e5b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "18628d6ad547dabf",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "ef88c6d03ddb4940",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "d0358d356f7721db",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "b712952e02811f35",
+    "type": "split",
+    "children": [
+      {
+        "id": "d82a175a359dff09",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "64c94049bd9155a6",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Arbeitsplan Residual Learning + Stream Function.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Arbeitsplan Residual Learning + Stream Function"
+            }
+          },
+          {
+            "id": "4236fb1e3385f98f",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Arbeitsplan Residual Learning + Stream Function.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Arbeitsplan Residual Learning + Stream Function"
+            }
+          },
+          {
+            "id": "acee26ba434ce651",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "3f94cfdcae76edb9",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Arbeitsplan Residual Learning + Stream Function.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Arbeitsplan Residual Learning + Stream Function"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false
+    }
+  },
+  "active": "e93ca2b7ffa954cc",
+  "lastOpenFiles": [
+    "Masterarbeit/Zusammenfassung der drei Ansätze für Strömungsfeld-Vorhersage.md",
+    "Old/Zwei Kristalle.md",
+    "Old",
+    "Old/Pasted image 20250815160612.png",
+    "Old/Pasted image 20250815160552.png",
+    "Arbeitsplan Residual Learning + Stream Function.md",
+    "Masterarbeit/Paper/DeepCFD Efficient Steady-State Laminar Flow Approximation with Deep Convolutional Neural Networks.md",
+    "Masterarbeit/Paper/Physics-informed neural networks A deep learning framework for solving forward and inverse problems involving nonlinear partial differential.md",
+    "Masterarbeit/Paper/Comprehensive Literature List for Master's Thesis.md",
+    "Masterarbeit/Paper/Physics-informed machine learning.md"
+  ]
+}
