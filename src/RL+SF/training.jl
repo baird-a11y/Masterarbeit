@@ -146,9 +146,12 @@ function evaluate_model_safe(model, val_dataset, target_resolution; check_physic
 end
 
 # =============================================================================
-# STANDARD PHYSICS-INFORMED TRAINING
+# LOSS FUNCTIONS
 # =============================================================================
 
+"""
+Physics-Informed Loss für Standard UNet
+"""
 function physics_informed_loss(prediction, velocity_batch; lambda_physics=0.1f0)
     data_loss = mse(prediction, velocity_batch)
     divergence = compute_divergence(prediction)
@@ -156,6 +159,132 @@ function physics_informed_loss(prediction, velocity_batch; lambda_physics=0.1f0)
     total_loss = data_loss + lambda_physics * physics_loss
     return total_loss, data_loss, physics_loss
 end
+
+"""
+    loss_residual(model, phase, velocity_target; kwargs...)
+
+Loss-Funktion für ResidualUNet (Residual Learning).
+
+# Argumente
+- `model`: ResidualUNet Modell
+- `phase`: Phasenfeld [H, W, 1, B]
+- `velocity_target`: Ground Truth Geschwindigkeiten [H, W, 2, B]
+
+# Keyword-Argumente
+- `lambda_residual`: Gewicht für Residuum-Regularisierung (default: 0.01)
+- `lambda_sparsity`: Gewicht für Sparsity-Loss (default: 0.001)
+- `lambda_physics`: Gewicht für Divergenz-Loss (default: 0.1)
+
+# Rückgabe
+- `total_loss`: Gesamtverlust
+- `components`: Dict mit Loss-Komponenten für Monitoring
+
+# Funktionsweise
+1. Modell gibt v_total, v_stokes, Δv zurück
+2. Haupt-Loss: MSE zwischen v_total und Ground Truth
+3. Regularisierung: Residuum klein halten (L2)
+4. Sparsity: Residuum spärlich halten (L1)
+5. Divergenz-Loss für Massenerhaltung
+"""
+function loss_residual(
+    model, 
+    phase, 
+    velocity_target; 
+    lambda_residual = 0.01f0, 
+    lambda_sparsity = 0.001f0,
+    lambda_physics = 0.1f0
+)
+    # Forward Pass mit allen Komponenten
+    v_pred, v_stokes, Δv = forward_with_components(model, phase)
+    
+    # 1. Haupt-Loss: Gesamtgeschwindigkeit gegen Ground Truth
+    velocity_loss = mse(v_pred, velocity_target)
+    
+    # 2. Regularisierung: Residuen klein halten
+    # Bestraft große Abweichungen von der Stokes-Lösung
+    residual_penalty = lambda_residual * mean(abs2, Δv)
+    
+    # 3. Sparsity Loss: Fördert spärliche Residuen
+    # Viele Bereiche sollten nahe Null sein (nur wo nötig korrigieren)
+    sparsity_loss = lambda_sparsity * mean(abs, Δv)
+    
+    # 4. Divergenz-Loss (Massenerhaltung als Soft Constraint)
+    divergence = compute_divergence(v_pred)
+    physics_loss = mean(abs2, divergence)
+    
+    total_loss = velocity_loss + residual_penalty + sparsity_loss + 
+                 lambda_physics * physics_loss
+    
+    components = Dict(
+        "velocity_loss" => velocity_loss,
+        "residual_penalty" => residual_penalty,
+        "sparsity_loss" => sparsity_loss,
+        "physics_loss" => physics_loss,
+        "total_loss" => total_loss
+    )
+    
+    return total_loss, components
+end
+
+"""
+    loss_residual_adaptive(model, phase, velocity_target, epoch; kwargs...)
+
+Adaptive Loss-Funktion mit zeitabhängigen Gewichten.
+
+Die Gewichte werden während des Trainings angepasst:
+- Frühe Epochen: Fokus auf Velocity-Treue
+- Mittlere Epochen: Balance zwischen Treue und Regularisierung
+- Späte Epochen: Stärkere Regularisierung für Generalisierung
+"""
+function loss_residual_adaptive(
+    model,
+    phase,
+    velocity_target,
+    epoch;
+    lambda_residual_initial = 0.001f0,
+    lambda_residual_final = 0.01f0,
+    lambda_sparsity_initial = 0.0001f0,
+    lambda_sparsity_final = 0.001f0,
+    lambda_physics = 0.1f0,
+    residual_warmup = 10,
+    sparsity_warmup = 15,
+    total_epochs = 50
+)
+    # Berechne adaptive Gewichte
+    if epoch <= residual_warmup
+        lambda_residual = lambda_residual_initial + 
+                         (lambda_residual_final - lambda_residual_initial) * 
+                         (epoch / residual_warmup)
+    else
+        lambda_residual = lambda_residual_final
+    end
+    
+    if epoch <= sparsity_warmup
+        lambda_sparsity = lambda_sparsity_initial + 
+                         (lambda_sparsity_final - lambda_sparsity_initial) * 
+                         (epoch / sparsity_warmup)
+    else
+        lambda_sparsity = lambda_sparsity_final
+    end
+    
+    # Rufe normale Loss-Funktion mit adaptiven Gewichten auf
+    total_loss, components = loss_residual(
+        model, phase, velocity_target;
+        lambda_residual = lambda_residual,
+        lambda_sparsity = lambda_sparsity,
+        lambda_physics = lambda_physics
+    )
+    
+    # Füge aktuelle Gewichte zu Komponenten hinzu für Logging
+    components["lambda_residual"] = lambda_residual
+    components["lambda_sparsity"] = lambda_sparsity
+    
+    return total_loss, components
+end
+
+# =============================================================================
+# STANDARD PHYSICS-INFORMED TRAINING
+# =============================================================================
 
 function train_velocity_unet_safe(
     model, 
@@ -347,98 +476,22 @@ function train_velocity_unet_safe(
 end
 
 # =============================================================================
-# RESIDUAL LEARNING LOSS FUNCTIONS
+# RESIDUAL LEARNING UTILITY FUNCTIONS
 # =============================================================================
 
-function loss_residual(
-    model, 
-    phase, 
-    velocity_target; 
-    lambda_residual = 0.01f0, 
-    lambda_sparsity = 0.001f0,
-    lambda_physics = 0.1f0
-)
-    # Forward Pass mit allen Komponenten
-    v_pred, v_stokes, Δv = forward_with_components(model, phase)
-    
-    # 1. Haupt-Loss: Gesamtgeschwindigkeit gegen Ground Truth
-    velocity_loss = mse(v_pred, velocity_target)
-    
-    # 2. Regularisierung: Residuen klein halten
-    residual_penalty = lambda_residual * mean(abs2, Δv)
-    
-    # 3. Sparsity Loss: Fördert spärliche Residuen
-    sparsity_loss = lambda_sparsity * mean(abs, Δv)
-    
-    # 4. Divergenz-Loss (Massenerhaltung als Soft Constraint)
-    divergence = compute_divergence(v_pred)
-    physics_loss = mean(abs2, divergence)
-    
-    total_loss = velocity_loss + residual_penalty + sparsity_loss + 
-                 lambda_physics * physics_loss
-    
-    components = Dict(
-        "velocity_loss" => velocity_loss,
-        "residual_penalty" => residual_penalty,
-        "sparsity_loss" => sparsity_loss,
-        "physics_loss" => physics_loss,
-        "total_loss" => total_loss
-    )
-    
-    return total_loss, components
-end
+"""
+    monitor_residual_training(model, samples, target_resolution)
 
-function loss_residual_adaptive(
-    model, phase, velocity_target, epoch;
-    lambda_residual_initial = 0.001f0,
-    lambda_residual_final = 0.01f0,
-    lambda_sparsity_initial = 0.0001f0,
-    lambda_sparsity_final = 0.001f0,
-    lambda_physics = 0.1f0,
-    residual_warmup = 10,
-    sparsity_warmup = 15
-)
-    if epoch <= residual_warmup
-        lambda_residual = lambda_residual_initial + 
-                         (lambda_residual_final - lambda_residual_initial) * 
-                         (epoch / residual_warmup)
-    else
-        lambda_residual = lambda_residual_final
-    end
-    
-    if epoch <= sparsity_warmup
-        lambda_sparsity = lambda_sparsity_initial + 
-                         (lambda_sparsity_final - lambda_sparsity_initial) * 
-                         (epoch / sparsity_warmup)
-    else
-        lambda_sparsity = lambda_sparsity_final
-    end
-    
-    total_loss, components = loss_residual(
-        model, phase, velocity_target;
-        lambda_residual = lambda_residual,
-        lambda_sparsity = lambda_sparsity,
-        lambda_physics = lambda_physics
-    )
-    
-    components["lambda_residual"] = lambda_residual
-    components["lambda_sparsity"] = lambda_sparsity
-    
-    return total_loss, components
-end
-
-# =============================================================================
-# RESIDUAL HELPER FUNCTIONS
-# =============================================================================
-
-function monitor_residual_training(model::ResidualUNet, samples, target_resolution)
+Zeigt Residuum-Statistiken während des Trainings.
+"""
+function monitor_residual_training(model, samples, target_resolution)
     residual_magnitudes = []
     stokes_magnitudes = []
     
-    for (phase_file, lamem_file) in samples[1:min(5, length(samples))]
+    for sample in samples[1:min(5, length(samples))]
         try
             phase_batch, velocity_batch, successful = create_adaptive_batch(
-                [(phase_file, lamem_file)],
+                [sample],
                 target_resolution,
                 verbose=false
             )
@@ -465,15 +518,20 @@ function monitor_residual_training(model::ResidualUNet, samples, target_resoluti
     end
 end
 
-function compute_residual_statistics(model::ResidualUNet, samples, target_resolution)
+"""
+    compute_residual_statistics(model, samples, target_resolution)
+
+Berechnet detaillierte Statistiken über gelernte Residuen.
+"""
+function compute_residual_statistics(model, samples, target_resolution)
     stats = Dict{String, Float32}()
     residual_mags = []
     sparsity_counts = []
     
-    for (phase_file, lamem_file) in samples
+    for sample in samples
         try
             phase_batch, velocity_batch, successful = create_adaptive_batch(
-                [(phase_file, lamem_file)],
+                [sample],
                 target_resolution,
                 verbose=false
             )
@@ -509,19 +567,42 @@ end
 # RESIDUAL UNET TRAINING
 # =============================================================================
 
+"""
+    train_residual_unet(model, dataset, target_resolution; kwargs...)
+
+Haupt-Trainings-Funktion speziell für ResidualUNet.
+
+Erweitert die Standard-Training-Funktion um:
+- Residual-spezifische Loss
+- Adaptive Gewichte
+- Residual-Monitoring
+- Zusätzliche Metriken
+
+# Keyword-Argumente
+- `config`: TrainingConfig Objekt
+- `use_adaptive`: Verwende adaptive Gewichte (empfohlen)
+- `monitor_residuals`: Zeige detaillierte Residual-Statistiken
+- `lambda_residual`: Gewicht für Residuum-Regularisierung (default: 0.01)
+- `lambda_sparsity`: Gewicht für Sparsity-Loss (default: 0.001)
+- `lambda_physics`: Gewicht für Divergenz-Loss (default: 0.1)
+"""
 function train_residual_unet(
-    model::ResidualUNet,
+    model,
     dataset,
     target_resolution;
     config = create_training_config(),
     use_adaptive = true,
-    monitor_residuals = true
+    monitor_residuals = true,
+    lambda_residual = 0.01f0,
+    lambda_sparsity = 0.001f0,
+    lambda_physics = 0.1f0
 )
     println("\n" * "="^80)
     println("RESIDUAL UNET TRAINING")
     println("="^80)
-    println("Modus: $(model.use_stream_function ? "Stream Function" : "Direct Residual")")
+    println("Ansatz: v_total = v_stokes(analytisch) + Δv(gelernt)")
     println("Adaptive Loss: $use_adaptive")
+    println("Residual Monitoring: $monitor_residuals")
     
     use_gpu = config.use_gpu && check_gpu_availability()
     if use_gpu
@@ -593,10 +674,17 @@ function train_residual_unet(
                 function loss_fn(m)
                     if use_adaptive
                         loss, comps = loss_residual_adaptive(
-                            m, phase_batch, velocity_batch, epoch
+                            m, phase_batch, velocity_batch, epoch;
+                            total_epochs = config.num_epochs,
+                            lambda_physics = lambda_physics
                         )
                     else
-                        loss, comps = loss_residual(m, phase_batch, velocity_batch)
+                        loss, comps = loss_residual(
+                            m, phase_batch, velocity_batch;
+                            lambda_residual = lambda_residual,
+                            lambda_sparsity = lambda_sparsity,
+                            lambda_physics = lambda_physics
+                        )
                     end
                     
                     for (key, val) in comps
@@ -723,6 +811,7 @@ function train_residual_unet(
         end
     end
     
+    model = safe_cpu(model)
     final_model_path = joinpath(config.checkpoint_dir, "final_residual_model.bson")
     @save final_model_path model train_losses val_losses components_history
     println("\n✓ Finales Modell: $final_model_path")
@@ -761,14 +850,21 @@ function load_trained_model(model_path::String)
     error("Kein Modell in BSON gefunden")
 end
 
-println("✓ Training Module geladen!")
+# =============================================================================
+# MODUL-INFO
+# =============================================================================
+
+println("✓ Training Module geladen (Residual Learning - Bereinigt)!")
 println("\nVerfügbare Funktionen:")
-println("  Standard UNet:")
+println("\n  Standard UNet Training:")
 println("    - train_velocity_unet_safe(model, dataset, resolution)")
-println("  Residual UNet:")
+println("    - physics_informed_loss(prediction, velocity)")
+println("\n  Residual UNet Training:")
 println("    - train_residual_unet(model, dataset, resolution)")
 println("    - loss_residual(model, phase, velocity)")
 println("    - loss_residual_adaptive(model, phase, velocity, epoch)")
-println("  Utils:")
+println("\n  Utility Functions:")
 println("    - load_trained_model(path)")
 println("    - compute_divergence(velocity_field)")
+println("    - monitor_residual_training(model, samples, resolution)")
+println("    - compute_residual_statistics(model, samples, resolution)")

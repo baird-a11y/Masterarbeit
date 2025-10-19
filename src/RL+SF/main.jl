@@ -35,7 +35,7 @@ const SERVER_CONFIG = (
     target_crystal_count = 10,
     
     # Training-Daten
-    n_training_samples = 2,
+    n_training_samples = 10,
     
     target_resolution = 256,
     
@@ -370,14 +370,17 @@ function run_residual_10_crystal_training(; config_override=nothing)
         println("\n5. RESIDUAL TRAINING")
         println("-"^50)
         
+        # Die Lambda-Werte werden in loss_residual() verwendet, nicht hier als Parameter
+        println("Loss-Gewichte:")
+        println("  lambda_residual: $(SERVER_CONFIG.lambda_residual)")
+        println("  lambda_sparsity: $(SERVER_CONFIG.lambda_sparsity)")
+        println("  lambda_physics: $(SERVER_CONFIG.lambda_physics)")
+        
         trained_model, train_losses, val_losses, components_history = train_residual_unet(
             model, 
             dataset, 
             SERVER_CONFIG.target_resolution,
             config=train_config,
-            lambda_residual=SERVER_CONFIG.lambda_residual,
-            lambda_sparsity=SERVER_CONFIG.lambda_sparsity,
-            lambda_physics=SERVER_CONFIG.lambda_physics,
             use_adaptive=true,
             monitor_residuals=true
         )
@@ -699,7 +702,7 @@ println("="^80)
 # =============================================================================
 
 # Uncomment die folgenden Zeilen um das Training zu starten:
-
+#
 println("\nStarte Residual UNet Training...")
 trained_model, train_losses, val_losses, components = run_residual_10_crystal_training()
 
