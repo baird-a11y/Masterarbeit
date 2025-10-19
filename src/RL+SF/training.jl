@@ -358,35 +358,33 @@ function loss_residual(
     lambda_sparsity = 0.001f0,
     lambda_physics = 0.1f0
 )
+    # Forward Pass mit allen Komponenten
     v_pred, v_stokes, Δv = forward_with_components(model, phase)
     
+    # 1. Haupt-Loss: Gesamtgeschwindigkeit gegen Ground Truth
     velocity_loss = mse(v_pred, velocity_target)
+    
+    # 2. Regularisierung: Residuen klein halten
     residual_penalty = lambda_residual * mean(abs2, Δv)
+    
+    # 3. Sparsity Loss: Fördert spärliche Residuen
     sparsity_loss = lambda_sparsity * mean(abs, Δv)
     
-    if !model.use_stream_function
-        divergence = compute_divergence(v_pred)
-        physics_loss = mean(abs2, divergence)
-        total_loss = velocity_loss + residual_penalty + sparsity_loss + 
-                     lambda_physics * physics_loss
-        
-        components = Dict(
-            "velocity_loss" => velocity_loss,
-            "residual_penalty" => residual_penalty,
-            "sparsity_loss" => sparsity_loss,
-            "physics_loss" => physics_loss,
-            "total_loss" => total_loss
-        )
-        return total_loss, components
-    end
+    # 4. Divergenz-Loss (Massenerhaltung als Soft Constraint)
+    divergence = compute_divergence(v_pred)
+    physics_loss = mean(abs2, divergence)
     
-    total_loss = velocity_loss + residual_penalty + sparsity_loss
+    total_loss = velocity_loss + residual_penalty + sparsity_loss + 
+                 lambda_physics * physics_loss
+    
     components = Dict(
         "velocity_loss" => velocity_loss,
         "residual_penalty" => residual_penalty,
         "sparsity_loss" => sparsity_loss,
+        "physics_loss" => physics_loss,
         "total_loss" => total_loss
     )
+    
     return total_loss, components
 end
 

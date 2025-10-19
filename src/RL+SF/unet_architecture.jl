@@ -223,12 +223,12 @@ end
 ResidualUNet: Lernt nur Abweichung von analytischer Stokes-Lösung
 v_total = v_stokes(analytisch) + Δv(gelernt)
 """
+
 struct ResidualUNet
-    base_unet::SimplifiedUNetBN  # Das UNet das Residuen lernt
-    use_stream_function::Bool    # Optional: Stream Function für Residuum
-    η_matrix::Float64            # Viskosität für Stokes-Berechnung
-    Δρ::Float64                  # Dichtedifferenz für Stokes-Berechnung
-    g::Float64                   # Gravitation
+    base_unet::SimplifiedUNetBN
+    η_matrix::Float64
+    Δρ::Float64
+    g::Float64
 end
 
 Flux.@layer ResidualUNet
@@ -240,50 +240,34 @@ function create_residual_unet(;
     input_channels=1,
     output_channels=2,
     base_filters=32,
-    use_stream_function=false,
     η_matrix=1e20,
     Δρ=200.0,
     g=9.81)
     
-    # Passe Output-Kanäle an: Stream Function braucht nur 1 Kanal
-    unet_output_channels = use_stream_function ? 1 : output_channels
+    base_unet = create_simplified_unet_bn(input_channels, output_channels, base_filters)
     
-    base_unet = create_simplified_unet_bn(input_channels, unet_output_channels, base_filters)
-    
-    return ResidualUNet(base_unet, use_stream_function, η_matrix, Δρ, g)
+    return ResidualUNet(base_unet, η_matrix, Δρ, g)
 end
 
-"""
-Forward-Pass für ResidualUNet: Stokes + Gelerntes Residuum
-"""
 function (model::ResidualUNet)(phase_field)
     # 1. Berechne analytische Stokes-Baseline
     v_stokes = compute_stokes_from_phase(
-        phase_field[:, :, 1, 1],  # Extrahiere 2D Phase aus (H, W, 1, B)
+        phase_field[:, :, 1, 1],
         η_matrix=model.η_matrix,
         Δρ=model.Δρ,
         g=model.g,
         verbose=false
     )
     
-    # Stelle sicher dass v_stokes gleiche Batch-Größe hat
     batch_size = size(phase_field, 4)
     if batch_size > 1
-        # Repliziere für alle Batches
         v_stokes_batch = repeat(v_stokes, 1, 1, 1, batch_size)
     else
         v_stokes_batch = v_stokes
     end
     
-    # 2. UNet berechnet Residuum
-    if model.use_stream_function
-        # UNet gibt Stream Function zurück → berechne divergenzfreies Residuum
-        ψ_residual = model.base_unet(phase_field)
-        Δv = compute_velocities_from_stream(ψ_residual)
-    else
-        # UNet gibt direkt Residual-Geschwindigkeit zurück
-        Δv = model.base_unet(phase_field)
-    end
+    # 2. UNet berechnet Residuum direkt
+    Δv = model.base_unet(phase_field)
     
     # 3. Gesamtgeschwindigkeit = Stokes + Residuum
     v_total = v_stokes_batch .+ Δv
@@ -311,13 +295,8 @@ function forward_with_components(model::ResidualUNet, phase_field)
         v_stokes_batch = v_stokes
     end
     
-    # 2. Residuum
-    if model.use_stream_function
-        ψ_residual = model.base_unet(phase_field)
-        Δv = compute_velocities_from_stream(ψ_residual)
-    else
-        Δv = model.base_unet(phase_field)
-    end
+    # 2. Residuum direkt
+    Δv = model.base_unet(phase_field)
     
     # 3. Total
     v_total = v_stokes_batch .+ Δv
@@ -325,43 +304,7 @@ function forward_with_components(model::ResidualUNet, phase_field)
     return v_total, v_stokes_batch, Δv
 end
 
-# =============================================================================
-# STREAM FUNCTION UTILITIES
-# =============================================================================
 
-"""
-Berechnet Geschwindigkeiten aus Stream Function
-vx = ∂ψ/∂z, vz = -∂ψ/∂x
-"""
-function compute_velocities_from_stream(ψ::AbstractArray{T,4}) where T
-    # ψ hat Shape: (H, W, 1, B)
-    
-    H, W, _, B = size(ψ)
-    
-    # Zentrale Differenzen für Ableitungen
-    # ∂ψ/∂z (vertikale Ableitung)
-    function ∂z(field)
-        # Padding oben und unten
-        padded = cat(field[end:end, :, :, :], field, field[1:1, :, :, :], dims=1)
-        return (padded[3:end, :, :, :] .- padded[1:end-2, :, :, :]) ./ 2.0f0
-    end
-    
-    # ∂ψ/∂x (horizontale Ableitung)
-    function ∂x(field)
-        # Padding links und rechts
-        padded = cat(field[:, end:end, :, :], field, field[:, 1:1, :, :], dims=2)
-        return (padded[:, 3:end, :, :] .- padded[:, 1:end-2, :, :]) ./ 2.0f0
-    end
-    
-    # Berechne Geschwindigkeiten
-    vx = ∂z(ψ)
-    vz = -∂x(ψ)
-    
-    # Kombiniere zu (H, W, 2, B)
-    velocities = cat(vx, vz, dims=3)
-    
-    return velocities
-end
 
 # =============================================================================
 # TEST-FUNKTIONEN
@@ -399,10 +342,7 @@ function test_residual_unet(resolution=256; batch_size=2, use_stream_function=fa
     println("\n=== TEST: RESIDUAL UNET $(use_stream_function ? "(mit Stream Function)" : "") ===")
     
     # Erstelle Modell
-    model = create_residual_unet(
-        use_stream_function=use_stream_function,
-        base_filters=32
-    )
+    model = create_residual_unet(base_filters=32)
     
     # Test-Input: Phasenfeld mit einem Kristall
     phase_field = zeros(Float32, resolution, resolution, 1, batch_size)
@@ -468,22 +408,17 @@ function test_all_architectures()
     println("\n1. STANDARD UNET MIT BATCH NORMALIZATION")
     success1, _ = test_simplified_unet(128, batch_size=2)
     
-    # Test 2: ResidualUNet (ohne Stream Function)
-    println("\n2. RESIDUAL UNET (DIREKTES RESIDUUM)")
-    success2, _ = test_residual_unet(128, batch_size=2, use_stream_function=false)
-    
-    # Test 3: ResidualUNet (mit Stream Function)
-    println("\n3. RESIDUAL UNET (MIT STREAM FUNCTION)")
-    success3, _ = test_residual_unet(128, batch_size=2, use_stream_function=true)
+    # Test 2: ResidualUNet
+    println("\n2. RESIDUAL UNET")
+    success2, _ = test_residual_unet(128, batch_size=2)
     
     println("\n" * "="^80)
     println("ZUSAMMENFASSUNG")
     println("="^80)
     println("Standard UNet: $(success1 ? "✓ PASS" : "✗ FAIL")")
-    println("Residual UNet (direkt): $(success2 ? "✓ PASS" : "✗ FAIL")")
-    println("Residual UNet (Stream): $(success3 ? "✓ PASS" : "✗ FAIL")")
+    println("Residual UNet: $(success2 ? "✓ PASS" : "✗ FAIL")")
     
-    all_success = success1 && success2 && success3
+    all_success = success1 && success2
     println("\n$(all_success ? "✓ ALLE TESTS BESTANDEN" : "✗ EINIGE TESTS FEHLGESCHLAGEN")")
     
     return all_success
