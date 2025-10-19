@@ -2,14 +2,14 @@
 
 ## 📊 Übersichtstabelle
 
-|Aspekt|**Ansatz 1: Direkt**|**Ansatz 2: Stream Function**|**Ansatz 3: Residual**|
-|---|---|---|---|
-|**Output**|(vx, vz)|Stream Function a|v_stokes + Δv|
-|**Massenerhaltung**|Soft Constraint|**Automatisch**|Soft Constraint*|
-|**Lernaufgabe**|Schwer|Mittel|**Einfach**|
-|**Physikalische Basis**|Keine|Mathematisch|**Analytisch**|
-|**Implementierung**|**Einfach**|Mittel|**Einfach**|
-|**Für Ihr Problem**|⚠️ Basis|✅ Gut|✅✅ **Best**|
+| Aspekt                  | **Ansatz 1: Direkt** | **Ansatz 2: Stream Function** | **Ansatz 3: Residual** |
+| ----------------------- | -------------------- | ----------------------------- | ---------------------- |
+| **Output**              | (vx, vz)             | Stream Function a             | v_stokes + Δv          |
+| **Massenerhaltung**     | Soft Constraint      | **Automatisch**               | Soft Constraint*       |
+| **Lernaufgabe**         | Schwer               | Mittel                        | **Einfach**            |
+| **Physikalische Basis** | Keine                | Mathematisch                  | **Analytisch**         |
+| **Implementierung**     | **Einfach**          | Mittel                        | **Einfach**            |
+| **Für Ihr Problem**     | ⚠️ Basis             | ✅ Gut                         | ✅✅ **Best**            |
 
 ---
 
