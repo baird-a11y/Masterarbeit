@@ -161,51 +161,44 @@ function physics_informed_loss(prediction, velocity_batch; lambda_physics=0.1f0)
 end
 
 """
-    loss_residual(model, phase, velocity_target; kwargs...)
+    loss_residual(model, phase, velocity_target, v_stokes; kwargs...)
 
-Loss-Funktion für ResidualUNet (Residual Learning).
+Zygote-sichere Loss-Funktion für ResidualUNet.
+Stokes-Lösung wird VOR dem Gradienten berechnet und übergeben.
 
 # Argumente
 - `model`: ResidualUNet Modell
 - `phase`: Phasenfeld [H, W, 1, B]
 - `velocity_target`: Ground Truth Geschwindigkeiten [H, W, 2, B]
+- `v_stokes`: Vorberechnete Stokes-Lösung [H, W, 2, B]
 
 # Keyword-Argumente
 - `lambda_residual`: Gewicht für Residuum-Regularisierung (default: 0.01)
 - `lambda_sparsity`: Gewicht für Sparsity-Loss (default: 0.001)
 - `lambda_physics`: Gewicht für Divergenz-Loss (default: 0.1)
-
-# Rückgabe
-- `total_loss`: Gesamtverlust
-- `components`: Dict mit Loss-Komponenten für Monitoring
-
-# Funktionsweise
-1. Modell gibt v_total, v_stokes, Δv zurück
-2. Haupt-Loss: MSE zwischen v_total und Ground Truth
-3. Regularisierung: Residuum klein halten (L2)
-4. Sparsity: Residuum spärlich halten (L1)
-5. Divergenz-Loss für Massenerhaltung
 """
 function loss_residual(
     model, 
     phase, 
-    velocity_target; 
+    velocity_target,
+    v_stokes;
     lambda_residual = 0.01f0, 
     lambda_sparsity = 0.001f0,
     lambda_physics = 0.1f0
 )
-    # Forward Pass mit allen Komponenten
-    v_pred, v_stokes, Δv = forward_with_components(model, phase)
+    # Nur Residuum durch UNet berechnen (wird differenziert)
+    Δv = model.base_unet(phase)
+    
+    # Kombiniere mit vorberechneter Stokes-Lösung (nicht differenziert)
+    v_pred = v_stokes .+ Δv
     
     # 1. Haupt-Loss: Gesamtgeschwindigkeit gegen Ground Truth
     velocity_loss = mse(v_pred, velocity_target)
     
     # 2. Regularisierung: Residuen klein halten
-    # Bestraft große Abweichungen von der Stokes-Lösung
     residual_penalty = lambda_residual * mean(abs2, Δv)
     
     # 3. Sparsity Loss: Fördert spärliche Residuen
-    # Viele Bereiche sollten nahe Null sein (nur wo nötig korrigieren)
     sparsity_loss = lambda_sparsity * mean(abs, Δv)
     
     # 4. Divergenz-Loss (Massenerhaltung als Soft Constraint)
@@ -227,19 +220,15 @@ function loss_residual(
 end
 
 """
-    loss_residual_adaptive(model, phase, velocity_target, epoch; kwargs...)
+    loss_residual_adaptive(model, phase, velocity_target, v_stokes, epoch; kwargs...)
 
-Adaptive Loss-Funktion mit zeitabhängigen Gewichten.
-
-Die Gewichte werden während des Trainings angepasst:
-- Frühe Epochen: Fokus auf Velocity-Treue
-- Mittlere Epochen: Balance zwischen Treue und Regularisierung
-- Späte Epochen: Stärkere Regularisierung für Generalisierung
+Adaptive Zygote-sichere Loss-Funktion mit zeitabhängigen Gewichten.
 """
 function loss_residual_adaptive(
     model,
     phase,
     velocity_target,
+    v_stokes,
     epoch;
     lambda_residual_initial = 0.001f0,
     lambda_residual_final = 0.01f0,
@@ -267,15 +256,15 @@ function loss_residual_adaptive(
         lambda_sparsity = lambda_sparsity_final
     end
     
-    # Rufe normale Loss-Funktion mit adaptiven Gewichten auf
-    total_loss, components = loss_residual(
-        model, phase, velocity_target;
+    # Rufe sichere Loss-Funktion mit adaptiven Gewichten auf
+    total_loss, components = loss_residual_safe(
+        model, phase, velocity_target, v_stokes;
         lambda_residual = lambda_residual,
         lambda_sparsity = lambda_sparsity,
         lambda_physics = lambda_physics
     )
     
-    # Füge aktuelle Gewichte zu Komponenten hinzu für Logging
+    # Füge aktuelle Gewichte zu Komponenten hinzu
     components["lambda_residual"] = lambda_residual
     components["lambda_sparsity"] = lambda_sparsity
     
@@ -564,6 +553,36 @@ function compute_residual_statistics(model, samples, target_resolution)
 end
 
 # =============================================================================
+# HILFSFUNKTION: STOKES VOR-BERECHNUNG
+# =============================================================================
+
+"""
+    precompute_stokes_batch(model, phase_batch)
+
+Berechnet Stokes-Lösung für einen Batch AUSSERHALB des Gradienten-Kontexts.
+"""
+function precompute_stokes_batch(model::ResidualUNet, phase_batch)
+    batch_size = size(phase_batch, 4)
+    H, W = size(phase_batch)[1:2]
+    
+    v_stokes_batch = zeros(Float32, H, W, 2, batch_size)
+    
+    for b in 1:batch_size
+        v_stokes = compute_stokes_from_phase(
+            phase_batch[:, :, 1, b],
+            η_matrix=model.η_matrix,
+            Δρ=model.Δρ,
+            g=model.g,
+            verbose=false
+        )
+        v_stokes_batch[:, :, :, b] .= v_stokes[:, :, :, 1]
+    end
+    
+    return v_stokes_batch
+end
+
+
+# =============================================================================
 # RESIDUAL UNET TRAINING
 # =============================================================================
 
@@ -671,16 +690,19 @@ function train_residual_unet(
                     velocity_batch = safe_cpu(velocity_batch)
                 end
                 
+                # Berechne Stokes VOR dem Gradienten
+                v_stokes_batch = precompute_stokes_batch(model, phase_batch)
+                
                 function loss_fn(m)
                     if use_adaptive
                         loss, comps = loss_residual_adaptive(
-                            m, phase_batch, velocity_batch, epoch;
+                            m, phase_batch, velocity_batch, v_stokes_batch, epoch;
                             total_epochs = config.num_epochs,
                             lambda_physics = lambda_physics
                         )
                     else
                         loss, comps = loss_residual(
-                            m, phase_batch, velocity_batch;
+                            m, phase_batch, velocity_batch, v_stokes_batch;
                             lambda_residual = lambda_residual,
                             lambda_sparsity = lambda_sparsity,
                             lambda_physics = lambda_physics

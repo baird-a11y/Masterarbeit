@@ -277,16 +277,20 @@ end
 
 """
 Forward-Pass der auch Stokes und Residuum separat zurückgibt (für Loss-Berechnung)
+ZYGOTE-SICHER: Stokes-Berechnung wird nicht differenziert
 """
 function forward_with_components(model::ResidualUNet, phase_field)
-    # 1. Stokes-Baseline
-    v_stokes = compute_stokes_from_phase(
-        phase_field[:, :, 1, 1],
-        η_matrix=model.η_matrix,
-        Δρ=model.Δρ,
-        g=model.g,
-        verbose=false
-    )
+    # 1. Stokes-Baseline - WICHTIG: Nicht differenzieren!
+    # Zygote.ignore() verhindert, dass Gradienten durch diese Berechnung fließen
+    v_stokes = Zygote.ignore() do
+        compute_stokes_from_phase(
+            phase_field[:, :, 1, 1],
+            η_matrix=model.η_matrix,
+            Δρ=model.Δρ,
+            g=model.g,
+            verbose=false
+        )
+    end
     
     batch_size = size(phase_field, 4)
     if batch_size > 1
@@ -295,14 +299,15 @@ function forward_with_components(model::ResidualUNet, phase_field)
         v_stokes_batch = v_stokes
     end
     
-    # 2. Residuum direkt
+    # 2. Residuum - DIES wird differenziert (das wollen wir!)
     Δv = model.base_unet(phase_field)
     
-    # 3. Total
+    # 3. Total = Stokes + Residuum
     v_total = v_stokes_batch .+ Δv
     
     return v_total, v_stokes_batch, Δv
 end
+
 
 
 
