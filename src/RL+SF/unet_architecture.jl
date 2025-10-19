@@ -3,6 +3,7 @@
 # =============================================================================
 
 using Flux
+using Zygote
 
 # Lade Stokes-Modul (muss vorher included werden)
 # include("stokes_analytical.jl") wird in main.jl gemacht

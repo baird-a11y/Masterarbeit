@@ -31,39 +31,27 @@ println("Alle Module erfolgreich geladen!")
 # =============================================================================
 
 const SERVER_CONFIG = (
-    # 10-Kristall spezifische Parameter
     target_crystal_count = 10,
     
-    # Training-Daten
-    n_training_samples = 10,
+    # ERHÖHE FÜR ECHTES TRAINING:
+    n_training_samples = 200,      # Statt 10 → 200+
+    num_epochs = 50,               # Statt 1 → 50
     
     target_resolution = 256,
-    
-    # Training-Parameter
-    num_epochs = 1,
-    learning_rate = 0.0005f0,
-    batch_size = 4,
+    learning_rate = 0.0005f0,      # Okay
+    batch_size = 4,                # Okay
     early_stopping_patience = 15,
-    
-    # Residual Learning spezifische Parameter
-    lambda_residual = 0.01f0,      # Residuum-Regularisierung
-    lambda_sparsity = 0.001f0,     # Sparsity-Loss
-    lambda_physics = 0.1f0,        # Divergenz-Loss
     
     # Physics-Informed Parameter
     lambda_physics_initial = 0.01f0,
     lambda_physics_final = 0.15f0,
     physics_warmup_epochs = 15,
     
-    # Output-Parameter
     checkpoint_dir = "residual_checkpoints",
     results_dir = "residual_results",
     
-    # Hardware
-    use_gpu = false,
+    use_gpu = false,  # oder true wenn GPU verfügbar
     save_dataset = true,
-    
-    # Augmentierung
     use_data_augmentation = true,
     validation_split = 0.15f0,
 )

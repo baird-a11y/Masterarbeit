@@ -257,7 +257,7 @@ function loss_residual_adaptive(
     end
     
     # Rufe sichere Loss-Funktion mit adaptiven Gewichten auf
-    total_loss, components = loss_residual_safe(
+    total_loss, components = loss_residual(
         model, phase, velocity_target, v_stokes;
         lambda_residual = lambda_residual,
         lambda_sparsity = lambda_sparsity,
