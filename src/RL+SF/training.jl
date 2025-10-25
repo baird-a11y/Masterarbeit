@@ -118,7 +118,11 @@ function evaluate_model_safe(model, val_dataset, target_resolution; check_physic
             velocity_batch = cpu(velocity_batch)
             model = cpu(model)
             
-            prediction = model(phase_batch)
+            # ✨ HIER IST DIE ÄNDERUNG ✨
+            v_total, v_stokes, Δv = model(phase_batch)
+            prediction = v_total
+            # ✨ END ÄNDERUNG ✨
+            
             batch_data_loss = mse(prediction, velocity_batch)
             
             if check_physics
