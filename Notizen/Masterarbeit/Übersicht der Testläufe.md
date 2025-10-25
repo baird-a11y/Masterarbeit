@@ -1,3 +1,4 @@
+## Alter Ansatz
 
 | Name des Runs    | Training Samples | Learning Rate | Batch Size | Epochen | Physics_final | WarmUp |
 | ---------------- | ---------------- | ------------- | ---------- | ------- | ------------- | ------ |
@@ -12,7 +13,8 @@
 | Test_Run_9 20.09 | 750              | 0.0005f0      | 4          | 75      | 0.15f0        | 15     |
 |                  |                  |               |            |         |               |        |
 
-Workshop angebote für lehrende
-Hintergrund google schoolar
-Limits von Agenten 
-Pro Student 10 bis 15 cent pro Monat
+## Neuer Ansatz
+
+| Name des Runs    | Training Samples | Learning Rate | Batch Size | Epochen | Physics_final | WarmUp |
+| ---------------- | ---------------- | ------------- | ---------- | ------- | ------------- | ------ |
+|                  |                  |               |            |         |               |        |

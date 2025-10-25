@@ -32,15 +32,17 @@ println("Alle Module erfolgreich geladen!")
 
 const SERVER_CONFIG = (
     target_crystal_count = 10,
-    
-    # ERHÖHE FÜR ECHTES TRAINING:
-    n_training_samples = 200,      # Statt 10 → 200+
-    num_epochs = 50,               # Statt 1 → 50
-    
+    n_training_samples = 200,
+    num_epochs = 50,
     target_resolution = 256,
-    learning_rate = 0.0005f0,      # Okay
-    batch_size = 4,                # Okay
+    learning_rate = 0.0005f0,
+    batch_size = 4,
     early_stopping_patience = 15,
+    
+    # Residual Learning Lambda-Werte
+    lambda_residual = 0.01f0,
+    lambda_sparsity = 0.001f0,
+    lambda_physics = 0.1f0,
     
     # Physics-Informed Parameter
     lambda_physics_initial = 0.01f0,
@@ -49,8 +51,7 @@ const SERVER_CONFIG = (
     
     checkpoint_dir = "residual_checkpoints",
     results_dir = "residual_results",
-    
-    use_gpu = false,  # oder true wenn GPU verfügbar
+    use_gpu = false,
     save_dataset = true,
     use_data_augmentation = true,
     validation_split = 0.15f0,
@@ -365,12 +366,13 @@ function run_residual_10_crystal_training(; config_override=nothing)
         println("  lambda_physics: $(SERVER_CONFIG.lambda_physics)")
         
         trained_model, train_losses, val_losses, components_history = train_residual_unet(
-            model, 
-            dataset, 
-            SERVER_CONFIG.target_resolution,
-            config=train_config,
-            use_adaptive=true,
-            monitor_residuals=true
+        model, dataset, SERVER_CONFIG.target_resolution,
+        config=train_config,
+        use_adaptive=true,
+        monitor_residuals=true,
+        lambda_residual=SERVER_CONFIG.lambda_residual,
+        lambda_sparsity=SERVER_CONFIG.lambda_sparsity,
+        lambda_physics=SERVER_CONFIG.lambda_physics
         )
         
         println("✓ Training abgeschlossen")
