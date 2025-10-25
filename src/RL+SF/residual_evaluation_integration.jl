@@ -346,7 +346,7 @@ println("4. KONFIGURATION...")
 println("-"^60)
 
 # WICHTIG: DIESE PFADE ANPASSEN!
-const MODEL_PATH = "H:/Masterarbeit/Modelle/final_model_rlsf_1.bson"  # ANPASSEN!
+const MODEL_PATH = "H:/Masterarbeit/Modelle/final_model_rlsf_2.bson"  # ANPASSEN!
 const OUTPUT_DIR = "H:/Masterarbeit/Auswertung/Residual_Evaluation_1"  # ANPASSEN!
 
 # Lambda-Gewichte (sollte mit Training übereinstimmen!)

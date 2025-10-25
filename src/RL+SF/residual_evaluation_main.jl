@@ -369,7 +369,7 @@ function evaluate_residual_batch(model_path::String;
     )
     
     # ============ ERGEBNISSE SPEICHERN ============
-    results_path = joinpath(output_dir, "data", "residual_batch_results.bson")
+    results_path = joinpath(output_dir, "data", "residual_batch_results_1.bson")
     BSON.bson(results_path, Dict("batch_results" => batch_results))
     
     if verbose

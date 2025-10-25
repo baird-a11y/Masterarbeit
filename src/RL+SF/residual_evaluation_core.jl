@@ -3,7 +3,7 @@
 # =============================================================================
 
 using Dates
-
+using Statistics: mean, std, median, quantile
 """
 Erweiterte Evaluierungsstruktur für Residual Learning
 NEUE FEATURES:
@@ -185,7 +185,7 @@ function compute_aggregated_statistics(results::Vector{ResidualEvaluationResult}
     continuities_max = [r.continuity_violation_max for r in valid_results]
     correlations = [r.pearson_total for r in valid_results]
     
-    using Statistics: mean, std, median, quantile
+  
     
     return AggregatedStatistics(
         crystal_count,

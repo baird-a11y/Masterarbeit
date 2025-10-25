@@ -32,7 +32,7 @@ println("Alle Module erfolgreich geladen!")
 
 const SERVER_CONFIG = (
     target_crystal_count = 10,
-    n_training_samples = 200,
+    n_training_samples = 400,
     num_epochs = 50,
     target_resolution = 256,
     learning_rate = 0.0005f0,
@@ -302,15 +302,16 @@ function run_residual_10_crystal_training(; config_override=nothing)
         success = try
             test_input = randn(Float32, SERVER_CONFIG.target_resolution, 
                               SERVER_CONFIG.target_resolution, 1, 1)
-            output = model(test_input)
-            v_total, v_stokes, Δv = forward_with_components(model, test_input)
-            
+            v_total, v_stokes, Δv = model(test_input)
+
             println("\nModell-Test erfolgreich:")
-            println("  Output Shape: $(size(output))")
+            println("  v_total Shape: $(size(v_total))")
+            println("  v_stokes Shape: $(size(v_stokes))")
+            println("  Δv Shape: $(size(Δv))")
             println("  Stokes Magnitude: $(mean(abs.(v_stokes)))")
             println("  Residuum Magnitude: $(mean(abs.(Δv)))")
-            
-            size(output) == (SERVER_CONFIG.target_resolution, 
+
+            size(v_total) == (SERVER_CONFIG.target_resolution, 
                             SERVER_CONFIG.target_resolution, 2, 1)
         catch e
             println("ResidualUNet-Test Fehler: $e")
@@ -656,9 +657,12 @@ function quick_test_safe()
         # Test Residual UNet
         model = create_residual_unet(base_filters=16)
         test_input = randn(Float32, 64, 64, 1, 1)
-        output = model(test_input)
         
-        return size(output) == (64, 64, 2, 1)
+        
+        v_total, v_stokes, Δv = model(test_input)
+        
+        # Prüfe Shape von v_total
+        return size(v_total) == (64, 64, 2, 1)
         
     catch e
         println("System-Test Fehler: $e")
