@@ -273,7 +273,7 @@ function (model::ResidualUNet)(phase_field)
     # 3. Gesamtgeschwindigkeit = Stokes + Residuum
     v_total = v_stokes_batch .+ Δv
     
-    return v_total
+    return v_total, v_stokes_batch, Δv
 end
 
 """
