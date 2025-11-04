@@ -1,8 +1,8 @@
 # =============================================================================
-# LAMEM INTERFACE - CLEAN VERSION (256x256 only)
+# LAMEM INTERFACE (256x256 only)
 # =============================================================================
 # Residual Learning + Stream Function Pipeline
-# Nur feste 256x256 Auflösung, keine dynamischen Größen mehr
+# Nur feste 256x256 Auflösung, keine dynamischen Größen
 
 using LaMEM
 using GeophysicalModelGenerator
@@ -56,7 +56,7 @@ function LaMEM_Multi_crystal(;
 )
     # ERZWINGE 256x256
     if resolution != (256, 256)
-        verbose && println("⚠️  Auflösung $resolution wird ignoriert - verwende immer 256x256")
+        verbose && println("Auflösung $resolution wird ignoriert - verwende immer 256x256")
         resolution = (256, 256)
     end
     
@@ -76,28 +76,8 @@ function LaMEM_Multi_crystal(;
     x_range = (-0.5, 0.5)
     z_range = (0.0, 1.0)
     
-    # Grid erstellen (direkt ohne Input-File)
-    grid = create_CartGrid(;
-        size=(x_range[2] - x_range[1], 1.0, z_range[2] - z_range[1]),
-        x=x_range,
-        y=(-0.5, 0.5),
-        z=z_range
-    )
-    
-    # Phasenfeld initialisieren
-    Phase = fill(1.0, nel[1] + 1, nel[2] + 1)
-    Temp = fill(1000.0, nel[1] + 1, nel[2] + 1)
-    
-    # Kristalle hinzufügen
-    for i in 1:n_crystals
-        cen_x, cen_z = cen_2D[i]
-        r = radius_crystal[i]
-        
-        AddSphere!(Phase, Temp, grid, cen=(cen_x, 0.0, cen_z), radius=r, phase=ConstantPhase(2))
-    end
-    
-    # Material-Eigenschaften
-    matrix = Phase_Transition(
+    # Material-Eigenschaften (ALTE API)
+    matrix = Phase(
         ID=0,
         Name="Matrix",
         rho=2800.0,
@@ -105,7 +85,7 @@ function LaMEM_Multi_crystal(;
         G=1e10
     )
     
-    crystal = Phase_Transition(
+    crystal = Phase(
         ID=1,
         Name="Crystal",
         rho=3300.0,
@@ -113,41 +93,55 @@ function LaMEM_Multi_crystal(;
         G=1e10
     )
     
-    # LaMEM Setup
+    # LaMEM Model (ALTE API)
     model = Model(
-        Grid=grid,
-        Time=LaMEM.Time(nstep_max=1),
-        Solver=Solver(SolverType="direct", DirectPenalty=1e5),
-        BoundaryConditions=BoundaryConditions(
+        Grid(nel=nel, x=[x_range[1], x_range[2]], z=[z_range[1], z_range[2]]),
+        LaMEM.Time(nstep_max=1),
+        Solver(SolverType="direct", DirectPenalty=1e5),
+        BoundaryConditions(
             open_top_bound=1,
             permeable_phase_inflow=1
         ),
-        FreeSurface=FreeSurface(surf_use=0),
-        Output=Output(out_density=1, out_velocity=1),
-        Materials=[matrix, crystal]
+        FreeSurface(surf_use=0),
+        Output(out_density=1, out_velocity=1)
     )
     
-    # Simulation ausführen
-    model = add_phase(model, Phase, Temp)
+    # Füge Phases zum Model hinzu
+    add_phase!(model, crystal, matrix)
     
+    # Phasenfeld und Temperatur
+    Phase = fill(1.0, nel[1] + 1, nel[2] + 1)
+    Temp = fill(1000.0, nel[1] + 1, nel[2] + 1)
+    
+    # Kristalle hinzufügen zum Phasenfeld
+    for i in 1:n_crystals
+        cen_x, cen_z = cen_2D[i]
+        r = radius_crystal[i]
+        
+        # Füge Sphäre zum Model hinzu
+        add_sphere!(model, 
+            cen=(cen_x, 0.0, cen_z), 
+            radius=r, 
+            phase=ConstantPhase(1))  # Phase ID 1 = Crystal
+    end
+    
+    # Simulation ausführen
     verbose && println("LaMEM Simulation läuft ($n_crystals Kristalle)...")
     
     run_lamem(model, 1, "-nstep_max 1")
     
     verbose && println("LaMEM Simulation abgeschlossen")
     
-    # Output laden
-    data, t = read_LaMEM_timestep(model, 0, last=true)
+    # Output laden (ALTE API)
+    data, _ = read_LaMEM_timestep(model, 1)
     
-    # Extrahiere 2D Schnitt (Y=0)
-    data_2D = extract_subvolume(data, y_range=(0.0, 0.0))
+    # Extrahiere 2D Daten (direkt, kein extract_subvolume nötig bei 2D)
+    x_vec = data.x.val[:,1,1]
+    z_vec = data.z.val[1,1,:]
     
-    x_vec = data_2D.fields.x[:, 1, 1]
-    z_vec = data_2D.fields.z[1, 1, :]
-    
-    Phase_2D = permutedims(data_2D.fields.phase[:, 1, :], (2, 1))
-    vx_2D = permutedims(data_2D.fields.velocity[1][:, 1, :], (2, 1))
-    vz_2D = permutedims(data_2D.fields.velocity[3][:, 1, :], (2, 1))
+    Phase_2D = data.fields.phase[:,1,:]'  # Transpose für (z, x) → (x, z)
+    vx_2D = data.fields.velocity[1][:,1,:]'
+    vz_2D = data.fields.velocity[3][:,1,:]'
     
     # Stokes-Geschwindigkeit (placeholder - wird später aus stokes_analytical.jl berechnet)
     v_stokes = 0.01  # Temporär
@@ -345,7 +339,7 @@ function generate_dataset(
         end
     end
     
-    verbose && println("\n✅ Dataset: $(length(dataset))/$n_samples erfolgreich generiert")
+    verbose && println("\n Dataset: $(length(dataset))/$n_samples erfolgreich generiert")
     
     return dataset
 end
