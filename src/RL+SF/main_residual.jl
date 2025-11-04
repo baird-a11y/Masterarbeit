@@ -3,6 +3,8 @@
 # =============================================================================
 # Kombiniert alle Module für vollständiges Training
 
+using Dates
+
 println("="^80)
 println("RESIDUAL LEARNING + STREAM FUNCTION - MAIN")
 println("="^80)
@@ -277,9 +279,7 @@ end
 # 6. AUTO-EXECUTION MODE
 # =============================================================================
 
-"""
-Automatischer Modus wenn direkt ausgeführt
-"""
+
 if abspath(PROGRAM_FILE) == @__FILE__
     println("\n Direkter Aufruf erkannt - Starte Standard Training")
     model, state, config = run_standard_training()

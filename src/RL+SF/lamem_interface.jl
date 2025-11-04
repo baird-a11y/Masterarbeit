@@ -8,7 +8,7 @@ using LaMEM
 using GeophysicalModelGenerator
 using Statistics
 
-println("LaMEM Interface (Clean) wird geladen...")
+println("LaMEM Interface wird geladen...")
 
 # =============================================================================
 # DATENSTRUKTUREN
@@ -56,7 +56,7 @@ function LaMEM_Multi_crystal(;
 )
     # ERZWINGE 256x256
     if resolution != (256, 256)
-        verbose && println("Auflösung $resolution wird ignoriert - verwende immer 256x256")
+        verbose && println("⚠️  Auflösung $resolution wird ignoriert - verwende immer 256x256")
         resolution = (256, 256)
     end
     
@@ -76,8 +76,7 @@ function LaMEM_Multi_crystal(;
     x_range = (-0.5, 0.5)
     z_range = (0.0, 1.0)
     
-    # Grid erstellen
-    grid = read_LaMEM_inputfile("test_files/SaltModels.dat")
+    # Grid erstellen (direkt ohne Input-File)
     grid = create_CartGrid(;
         size=(x_range[2] - x_range[1], 1.0, z_range[2] - z_range[1]),
         x=x_range,
@@ -346,7 +345,7 @@ function generate_dataset(
         end
     end
     
-    verbose && println("\n Dataset: $(length(dataset))/$n_samples erfolgreich generiert")
+    verbose && println("\n✅ Dataset: $(length(dataset))/$n_samples erfolgreich generiert")
     
     return dataset
 end
