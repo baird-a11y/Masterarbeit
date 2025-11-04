@@ -173,7 +173,7 @@ function compute_aggregated_statistics(results::Vector{ResidualEvaluationResult}
     valid_results = filter(r -> r.mae_with_residual < 900.0, results)
     
     if isempty(valid_results)
-        return compute_aggregated_statistics([])  # Rekursion mit leerem Array
+        return compute_aggregated_statistics(ResidualEvaluationResult[])  # Type-korrekt!
     end
     
     # Vektorisierte Extraktion

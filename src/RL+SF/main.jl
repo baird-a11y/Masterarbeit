@@ -32,7 +32,7 @@ println("Alle Module erfolgreich geladen!")
 
 const SERVER_CONFIG = (
     target_crystal_count = 10,
-    n_training_samples = 400,
+    n_training_samples = 600,
     num_epochs = 50,
     target_resolution = 256,
     learning_rate = 0.0005f0,

@@ -40,7 +40,7 @@ catch e
     println("  ✗ Data Processing FEHLER: $e")
     error("Kann nicht ohne Data Processing fortfahren!")
 end
-
+include("stokes_analytical.jl")
 # UNet Architecture
 try
     include("unet_architecture.jl")
@@ -56,6 +56,7 @@ try
 catch e
     println("  ⚠ Evaluate Model nicht gefunden (optional): $e")
 end
+# Im REPL:
 
 println()
 
@@ -315,23 +316,28 @@ println("  ✓ generate_crystal_sample verbunden")
 """
 Wrapper: load_trained_model
 """
+# KORRIGIERTE Load-Funktion
 function load_trained_model(model_path::String)
+    println("Lade Modell: $model_path")
+    
     if !isfile(model_path)
-        error("Modell nicht gefunden: $model_path")
+        error("Modelldatei nicht gefunden: $model_path")
     end
     
-    # Lade mit BSON
     data = BSON.load(model_path)
     
-    # ANPASSEN: Falls dein Modell anders gespeichert ist
-    if haskey(data, "model")
-        return data["model"]
-    elseif haskey(data, "trained_model")
-        return data["trained_model"]
-    else
-        # Fallback: Nimm ersten Schlüssel
-        return first(values(data))
+    # EXPLIZIT :model verwenden
+    if haskey(data, :model)
+        model = data[:model]
+        println("✓ Modell geladen: $(typeof(model))")
+        return model
+    elseif haskey(data, "model")  # String-Key als Fallback
+        model = data["model"]
+        println("✓ Modell geladen: $(typeof(model))")
+        return model
     end
+    
+    error("Key :model nicht in BSON gefunden! Keys: $(keys(data))")
 end
 
 println("  ✓ load_trained_model verbunden")
