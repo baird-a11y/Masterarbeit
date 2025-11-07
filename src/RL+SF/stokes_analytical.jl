@@ -161,8 +161,9 @@ function compute_stokes_velocity_field(
             ρ_crystal, ρ_matrix, η, g
         )
         
-        vx_total .+= vx_single
-        vz_total .+= vz_single
+        # OHNE Mutation - Zygote-kompatibel
+        vx_total = vx_total .+ vx_single
+        vz_total = vz_total .+ vz_single
     end
     
     # Berechne typische Stokes-Geschwindigkeit (für Normalisierung)
