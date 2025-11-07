@@ -48,7 +48,7 @@ function residual_loss(
     v_target::AbstractArray{T,4};
     λ_residual::Float32 = 0.01f0,
     λ_divergence::Float32 = 0.1f0,
-    use_stream_function::Bool = false
+    use_stream_function::Bool = true
 ) where T
     
     # 1. Velocity Loss (Haupt-Ziel)
