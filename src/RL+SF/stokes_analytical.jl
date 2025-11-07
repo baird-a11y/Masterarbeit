@@ -97,8 +97,8 @@ function stokes_single_sphere(
             v_θ = -v_stokes * sin_θ * (1.0 - 0.75 * R_over_r - 0.25 * R3_over_r3)
             
             # Umrechnung zu kartesischen Koordinaten
-            vx[i] = v_r * sin_θ + v_θ * cos_θ
-            vz[i] = v_r * cos_θ - v_θ * sin_θ
+            vx = [compute_vx(i) for i in eachindex(x_grid)]
+            vz = [compute_vz(i) for i in eachindex(z_grid)]
         else
             # Innerhalb der Sphäre: Rigid Body Motion
             # (Sphäre bewegt sich als Ganzes mit v_stokes nach unten)
