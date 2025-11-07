@@ -1,14 +1,13 @@
 # =============================================================================
-# LAMEM INTERFACE (256x256 only)
+# LAMEM INTERFACE - CLEAN VERSION (256x256 only)
 # =============================================================================
-# Residual Learning + Stream Function Pipeline
-# Nur feste 256x256 Auflösung, keine dynamischen Größen
+# Basiert auf funktionierender alter LaMEM API
 
 using LaMEM
 using GeophysicalModelGenerator
 using Statistics
 
-println("LaMEM Interface wird geladen...")
+println("LaMEM Interface (Clean) wird geladen...")
 
 # =============================================================================
 # DATENSTRUKTUREN
@@ -18,13 +17,12 @@ println("LaMEM Interface wird geladen...")
     CrystalParams
 
 Kristall-Parameter für Stokes-Berechnung.
-Extrahiert aus Phasenfeld.
 """
 struct CrystalParams
-    center_x::Float64      # Zentrum X-Koordinate (physikalisch, z.B. -0.5 bis 0.5)
-    center_z::Float64      # Zentrum Z-Koordinate (physikalisch)
-    radius::Float64        # Radius in physikalischen Einheiten
-    density::Float64       # Dichte (optional, default aus LaMEM)
+    center_x::Float64
+    center_z::Float64
+    radius::Float64
+    density::Float64
 end
 
 # =============================================================================
@@ -35,13 +33,13 @@ end
     LaMEM_Multi_crystal(; kwargs...)
 
 Generiert LaMEM Simulation mit mehreren Kristallen.
-IMMER 256x256 Auflösung (nel = 255,255).
+IMMER 256x256 Auflösung.
 
 # Arguments
-- `resolution::Tuple{Int,Int}`: FEST (256, 256) - ignoriert wenn anders
+- `resolution::Tuple{Int,Int}`: Wird ignoriert - immer (256, 256)
 - `n_crystals::Int`: Anzahl Kristalle (1-15 empfohlen)
-- `radius_crystal::Vector{Float64}`: Radius pro Kristall (default: [0.05])
-- `cen_2D::Vector{Tuple{Float64,Float64}}`: Zentren [(x,z), ...] (default: random)
+- `radius_crystal::Vector{Float64}`: Radius pro Kristall
+- `cen_2D::Vector{Tuple{Float64,Float64}}`: Zentren [(x,z), ...]
 - `verbose::Bool`: Ausgabe aktivieren
 
 # Returns
@@ -56,8 +54,7 @@ function LaMEM_Multi_crystal(;
 )
     # ERZWINGE 256x256
     if resolution != (256, 256)
-        verbose && println("Auflösung $resolution wird ignoriert - verwende immer 256x256")
-        resolution = (256, 256)
+        verbose && println("WARNUNG: Auflösung $resolution wird ignoriert - verwende immer 256x256")
     end
     
     # Parameter-Validierung
@@ -72,30 +69,31 @@ function LaMEM_Multi_crystal(;
     # LaMEM Grid: nel = 255 → 256 Knoten
     nel = (255, 255)
     
-    # Physikalische Domain
-    x_range = (-0.5, 0.5)
-    z_range = (0.0, 1.0)
+    # Material-Eigenschaften
+    η_magma = 1e21
+    ρ_magma = 2800.0
+    ρ_crystal = 3300.0
+    η_crystal = 1e21
     
-    # Material-Eigenschaften (ALTE API)
     matrix = Phase(
         ID=0,
         Name="Matrix",
-        rho=2800.0,
-        eta=1e21,
+        rho=ρ_magma,
+        eta=η_magma,
         G=1e10
     )
     
     crystal = Phase(
         ID=1,
         Name="Crystal",
-        rho=3300.0,
-        eta=1e21,
+        rho=ρ_crystal,
+        eta=η_crystal,
         G=1e10
     )
     
-    # LaMEM Model (ALTE API)
+    # LaMEM Model erstellen (ALTE API)
     model = Model(
-        Grid(nel=nel, x=[x_range[1], x_range[2]], z=[z_range[1], z_range[2]]),
+        Grid(nel=nel, x=[-1.0, 1.0], z=[-1.0, 1.0]),
         LaMEM.Time(nstep_max=1),
         Solver(SolverType="direct", DirectPenalty=1e5),
         BoundaryConditions(
@@ -106,47 +104,42 @@ function LaMEM_Multi_crystal(;
         Output(out_density=1, out_velocity=1)
     )
     
-    # Füge Phases zum Model hinzu
+    # Füge Phases hinzu
     add_phase!(model, crystal, matrix)
     
-    # Phasenfeld und Temperatur
-    Phase = fill(1.0, nel[1] + 1, nel[2] + 1)
-    Temp = fill(1000.0, nel[1] + 1, nel[2] + 1)
-    
-    # Kristalle hinzufügen zum Phasenfeld
+    # Füge Kristalle hinzu
     for i in 1:n_crystals
         cen_x, cen_z = cen_2D[i]
         r = radius_crystal[i]
         
-        # Füge Sphäre zum Model hinzu
         add_sphere!(model, 
             cen=(cen_x, 0.0, cen_z), 
             radius=r, 
-            phase=ConstantPhase(1))  # Phase ID 1 = Crystal
+            phase=ConstantPhase(1))
     end
     
-    # Simulation ausführen
-    verbose && println("LaMEM Simulation läuft ($n_crystals Kristalle)...")
+    # Run LaMEM
+    verbose && println("LaMEM Simulation laeuft ($n_crystals Kristalle)...")
     
-    run_lamem(model, 1, "-nstep_max 1")
+    run_lamem(model, 1)
     
     verbose && println("LaMEM Simulation abgeschlossen")
     
-    # Output laden (ALTE API)
+    # Load results (ALTE API)
     data, _ = read_LaMEM_timestep(model, 1)
     
-    # Extrahiere 2D Daten (direkt, kein extract_subvolume nötig bei 2D)
+    # Extract 2D data
     x_vec = data.x.val[:,1,1]
     z_vec = data.z.val[1,1,:]
     
-    Phase_2D = data.fields.phase[:,1,:]'  # Transpose für (z, x) → (x, z)
+    Phase_2D = data.fields.phase[:,1,:]'  # Transpose für korrekte Orientierung
     vx_2D = data.fields.velocity[1][:,1,:]'
     vz_2D = data.fields.velocity[3][:,1,:]'
     
-    # Stokes-Geschwindigkeit (placeholder - wird später aus stokes_analytical.jl berechnet)
-    v_stokes = 0.01  # Temporär
+    # Stokes velocity (placeholder)
+    v_stokes = 0.01
     
-    verbose && println("Output: $(size(Phase_2D)) (sollte 256x256 sein)")
+    verbose && println("📊 Output: $(size(Phase_2D)) (sollte 256x256 sein)")
     
     return x_vec, z_vec, Phase_2D, vx_2D, vz_2D, v_stokes
 end
@@ -156,27 +149,23 @@ end
 # =============================================================================
 
 """
-    extract_crystal_params(phase_field::AbstractArray, x_vec, z_vec)
+    extract_crystal_params(phase_field, x_vec, z_vec)
 
-Extrahiert Kristall-Parameter aus Phasenfeld für Stokes-Berechnung.
-Verwendet Clustering-basierte Kristall-Erkennung.
+Extrahiert Kristall-Parameter aus Phasenfeld.
 
-# Returns
-- `Vector{CrystalParams}`: Liste aller erkannten Kristalle
+WICHTIG: Phase ist kontinuierlich (0.0 - 1.0 = Phase-Fraktion)!
+Wir nutzen einen Threshold um Kristalle zu identifizieren.
 """
 function extract_crystal_params(
     phase_field::AbstractArray{T,2},
     x_vec::AbstractVector,
     z_vec::AbstractVector;
-    crystal_phase::Int = 2,
+    crystal_threshold::Float64 = 0.5,  # Phase > 0.5 ist Kristall
     min_size::Int = 50
 ) where T
     
-    # Binäre Maske (Kristall vs. Matrix)
-    crystal_mask = phase_field .== crystal_phase
-    
-    # Connected Components (einfache Implementierung)
-    # TODO: Für Production ImageMorphology.label_components nutzen
+    # Binäre Maske mit Threshold (kontinuierliche Phase!)
+    crystal_mask = phase_field .> crystal_threshold
     
     params = CrystalParams[]
     
@@ -186,22 +175,22 @@ function extract_crystal_params(
     
     for i in 1:H, j in 1:W
         if crystal_mask[i, j] && !visited[i, j]
-            # Neue Komponente gefunden
+            # Neue Komponente
             blob_pixels = find_connected_blob(crystal_mask, visited, i, j)
             
             if length(blob_pixels) >= min_size
-                # Berechne Zentrum und Radius
+                # Zentrum und Radius
                 z_indices = [p[1] for p in blob_pixels]
                 x_indices = [p[2] for p in blob_pixels]
                 
                 center_i = mean(z_indices)
                 center_j = mean(x_indices)
                 
-                # Konvertiere zu physikalischen Koordinaten
+                # Zu physikalischen Koordinaten
                 center_x = x_vec[round(Int, center_j)]
                 center_z = z_vec[round(Int, center_i)]
                 
-                # Radius schätzen (Durchmesser / 2)
+                # Radius
                 radius = sqrt(length(blob_pixels) / π) * (x_vec[2] - x_vec[1])
                 
                 push!(params, CrystalParams(
@@ -215,7 +204,7 @@ function extract_crystal_params(
 end
 
 """
-Helper: Finde zusammenhängende Blob-Pixel (Flood-Fill)
+Flood-Fill Helper
 """
 function find_connected_blob(mask, visited, start_i, start_j)
     H, W = size(mask)
@@ -236,7 +225,7 @@ function find_connected_blob(mask, visited, start_i, start_j)
         visited[i, j] = true
         push!(pixels, (i, j))
         
-        # 4-connected Nachbarn
+        # 4-connected
         push!(stack, (i+1, j))
         push!(stack, (i-1, j))
         push!(stack, (i, j+1))
@@ -254,15 +243,6 @@ end
     generate_dataset(n_samples; kwargs...)
 
 Generiert Dataset für Residual Learning.
-IMMER 256x256 Auflösung.
-
-# Arguments
-- `n_samples::Int`: Anzahl Samples
-- `crystal_range::UnitRange{Int}`: Kristall-Anzahl Range (default: 1:10)
-- `verbose::Bool`: Progress-Ausgabe
-
-# Returns
-- `Vector{Tuple}`: [(phase, crystal_params, velocity, x_vec, z_vec), ...]
 """
 function generate_dataset(
     n_samples::Int;
@@ -278,17 +258,16 @@ function generate_dataset(
     for i in 1:n_samples
         n_crystals = rand(crystal_range)
         
-        # Random Kristall-Konfiguration
+        # Random Konfiguration
         radius_crystal = [rand(0.03:0.01:0.07) for _ in 1:n_crystals]
         
         centers = Tuple{Float64,Float64}[]
         for j in 1:n_crystals
-            # Random Platzierung mit Mindestabstand
             attempts = 0
             while length(centers) < j && attempts < 100
                 new_center = (rand(-0.3:0.1:0.3), rand(0.3:0.1:0.7))
                 
-                # Prüfe Mindestabstand
+                # Check Mindestabstand
                 too_close = any(centers) do c
                     dist = sqrt((c[1] - new_center[1])^2 + (c[2] - new_center[2])^2)
                     dist < 0.15
@@ -319,8 +298,8 @@ function generate_dataset(
             # Extrahiere Kristall-Parameter
             crystal_params = extract_crystal_params(phase, x_vec, z_vec)
             
-            # Velocity Stack (vx, vz)
-            velocity = cat(vx, vz, dims=3)  # [H, W, 2]
+            # Velocity Stack
+            velocity = cat(vx, vz, dims=3)
             
             sample = (phase, crystal_params, velocity, x_vec, z_vec)
             push!(dataset, sample)
@@ -339,7 +318,7 @@ function generate_dataset(
         end
     end
     
-    verbose && println("\n Dataset: $(length(dataset))/$n_samples erfolgreich generiert")
+    verbose && println("\nDataset: $(length(dataset))/$n_samples erfolgreich generiert")
     
     return dataset
 end
@@ -349,7 +328,7 @@ end
 # =============================================================================
 
 println("LaMEM Interface (Clean) geladen!")
-println("   - Feste 256x256 Auflösung")
+println("   - Feste 256x256 Aufloesung")
 println("   - Multi-Kristall Support (1-15)")
 println("   - Kristall-Parameter Extraktion")
 println("")

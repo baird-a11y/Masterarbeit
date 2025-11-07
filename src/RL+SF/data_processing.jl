@@ -212,6 +212,50 @@ function create_batch(samples::Vector)
 end
 
 # =============================================================================
+# NORMALISIERUNG VON STOKES-FELDERN
+# =============================================================================
+
+"""
+    normalize_stokes_field(v_stokes, stats_batch)
+
+Normalisiert Stokes-Geschwindigkeitsfeld mit denselben Stats wie Target.
+
+WICHTIG: Komplett nicht-mutierend für Zygote-Kompatibilität!
+
+# Arguments
+- `v_stokes::AbstractArray{T,4}`: Stokes-Feld [H, W, 2, B]
+- `stats_batch::Vector`: [(vx_stats, vz_stats), ...] pro Batch
+
+# Returns
+- `AbstractArray{T,4}`: Normalisiertes Stokes-Feld
+"""
+function normalize_stokes_field(
+    v_stokes::AbstractArray{T,4},
+    stats_batch::Vector
+) where T
+    H, W, _, B = size(v_stokes)
+    
+    # Nicht-mutierend: List comprehension für jeden Batch
+    v_normalized_list = [
+        begin
+            vx_stats, vz_stats = stats_batch[b]
+            μx, σx = vx_stats
+            μz, σz = vz_stats
+            
+            # Erstelle normalisiertes Array für diesen Batch
+            vx_norm = (v_stokes[:, :, 1, b] .- μx) ./ σx
+            vz_norm = (v_stokes[:, :, 2, b] .- μz) ./ σz
+            
+            cat(vx_norm, vz_norm, dims=3)
+        end
+        for b in 1:B
+    ]
+    
+    # Concatenate entlang Batch-Dimension
+    return cat(v_normalized_list..., dims=4)
+end
+
+# =============================================================================
 # POST-PROCESSING
 # =============================================================================
 

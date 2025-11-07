@@ -9,6 +9,7 @@ using BSON
 using Statistics
 using Printf
 using Dates
+using Random  # Für randperm()
 
 println("Residual Training wird geladen...")
 
@@ -178,7 +179,7 @@ function train_residual_unet(; config::TrainingConfig=default_training_config())
     println("Val Samples: $(length(val_data))")
     
     # 2. Model Setup
-    println("\n MODEL SETUP")
+    println("\n  MODEL SETUP")
     println("-"^60)
     
     # Grid info (von erstem Sample)
@@ -197,7 +198,7 @@ function train_residual_unet(; config::TrainingConfig=default_training_config())
     println("  Parameters: $(sum(length, Flux.params(model)))")
     
     # 3. Optimizer Setup
-    println("\n OPTIMIZER SETUP")
+    println("\n  OPTIMIZER SETUP")
     println("-"^60)
     
     if config.optimizer_type == :adam
@@ -339,7 +340,7 @@ function train_epoch!(model, train_data, opt_state, config, device)
         
         # Forward & Loss
         loss_val, grads = Flux.withgradient(model) do m
-            v_pred, v_stokes, Δv = m(phase_batch, crystal_params_batch, x_vec, z_vec)
+            v_pred, v_stokes, Δv = m(phase_batch, crystal_params_batch, x_vec, z_vec, stats_batch)
             
             total_loss, vel_loss, res_penalty, div_loss = residual_loss(
                 v_pred, v_stokes, Δv, velocity_batch;
@@ -354,22 +355,21 @@ function train_epoch!(model, train_data, opt_state, config, device)
         # Update
         Flux.update!(opt_state, model, grads[1])
         
-        # Track
+        # Track total loss
         push!(epoch_losses, loss_val)
         
-        # Detailed Metrics (periodisch)
-        if length(epoch_losses) % 10 == 0
-            v_pred, v_stokes, Δv = model(phase_batch, crystal_params_batch, x_vec, z_vec)
-            _, vel, res, div = residual_loss(
-                v_pred, v_stokes, Δv, velocity_batch;
-                λ_residual=config.λ_residual,
-                λ_divergence=config.λ_divergence,
-                use_stream_function=config.use_stream_function
-            )
-            push!(epoch_vel_losses, vel)
-            push!(epoch_res_penalties, res)
-            push!(epoch_div_losses, div)
-        end
+        # Track Komponenten (außerhalb Gradient-Kontext)
+        # Berechne Komponenten außerhalb von withgradient
+        v_pred_track, v_stokes_track, Δv_track = model(phase_batch, crystal_params_batch, x_vec, z_vec, stats_batch)
+        _, vel, res, div = residual_loss(
+            v_pred_track, v_stokes_track, Δv_track, velocity_batch;
+            λ_residual=config.λ_residual,
+            λ_divergence=config.λ_divergence,
+            use_stream_function=config.use_stream_function
+        )
+        push!(epoch_vel_losses, vel)
+        push!(epoch_res_penalties, res)
+        push!(epoch_div_losses, div)
     end
     
     avg_loss = mean(epoch_losses)
@@ -406,7 +406,7 @@ function validate_epoch(model, val_data, config, device)
         end
         
         batch_samples = [val_data[idx] for idx in batch_indices]
-        phase_batch, velocity_batch, crystal_params_batch, _ = create_batch(batch_samples)
+        phase_batch, velocity_batch, crystal_params_batch, stats_batch = create_batch(batch_samples)
         
         phase_batch = device(phase_batch)
         velocity_batch = device(velocity_batch)
@@ -414,7 +414,7 @@ function validate_epoch(model, val_data, config, device)
         _, _, _, x_vec, z_vec = batch_samples[1]
         
         # Forward (no gradients)
-        v_pred, v_stokes, Δv = model(phase_batch, crystal_params_batch, x_vec, z_vec)
+        v_pred, v_stokes, Δv = model(phase_batch, crystal_params_batch, x_vec, z_vec, stats_batch)
         
         total_loss, vel_loss, res_penalty, div_loss = residual_loss(
             v_pred, v_stokes, Δv, velocity_batch;
@@ -477,7 +477,7 @@ end
 Gibt Konfiguration formatiert aus.
 """
 function print_config(config)
-    println(" TRAINING CONFIGURATION")
+    println("TRAINING CONFIGURATION")
     println("-"^60)
     println("Dataset:")
     println("  Samples: $(config.n_samples)")

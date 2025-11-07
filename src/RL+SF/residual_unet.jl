@@ -9,6 +9,7 @@
 
 using Flux
 using CUDA
+using Zygote  # Für @ignore Makro
 
 println("ResidualUNet wird geladen...")
 
@@ -44,16 +45,20 @@ function adapt_skip_dimensions_safe(skip_features, decoder_features)
     else
         T = eltype(skip_features)
         
+        h_copy = min(current_h, target_h)
+        w_copy = min(current_w, target_w)
+        
+        # Zygote-safe: Padding mit @ignore (keine trainierbaren Parameter hier)
         if isa(skip_features, CuArray)
             padded = CUDA.zeros(T, target_h, target_w, skip_size[3], skip_size[4])
         else
             padded = zeros(T, target_h, target_w, skip_size[3], skip_size[4])
         end
         
-        h_copy = min(current_h, target_h)
-        w_copy = min(current_w, target_w)
-        
-        @views padded[1:h_copy, 1:w_copy, :, :] .= skip_features[1:h_copy, 1:w_copy, :, :]
+        # @ignore weil Padding keine trainierbaren Parameter hat
+        Zygote.@ignore begin
+            @views padded[1:h_copy, 1:w_copy, :, :] .= skip_features[1:h_copy, 1:w_copy, :, :]
+        end
         
         return padded
     end
@@ -311,7 +316,7 @@ function create_residual_unet(;
         # Import hier statt global (falls Modul geladen)
         try
             sf_layer = StreamFunctionLayer(Δx, Δz, method=:central)
-            println("✅ Stream Function aktiviert")
+            println("Stream Function aktiviert")
             return ResidualUNet(base_unet, sf_layer, true)
         catch e
             @warn "Stream Function Layer nicht verfügbar: $e"
@@ -326,56 +331,57 @@ function create_residual_unet(;
 end
 
 """
-    (model::ResidualUNet)(phase_field, crystal_params, x_vec, z_vec)
+    (model::ResidualUNet)(phase_field, crystal_params, x_vec, z_vec, stats_batch)
 
 Forward-Pass: Berechnet Gesamtgeschwindigkeit aus Phase + Crystal Params.
 
+WICHTIG: v_stokes wird mit denselben Stats normalisiert wie v_target!
+
 # Flow
-1. Stokes Baseline: v_stokes = f(crystal_params)
-2. UNet Residuum: Δv oder Δψ = UNet(phase_field)
-3. Optional Stream Function: Δv = curl(Δψ)
-4. Total: v_total = v_stokes + Δv
+1. Stokes Baseline: v_stokes = f(crystal_params) [physikalische Werte]
+2. Normalisiere v_stokes mit Stats von v_target
+3. UNet Residuum: Δv oder Δψ = UNet(phase_field)
+4. Optional Stream Function: Δv = curl(Δψ)
+5. Total: v_total = v_stokes_norm + Δv
 
 # Arguments
 - `phase_field::AbstractArray{T,4}`: Phasenfeld [H, W, 1, B]
 - `crystal_params::Vector`: Liste von CrystalParams pro Batch
 - `x_vec::AbstractVector`: X-Koordinaten
 - `z_vec::AbstractVector`: Z-Koordinaten
+- `stats_batch::Vector`: Normalisierungs-Stats [(vx_stats, vz_stats), ...]
 
 # Returns
-- `Tuple`: (v_total, v_stokes, Δv)
-  - v_total: Gesamtgeschwindigkeit [H, W, 2, B]
-  - v_stokes: Analytische Baseline [H, W, 2, B]
+- `Tuple`: (v_total, v_stokes_norm, Δv)
+  - v_total: Gesamtgeschwindigkeit [H, W, 2, B] (normalisiert!)
+  - v_stokes_norm: Normalisierte Stokes-Baseline [H, W, 2, B]
   - Δv: Gelerntes Residuum [H, W, 2, B]
 """
 function (model::ResidualUNet)(
     phase_field::AbstractArray{T,4},
     crystal_params::Vector,
     x_vec::AbstractVector,
-    z_vec::AbstractVector
+    z_vec::AbstractVector,
+    stats_batch::Vector
 ) where T
     
     batch_size = size(phase_field, 4)
     H, W = size(phase_field)[1:2]
     
-    # 1. Berechne Stokes-Baseline für jeden Batch
-    # Note: Diese Funktion kommt aus stokes_analytical.jl
-    v_stokes_batch = zeros(T, H, W, 2, batch_size)
-    
-    for b in 1:batch_size
-        # Extrahiere Phase für diesen Batch
-        phase_b = phase_field[:, :, 1, b]
-        
-        # Berechne Stokes für diese Kristall-Konfiguration
-        v_stokes_b = compute_stokes_from_crystal_params(
-            phase_b,
+    # 1. Berechne Stokes-Baseline für jeden Batch (KOMPLETT NICHT-MUTIEREND!)
+    # List comprehension statt push!
+    v_stokes_batch = cat([
+        compute_stokes_from_crystal_params(
+            phase_field[:, :, 1, b],
             crystal_params[b],
             x_vec,
             z_vec
         )
-        
-        v_stokes_batch[:, :, :, b] .= v_stokes_b
-    end
+        for b in 1:batch_size
+    ]..., dims=4)
+    
+    # 1b. WICHTIG: Normalisiere v_stokes mit denselben Stats wie v_target!
+    v_stokes_normalized = normalize_stokes_field(v_stokes_batch, stats_batch)
     
     # 2. UNet Forward Pass
     unet_output = model.base_unet(phase_field)
@@ -386,23 +392,23 @@ function (model::ResidualUNet)(
         Δv = model.stream_function_layer(unet_output)
         
         # Match Dimensionen (SF reduziert Größe durch Ableitungen)
-        # Crop v_stokes auf gleiche Größe
+        # Crop v_stokes_normalized auf gleiche Größe
         H_out, W_out = size(Δv)[1:2]
         h_start = (H - H_out) ÷ 2 + 1
         w_start = (W - W_out) ÷ 2 + 1
-        v_stokes_cropped = v_stokes_batch[h_start:(h_start+H_out-1), 
-                                          w_start:(w_start+W_out-1), :, :]
+        v_stokes_cropped = v_stokes_normalized[h_start:(h_start+H_out-1), 
+                                                w_start:(w_start+W_out-1), :, :]
         
-        v_stokes_batch = v_stokes_cropped
+        v_stokes_normalized = v_stokes_cropped
     else
         # Direktes Geschwindigkeitsfeld
         Δv = unet_output
     end
     
-    # 4. Total = Stokes + Residuum
-    v_total = v_stokes_batch .+ Δv
+    # 4. Total = Stokes_norm + Residuum (beide normalisiert!)
+    v_total = v_stokes_normalized .+ Δv
     
-    return v_total, v_stokes_batch, Δv
+    return v_total, v_stokes_normalized, Δv
 end
 
 # =============================================================================
@@ -496,7 +502,7 @@ function test_residual_unet_shapes(; use_stream_function=false)
         
         success = size(v_total) == size(v_stokes) == size(Δv)
         
-        println("\nShape Konsistenz: $(success ? "✅" : "❌")")
+        println("\nShape Konsistenz: $(success ? "Yes" : "No")")
         
         # Magnitude Check
         v_total_mag = mean(sqrt.(v_total[:,:,1,:].^2 .+ v_total[:,:,2,:].^2))
@@ -508,12 +514,12 @@ function test_residual_unet_shapes(; use_stream_function=false)
         println("  v_stokes: $(round(v_stokes_mag, digits=6))")
         println("  Δv: $(round(Δv_mag, digits=6))")
         
-        println("\n$(success ? "✅" : "❌") Test $(success ? "bestanden" : "fehlgeschlagen")")
+        println("\n$(success ? "Yes" : "No") Test $(success ? "bestanden" : "fehlgeschlagen")")
         
         return success, model
         
     catch e
-        println("❌ Test fehlgeschlagen: $e")
+        println("Test fehlgeschlagen: $e")
         showerror(stdout, e, catch_backtrace())
         return false, nothing
     end
