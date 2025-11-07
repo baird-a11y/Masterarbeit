@@ -70,42 +70,44 @@ function stokes_single_sphere(
     Δρ = ρ_crystal - ρ_matrix
     v_stokes = (2.0 / 9.0) * (Δρ * g * radius^2) / η
     
-    # Initialisiere Geschwindigkeitsfelder
-    vx = zeros(Float64, size(x_grid))
-    vz = zeros(Float64, size(z_grid))
-    
-    # Iteriere über Grid
-    for i in eachindex(x_grid)
-        # Relativposition zur Sphäre
+    # Helper: Berechne v_r und v_θ für einen Punkt
+    function compute_velocities(i)
         dx = x_grid[i] - center_x
         dz = z_grid[i] - center_z
-        
         r = sqrt(dx^2 + dz^2)
         
-        # Nur außerhalb der Sphäre (r > radius)
         if r > radius
-            # Polarwinkel θ (von z-Achse aus gemessen)
+            # Außerhalb: Stokes-Strömung
             cos_θ = dz / r
             sin_θ = dx / r
             
-            # Radiale und tangentiale Komponenten
             R_over_r = radius / r
             R3_over_r3 = (radius / r)^3
             
-            # Stokes-Strömung Komponenten
             v_r = v_stokes * cos_θ * (1.0 - 1.5 * R_over_r + 0.5 * R3_over_r3)
             v_θ = -v_stokes * sin_θ * (1.0 - 0.75 * R_over_r - 0.25 * R3_over_r3)
             
-            # Umrechnung zu kartesischen Koordinaten
-            vx[i] = v_r * sin_θ + v_θ * cos_θ
-            vz[i] = v_r * cos_θ - v_θ * sin_θ
+            # Kartesische Komponenten
+            vx_val = v_r * sin_θ + v_θ * cos_θ
+            vz_val = v_r * cos_θ - v_θ * sin_θ
+            
+            return (vx_val, vz_val)
         else
-            # Innerhalb der Sphäre: Rigid Body Motion
-            # (Sphäre bewegt sich als Ganzes mit v_stokes nach unten)
-            vx[i] = 0.0
-            vz[i] = -v_stokes
+            # Innerhalb: Rigid Body Motion
+            return (0.0, -v_stokes)
         end
     end
+    
+    # Berechne alle Punkte auf einmal
+    velocities = map(compute_velocities, eachindex(x_grid))
+    
+    # Extrahiere vx und vz (behält Shape bei)
+    vx = [v[1] for v in velocities]
+    vz = [v[2] for v in velocities]
+    
+    # Reshape zurück zur Original-Dimension
+    vx = reshape(vx, size(x_grid))
+    vz = reshape(vz, size(z_grid))
     
     return vx, vz
 end
