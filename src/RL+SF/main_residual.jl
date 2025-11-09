@@ -54,7 +54,7 @@ function create_experiment_config(;
     # Loss
     λ_residual=0.01f0,
     λ_divergence=0.1f0,
-    use_stream_function=false,
+    use_stream_function=true,
     
     # Other
     patience=15,
@@ -83,7 +83,7 @@ function create_experiment_config(;
         10,  # save_every
         checkpoint_dir,
         
-        true  # use_gpu (wenn verfügbar)
+        false  # use_gpu (wenn verfügbar)
     )
 end
 
@@ -102,7 +102,7 @@ function run_baseline_experiment()
     config = create_experiment_config(
         n_samples=100,
         epochs=50,
-        use_stream_function=false,
+        use_stream_function=true,
         checkpoint_dir="results/baseline"
     )
     
@@ -305,3 +305,4 @@ println()
 println("="^80)
 println("MAIN GELADEN - BEREIT FÜR TRAINING!")
 println("="^80)
+run_quick_test()
