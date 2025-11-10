@@ -298,6 +298,28 @@ function train_residual_unet(; config::TrainingConfig=default_training_config())
     return cpu(model), state
 end
 
+"""
+Crop target auf die gleiche Größe wie prediction (für Stream Function).
+"""
+function match_target_to_prediction(target, prediction)
+    H_pred, W_pred = size(prediction, 1), size(prediction, 2)
+    H_tgt, W_tgt = size(target, 1), size(target, 2)
+    
+    if H_pred == H_tgt && W_pred == W_tgt
+        return target
+    end
+    
+    # Zentral croppen
+    h_start = div(H_tgt - H_pred, 2) + 1
+    w_start = div(W_tgt - W_pred, 2) + 1
+    
+    return target[
+        h_start:h_start+H_pred-1,
+        w_start:w_start+W_pred-1,
+        :, :
+    ]
+end
+
 # =============================================================================
 # TRAINING EPOCH
 # =============================================================================
@@ -342,8 +364,11 @@ function train_epoch!(model, train_data, opt_state, config, device)
         loss_val, grads = Flux.withgradient(model) do m
             v_pred, v_stokes, Δv = m(phase_batch, crystal_params_batch, x_vec, z_vec, stats_batch)
             
+            # ============ STELLE 1: Crop Target ============
+            velocity_batch_matched = match_target_to_prediction(velocity_batch, v_pred)
+            
             total_loss, vel_loss, res_penalty, div_loss = residual_loss(
-                v_pred, v_stokes, Δv, velocity_batch;
+                v_pred, v_stokes, Δv, velocity_batch_matched;  # ← HIER
                 λ_residual=config.λ_residual,
                 λ_divergence=config.λ_divergence,
                 use_stream_function=config.use_stream_function
@@ -359,10 +384,13 @@ function train_epoch!(model, train_data, opt_state, config, device)
         push!(epoch_losses, loss_val)
         
         # Track Komponenten (außerhalb Gradient-Kontext)
-        # Berechne Komponenten außerhalb von withgradient
         v_pred_track, v_stokes_track, Δv_track = model(phase_batch, crystal_params_batch, x_vec, z_vec, stats_batch)
+        
+        # ============ STELLE 2: Crop Target (nochmal) ============
+        velocity_batch_matched = match_target_to_prediction(velocity_batch, v_pred_track)
+        
         _, vel, res, div = residual_loss(
-            v_pred_track, v_stokes_track, Δv_track, velocity_batch;
+            v_pred_track, v_stokes_track, Δv_track, velocity_batch_matched;  # ← HIER
             λ_residual=config.λ_residual,
             λ_divergence=config.λ_divergence,
             use_stream_function=config.use_stream_function
@@ -416,8 +444,11 @@ function validate_epoch(model, val_data, config, device)
         # Forward (no gradients)
         v_pred, v_stokes, Δv = model(phase_batch, crystal_params_batch, x_vec, z_vec, stats_batch)
         
+        # ============ Crop Target ============
+        velocity_batch_matched = match_target_to_prediction(velocity_batch, v_pred)
+        
         total_loss, vel_loss, res_penalty, div_loss = residual_loss(
-            v_pred, v_stokes, Δv, velocity_batch;
+            v_pred, v_stokes, Δv, velocity_batch_matched;  # ← HIER
             λ_residual=config.λ_residual,
             λ_divergence=config.λ_divergence,
             use_stream_function=config.use_stream_function

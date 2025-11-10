@@ -122,8 +122,8 @@ function run_stream_function_experiment()
     println("="^80)
     
     config = create_experiment_config(
-        n_samples=10,
-        epochs=3,
+        n_samples=100,
+        epochs=50,
         use_stream_function=true,
         learning_rate=0.0001f0,
         λ_divergence=0.0f0,  # Nicht nötig mit SF
