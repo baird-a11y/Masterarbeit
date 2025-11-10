@@ -38,7 +38,16 @@ struct StreamFunctionLayer{T<:Real}
     Δz::T
     method::Symbol
     
+    # Haupt-Konstruktor (mit Keyword)
     function StreamFunctionLayer(Δx::T, Δz::T; method::Symbol=:central) where T<:Real
+        if method ∉ [:central, :forward, :backward]
+            error("method muss :central, :forward oder :backward sein")
+        end
+        new{T}(Δx, Δz, method)
+    end
+    
+    # Zusätzlicher Konstruktor für Functors (mit positionellem Argument)
+    function StreamFunctionLayer(Δx::T, Δz::T, method::Symbol) where T<:Real
         if method ∉ [:central, :forward, :backward]
             error("method muss :central, :forward oder :backward sein")
         end
@@ -75,8 +84,24 @@ function (layer::StreamFunctionLayer)(ψ::AbstractArray{T,4}) where T
     vx = ∂z(ψ_2d, layer.Δz, layer.method)   # ∂ψ/∂z
     vz = .-∂x(ψ_2d, layer.Δx, layer.method)  # -∂ψ/∂x
     
-    # Stack zu [H', W', 2, B]
-    velocity = cat(vx, vz, dims=3)
+    # Dimensionen angleichen
+    if layer.method == :central
+        vx = vx[:, 2:end-1, :]  # [H-2, W-2, B]
+        vz = vz[2:end-1, :, :]  # [H-2, W-2, B]
+    elseif layer.method == :forward
+        vx = vx[:, 1:end-1, :]  # [H-1, W-1, B]
+        vz = vz[1:end-1, :, :]  # [H-1, W-1, B]
+    elseif layer.method == :backward
+        vx = vx[:, 2:end, :]
+        vz = vz[2:end, :, :]
+    end
+    
+    # === FIX: Füge Channel-Dimension hinzu ===
+    vx = reshape(vx, size(vx, 1), size(vx, 2), 1, size(vx, 3))  # [H', W', 1, B]
+    vz = reshape(vz, size(vz, 1), size(vz, 2), 1, size(vz, 3))  # [H', W', 1, B]
+    
+    # Jetzt cat entlang Kanal-Dimension
+    velocity = cat(vx, vz, dims=3)  # [H', W', 2, B] ✓
     
     return velocity
 end

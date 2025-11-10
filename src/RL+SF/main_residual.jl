@@ -48,7 +48,7 @@ function create_experiment_config(;
     
     # Training
     epochs=50,
-    batch_size=4,
+    batch_size=2,
     learning_rate=0.001f0,
     
     # Loss
@@ -102,7 +102,8 @@ function run_baseline_experiment()
     config = create_experiment_config(
         n_samples=100,
         epochs=50,
-        use_stream_function=true,
+        learning_rate=0.0001f0,
+        use_stream_function=false,
         checkpoint_dir="results/baseline"
     )
     
@@ -121,9 +122,10 @@ function run_stream_function_experiment()
     println("="^80)
     
     config = create_experiment_config(
-        n_samples=100,
-        epochs=50,
+        n_samples=10,
+        epochs=3,
         use_stream_function=true,
+        learning_rate=0.0001f0,
         λ_divergence=0.0f0,  # Nicht nötig mit SF
         checkpoint_dir="results/stream_function"
     )
@@ -171,7 +173,7 @@ function run_lambda_tuning_experiment()
     
     for λ_res in λ_values
         for λ_div in λ_values
-            println("\n🔧 Testing λ_residual=$λ_res, λ_divergence=$λ_div")
+            println("\n Testing λ_residual=$λ_res, λ_divergence=$λ_div")
             
             config = create_experiment_config(
                 n_samples=50,
@@ -280,14 +282,6 @@ end
 # =============================================================================
 
 
-if abspath(PROGRAM_FILE) == @__FILE__
-    println("\n Direkter Aufruf erkannt - Starte Standard Training")
-    model, state, config = run_standard_training()
-else
-    # Interactive Mode
-    show_interactive_menu()
-end
-
 # =============================================================================
 # 7. EXPORT WICHTIGER FUNKTIONEN
 # =============================================================================
@@ -305,4 +299,4 @@ println()
 println("="^80)
 println("MAIN GELADEN - BEREIT FÜR TRAINING!")
 println("="^80)
-run_quick_test()
+run_stream_function_experiment()
