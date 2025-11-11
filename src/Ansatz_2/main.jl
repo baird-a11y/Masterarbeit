@@ -14,6 +14,8 @@ include("data_generation_psi.jl")
 include("dataset_psi.jl")
 include("unet_psi.jl")
 include("training_psi.jl")
+include("evaluate_psi.jl")
+
 
 # Module verfügbar machen
 using .StreamFunctionPoisson
@@ -22,6 +24,9 @@ using .DataGenerationPsi
 using .DatasetPsi
 using .UNetPsi
 using .TrainingPsi
+using .EvaluatePsi
+
+
 
 # ================================
 # Konfiguration
@@ -31,14 +36,14 @@ using .TrainingPsi
 #   "debug_single"   → eine Simulation + ψ-Plot
 #   "generate_data"  → viele Samples als .jld2 speichern
 #   "train"          → U-Net auf Daten trainieren
-mode          = "train"
+mode          = "eval_single"
 
 # Zufall
 seed = 42
 rng  = MersenneTwister(seed)
 
 # Datengenerierung
-n_train   = 10              # nur benutzt, wenn mode == "generate_data"
+n_train   = 4              # nur benutzt, wenn mode == "generate_data"
 outdir    = "data_psi"      # Ordner für .jld2-Samples
 
 # Training
@@ -46,6 +51,11 @@ epochs        = 2
 batch_size    = 2
 learning_rate = 1e-4
 model_path    = "unet_psi.bson"
+
+# Eval
+eval_sample_idx = 1
+eval_prefix     = "eval_psi"
+
 
 @info "Starte main.jl im Modus: $mode"
 
@@ -100,6 +110,15 @@ elseif mode == "train"
                             lr=learning_rate,
                             rng=rng,
                             save_path=model_path)
+
+elseif mode == "eval_single"
+
+    @info "Evaluiere ein einzelnes Sample aus $outdir mit Modell $model_path"
+    EvaluatePsi.evaluate_single(; data_dir=outdir,
+                                model_path=model_path,
+                                sample_idx=eval_sample_idx,
+                                out_prefix=eval_prefix)
+
 
 else
     error("Unbekannter Modus: $mode")
