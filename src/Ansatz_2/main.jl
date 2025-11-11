@@ -31,7 +31,7 @@ using .TrainingPsi
 #   "debug_single"   → eine Simulation + ψ-Plot
 #   "generate_data"  → viele Samples als .jld2 speichern
 #   "train"          → U-Net auf Daten trainieren
-mode          = "train"
+mode          = "generate_data"
 
 # Zufall
 seed = 42
