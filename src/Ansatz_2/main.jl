@@ -31,7 +31,7 @@ using .TrainingPsi
 #   "debug_single"   → eine Simulation + ψ-Plot
 #   "generate_data"  → viele Samples als .jld2 speichern
 #   "train"          → U-Net auf Daten trainieren
-mode          = "generate_data"
+mode          = "train"
 
 # Zufall
 seed = 42
@@ -87,6 +87,11 @@ elseif mode == "debug_single"
     @info "Plot gespeichert als $filename"
 
 elseif mode == "train"
+
+    mkpath(outdir)
+    @info "Erzeuge $n_train Trainings-Samples in Ordner: $outdir"
+    DataGenerationPsi.generate_dataset(outdir; n_train=n_train, rng=rng)
+    @info "Datengenerierung abgeschlossen."
 
     @info "Starte Training auf Datensatz in $outdir"
     TrainingPsi.train_unet(; data_dir=outdir,
