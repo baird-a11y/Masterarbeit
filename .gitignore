@@ -33,3 +33,6 @@ src/RL+SF/Timestep_00000001_4.00000000e-02/output.pvtr
 src/RL+SF/Model3D.vts
 src/RL+SF/output.dat
 src/RL+SF/output.pvd
+src/Ansatz_2/data_psi/
+src/Ansatz_2/markers
+src/Ansatz_2/Timestep_*/

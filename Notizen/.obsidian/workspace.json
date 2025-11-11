@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Übersicht der Ziele der Masterarbeit.md",
+                "file": "Masterarbeit/Übersicht der Ziele der Masterarbeit.md",
                 "mode": "source",
                 "source": false
               },
@@ -171,8 +171,9 @@
   },
   "active": "19b98e63b925f11c",
   "lastOpenFiles": [
-    "Old/Arbeitsplan Residual Learning + Stream Function.md",
-    "Übersicht der Ziele der Masterarbeit.md",
+    "Masterarbeit/Zusammenfassung der drei Ansätze für Strömungsfeld-Vorhersage.md",
+    "Masterarbeit/Übersicht der Ziele der Masterarbeit.md",
+    "Masterarbeit/Old/Arbeitsplan Residual Learning + Stream Function.md",
     "Masterarbeit/Paper/Physics-informed neural networks A deep learning framework for solving forward and inverse problems involving nonlinear partial differential.md",
     "Masterarbeit/Paper/Comprehensive Literature List for Master's Thesis.md",
     "Masterarbeit/Paper/DeepCFD Efficient Steady-State Laminar Flow Approximation with Deep Convolutional Neural Networks.md",
@@ -180,10 +181,9 @@
     "Masterarbeit/Paper/Physics-based machine learning for mantle convection simulations.md",
     "Masterarbeit/Paper/Physics-informed machine learning.md",
     "Masterarbeit/Übersicht der Testläufe.md",
-    "Masterarbeit/Zusammenfassung der drei Ansätze für Strömungsfeld-Vorhersage.md",
-    "Old/Zwei Kristalle.md",
-    "Old",
-    "Old/Pasted image 20250815160612.png",
-    "Old/Pasted image 20250815160552.png"
+    "Masterarbeit/Old/Zwei Kristalle.md",
+    "Masterarbeit/Old",
+    "Masterarbeit/Old/Pasted image 20250815160612.png",
+    "Masterarbeit/Old/Pasted image 20250815160552.png"
   ]
 }
