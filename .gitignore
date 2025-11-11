@@ -36,3 +36,6 @@ src/RL+SF/output.pvd
 src/Ansatz_2/data_psi/
 src/Ansatz_2/markers
 src/Ansatz_2/Timestep_*/
+src/Ansatz_2/FS_vel_gradient.pvd
+src/Ansatz_2/Model3D.vts
+

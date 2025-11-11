@@ -32,7 +32,7 @@ using .TrainingPsi
 # mode:
 #   "debug_single"   → eine Simulation + ψ-Plot
 #   "generate_data"  → viele Samples als .jld2 speichern
-mode = "generate_data"          # für Server z.B. auf "generate_data" setzen
+mode = "debug_single"          # für Server z.B. auf "generate_data" setzen
 
 seed = 42
 rng  = MersenneTwister(seed)
