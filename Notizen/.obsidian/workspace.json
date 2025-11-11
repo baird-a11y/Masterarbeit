@@ -8,35 +8,20 @@
         "type": "tabs",
         "children": [
           {
-            "id": "e93ca2b7ffa954cc",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Masterarbeit/Paper/Physics-informed neural networks A deep learning framework for solving forward and inverse problems involving nonlinear partial differential.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Physics-informed neural networks A deep learning framework for solving forward and inverse problems involving nonlinear partial differential"
-            }
-          },
-          {
             "id": "19b98e63b925f11c",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Masterarbeit/Paper/Comprehensive Literature List for Master's Thesis.md",
+                "file": "Übersicht der Ziele der Masterarbeit.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Comprehensive Literature List for Master's Thesis"
+              "title": "Übersicht der Ziele der Masterarbeit"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -186,14 +171,15 @@
   },
   "active": "19b98e63b925f11c",
   "lastOpenFiles": [
+    "Old/Arbeitsplan Residual Learning + Stream Function.md",
+    "Übersicht der Ziele der Masterarbeit.md",
+    "Masterarbeit/Paper/Physics-informed neural networks A deep learning framework for solving forward and inverse problems involving nonlinear partial differential.md",
+    "Masterarbeit/Paper/Comprehensive Literature List for Master's Thesis.md",
     "Masterarbeit/Paper/DeepCFD Efficient Steady-State Laminar Flow Approximation with Deep Convolutional Neural Networks.md",
     "Masterarbeit/Paper/NSFnets (Navier-Stokes Flow nets) Physics-informed neural networks for the incompressible Navier-Stokes equations.md",
     "Masterarbeit/Paper/Physics-based machine learning for mantle convection simulations.md",
     "Masterarbeit/Paper/Physics-informed machine learning.md",
-    "Masterarbeit/Paper/Physics-informed neural networks A deep learning framework for solving forward and inverse problems involving nonlinear partial differential.md",
     "Masterarbeit/Übersicht der Testläufe.md",
-    "Arbeitsplan Residual Learning + Stream Function.md",
-    "Masterarbeit/Paper/Comprehensive Literature List for Master's Thesis.md",
     "Masterarbeit/Zusammenfassung der drei Ansätze für Strömungsfeld-Vorhersage.md",
     "Old/Zwei Kristalle.md",
     "Old",
