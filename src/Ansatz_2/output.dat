@@ -13,13 +13,13 @@
 #===============================================================================
 
 # Number of cells for all segments
-    nel_x   =  256
+    nel_x   =  255
     nel_y   =  1
-    nel_z   =  256
+    nel_z   =  255
 
 # Coordinates of all segments (including start and end points)
     coord_x =  -1.0 1.0
-    coord_y =  -0.00390625 0.00390625
+    coord_y =  -0.00392156862745098 0.00392156862745098
     coord_z =  -1.0 1.0
 
 # Number of markers per cell
