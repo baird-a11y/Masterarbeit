@@ -15,7 +15,6 @@ include("dataset_psi.jl")
 include("unet_psi.jl")
 include("training_psi.jl")
 
-
 # Module verfügbar machen
 using .StreamFunctionPoisson
 using .LaMEMInterface
@@ -24,7 +23,6 @@ using .DatasetPsi
 using .UNetPsi
 using .TrainingPsi
 
-
 # ================================
 # Konfiguration
 # ================================
@@ -32,14 +30,22 @@ using .TrainingPsi
 # mode:
 #   "debug_single"   → eine Simulation + ψ-Plot
 #   "generate_data"  → viele Samples als .jld2 speichern
-mode = "debug_single"          # für Server z.B. auf "generate_data" setzen
+#   "train"          → U-Net auf Daten trainieren
+mode          = "train"
 
+# Zufall
 seed = 42
 rng  = MersenneTwister(seed)
 
 # Datengenerierung
-n_train   = 10                 # Anzahl der Samples für generate_data
-outdir    = "data_psi"         # Zielordner für .jld2-Dateien
+n_train   = 10              # nur benutzt, wenn mode == "generate_data"
+outdir    = "data_psi"      # Ordner für .jld2-Samples
+
+# Training
+epochs        = 2
+batch_size    = 2
+learning_rate = 1e-4
+model_path    = "unet_psi.bson"
 
 @info "Starte main.jl im Modus: $mode"
 
@@ -48,6 +54,7 @@ outdir    = "data_psi"         # Zielordner für .jld2-Dateien
 # ================================
 
 if mode == "generate_data"
+
     mkpath(outdir)
     @info "Erzeuge $n_train Trainings-Samples in Ordner: $outdir"
     DataGenerationPsi.generate_dataset(outdir; n_train=n_train, rng=rng)
@@ -78,6 +85,16 @@ elseif mode == "debug_single"
 
     display(fig)
     @info "Plot gespeichert als $filename"
+
+elseif mode == "train"
+
+    @info "Starte Training auf Datensatz in $outdir"
+    TrainingPsi.train_unet(; data_dir=outdir,
+                            epochs=epochs,
+                            batch_size=batch_size,
+                            lr=learning_rate,
+                            rng=rng,
+                            save_path=model_path)
 
 else
     error("Unbekannter Modus: $mode")

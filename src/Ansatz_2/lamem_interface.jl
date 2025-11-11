@@ -23,11 +23,11 @@ function run_sinking_crystals(; nx::Int=256, nz::Int=256,
     ρ_magma   = 2700.0
 
     model = Model(
-        Grid(nel = (nx, nz), x = [-1, 1], z = [-1, 1]),
-        Time(nstep_max = 1),
-        Output(out_strain_rate   = 1,
-               out_vel_gr_tensor = 1,
-               out_file_name     = "FS_vel_gradient")
+    Grid(nel = (nx - 1, nz - 1), x = [-1, 1], z = [-1, 1]),
+    Time(nstep_max = 1),
+    Output(out_strain_rate   = 1,
+           out_vel_gr_tensor = 1,
+           out_file_name     = "FS_vel_gradient")
     )
 
     matrix  = Phase(ID=0, Name="matrix",  eta=η,         rho=ρ_magma)
