@@ -2,15 +2,16 @@ module EvaluatePsi
 
 using JLD2
 using BSON
-using GLMakie
+using CairoMakie            # CairoMakie ist für PNGs oft stressfreier als GLMakie
 using Statistics
 
 using ..DatasetPsi: load_dataset, get_sample
+using CairoMakie: DataAspect
 
 """
     evaluate_single(; data_dir, model_path, sample_idx, out_prefix)
 
-Lädt ein trainiertes Modell + einen Datensatz, nimmt ein Sample,
+Lädt ein trainiertes Modell + Datensatz, nimmt ein Sample,
 berechnet ψ_pred und speichert Vergleichsplots:
 - ψ_true
 - ψ_pred
@@ -46,22 +47,56 @@ function evaluate_single(; data_dir::String = "data_psi",
     @info "ψ_true range: $(extrema(ψ_true)), ψ_pred range: $(extrema(ψ_pred))"
     @info "Fehler (ψ_pred - ψ_true) range: $(extrema(err))"
 
-    # Plot
-    fig = Figure(resolution = (1200, 400))
+    # Gemeinsame Farbskalen
+    cr_ψ_true = extrema(ψ_true)
+    cr_ψ_pred = extrema(ψ_pred)
+    cr_ψ = (min(cr_ψ_true[1], cr_ψ_pred[1]),
+            max(cr_ψ_true[2], cr_ψ_pred[2]))
 
-    ax1 = Axis(fig[1, 1], title = "ψ_true", xlabel = "x", ylabel = "z")
-    hm1 = heatmap!(ax1, ψ_true')
+    max_err = maximum(abs, err)
+    cr_err = (-max_err, max_err)
+
+    # Koordinaten (Indices) – könnten später durch physikalische x,z ersetzt werden
+    xcoords = 1:nx
+    zcoords = 1:nz
+
+    CairoMakie.activate!()  # sicherstellen, dass wir auf Cairo zeichnen
+
+    fig = Figure(resolution = (1200, 450))
+
+    # ψ_true
+    ax1 = Axis(fig[1, 1],
+               title = "ψ_true",
+               xlabel = "x",
+               ylabel = "z",
+               aspect = DataAspect())
+    hm1 = heatmap!(ax1, xcoords, zcoords, ψ_true'; colorrange = cr_ψ)
     Colorbar(fig[2, 1], hm1, label = "ψ_true")
 
-    ax2 = Axis(fig[1, 2], title = "ψ_pred", xlabel = "x", ylabel = "z")
-    hm2 = heatmap!(ax2, ψ_pred')
+    # ψ_pred
+    ax2 = Axis(fig[1, 2],
+               title = "ψ_pred",
+               xlabel = "x",
+               ylabel = "z",
+               aspect = DataAspect())
+    hm2 = heatmap!(ax2, xcoords, zcoords, ψ_pred'; colorrange = cr_ψ)
     Colorbar(fig[2, 2], hm2, label = "ψ_pred")
 
-    ax3 = Axis(fig[1, 3], title = "Fehler (ψ_pred - ψ_true)", xlabel = "x", ylabel = "z")
-    hm3 = heatmap!(ax3, err')
+    # Fehler
+    ax3 = Axis(fig[1, 3],
+               title = "Fehler (ψ_pred - ψ_true)",
+               xlabel = "x",
+               ylabel = "z",
+               aspect = DataAspect())
+    hm3 = heatmap!(ax3, xcoords, zcoords, err'; colorrange = cr_err)
     Colorbar(fig[2, 3], hm3, label = "Fehler")
 
-    # Datei speichern
+    # Ticks etwas ausdünnen, damit es lesbar bleibt
+    for ax in (ax1, ax2, ax3)
+        ax.xticks = 0:50:nx
+        ax.yticks = 0:50:nz
+    end
+
     filename = "$(out_prefix)_sample$(sample_idx).png"
     save(filename, fig)
     @info "Eval-Plot gespeichert als $filename"
