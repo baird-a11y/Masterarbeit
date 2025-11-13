@@ -27,7 +27,6 @@ function evaluate_single(; data_dir::String = "data_psi",
     @assert 1 <= sample_idx <= length(ds.files) "sample_idx liegt außerhalb des Datensatzes"
 
     x, y = get_sample(ds, sample_idx)  # x, y: (nx, nz, 1)
-
     nx, nz, _ = size(x)
 
     # Modell laden
@@ -36,11 +35,11 @@ function evaluate_single(; data_dir::String = "data_psi",
     @assert model !== nothing "Konnte Modell aus $model_path nicht laden"
 
     # Vorhersage: Batch-Dimension hinzufügen
-    x_batch = reshape(x, nx, nz, 1, 1)       # (nx, nz, 1, 1)
-    y_pred  = model(x_batch)                # (nx, nz, 1, 1)
+    x_batch = reshape(x, nx, nz, 1, 1)     # (nx, nz, 1, 1)
+    y_pred  = model(x_batch)               # (nx, nz, 1, 1)
 
-    ψ_true = reshape(y, nx, nz)             # (nx, nz)
-    ψ_pred = Array(y_pred[:, :, 1, 1])      # (nx, nz)
+    ψ_true = reshape(y, nx, nz)            # (nx, nz)
+    ψ_pred = Array(y_pred[:, :, 1, 1])     # (nx, nz)
     err    = ψ_pred .- ψ_true
 
     @info "Eval-Sample $sample_idx: nx=$nx, nz=$nz"
@@ -53,45 +52,46 @@ function evaluate_single(; data_dir::String = "data_psi",
     cr_ψ = (min(cr_ψ_true[1], cr_ψ_pred[1]),
             max(cr_ψ_true[2], cr_ψ_pred[2]))
 
-    max_err = maximum(abs, err)
+    max_err = maximum(abs.(err))
     cr_err = (-max_err, max_err)
 
-    # Koordinaten (Indices) – könnten später durch physikalische x,z ersetzt werden
     xcoords = 1:nx
     zcoords = 1:nz
 
-    CairoMakie.activate!()  # sicherstellen, dass wir auf Cairo zeichnen
+    CairoMakie.activate!()
 
-    fig = Figure(resolution = (1200, 450))
+    # Haupt-Grid: 1 Zeile, 3 Spalten
+    fig = Figure(resolution = (1500, 500))
+    # Jede Haupt-Zelle bekommt ein Nested-Grid (links Heatmap, rechts Colorbar)
+    for j in 1:3
+        fig[1, j] = GridLayout()
+    end
 
-    # ψ_true
-    ax1 = Axis(fig[1, 1],
-               title = "ψ_true",
-               xlabel = "x",
-               ylabel = "z",
+    # Panel 1: ψ Ground Truth
+    ax1 = Axis(fig[1, 1][1, 1],
+               title = "ψ LaMEM (Ground Truth)",
+               xlabel = "x", ylabel = "z",
                aspect = DataAspect())
     hm1 = heatmap!(ax1, xcoords, zcoords, ψ_true'; colorrange = cr_ψ)
-    Colorbar(fig[2, 1], hm1, label = "ψ_true")
+    Colorbar(fig[1, 1][1, 2], hm1, label = "ψ_true")
 
-    # ψ_pred
-    ax2 = Axis(fig[1, 2],
-               title = "ψ_pred",
-               xlabel = "x",
-               ylabel = "z",
+    # Panel 2: ψ predicted
+    ax2 = Axis(fig[1, 2][1, 1],
+               title = "ψ predicted (Model)",
+               xlabel = "x", ylabel = "z",
                aspect = DataAspect())
     hm2 = heatmap!(ax2, xcoords, zcoords, ψ_pred'; colorrange = cr_ψ)
-    Colorbar(fig[2, 2], hm2, label = "ψ_pred")
+    Colorbar(fig[1, 2][1, 2], hm2, label = "ψ_pred")
 
-    # Fehler
-    ax3 = Axis(fig[1, 3],
-               title = "Fehler (ψ_pred - ψ_true)",
-               xlabel = "x",
-               ylabel = "z",
+    # Panel 3: Fehler Δψ
+    ax3 = Axis(fig[1, 3][1, 1],
+               title = "Δψ = ψ_pred − ψ_true",
+               xlabel = "x", ylabel = "z",
                aspect = DataAspect())
     hm3 = heatmap!(ax3, xcoords, zcoords, err'; colorrange = cr_err)
-    Colorbar(fig[2, 3], hm3, label = "Fehler")
+    Colorbar(fig[1, 3][1, 2], hm3, label = "Fehler")
 
-    # Ticks etwas ausdünnen, damit es lesbar bleibt
+    # Ticks ausdünnen
     for ax in (ax1, ax2, ax3)
         ax.xticks = 0:50:nx
         ax.yticks = 0:50:nz

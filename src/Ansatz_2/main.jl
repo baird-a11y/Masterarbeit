@@ -6,6 +6,7 @@
 using Random
 using Dates
 using Printf
+using CUDA
 
 # Eigene Dateien (alle im selben Ordner)
 include("streamfunction_poisson.jl")
@@ -36,6 +37,7 @@ using .EvaluatePsi
 #   "debug_single"   → eine Simulation + ψ-Plot
 #   "generate_data"  → viele Samples als .jld2 speichern
 #   "train"          → U-Net auf Daten trainieren
+#   "eval_single"    → ein Sample mit trainiertem Modell evaluieren
 mode          = "eval_single"
 
 # Zufall
@@ -43,11 +45,11 @@ seed = 42
 rng  = MersenneTwister(seed)
 
 # Datengenerierung
-n_train   = 4              # nur benutzt, wenn mode == "generate_data"
+n_train   = 200              # nur benutzt, wenn mode == "generate_data"
 outdir    = "data_psi"      # Ordner für .jld2-Samples
 
 # Training
-epochs        = 2
+epochs        = 70
 batch_size    = 2
 learning_rate = 1e-4
 model_path    = "unet_psi.bson"
