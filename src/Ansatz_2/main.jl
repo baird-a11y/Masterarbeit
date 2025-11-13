@@ -34,22 +34,33 @@ using .EvaluatePsi
 # ================================
 
 # mode:
-#   "debug_single"   → eine Simulation + ψ-Plot
 #   "generate_data"  → viele Samples als .jld2 speichern
 #   "train"          → U-Net auf Daten trainieren
-#   "eval_single"    → ein Sample mit trainiertem Modell evaluieren
-mode          = "eval_single"
+#   "eval_dataset"   → gesamten Datensatz auswerten (Statistik je Kristallanzahl)
+mode          = "eval_dataset"   # z.B. zum Testen
+
 
 # Zufall
 seed = 42
 rng  = MersenneTwister(seed)
 
+# --- Geometrie-Parameter für die Datengenerierung ---
+min_crystals = 1      # minimum Anzahl Kristalle pro Sample
+max_crystals = 1      # maximum Anzahl Kristalle pro Sample
+
+radius_mode  = :fixed # :fixed oder :range
+
+R_fixed      = 0.02    # wird nur benutzt, wenn radius_mode == :fixed
+R_min        = 0.05   # wird nur benutzt, wenn radius_mode == :range
+R_max        = 0.15
+
+
 # Datengenerierung
-n_train   = 200              # nur benutzt, wenn mode == "generate_data"
-outdir    = "data_psi"      # Ordner für .jld2-Samples
+n_train   = 10                 # nur benutzt, wenn mode == "generate_data"
+outdir    = "data_psi"          # Ordner für .jld2-Samples
 
 # Training
-epochs        = 70
+epochs        = 4
 batch_size    = 2
 learning_rate = 1e-4
 model_path    = "unet_psi.bson"
@@ -69,40 +80,44 @@ if mode == "generate_data"
 
     mkpath(outdir)
     @info "Erzeuge $n_train Trainings-Samples in Ordner: $outdir"
-    DataGenerationPsi.generate_dataset(outdir; n_train=n_train, rng=rng)
+    DataGenerationPsi.generate_dataset(
+    outdir;
+    n_train     = n_train,
+    rng         = rng,
+    nx          = 256,
+    nz          = 256,
+    η           = 1e20,
+    Δρ          = 200.0,
+    min_crystals = min_crystals,
+    max_crystals = max_crystals,
+    radius_mode  = radius_mode,
+    R_fixed      = R_fixed,
+    R_min        = R_min,
+    R_max        = R_max,
+    )
+
     @info "Datengenerierung abgeschlossen."
-
-elseif mode == "debug_single"
-    # Nur für lokalen Test – braucht GLMakie
-    @info "Erzeuge ein einzelnes Sample und plotte ψ_norm."
-
-    using GLMakie
-
-    input, ψ_norm, scale, meta = DataGenerationPsi.generate_psi_sample(rng)
-
-    nx, nz, _ = size(input)
-    @info "Gridgröße: ($nx, $nz), Normierungsfaktor = $scale"
-    @info "Meta-Daten: $(meta)"
-
-    fig = Figure(resolution = (800, 600))
-    ax  = Axis(fig[1, 1], title = "ψ_norm", xlabel = "x-Index", ylabel = "z-Index")
-
-    # Transponiert für "normale" Darstellung (x horizontal, z vertikal)
-    hm  = heatmap!(ax, ψ_norm')
-    Colorbar(fig[1, 2], hm, label = "ψ_norm")
-
-    timestamp = Dates.format(now(), "yyyy-mm-dd_HHMMSS")
-    filename  = "psi_debug_$timestamp.png"
-    save(filename, fig)
-
-    display(fig)
-    @info "Plot gespeichert als $filename"
 
 elseif mode == "train"
 
     mkpath(outdir)
     @info "Erzeuge $n_train Trainings-Samples in Ordner: $outdir"
-    DataGenerationPsi.generate_dataset(outdir; n_train=n_train, rng=rng)
+    DataGenerationPsi.generate_dataset(
+    outdir;
+    n_train     = n_train,
+    rng         = rng,
+    nx          = 256,
+    nz          = 256,
+    η           = 1e20,
+    Δρ          = 200.0,
+    min_crystals = min_crystals,
+    max_crystals = max_crystals,
+    radius_mode  = radius_mode,
+    R_fixed      = R_fixed,
+    R_min        = R_min,
+    R_max        = R_max,
+)
+
     @info "Datengenerierung abgeschlossen."
 
     @info "Starte Training auf Datensatz in $outdir"
@@ -113,13 +128,16 @@ elseif mode == "train"
                             rng=rng,
                             save_path=model_path)
 
-elseif mode == "eval_single"
 
-    @info "Evaluiere ein einzelnes Sample aus $outdir mit Modell $model_path"
-    EvaluatePsi.evaluate_single(; data_dir=outdir,
-                                model_path=model_path,
-                                sample_idx=eval_sample_idx,
-                                out_prefix=eval_prefix)
+elseif mode == "eval_dataset"
+
+    @info "Evaluiere gesamten Datensatz in $outdir mit Modell $model_path"
+    EvaluatePsi.evaluate_dataset(; data_dir   = outdir,
+                                 model_path  = model_path,
+                                 out_prefix  = eval_prefix,
+                                 save_plots  = true,
+                                 plot_dir    = "eval_plots_phys",
+                                 denorm_psi  = true)
 
 
 else
