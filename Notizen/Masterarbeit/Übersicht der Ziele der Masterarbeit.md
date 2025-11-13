@@ -116,15 +116,10 @@ Alle Modelle sollen auf einem **256×256-Gitter** trainiert werden.
 ---
 ## 5. Ansatz 2 – Lernen der Stromfunktion ψ
 
-  
-
 Hier steht im Zentrum die **Stromfunktion ψ**, aus der sich Geschwindigkeiten rekonstruieren lassen.
 
-  
+ ### 5.1 Grundidee
 
-### 5.1 Grundidee
-
-  
 
 - **Input:** Geometrie / Material-/Phasenfelder als Gitter (wie bei Ansatz 1).
 
@@ -136,19 +131,13 @@ Hier steht im Zentrum die **Stromfunktion ψ**, aus der sich Geschwindigkeiten r
 
   - Optional: Rekonstruktion der Geschwindigkeiten aus ψ und Vergleich mit LaMEM-Geschwindigkeiten.
 
-  
-
 ### 5.2 Datenpipeline (Schritte)
-
-  
 
 1. **Datengenerierung in LaMEM**
 
    - Durchführung von LaMEM-Simulationen für verschiedene Kristallkonfigurationen (1–10 Kristalle, zufällige Positionen).  
 
    - Nutzung des existierenden Skripts, das **ψ direkt aus den LaMEM-Ausgaben** bestimmt.
-
-  
 
 2. **Lösen der Poisson-Gleichung (falls nötig)**
 
@@ -162,8 +151,6 @@ Hier steht im Zentrum die **Stromfunktion ψ**, aus der sich Geschwindigkeiten r
 
    - Berechnung von **ω (Omega)** aus Geschwindigkeitsfeldern oder ψ (je nach Formulierung).
 
-  
-
 4. **Vorbereitung der Trainingsdaten**
 
    - Speicherung der Eingabekanäle (z. B. Kristallmaske, Materialparameter) als 256×256-Tensoren.
@@ -172,7 +159,6 @@ Hier steht im Zentrum die **Stromfunktion ψ**, aus der sich Geschwindigkeiten r
 
    - **Split in Trainings-, Validierungs- und Testdaten**.
 
-  
 
 5. **Normalisierung von ψ**
 
@@ -186,13 +172,10 @@ Hier steht im Zentrum die **Stromfunktion ψ**, aus der sich Geschwindigkeiten r
 
    - Dies verbessert die numerische Stabilität und Konvergenz im Training.
 
-  
-
 6. **Training des U-Net mit ψ als Target**
 
    - Loss-Funktion: MSE zwischen vorhergesagter ψ_norm und Referenz ψ_norm.
 
-  
 
 7. **Evaluierung**
 
