@@ -95,7 +95,6 @@ function evaluate_dataset(; data_dir::String,
     for (i, filepath) in enumerate(ds.files)
         # --- Daten als (nx,nz,1) laden ---
         x, y_true = get_sample(ds, i)
-
         nx, nz, ch = size(x)
         x_batch = reshape(x, nx, nz, ch, 1)
 
@@ -115,6 +114,17 @@ function evaluate_dataset(; data_dir::String,
         centers_2D = haskey(meta, :centers_2D) ? meta[:centers_2D] : meta.centers_2D
         radii      = haskey(meta, :radii)      ? meta[:radii]      : meta.radii
 
+        # Koordinaten aus meta verwenden, falls vorhanden
+        if haskey(meta, :x_vec_1D) && haskey(meta, :z_vec_1D)
+            xcoords = meta[:x_vec_1D]
+            zcoords = meta[:z_vec_1D]
+        else
+            # Fallback: angenommene Domäne [-0.5, 0.5] × [-0.5, 0.5]
+            nxp, nzp = size(y_true_norm)
+            xcoords = range(-0.5, 0.5; length = nxp)
+            zcoords = range(-0.5, 0.5; length = nzp)
+        end
+
         # --- Entscheiden, in welchem Raum evaluiert wird ---
         if denorm_psi
             y_true_eval = y_true_norm ./ scale
@@ -131,14 +141,14 @@ function evaluate_dataset(; data_dir::String,
         denom = sqrt(sum(y_true_eval.^2)) + eps()
         rel_l2 = num / denom
 
-        stat = (; mse=mse, rel_l2=rel_l2)
+        stat = (; mse, rel_l2)
         if !haskey(errors_by_n, n)
             errors_by_n[n] = NamedTuple[]
         end
         push!(errors_by_n[n], stat)
 
         # --- Optional: Plot speichern (ebenfalls im gewählten Raum) ---
-                if save_plots
+        if save_plots
             subdir = joinpath(plot_dir, @sprintf("n_%02d", n))
             mkpath(subdir)
 
@@ -154,11 +164,6 @@ function evaluate_dataset(; data_dir::String,
             diff = y_pred_eval .- y_true_eval
             max_abs_diff = maximum(abs.(diff))
 
-            # physikalische Koordinaten (wie in der Datengenerierung)
-            nxp, nzp = size(y_true_eval)
-            xcoords = range(-0.5, 0.5; length = nxp)
-            zcoords = range(-0.5, 0.5; length = nzp)
-
             # --- Layout: 3 Spalten, in jeder Spalte: Axis + Colorbar rechts ---
             gl1 = fig[1, 1] = GridLayout()
             gl2 = fig[1, 2] = GridLayout()
@@ -170,7 +175,7 @@ function evaluate_dataset(; data_dir::String,
                        xlabel = "x",
                        ylabel = "z",
                        aspect = DataAspect())
-            hm1 = heatmap!(ax1, xcoords, zcoords, y_true_eval'; colorrange = (global_min, global_max))
+            hm1 = heatmap!(ax1, xcoords, zcoords, y_true_eval; colorrange = (global_min, global_max))
             plot_crystal_outlines!(ax1, centers_2D, radii)
             Colorbar(gl1[1, 2], hm1, label = "ψ_true")
 
@@ -180,7 +185,7 @@ function evaluate_dataset(; data_dir::String,
                        xlabel = "x",
                        ylabel = "z",
                        aspect = DataAspect())
-            hm2 = heatmap!(ax2, xcoords, zcoords, y_pred_eval'; colorrange = (global_min, global_max))
+            hm2 = heatmap!(ax2, xcoords, zcoords, y_pred_eval; colorrange = (global_min, global_max))
             plot_crystal_outlines!(ax2, centers_2D, radii)
             Colorbar(gl2[1, 2], hm2, label = "ψ_pred")
 
@@ -190,14 +195,13 @@ function evaluate_dataset(; data_dir::String,
                        xlabel = "x",
                        ylabel = "z",
                        aspect = DataAspect())
-            hm3 = heatmap!(ax3, xcoords, zcoords, diff'; colorrange = (-max_abs_diff, max_abs_diff))
+            hm3 = heatmap!(ax3, xcoords, zcoords, diff;      colorrange = (-max_abs_diff, max_abs_diff))
             plot_crystal_outlines!(ax3, centers_2D, radii)
             Colorbar(gl3[1, 2], hm3, label = "Fehler")
 
             save(filename, fig)
             @info "Plot gespeichert: $filename"
         end
-
     end
 
     @info "=== Auswertung nach Kristallanzahl ($(denorm_psi ? "physikalisches ψ" : "ψ_norm")) ==="

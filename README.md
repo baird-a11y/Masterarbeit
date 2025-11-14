@@ -1,523 +1,193 @@
-# Physics-Informed UNet for Flow Field Prediction in Multi-Crystal Sedimentation Systems
+U-Net für Strömungsvorhersagen aus LaMEM-Simulationen
 
-**Master's Thesis:** Physics-Based Machine Learning for Predicting Flow Fields in Multi-Crystal Sedimentation Systems  
-**Author:** Paul Baselt  
-**Framework:** Julia + Flux.jl + LaMEM.jl
+Masterarbeit – Computational Sciences (Geowissenschaften)
 
----
+Dieses Repository enthält den vollständigen Code für drei Modelle zur Vorhersage von Strömungsgrößen in viskosen Medien (z. B. sinkende Kristalle in Magmen). Grundlage sind LaMEM-Simulationen, aus denen Trainingsdaten generiert und anschließend mit einem U-Net in Julia / Flux.jl ausgewertet werden.
 
-## Project Overview
+Der Fokus liegt auf der Stromfunktion ψ, den Geschwindigkeitsfeldern und einem Residualansatz (analytisch vs. numerisch).
 
-This repository implements a physics-informed UNet architecture for predicting flow fields around sinking crystals in geoscientific systems. The project combines deep learning with physical constraints for physically consistent modeling of complex multi-crystal sedimentation processes.
+Inhalt
 
-### Research Objectives
+Datengenerierung (LaMEM Interface, zufällige Kristallgeometrien, Normalisierung)
 
-Development and validation of physics-informed neural networks for physically consistent prediction of velocity fields in multi-crystal sedimentation systems (1-15 crystals).
+U-Net-Architektur (gemeinsam für alle Ansätze)
 
-### Core Research Questions
+Trainingspipelines (ψ-Modell, Geschwindigkeitsmodell)
 
-- Can a physics-informed UNet model produce physically consistent predictions conforming to LaMEM simulations?
-- How does performance scale with increasing crystal count?
-- What role do physical constraints play in model generalization?
+Evaluierung mit Fehlerstatistiken & Heatmaps
 
-### Input/Output Specifications
+Unterstützung für GPU / CPU (CUDA, fallback-safe)
 
-| Component | Description |
-|-----------|-------------|
-| Input | Phase field (1 channel: 0=matrix, 1-15=crystal IDs) |
-| Output | 2D velocity fields (2 channels: v_x, v_z) |
-| Resolution | 256×256 pixels (consistent throughout pipeline) |
-| Normalization | Robust Z-score with percentile-based outlier clipping |
-| Physics | Continuity equation (∇·v ≈ 0) as regularization |
+Modelle / Ansätze
+Ansatz 1: Geschwindigkeiten direkt lernen
 
----
+Output: 
+v_x
+v_z
+	​
+Ziel: Direkte Approximation der LaMEM-Geschwindigkeitsfelder (Baseline).
+Ort im Code:
 
-## Recent Developments (December 2024)
+data_generation_vel.jl
 
-### Physics-Informed Training
+training_vel.jl
 
-- Continuity equation: Divergence minimization as loss component
-- Adaptive weighting: Warm-up strategy (λ: 0.01 → 0.15 over 15 epochs)
-- GPU-compatible computation: Efficient divergence calculation
+evaluate_vel.jl
 
-### Optimized Training Pipeline
+Ansatz 2: Stromfunktion ψ vorhersagen
 
-- 750 training samples (effective 1500+ through augmentation)
-- Batch normalization for improved convergence stability
-- Robust normalization with 99.5th percentile clipping
-- Automatic GPU/CPU fallback with intelligent error handling
+Output: 1 Kanal → ψ(x, z)
+Ziel: Glattes, physikalisch konsistentes Feld (divergenzfrei).
+Ort im Code:
 
-### Evaluation Framework
+data_generation_psi.jl
 
-- 47 metrics across 5 categories
-- Statistical significance tests (ANOVA, confidence intervals, effect sizes)
-- Automated report generation (CSV, JSON, LaTeX, HTML)
-- Multi-format export for publication
+training_psi.jl
 
-### Technical Improvements
+evaluate_psi.jl
 
-- Zygote compatibility: Eliminated mutating arrays
-- Adaptive batch sizes: GPU memory optimized
-- Modular architecture: 12 specialized modules
-- SLURM integration: Cluster-ready with submit_job.sh
+Ansatz 3: Residuen lernen (analytisch – numerisch)
 
----
+Output: Residualfeld r = ψ_analytic – ψ_LaMEM
+Ziel: Modell lernt nur die Abweichungen zur analytischen Lösung → stabiler, besser generalisierbar.
+Dokumentation: Ansatz 3.md
+(Implementierung im Aufbau)
 
-## Project Structure
+Projektstruktur
+src/
+ ├─ data_generation_psi.jl     # Sample-Generierung für ψ
+ ├─ data_generation_vel.jl     # Sample-Generierung für v
+ ├─ dataset_psi.jl             # Dataset-Loader für ψ
+ ├─ dataset_vel.jl             # Dataset-Loader für v
+ ├─ lamem_interface.jl         # Direkte Anbindung an LaMEM
+ ├─ streamfunction_poisson.jl  # Poisson-Löser (ψ aus ω)
+ ├─ unet_psi.jl                # U-Net-Architektur
+ ├─ training_psi.jl            # Training für ψ
+ ├─ training_vel.jl            # Training für v
+ ├─ evaluate_psi.jl            # Evaluierung ψ
+ ├─ evaluate_vel.jl            # Evaluierung v
+ ├─ main.jl                    # Hauptskript: generate/train/eval (ψ)
+ ├─ main_vel.jl                # Hauptskript: generate/train/eval (v)
 
-```
-├── Core Modules
-│   ├── lamem_interface.jl              # LaMEM integration (1-15 crystals)
-│   ├── data_processing.jl              # Robust normalization & preprocessing
-│   ├── unet_architecture.jl            # UNet with batch normalization
-│   ├── training.jl                     # Physics-informed training loop
-│   ├── batch_management.jl             # GPU-optimized batch management
-│   ├── gpu_utils.jl                    # GPU management & error handling
-│   └── main.jl                         # Optimized 10-crystal pipeline
-│
-├── Evaluation & Analysis
-│   ├── comprehensive_evaluation.jl     # 47-metric evaluation system
-│   ├── statistical_analysis.jl         # Significance tests & effect sizes
-│   ├── advanced_visualization.jl       # Visualization suite
-│   ├── automated_reporting_system.jl   # Scientific report generation
-│   └── master_evaluation_fixed.jl      # Complete evaluation framework
-│
-├── Utilities
-│   ├── simple_data_export.jl           # Multi-format data export
-│   ├── data_management_system.jl       # LaTeX table generator
-│   └── submit_job.sh                   # SLURM job script
-│
-└── Documentation
-    ├── README.md                       # This file
-    └── Arbeit/                         # LaTeX thesis
-```
+Installation
+Voraussetzungen
 
----
+Julia ≥ 1.10
 
-## Installation
+LaMEM installiert & im PATH
 
-### System Requirements
+Abhängigkeiten:
 
-**Minimum:**
-- Julia 1.9+
-- 4 CPU cores
-- 8 GB RAM
-- ~8h training time (CPU)
-
-**Recommended:**
-- Julia 1.10+
-- 8+ CPU cores
-- 16 GB RAM
-- NVIDIA GPU with 8+ GB VRAM
-- ~1-2h training time (GPU)
-
-### Dependencies
-
-```julia
 using Pkg
+Pkg.add(["Flux", "JLD2", "BSON", "CairoMakie", "Functors", "CUDA"])
 
-# Core dependencies
-Pkg.add(["LaMEM", "GeophysicalModelGenerator", "Flux", "CUDA", "Optimisers"])
+Verwendung
+1) Trainingsdaten erzeugen
 
-# Data processing & statistics
-Pkg.add(["Statistics", "StatsBase", "Random", "Distributions", "HypothesisTests"])
+Im Hauptskript main.jl:
 
-# I/O & serialization
-Pkg.add(["BSON", "CSV", "DataFrames", "JSON3", "Printf"])
+mode = "generate_data"
+julia main.jl
 
-# Visualization
-Pkg.add(["Plots", "Colors", "ColorSchemes"])
-```
 
-### Configuration
+Legt .jld2-Samples in data_psi/ an.
 
-**1. Resolve LaMEM Time conflict:**
+2) ψ-Modell trainieren
+mode = "train"
+julia main.jl
 
-```julia
-# In lamem_interface.jl, change:
-Time(nstep_max=1)
-# To:
-LaMEM.Time(nstep_max=1)
-```
 
-**2. Verify GPU setup (optional):**
+Trainiert das U-Net auf den generierten Daten
+→ speichert Modell: unet_psi.bson
 
-```julia
-include("gpu_utils.jl")
-check_gpu_availability()
-```
+3) Datensatz evaluieren
+mode = "eval_dataset"
+julia main.jl
 
----
 
-## Usage
+MSE & relative L2-Errors
 
-### Standard Training (10 crystals)
-
-```julia
-include("main.jl")
+optional: Heatmaps mit Kristallumrissen
 
-# Automatic configuration in SERVER_CONFIG:
-# - 750 samples with augmentation
-# - Physics-informed loss (λ: 0.01→0.15)
-# - Batch size = 4, learning rate = 0.0005
-# - 50 epochs with early stopping (patience=15)
-# - Automatic GPU detection
-```
-
-### Comprehensive Evaluation (1-5 crystals)
-
-```julia
-include("master_evaluation_fixed.jl")
-run_simplified_evaluation()
-
-# Generates:
-# - 47 metrics per sample
-# - Statistical analyses (ANOVA, confidence intervals)
-# - LaTeX tables for publication
-# - Visualizations (training curves, divergence, etc.)
-```
+Gruppiert nach Kristallanzahl (1–10)
 
----
+4) Geschwindigkeitsmodell (Ansatz 1)
+mode = "train_vel"
+julia main_vel.jl
 
-## Technical Implementation
+Datengenerierung (LaMEM)
 
-### Physics-Informed Loss Function
+Jedes Sample enthält:
 
-```julia
-function physics_informed_loss(prediction, velocity_batch; lambda_physics=0.1f0)
-    data_loss = mse(prediction, velocity_batch)
-    divergence = compute_divergence(prediction)
-    physics_loss = mean(abs2, divergence)
-    total_loss = data_loss + lambda_physics * physics_loss
-    return total_loss, data_loss, physics_loss
-end
-```
-
-### Robust Normalization
-
-```julia
-function robust_normalize(data; percentile_clip=99.5)
-    lower_bound = percentile(vec(data), 100 - percentile_clip)
-    upper_bound = percentile(vec(data), percentile_clip)
-    data_clipped = clamp.(data, lower_bound, upper_bound)
-    μ = mean(data_clipped)
-    σ = std(data_clipped) + 1f-8
-    data_normalized = (data_clipped .- μ) ./ σ
-    return Float32.(data_normalized), Float32(μ), Float32(σ)
-end
-```
-
----
-
-## Performance Benchmarks
-
-### Current Performance (September 2025)
-
-| Metric | Best Value | Average | Target | Status |
-|--------|------------|---------|--------|--------|
-| MAE | 0.2546 | 0.4755 | < 0.05 | Improvement needed |
-| Correlation (v_z) | 0.778 | ~0.65 | > 0.85 | Improvement needed |
-| Physics Loss | N/A | N/A | < 0.001 | In progress |
-| Alignment | N/A | N/A | < 10 px | To be evaluated |
-
-**Latest Model:** Modell_9 (trained on 750 samples, 10 crystals)
-
-### Performance Evolution
-
-```
-Baseline (July 2024):
-- MAE: 0.488
-- Correlation: ~0.70
-- Training: CPU-only
-- Physics: Implicit only
-
-Current (September 2025):
-- MAE: 0.2546 (best), 0.4755 (average) - 50% improvement on best case
-- Correlation: 0.778 (best), ~0.65 (average) - 11% improvement on best case
-- Training: CPU-based (50 samples)
-- Physics: Explicit continuity constraint implemented
-- Scaling: 1-10 crystals tested
-
-Identified Issues:
-- Insufficient training data (50 samples)
-- High variance between best and average performance
-- Targets not yet achieved, requires optimization
-```
-
-### Training Times
-
-| Setup | Samples | Epochs | Time | Notes |
-|-------|---------|--------|------|-------|
-| CPU (current) | 500 | N/A | ~1-2h | Current models (Modell_1-9) |
-| CPU (planned) | 500 | 50 | ~8h | Target configuration |
-| CPU (planned) | 750 | 50 | ~12h | Extended dataset |
-| GPU (planned) | 500 | 50 | ~1.5h | With CUDA optimization |
-
-### Model Comparison (Current Results - September 2025)
-
-| Model | Samples | Crystal Range | Best MAE | Correlation | Average MAE | Status |
-|-------|---------|---------------|----------|-------------|-------------|--------|
-| Modell_9 | 50 | 1:10 | 0.2546 | 0.778 | 0.4755 | Best performance |
-| Modell_8 | 50 | 1:10 | 0.2574 | 0.722 | 0.4820 | Second best |
-| Modell_1 | 50 | 1:10 | 0.2741 | 0.687 | 0.4968 | Baseline |
-| Modell_3 | 49 | 1:10 | 0.2916 | 0.710 | 0.5005 | - |
-| Modell_5 | 50 | 1:10 | 0.2919 | 0.669 | 0.5051 | - |
-| Modell_7 | 50 | 1:10 | 0.3014 | 0.635 | 0.5099 | - |
-| Modell_4 | 48 | 1:10 | 0.3116 | 0.632 | 0.4977 | - |
-| Modell_2 | 50 | 1:10 | 0.3351 | 0.623 | 0.5479 | Worst performance |
-| Modell_6 | 50 | 1:10 | 0.3714 | 0.576 | 0.5392 | - |
-
-**Key Observation:** Large gap between best-case and average performance indicates inconsistent generalization across crystal counts. Further optimization required.
-
----
-
-## Evaluation Framework
-
-### Metric Categories (47 total)
-
-**1. Error Metrics (8 metrics)**
-- MAE, RMSE (total, v_x, v_z)
-- Relative errors (L1, L2)
-- Maximum absolute error
-
-**2. Physical Consistency (12 metrics)**
-- Divergence (mean, max, 90th percentile)
-- Continuity violation
-- Vorticity
-- Boundary condition fulfillment
-- Momentum balance
-
-**3. Structural Similarity (9 metrics)**
-- SSIM (total, per channel)
-- Pearson correlation
-- Spearman correlation
-- Cosine similarity
-- R² score
+Kristallgeometrie (Zentren & Radien, 1–10 Kristalle)
 
-**4. Crystal-Specific (10 metrics)**
-- Alignment error (mean, max, std)
-- Crystal detection rate
-- False positives/negatives
-- Peak velocity accuracy
-- Near-field flow error
+Phasefeld (Maske)
 
-**5. Multi-Crystal (8 metrics)**
-- Scaling behavior (MAE vs. N)
-- Interaction accuracy
-- Coverage rate
-- Performance degradation
+ψ oder v-Felder
 
-### Statistical Validation
+normierte Zielgröße
 
-```julia
-# Confidence intervals (95%)
-confidence_intervals = compute_confidence_intervals(results)
+scalings (dynamic normalisation)
 
-# ANOVA for multi-crystal comparisons
-anova_results = perform_anova_analysis(batch_results)
+Metadaten (physikalische Koordinaten usw.)
 
-# Effect sizes (Cohen's d)
-effect_sizes = calculate_cohens_d(group1, group2)
+Die Felder werden grundsätzlich auf einem 256×256-Gitter erzeugt.
 
-# Bonferroni correction for multiple tests
-bonferroni_threshold = 0.05 / n_comparisons
-```
+U-Net Architektur
 
----
+Encoder–Decoder mit Skip-Connections
 
-## Output Structure
+4 Ebenen Downsampling / Upsampling
 
-```
-optimized_results/
-│
-├── ten_crystal_checkpoints_optimized/
-│   ├── best_model.bson
-│   ├── checkpoint_epoch_X.bson
-│   └── final_model.bson
-│
-├── ten_crystal_results_optimized/
-│   ├── ten_crystal_dataset.jls
-│   └── training_results.bson
-│
-├── evaluation_results/
-│   ├── comprehensive_metrics.csv
-│   ├── statistical_analysis.json
-│   ├── aggregated_statistics.csv
-│   └── latex_tables/
-│       ├── main_results_table.tex
-│       ├── detailed_metrics_table.tex
-│       └── scaling_analysis_table.tex
-│
-└── visualizations/
-    ├── training_curves.png
-    ├── divergence_comparison.png
-    ├── performance_scaling.png
-    └── crystal_comparisons/
-```
+Conv → BatchNorm → ReLU
 
----
+1 Output-Kanal (ψ) oder 2 Kanäle (v)
 
-## Known Issues and Solutions
+Architektur definiert in:
 
-### GPU Kernel Compilation Errors
+unet_psi.jl
 
-**Issue:** GPUCompiler.KernelError for non-bitstype arguments
+Evaluierung
 
-**Solution:** Automatic CPU fallback implemented. GPU training functional for simple operations.
+Für jedes Sample werden berechnet:
 
-**Status:** Limited GPU support; full optimization in progress.
+MSE
 
-### LaMEM Time Namespace Conflict
+relative L2-Norm
 
-**Issue:** UndefVarError: Time not defined
+Δψ oder Δv-Heatmaps
 
-**Solution:** Use explicit module qualification: `LaMEM.Time(nstep_max=1)`
+Kristall-Overlays
 
-**Status:** Resolved.
+Gruppierung nach Kristallanzahl
 
-### GPU Memory Overflow
+Unterordner pro Kristallanzahl:
 
-**Issue:** OOM errors with large batches
+eval_plots_phys/
+ ├─ n_01/
+ ├─ n_02/
+ └─ ...
 
-**Solution:** Adaptive batch sizing based on resolution; automatic garbage collection.
+Features
 
-**Status:** Resolved.
+realistische Strömungsdaten via LaMEM
 
-### Zygote Mutating Arrays
+vollständige Training- und Evaluierungspipeline
 
-**Issue:** Mutating arrays not supported in automatic differentiation
+GPU-Beschleunigung (mit Fallback)
 
-**Solution:** Replaced mutable operations with immutable tuple-based approach.
+sample-spezifische Normalisierung (ψ & v)
 
-**Status:** Resolved.
+plots in physikalischen Koordinaten
 
----
+modular aufgebaut (leicht erweiterbar)
 
-## Scientific Validation
+Lizenz
 
-### Physical Consistency
+Wird von mir irgendwann ergänzt (MIT / GPL / Proprietary).
 
-- Continuity equation: ∇·v ≈ 0 (implementation complete, validation pending)
-- Stokes regime: Low Reynolds number implementation verified
-- Boundary conditions: No-slip at crystal surfaces (in training pipeline)
-- Momentum balance: Physics-informed loss integrated
-- Coordinate alignment: To be evaluated in next iteration
+Autor
 
-### Current Validation Status
-
-**Completed:**
-- Physics-informed loss implementation
-- Training pipeline with 1-10 crystal range
-- Basic performance metrics (MAE, correlation)
-- Model comparison across 9 variants
-
-**In Progress:**
-- Target performance achievement (MAE < 0.05)
-- Extended dataset generation (50 → 500+ samples)
-- Comprehensive physical consistency validation
-- Statistical significance testing
-
-**Planned:**
-- Divergence analysis and quantification
-- Boundary condition verification
-- Benchmark validation (DKT, Richardson-Zaki)
-- Cross-validation and robustness testing
-
-### Benchmark Comparisons
-
-| Benchmark | Description | Status |
-|-----------|-------------|--------|
-| Single-crystal baseline | Target: MAE<0.01, R²>0.90 | Planned |
-| Current best (Modell_9) | MAE=0.2546, Corr=0.778 | Achieved |
-| Multi-crystal (1-10) | Average MAE=0.48, Corr=0.65 | In progress |
-| DKT sequence | Qualitative two-crystal dynamics | Planned |
-| Richardson-Zaki | Hindered settling scaling | Planned |
-| LBM-DEM | High-fidelity comparison | Future work |
-
-**Performance Gap Analysis:**
-- Current best MAE (0.2546) is 5× above target (0.05)
-- Training data insufficient (50 vs. target 500+ samples)
-- Inconsistent performance across crystal counts requires investigation
-
----
-
-## Development Roadmap
-
-### Immediate Priorities (Q4 2025)
-
-- Increase training dataset to 500+ samples (currently 50)
-- Optimize physics loss weighting (λ-parameter tuning)
-- Extended training duration with early stopping
-- Achieve target performance: MAE < 0.05, Correlation > 0.85
-- Comprehensive evaluation across 1-15 crystal range
-
-### Short-term (Q1 2026)
-
-- GPU kernel optimization for full support
-- Hyperparameter tuning with Optuna
-- K-fold cross-validation
-- Detailed performance analysis per crystal count
-- Richardson-Zaki benchmark validation
-
-### Medium-term (Q2-Q3 2026)
-
-- 3D extension for volumetric flow fields
-- Uncertainty quantification (Bayesian NNs)
-- Transfer learning to other systems
-- Real-world experimental validation
-- ArXiv pre-print publication
-
-### Long-term (2026+)
-
-- Multi-scale modeling (micro-macro coupling)
-- LaMEM integration as surrogate model
-- Industrial application (magma chamber modeling)
-- Online learning capabilities
-- Hybrid ML-numerical solver
-
----
-
-## References
-
-### Primary Literature
-
-1. Ronneberger et al. (2015): U-Net Architecture
-2. Raissi et al. (2019): Physics-Informed Neural Networks
-3. Peng et al. (2021): Deep Fluids (CFD with ML)
-4. Lagaris et al. (1998): Neural Networks for PDEs
-5. Pellegrin et al. (2022): Transfer Learning in Earth Sciences
-
-### Software Documentation
-
-- [LaMEM.jl](https://github.com/JuliaGeodynamics/LaMEM.jl)
-- [Flux.jl](https://fluxml.ai/Flux.jl/stable/)
-- [CUDA.jl](https://cuda.juliagpu.org/stable/)
-
----
-
-## Contact
-
-**Author:** Paul Baselt  
-
-### Citation
-
-```bibtex
-@mastersthesis{baselt2025physics,
-  title={Physics-Based Machine Learning for Predicting Flow Fields 
-         in Multi-Crystal Sedimentation Systems},
-  author={Baselt, Paul},
-  year={2025},
-  school={[University Name]},
-  type={Master's thesis}
-}
-```
-
----
-
-## License
-
-[To be specified]
-
----
-
-*Last updated: September 2025 - Physics-Informed Training implemented, performance optimization in progress*
+Paul Baselt
+Masterstudent Computational Sciences (Geowissenschaften)
+Johannes Gutenberg-Universität Mainz

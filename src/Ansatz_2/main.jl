@@ -37,7 +37,7 @@ using .EvaluatePsi
 #   "generate_data"  → viele Samples als .jld2 speichern
 #   "train"          → U-Net auf Daten trainieren
 #   "eval_dataset"   → gesamten Datensatz auswerten (Statistik je Kristallanzahl)
-mode          = "eval_dataset"   # z.B. zum Testen
+mode          = "train"   # z.B. zum Testen
 
 
 # Zufall
@@ -46,28 +46,30 @@ rng  = MersenneTwister(seed)
 
 # --- Geometrie-Parameter für die Datengenerierung ---
 min_crystals = 1      # minimum Anzahl Kristalle pro Sample
-max_crystals = 1      # maximum Anzahl Kristalle pro Sample
+max_crystals = 10      # maximum Anzahl Kristalle pro Sample
 
 radius_mode  = :fixed # :fixed oder :range
 
-R_fixed      = 0.02    # wird nur benutzt, wenn radius_mode == :fixed
-R_min        = 0.05   # wird nur benutzt, wenn radius_mode == :range
-R_max        = 0.15
+R_fixed      = 0.04    # wird nur benutzt, wenn radius_mode == :fixed
+R_min        = 0.02   # wird nur benutzt, wenn radius_mode == :range
+R_max        = 0.05
 
 
 # Datengenerierung
-n_train   = 10                 # nur benutzt, wenn mode == "generate_data"
+n_train   = 300                 # nur benutzt, wenn mode == "generate_data"
 outdir    = "data_psi"          # Ordner für .jld2-Samples
 
 # Training
-epochs        = 4
+epochs        = 70
 batch_size    = 2
-learning_rate = 1e-4
+learning_rate = 1e-5
 model_path    = "unet_psi.bson"
 
 # Eval
 eval_sample_idx = 1
 eval_prefix     = "eval_psi"
+plots_save      = "eval_plots_phys"
+psi_denorm = true                       # ob im physikalischen ψ-Raum ausgewertet wird
 
 
 @info "Starte main.jl im Modus: $mode"
@@ -136,8 +138,8 @@ elseif mode == "eval_dataset"
                                  model_path  = model_path,
                                  out_prefix  = eval_prefix,
                                  save_plots  = true,
-                                 plot_dir    = "eval_plots_phys",
-                                 denorm_psi  = true)
+                                 plot_dir    = plots_save,
+                                 denorm_psi  = psi_denorm)
 
 
 else
