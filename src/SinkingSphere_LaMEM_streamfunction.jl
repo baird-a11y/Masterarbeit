@@ -132,8 +132,8 @@ end
 
 # Setup 2D model
 nx, nz = 256, 256
-cen_2D = [(0.4, -0.4)]      # center of sphere
-R      = [0.1]             # radius of sphere in km    
+cen_2D = [(-0.5,-0.5),(0.5,0.5),(0.5,-0.5),(-0.5,0.5),(-0.2,-0.2),(0.2,0.2),(0.2,-0.2),(-0.2,0.2),(0.8,0.8),(-0.8,-0.8)]      # center of sphere
+R      = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]             # radius of sphere in km    
 
 
 x, z, phase, Vx, Vz, Exx, Ezz, V_stokes_cm_year, psi = LaMEM_Single_crystal(; nx=nx, nz=nz, cen_2D=cen_2D, R=R)
@@ -142,7 +142,7 @@ x, z, phase, Vx, Vz, Exx, Ezz, V_stokes_cm_year, psi = LaMEM_Single_crystal(; nx
 fig = Figure()
 ax1 = Axis(fig[1,1], title="ψ", xlabel="x (km)", ylabel="z (km)")
 
-hm1 = heatmap!(ax1,x, z, 1e13*psi, colormap=:viridis)
+hm1 = heatmap!(ax1,x, z, psi, colormap=:viridis)
 Colorbar(fig[:, 2], hm1)  
 
 display(fig)

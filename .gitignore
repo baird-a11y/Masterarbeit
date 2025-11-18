@@ -45,3 +45,5 @@ src/Ansatz_2/output.dat
 src/Ansatz_2/unet_psi.bson
 src/Ansatz_2/Model3D.vts
 src/Ansatz_2/eval_*
+src/Ansatz_2/unet_psi_1000_100_8_1e4.bson
+src/Ansatz_2/unet_psi._1000_400_8_1e3.bson

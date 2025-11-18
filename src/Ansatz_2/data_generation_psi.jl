@@ -154,10 +154,10 @@ function generate_psi_sample(rng;
             existing_centers,
             existing_radii,
             r_i;
-            x_min = -0.5,  # wie bisherige Domäne
-            x_max =  0.5,
-            z_min = -0.5,
-            z_max =  0.5,
+            x_min = -0.9,  # wie bisherige Domäne
+            x_max =  0.9,
+            z_min = -0.9,
+            z_max =  0.9,
         )
 
         centers_2D[i] = (cx, cz)

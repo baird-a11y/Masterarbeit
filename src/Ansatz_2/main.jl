@@ -37,7 +37,7 @@ using .EvaluatePsi
 #   "generate_data"  → viele Samples als .jld2 speichern
 #   "train"          → U-Net auf Daten trainieren
 #   "eval_dataset"   → gesamten Datensatz auswerten (Statistik je Kristallanzahl)
-mode          = "train"   # z.B. zum Testen
+mode          = "eval_dataset"   # z.B. zum Testen
 
 
 # Zufall
@@ -46,24 +46,24 @@ rng  = MersenneTwister(seed)
 
 # --- Geometrie-Parameter für die Datengenerierung ---
 min_crystals = 1      # minimum Anzahl Kristalle pro Sample
-max_crystals = 10      # maximum Anzahl Kristalle pro Sample
+max_crystals = 1      # maximum Anzahl Kristalle pro Sample
 
 radius_mode  = :fixed # :fixed oder :range
 
-R_fixed      = 0.04    # wird nur benutzt, wenn radius_mode == :fixed
+R_fixed      = 0.1    # wird nur benutzt, wenn radius_mode == :fixed
 R_min        = 0.02   # wird nur benutzt, wenn radius_mode == :range
 R_max        = 0.05
 
 
 # Datengenerierung
-n_train   = 300                 # nur benutzt, wenn mode == "generate_data"
+n_train   = 10                # nur benutzt, wenn mode == "generate_data"
 outdir    = "data_psi"          # Ordner für .jld2-Samples
 
 # Training
-epochs        = 70
-batch_size    = 2
-learning_rate = 1e-5
-model_path    = "unet_psi.bson"
+epochs        = 100
+batch_size    = 8
+learning_rate = 1e-4
+model_path    = "unet_psi._1000_400_8_1e3.bson"
 
 # Eval
 eval_sample_idx = 1
@@ -102,23 +102,23 @@ if mode == "generate_data"
 
 elseif mode == "train"
 
-    mkpath(outdir)
-    @info "Erzeuge $n_train Trainings-Samples in Ordner: $outdir"
-    DataGenerationPsi.generate_dataset(
-    outdir;
-    n_train     = n_train,
-    rng         = rng,
-    nx          = 256,
-    nz          = 256,
-    η           = 1e20,
-    Δρ          = 200.0,
-    min_crystals = min_crystals,
-    max_crystals = max_crystals,
-    radius_mode  = radius_mode,
-    R_fixed      = R_fixed,
-    R_min        = R_min,
-    R_max        = R_max,
-)
+#     mkpath(outdir)
+#     @info "Erzeuge $n_train Trainings-Samples in Ordner: $outdir"
+#     DataGenerationPsi.generate_dataset(
+#     outdir;
+#     n_train     = n_train,
+#     rng         = rng,
+#     nx          = 256,
+#     nz          = 256,
+#     η           = 1e20,
+#     Δρ          = 200.0,
+#     min_crystals = min_crystals,
+#     max_crystals = max_crystals,
+#     radius_mode  = radius_mode,
+#     R_fixed      = R_fixed,
+#     R_min        = R_min,
+#     R_max        = R_max,
+# )
 
     @info "Datengenerierung abgeschlossen."
 
