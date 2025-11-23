@@ -10,21 +10,100 @@ using ..LaMEMInterface: run_sinking_crystals
 const g_gravity = 9.81  # m/s²
 
 # ------------------------------------------------------------
-# Hilfsfunktionen (analog zu Ansatz 2, aber lokal kopiert)
+# Hilfsfunktionen (analog zu Ansatz 2, aber erweitert)
 # ------------------------------------------------------------
+
+"""
+    distance_field(mask)
+
+Einfache Distanztransformation auf dem Gitter:
+- `mask[i, j] == true` → Distanz = 0
+- andere Zellen → minimale Gitterdistanz (in Pixeln) zu einem wahr-Wert.
+
+Verwendet eine BFS-artige Ausbreitung (Manhattan-Distanz in Gitter-Schritten),
+was für das NN völlig ausreichend ist.
+"""
+function distance_field(mask::AbstractMatrix{Bool})
+    nx, nz = size(mask)
+    dist = fill(typemax(Float32), nx, nz)
+
+    # Queue für BFS
+    queue = Vector{Tuple{Int,Int}}()
+
+    # Startpunkte: alle Kristallzellen
+    for i in 1:nx, j in 1:nz
+        if mask[i, j]
+            dist[i, j] = 0.0f0
+            push!(queue, (i, j))
+        end
+    end
+
+    # Spezialfall: keine Kristalle → überall Distanz = 0
+    if isempty(queue)
+        dist .= 0.0f0
+        return dist
+    end
+
+    # 4er-Nachbarschaft (Manhattan)
+    neigh = ((-1, 0), (1, 0), (0, -1), (0, 1))
+
+    head = 1
+    while head <= length(queue)
+        i, j = queue[head]
+        head += 1
+        d_ij = dist[i, j]
+
+        for (di, dj) in neigh
+            ni = i + di
+            nj = j + dj
+            if 1 <= ni <= nx && 1 <= nj <= nz
+                # ein Schritt weiter
+                nd = d_ij + 1.0f0
+                if nd < dist[ni, nj]
+                    dist[ni, nj] = nd
+                    push!(queue, (ni, nj))
+                end
+            end
+        end
+    end
+
+    return dist
+end
 
 """
     build_input_channels(phase)
 
-Erstellt Eingabekanäle für das U-Net.
-Aktuell: nur Kristallmaske (phase == 1) als ein Kanal.
+Erstellt Eingabekanäle für das U-Net (Ansatz 3).
+
+Kanal 1: Kristallmaske (phase == 1) ∈ {0,1}  
+Kanal 2: normalisierte Distanz zum nächsten Kristall (0 → im Kristall, 1 → weit weg)
 """
 function build_input_channels(phase)
     nx, nz = size(phase)
-    input = Array{Float32}(undef, nx, nz, 1)
-    input[:, :, 1] .= phase .== 1
+
+    # Kristallmaske
+    mask = phase .== 1
+
+    # Distanzfeld berechnen (in Gitter-Schritten)
+    dist = distance_field(mask)
+
+    # Auf [0, 1] normalisieren (falls überhaupt Distanz > 0 existiert)
+    maxdist = maximum(dist)
+    dist_norm = similar(dist)
+    if maxdist > 0
+        dist_norm .= dist ./ maxdist
+    else
+        dist_norm .= 0.0f0
+    end
+
+    # Eingabetensor zusammenbauen: (nx, nz, 2)
+    input = Array{Float32}(undef, nx, nz, 2)
+    input[:, :, 1] .= Float32.(mask)
+    input[:, :, 2] .= Float32.(dist_norm)
+
     return input
 end
+
 
 """
     normalize_psi(ψ)

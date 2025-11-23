@@ -8,5 +8,5 @@
 #SBATCH --ntasks=1
 
 # Pfad des Skriptes. Muss immer im selben Ordner wie das Skript liegen. Am besten das Skript selbst start.jl nennen.
-/opt/julia/bin/julia main.jl
+/opt/julia/bin/julia -t 1 main.jl
 

@@ -35,7 +35,7 @@ end
     get_sample(ds, idx)
 
 Lädt ein einzelnes Sample aus der .jld2-Datei:
-- input  :: (nx, nz, 1)  Float32  (Kristallmaske)
+- input  :: (nx, nz, C)  Float32  (Maske + weitere Kanäle)
 - target :: (nx, nz, 1)  Float32  (ψ_norm)
 """
 function get_sample(ds::PsiDataset, idx::Int)
@@ -44,13 +44,14 @@ function get_sample(ds::PsiDataset, idx::Int)
     ψ_norm = nothing
     @load file input ψ_norm
 
-    x = Float32.(input)           # (nx, nz, 1)
+    x = Float32.(input)           # (nx, nz, C)
     y = Float32.(ψ_norm)
     nx, nz = size(y)
     y = reshape(y, nx, nz, 1)     # (nx, nz, 1), passend zum U-Net-Output
 
     return x, y
 end
+
 
 """
     make_batches(ds, batch_size; rng)

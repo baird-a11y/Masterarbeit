@@ -95,7 +95,7 @@ function train_unet_residual(; data_dir::String="data_residual",
 
     ds = load_dataset(data_dir)
 
-    model = build_unet(1, 1)    # 1 Input (Maske), 1 Output (Residual_norm)
+    model = build_unet(2, 1)    # 2 Inputs (Maske + Distanz), 1 Output (residual_norm)
     model = fmap(move, model)
 
     ps = Flux.params(model)

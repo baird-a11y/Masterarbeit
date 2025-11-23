@@ -37,7 +37,7 @@ using .EvaluatePsi
 #   "generate_data"  → viele Samples als .jld2 speichern
 #   "train"          → U-Net auf Daten trainieren
 #   "eval_dataset"   → gesamten Datensatz auswerten (Statistik je Kristallanzahl)
-mode          = "eval_dataset"   # z.B. zum Testen
+mode          = "train"   # z.B. zum Testen
 
 
 # Zufall
@@ -56,14 +56,14 @@ R_max        = 0.05
 
 
 # Datengenerierung
-n_train   = 10                # nur benutzt, wenn mode == "generate_data"
+n_train   = 80                # nur benutzt, wenn mode == "generate_data"
 outdir    = "data_psi"          # Ordner für .jld2-Samples
 
 # Training
 epochs        = 100
-batch_size    = 8
+batch_size    = 4
 learning_rate = 1e-4
-model_path    = "unet_psi._1000_400_8_1e3.bson"
+model_path    = "unet_psi.bson"
 
 # Eval
 eval_sample_idx = 1
@@ -102,23 +102,23 @@ if mode == "generate_data"
 
 elseif mode == "train"
 
-#     mkpath(outdir)
-#     @info "Erzeuge $n_train Trainings-Samples in Ordner: $outdir"
-#     DataGenerationPsi.generate_dataset(
-#     outdir;
-#     n_train     = n_train,
-#     rng         = rng,
-#     nx          = 256,
-#     nz          = 256,
-#     η           = 1e20,
-#     Δρ          = 200.0,
-#     min_crystals = min_crystals,
-#     max_crystals = max_crystals,
-#     radius_mode  = radius_mode,
-#     R_fixed      = R_fixed,
-#     R_min        = R_min,
-#     R_max        = R_max,
-# )
+    mkpath(outdir)
+    @info "Erzeuge $n_train Trainings-Samples in Ordner: $outdir"
+    DataGenerationPsi.generate_dataset(
+    outdir;
+    n_train     = n_train,
+    rng         = rng,
+    nx          = 256,
+    nz          = 256,
+    η           = 1e20,
+    Δρ          = 200.0,
+    min_crystals = min_crystals,
+    max_crystals = max_crystals,
+    radius_mode  = radius_mode,
+    R_fixed      = R_fixed,
+    R_min        = R_min,
+    R_max        = R_max,
+    )
 
     @info "Datengenerierung abgeschlossen."
 
@@ -129,6 +129,18 @@ elseif mode == "train"
                             lr=learning_rate,
                             rng=rng,
                             save_path=model_path)
+
+    @info "Training abgeschlossen."
+
+    @info "Evaluiere gesamten Datensatz in $outdir mit Modell $model_path"
+    EvaluatePsi.evaluate_dataset(; data_dir   = outdir,
+                                 model_path  = model_path,
+                                 out_prefix  = eval_prefix,
+                                 save_plots  = true,
+                                 plot_dir    = plots_save,
+                                 denorm_psi  = psi_denorm)
+
+    
 
 
 elseif mode == "eval_dataset"

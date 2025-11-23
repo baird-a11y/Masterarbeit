@@ -72,12 +72,79 @@ function _select_mover(use_gpu::Union{Nothing,Bool})
     end
 end
 
-"""
-    mse_loss(y_pred, y_true)
+# Huber-Loss (glatt zwischen L2 und L1)
+function huber_loss(y_pred, y_true; δ::Float32 = 1.0f0)
+    r = y_pred .- y_true
+    abs_r = abs.(r)
 
-Einfacher Mean-Squared-Error über alle Dimensionen.
+    quad = 0.5f0 .* r.^2
+    linear = δ .* (abs_r .- 0.5f0*δ)
+
+    use_quad = abs_r .<= δ
+    return mean(ifelse.(use_quad, quad, linear))
+end
+
+function loss(x, y)
+    y_pred = model(x)
+    return huber_loss(y_pred, y; δ=1.0f0)
+end
+
 """
-mse_loss(y_pred, y_true) = mean((y_pred .- y_true).^2)
+    weighted_mse_loss(y_pred, y_true, x_mask;
+                      w_crystal=5.0, w_matrix=1.0)
+
+Gewichteter MSE:
+- höhere Gewichte im Kristall (x_mask ≈ 1),
+- geringere Gewichte in der Matrix (x_mask ≈ 0).
+x_mask muss dieselbe Shape wie y_true haben: (nx, nz, 1, B).
+"""
+function weighted_mse_loss(y_pred, y_true, x_mask;
+                           w_crystal::Float32 = 5.0f0,
+                           w_matrix::Float32  = 1.0f0)
+
+    @assert size(x_mask) == size(y_true) "x_mask und y_true müssen gleiche Shape haben"
+
+    mask = x_mask .> 0.5f0
+
+    w = similar(x_mask)
+    w[mask]   .= w_crystal
+    w[.!mask] .= w_matrix
+
+    diff2    = (y_pred .- y_true).^2
+    weighted = w .* diff2
+
+    return sum(weighted) / sum(w)
+end
+
+
+"""
+    weighted_mse_loss(y_pred, y_true, x;
+                      w_crystal=5.0, w_matrix=1.0)
+
+Gewichteter MSE:
+- höhere Gewichte im Kristall (x ≈ 1),
+- geringere Gewichte in der Matrix (x ≈ 0).
+"""
+function weighted_mse_loss(y_pred, y_true, x;
+                           w_crystal::Float32 = 5.0f0,
+                           w_matrix::Float32  = 1.0f0)
+
+    @assert size(x) == size(y_true) "x und y_true müssen gleiche Shape haben"
+
+    # Maske: Kristall = true, Matrix = false
+    mask = x .> 0.5f0
+
+    # Gewichte pro Pixel
+    w = similar(x)
+    w[mask]    .= w_crystal
+    w[.!mask]  .= w_matrix
+
+    diff2 = (y_pred .- y_true).^2
+    weighted = w .* diff2
+
+    # normiert: Mittelwert mit Gewichtung
+    return sum(weighted) / sum(w)
+end
 
 """
     train_unet(; data_dir, epochs, batch_size, lr, rng, save_path, use_gpu)
@@ -130,14 +197,17 @@ function train_unet(; data_dir::String="data_psi",
             # Daten auf Zielgerät
             x = move(x)
             y = move(y)
+            
+            # x hat Shape (nx, nz, C, B), wir nehmen Kanal 1 als Kristallmaske
+            x_mask = x[:, :, 1:1, :]  # Shape (nx, nz, 1, B)
 
-            # Gradient über die Parameter ps
             loss, back = Flux.withgradient(ps) do
                 y_pred = model(x)
-                mse_loss(y_pred, y)
+                # gewichtete Loss: Kristallbereiche stärker gewichten
+                weighted_mse_loss(y_pred, y, x_mask)
             end
 
-            # Manuelles SGD-Update: p .= p .- lr * grad
+            # Manuelles SGD-Update
             for p in ps
                 g = back[p]
                 if g === nothing
@@ -146,7 +216,6 @@ function train_unet(; data_dir::String="data_psi",
                 @. p -= lr * g
             end
 
-            # Verlust als Float64 loggen (unabhängig vom Gerät)
             push!(losses, float(loss))
         end
 
@@ -279,7 +348,7 @@ function train_unet(; data_dir::String="data_psi",
     ds = load_dataset(data_dir)
 
     # Modell bauen und auf Zielgerät verschieben (rekursiv!)
-    model = build_unet(1, 1)                 # 1 Input-Kanal (Maske), 1 Output-Kanal (ψ_norm)
+    model = build_unet(2, 1)  # 2 Input-Kanäle (Maske + Distanz), 1 Output-Kanal (ψ_norm)
     model = fmap(move, model)                 # <— wichtig: alle Gewichte/Buffer verschieben
 
     # Parameter *nach* dem Verschieben ziehen

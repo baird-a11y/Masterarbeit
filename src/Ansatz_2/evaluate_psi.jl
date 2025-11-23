@@ -5,9 +5,70 @@ using BSON
 using CairoMakie
 using Statistics
 using Printf
+using Functors: fmap
 
 using ..DatasetPsi: load_dataset, get_sample
 using CairoMakie: DataAspect, Figure, Axis, heatmap!, Colorbar
+
+# ============================================================
+# Optional CUDA-Support (wie im Training)
+# ============================================================
+const _HAS_CUDA = try
+    @eval import CUDA
+    true
+catch
+    false
+end
+
+function has_gpu()
+    if !_HAS_CUDA
+        return false
+    end
+    try
+        return CUDA.has_cuda()
+    catch
+        return false
+    end
+end
+
+function _to_gpu(x)
+    if !_HAS_CUDA
+        return x
+    end
+    try
+        if isdefined(CUDA, :cuda)
+            return CUDA.cuda(x)
+        elseif isdefined(CUDA, :cu)
+            return CUDA.cu(x)
+        else
+            return x
+        end
+    catch
+        return x
+    end
+end
+
+_to_cpu(x) = cpu(x)
+
+function _select_mover(use_gpu::Union{Nothing,Bool})
+    if use_gpu === false
+        return _to_cpu, :cpu
+    elseif use_gpu === true
+        if has_gpu()
+            return _to_gpu, :gpu
+        else
+            @warn "GPU angefordert, aber CUDA nicht verfügbar – nutze CPU."
+            return _to_cpu, :cpu
+        end
+    else
+        # auto
+        if has_gpu()
+            return _to_gpu, :gpu
+        else
+            return _to_cpu, :cpu
+        end
+    end
+end
 
 # ------------------------------------------------------------
 # Helper: Kristall-Umrisse plotten (physikalische Koordinaten)
@@ -76,7 +137,7 @@ end
 """
     evaluate_dataset(; data_dir, model_path, out_prefix="eval_psi_dataset",
                       save_plots=false, plot_dir="eval_plots",
-                      denorm_psi=false)
+                      denorm_psi=false, use_gpu=nothing)
 
 - Evaluierung von ψ (MSE, relL2)
 - Zusätzlich: ψ_x, ψ_z (ebenfalls MSE, relL2)
@@ -85,19 +146,34 @@ end
 - Wenn `save_plots = true`:
     - pro Sample: ψ-Plot (3 Panels)
     - pro Sample: ψ_x / ψ_z-Plot (2×3 Panels)
-- Aggregierte Metriken werden als CSV gespeichert:
-    `<out_prefix>_by_n.csv`
+- `use_gpu` wie im Training:
+    - nothing → auto
+    - true    → GPU (falls möglich, sonst CPU)
+    - false   → CPU
 """
 function evaluate_dataset(; data_dir::String,
                           model_path::String,
                           out_prefix::String = "eval_psi_dataset",
                           save_plots::Bool = false,
                           plot_dir::String = "eval_plots",
-                          denorm_psi::Bool = false)
+                          denorm_psi::Bool = false,
+                          use_gpu::Union{Nothing,Bool} = nothing)
+
+    # Gerät auswählen (für Modell + Forward-Pass)
+    move, devsym = _select_mover(use_gpu)
+    @info "Evaluierung auf Gerät: $(devsym == :gpu ? "GPU (CUDA)" : "CPU")"
+
+    if devsym == :gpu && _HAS_CUDA
+        try
+            CUDA.allowscalar(false)
+        catch
+        end
+    end
 
     @info "Lade Modell aus $model_path"
     model_bson = BSON.load(model_path)
-    model = model_bson[:model]
+    model_cpu = model_bson[:model]
+    model = fmap(move, model_cpu)  # Modell ggf. auf GPU
 
     ds = load_dataset(data_dir)
     n_samples = length(ds.files)
@@ -118,15 +194,20 @@ function evaluate_dataset(; data_dir::String,
     errors_by_n = Dict{Int, Vector{NamedTuple}}()
 
     for (i, filepath) in enumerate(ds.files)
-        # --- Daten als (nx,nz,1) laden ---
+        # --- Daten als (nx,nz,Channels) laden ---
         x, y_true = get_sample(ds, i)
-        nx, nz, ch = size(x)
+        nx, nz, ch = size(x)               # ch = 1 oder 2 (Maske + SDF)
         x_batch = reshape(x, nx, nz, ch, 1)
 
-        # Vorhersage (normalisierter Raum)
-        y_pred_batch = model(x_batch)
-        y_pred_norm = dropdims(y_pred_batch[:, :, :, 1], dims=3)   # (nx,nz)
-        y_true_norm = dropdims(y_true, dims=3)                     # (nx,nz)
+        # Auf Ausführungsgerät verschieben
+        x_dev = move(x_batch)
+
+        # Vorhersage (normalisierter Raum) auf Gerät
+        y_pred_batch_dev = model(x_dev)
+
+        # zurück auf CPU, Shape (nx,nz)
+        y_pred_norm = dropdims(Array(y_pred_batch_dev)[:, :, :, 1], dims=3)
+        y_true_norm = dropdims(Array(y_true), dims=3)
 
         # --- Zusatzinfos (meta + scale) aus der Datei ---
         filedata = JLD2.load(filepath)
@@ -142,7 +223,6 @@ function evaluate_dataset(; data_dir::String,
             xcoords = meta[:x_vec_1D]
             zcoords = meta[:z_vec_1D]
         else
-            # Fallback: Indizes als "Koordinaten"
             xcoords = collect(1:nx)
             zcoords = collect(1:nz)
         end
@@ -163,11 +243,16 @@ function evaluate_dataset(; data_dir::String,
         denom_psi = sqrt(sum(y_true_eval.^2)) + eps()
         rel_l2_psi = num_psi / denom_psi
 
+        # Pixel-Fehlerraten ε_α für ψ (relativer Fehler pro Pixel)
+        rel_err_psi = abs.(y_pred_eval .- y_true_eval) ./ (abs.(y_true_eval) .+ eps())
+        eps01_psi = mean(rel_err_psi .> 0.01)   # > 1 %
+        eps05_psi = mean(rel_err_psi .> 0.05)   # > 5 %
+        eps10_psi = mean(rel_err_psi .> 0.10)   # > 10 %
+
         # --- ψ_x und ψ_z berechnen ---
         if length(xcoords) > 1 && length(zcoords) > 1
             dx = (xcoords[2] - xcoords[1]) * 1000.0   # km → m
             dz = (zcoords[2] - zcoords[1]) * 1000.0   # km → m
-
         else
             dx = 1.0
             dz = 1.0
@@ -190,7 +275,8 @@ function evaluate_dataset(; data_dir::String,
 
         stat = (; mse_psi, rel_l2_psi,
                  mse_psix, rel_l2_psix,
-                 mse_psiz, rel_l2_psiz)
+                 mse_psiz, rel_l2_psiz,
+                 eps01_psi, eps05_psi, eps10_psi)
 
         if !haskey(errors_by_n, n)
             errors_by_n[n] = NamedTuple[]
@@ -222,7 +308,8 @@ function evaluate_dataset(; data_dir::String,
                        xlabel = "x (km)",
                        ylabel = "z (km)",
                        aspect = DataAspect())
-            hm1 = heatmap!(ax1, xcoords, zcoords, y_true_eval; colorrange = (global_min, global_max))
+            hm1 = heatmap!(ax1, xcoords, zcoords, y_true_eval;
+                           colorrange = (global_min, global_max))
             plot_crystal_outlines!(ax1, centers_2D, radii)
             Colorbar(gl1[1, 2], hm1, label = "ψ_true")
 
@@ -231,7 +318,8 @@ function evaluate_dataset(; data_dir::String,
                        xlabel = "x (km)",
                        ylabel = "z (km)",
                        aspect = DataAspect())
-            hm2 = heatmap!(ax2, xcoords, zcoords, y_pred_eval; colorrange = (global_min, global_max))
+            hm2 = heatmap!(ax2, xcoords, zcoords, y_pred_eval;
+                           colorrange = (global_min, global_max))
             plot_crystal_outlines!(ax2, centers_2D, radii)
             Colorbar(gl2[1, 2], hm2, label = "ψ_pred")
 
@@ -240,7 +328,8 @@ function evaluate_dataset(; data_dir::String,
                        xlabel = "x (km)",
                        ylabel = "z (km)",
                        aspect = DataAspect())
-            hm3 = heatmap!(ax3, xcoords, zcoords, diff; colorrange = (-max_abs_diff, max_abs_diff))
+            hm3 = heatmap!(ax3, xcoords, zcoords, diff;
+                           colorrange = (-max_abs_diff, max_abs_diff))
             plot_crystal_outlines!(ax3, centers_2D, radii)
             Colorbar(gl3[1, 2], hm3, label = "Fehler")
 
@@ -267,7 +356,8 @@ function evaluate_dataset(; data_dir::String,
                         xlabel = "x (km)",
                         ylabel = "z (km)",
                         aspect = DataAspect())
-            hmx1 = heatmap!(axx1, xcoords, zcoords, ψx_true; colorrange = (min_psix, max_psix))
+            hmx1 = heatmap!(axx1, xcoords, zcoords, ψx_true;
+                            colorrange = (min_psix, max_psix))
             plot_crystal_outlines!(axx1, centers_2D, radii)
             Colorbar(gx1[1, 2], hmx1, label = "ψ_x true")
 
@@ -276,7 +366,8 @@ function evaluate_dataset(; data_dir::String,
                         xlabel = "x (km)",
                         ylabel = "z (km)",
                         aspect = DataAspect())
-            hmx2 = heatmap!(axx2, xcoords, zcoords, ψx_pred; colorrange = (min_psix, max_psix))
+            hmx2 = heatmap!(axx2, xcoords, zcoords, ψx_pred;
+                            colorrange = (min_psix, max_psix))
             plot_crystal_outlines!(axx2, centers_2D, radii)
             Colorbar(gx2[1, 2], hmx2, label = "ψ_x pred")
 
@@ -305,7 +396,8 @@ function evaluate_dataset(; data_dir::String,
                         xlabel = "x (km)",
                         ylabel = "z (km)",
                         aspect = DataAspect())
-            hmz1 = heatmap!(axz1, xcoords, zcoords, ψz_true; colorrange = (min_psiz, max_psiz))
+            hmz1 = heatmap!(axz1, xcoords, zcoords, ψz_true;
+                            colorrange = (min_psiz, max_psiz))
             plot_crystal_outlines!(axz1, centers_2D, radii)
             Colorbar(gz1[1, 2], hmz1, label = "ψ_z true")
 
@@ -314,7 +406,8 @@ function evaluate_dataset(; data_dir::String,
                         xlabel = "x (km)",
                         ylabel = "z (km)",
                         aspect = DataAspect())
-            hmz2 = heatmap!(axz2, xcoords, zcoords, ψz_pred; colorrange = (min_psiz, max_psiz))
+            hmz2 = heatmap!(axz2, xcoords, zcoords, ψz_pred;
+                            colorrange = (min_psiz, max_psiz))
             plot_crystal_outlines!(axz2, centers_2D, radii)
             Colorbar(gz2[1, 2], hmz2, label = "ψ_z pred")
 
@@ -335,18 +428,16 @@ function evaluate_dataset(; data_dir::String,
 
     @info "=== Auswertung nach Kristallanzahl ($(denorm_psi ? "physikalisches ψ" : "ψ_norm")) ==="
 
-    # sortierte Gruppen, einmal berechnen
     sorted_groups = sort(collect(errors_by_n); by = first)
 
     # CSV schreiben
     csv_path = out_prefix * "_by_n.csv"
     open(csv_path, "w") do io
-        println(io,
-            "n_crystals,N," *
-            "mse_psi_mean,mse_psi_std,relL2_psi_mean,relL2_psi_std," *
-            "mse_psix_mean,mse_psix_std,relL2_psix_mean,relL2_psix_std," *
-            "mse_psiz_mean,mse_psiz_std,relL2_psiz_mean,relL2_psiz_std"
-        )
+        println(io, "n_crystals,N," *
+           "mse_psi_mean,mse_psi_std,relL2_psi_mean,relL2_psi_std," *
+           "mse_psix_mean,mse_psix_std,relL2_psix_mean,relL2_psix_std," *
+           "mse_psiz_mean,mse_psiz_std,relL2_psiz_mean,relL2_psiz_std," *
+           "eps01_psi_mean,eps01_psi_std,eps05_psi_mean,eps05_psi_std,eps10_psi_mean,eps10_psi_std")
 
         for (n, stats) in sorted_groups
             N = length(stats)
@@ -375,12 +466,24 @@ function evaluate_dataset(; data_dir::String,
             rel_psiz_mean = mean(rel_psiz_vals)
             rel_psiz_std  = std(rel_psiz_vals)
 
+            eps01_vals = [s.eps01_psi for s in stats]
+            eps05_vals = [s.eps05_psi for s in stats]
+            eps10_vals = [s.eps10_psi for s in stats]
+
+            eps01_mean = mean(eps01_vals)
+            eps01_std  = std(eps01_vals)
+            eps05_mean = mean(eps05_vals)
+            eps05_std  = std(eps05_vals)
+            eps10_mean = mean(eps10_vals)
+            eps10_std  = std(eps10_vals)
+
             println(io, @sprintf(
-                "%d,%d,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e",
+                "%d,%d,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e",
                 n, N,
                 mse_psi_mean,  mse_psi_std,  rel_psi_mean,  rel_psi_std,
                 mse_psix_mean, mse_psix_std, rel_psix_mean, rel_psix_std,
-                mse_psiz_mean, mse_psiz_std, rel_psiz_mean, rel_psiz_std
+                mse_psiz_mean, mse_psiz_std, rel_psiz_mean, rel_psiz_std,
+                eps01_mean, eps01_std, eps05_mean, eps05_std, eps10_mean, eps10_std
             ))
         end
     end

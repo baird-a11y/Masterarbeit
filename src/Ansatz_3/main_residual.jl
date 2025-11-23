@@ -4,13 +4,15 @@ using Random
 using Dates
 using Printf
 
+
+
 include("streamfunction_poisson.jl")
 include("lamem_interface.jl")
 include("data_generation_residual.jl")
 include("dataset_residual.jl")
 include("unet_psi.jl")           # U-Net-Architektur wiederverwenden
 include("training_residual.jl")
-# (später ggf. evaluate_residual.jl)
+include("evaluate_residual.jl")
 
 using .StreamFunctionPoisson
 using .LaMEMInterface
@@ -18,31 +20,54 @@ using .DataGenerationResidual
 using .DatasetResidual
 using .UNetPsi
 using .TrainingResidual
+using .EvaluateResidual
 
-mode = "train_residual"   # oder "generate_residual"
+# ================================
+# Konfiguration
+# ================================
 
+# mode:
+#   "generate_data"  → viele Samples als .jld2 speichern
+#   "train"          → U-Net auf Daten trainieren
+#   "eval_dataset"   → gesamten Datensatz auswerten (Statistik je Kristallanzahl)
+mode          = "eval_dataset"   # z.B. zum Testen
+
+
+# Zufall
 seed = 42
 rng  = MersenneTwister(seed)
 
-min_crystals = 1
-max_crystals = 10
+# --- Geometrie-Parameter für die Datengenerierung ---
+min_crystals = 1      # minimum Anzahl Kristalle pro Sample
+max_crystals = 1      # maximum Anzahl Kristalle pro Sample
 
-radius_mode  = :fixed
-R_fixed      = 0.04
-R_min        = 0.02
+radius_mode  = :fixed # :fixed oder :range
+
+R_fixed      = 0.1    # wird nur benutzt, wenn radius_mode == :fixed
+R_min        = 0.02   # wird nur benutzt, wenn radius_mode == :range
 R_max        = 0.05
 
-n_train   = 10
-outdir    = "data_residual"
 
-epochs        = 4
+# Datengenerierung
+n_train   = 1000                # nur benutzt, wenn mode == "generate_data"
+outdir    = "data_psi"          # Ordner für .jld2-Samples
+
+# Training
+epochs        = 100
 batch_size    = 2
-learning_rate = 1e-5
-model_path    = "unet_residual.bson"
+learning_rate = 1e-4
+model_path    = "unet_psi._1000_100_8_1e4.bson"
 
-@info "Starte main_residual.jl im Modus: $mode"
+# Eval
+eval_sample_idx = 1
+eval_prefix     = "eval_psi"
+plots_save      = "eval_plots_phys"
+psi_denorm = true                       # ob im physikalischen ψ-Raum ausgewertet wird
 
-if mode == "generate_residual"
+
+@info "Starte main.jl im Modus: $mode"
+
+if mode == "generate_data"
 
     mkpath(outdir)
     @info "Erzeuge $n_train Residual-Samples in Ordner: $outdir"
@@ -64,7 +89,7 @@ if mode == "generate_residual"
 
     @info "Residual-Datengenerierung abgeschlossen."
 
-elseif mode == "train_residual"
+elseif mode == "train"
 
     mkpath(outdir)
     @info "Erzeuge $n_train Residual-Samples in Ordner: $outdir"
@@ -91,6 +116,21 @@ elseif mode == "train_residual"
                                          lr=learning_rate,
                                          rng=rng,
                                          save_path=model_path)
+
+
+elseif mode == "eval_dataset"
+    outdir     = "data_residual"
+    
+
+    EvaluateResidual.evaluate_dataset_residual(
+        data_dir      = outdir,
+        model_path    = model_path,
+        out_prefix    = "eval_residual_dataset",
+        save_plots    = true,              # Bilder erzeugen
+        plot_dir      = "eval_residual_plots",
+        denorm_residual = true,
+    )
+
 
 else
     error("Unbekannter Modus: $mode")

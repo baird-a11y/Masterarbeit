@@ -1,325 +1,538 @@
-Hier steht die **Stromfunktion ψ(x, z)** im Zentrum. Aus ihr lassen sich die Geschwindigkeitskomponenten rekonstruieren, sodass das Modell implizit ein physikalisch konsistentes Strömungsfeld lernt.
-
-### Grundidee
-
-- **Input des U-Net:**
-    
-    - Geometrie und Material/Phaseninformation auf dem **256×256-Gitter**, aktuell:
-        
-        - Kristallmaske (phase == 1) als einzelner Kanal (siehe `build_input_channels`).
-        
-    - Später erweiterbar um weitere Kanäle (z. B. Viskosität, Randbedingungen).
-    
-- **Output des U-Net:**
-    
-    - Ein **Skalarfeld ψ(x, z)** auf dem gleichen 256×256-Gitter  
-        → in der Implementierung als ein Kanal mit Form (nx, nz, 1).
-    
-- **Ziel des Trainings:**
-    
-    - Das Netz soll die von LaMEM abgeleitete ψ-Funktion (bzw. eine daraus normalisierte Version) approximieren.
-    
-- **Evaluierung (konzeptionell):**
-    
-    1. Vergleich zwischen **ψ_pred** (vom U-Net) und **ψ_LaMEM** (bzw. ψ aus der Poisson-Lösung).
-        
-    2. Optional: Rekonstruktion der Geschwindigkeiten aus ψ_pred und Vergleich mit den LaMEM-Geschwindigkeiten **Vx, Vz**.
-    
-
----
-
-## Datenpipeline für Ansatz 2
-
-Die Pipeline ist im Prinzip schon angelegt, ich formuliere sie hier einmal klar durch – inkl. aktuellem Status.
-
-### 1. Datengenerierung in LaMEM
-
-- Für jede Stichprobe:
-    
-    - LaMEM-Simulation für eine Kristallkonfiguration im 2D-Schnitt.
-    
-    - Aktuell: **ein Kristall** mit zufälliger Position (cx, cz) und festem Radius R = 0.1 km.
-    
-- Die Funktion **`run_sinking_crystals`** erzeugt: Phasefeld, Vx, Vz, Wirbelstärke ω und daraus ψ über die Poisson-Gleichung.
-    
-
-**Status (13.11):** LaMEM-Setup und Datengenerierung funktionieren für **1 Kristall**.
-
----
-
-### 2. Berechnung von ω und ψ
-
-- ω wird aus den Geschwindigkeitsgradienten berechnet:  
-    **ω = dVz/dx − dVx/dz** aus dem von LaMEM ausgegebenen Geschwindigkeitsgradienten.
-    
-- ψ wird anschließend mit der Poisson-Routine bestimmt:
-    
-    - **Poisson-Gleichung:**
-    
-        Δψ=−ω\Delta \psi = -\omegaΔψ=−ω
-    - Umsetzung in `poisson2D(omega, dx, dz)` mit Dirichlet-Randbedingung ψ = 0 am Rand.
-    
-
----
-
-### 3. Vorbereitung der Trainingsdaten
-
-- Aus dem Phasefeld wird der **Inputkanal** erzeugt:
-    
-    - `build_input_channels(phase)` erzeugt ein Array (nx, nz, 1) mit einer **Binärmaske für die Kristalle**.
-    
-- Zielgröße:
-    
-    - ψ wird als 2D-Feld (nx, nz) berechnet und danach normalisiert (siehe unten) und als ψ_norm gespeichert.
-    
-- Speicherung:
-    
-    - `generate_psi_sample` erzeugt für jedes Sample:  
-        **input, ψ_norm, scale, meta**  
-        und `generate_dataset` schreibt diese in einzelne `.jld2`-Dateien.
-    
-- Datensatz-Aufbau:
-    
-    - `PsiDataset` speichert nur die Dateipfade.
-        
-    - `get_sample` lädt `input` und `ψ_norm`, formt sie in `(nx, nz, 1)` um und gibt sie als **x, y** zurück.
-    
-- **Splits (konzeptionell):**
-    
-    - Train/Val/Test werden über verschiedene Verzeichnisse bzw. Unterordner realisiert (noch umzusetzen)
-    
-
----
-
-### 4. Normalisierung von ψ
-
-- Problem: ψ-Werte aus der Poisson-Lösung sind **sehr klein** (typisch Größenordnung 10⁻¹²–10⁻¹⁵).
-    
-- Lösung: **dynamische Skalierung pro Sample** in `normalize_psi(ψ)`:
-    
-    - Berechnung des mittleren Exponenten über die nicht-null Werte:
-        
-        - `exponents = log10.(absψ[mask])`
-
-        - `p_mean = mean(exponents)`
-
-    - Skalierungsfaktor:
-
-        - `scale = 10.0^(-p_mean)`
-
-    - Normierte Stromfunktion:
-        
-        - **ψ_norm = ψ * scale**
-            
-    - Rückgabe: `(ψ_norm, scale)`.
-        
-
-**Vorteil:**  
-ψ_norm liegt im numerisch angenehmen Bereich (typisch O(1)), was Training und Konvergenz verbessert.
-
----
-
-### 5. Training des U-Net mit ψ als Target
-
-- Architektur: U-Net aus `UNetPsi.build_unet(1, 1)` mit:
-    
-    - einem Eingabekanal (Kristallmaske),
-        
-    - einem Ausgabekanal (ψ_norm).
-        
-- Optimierung:
-    
-    - Loss-Funktion: **MSE** zwischen vorhergesagter ψ_norm und referenz ψ_norm:
-        
-        - `mse_loss(y_pred, y_true) = mean((y_pred .- y_true).^2)`.
-            
-    - Einfaches manuelles SGD-Update in `train_unet`.
-        
-- GPU/CPU:
-    
-    - Optionaler CUDA-Pfad mit Fallback auf CPU.
-        
-
----
-
-### 6. Evaluierung (aktuell)
-
-- `evaluate_single` lädt:
-    
-    - `x, y` (ψ_norm als Ziel),
-        
-    - das gespeicherte Modell.
-        
-- Es berechnet:
-    
-    - `y_pred = model(x_batch)` als ψ_norm_pred,
-        
-    - bildet ψ_true, ψ_pred und **err = ψ_pred − ψ_true** (alles im **normalisierten** Raum),
-        
-    - erstellt drei Heatmaps (ψ_true, ψ_pred, Fehler) mit gemeinsamer Farbskala.
-        
-
-Bis hierhin findet die gesamte Evaluierung noch **auf den normalisierten ψ-Feldern** statt.
-
----
-
-## Nächste Schritte (konkret ausgearbeitet)
-
-### 1. Mehrere Kristalle + flexible Radien
-
-**Ziel:** Datengenerierung so erweitern, dass 1…n Kristalle mit zufälligen Positionen und wählbaren Radien erzeugt werden.
-
-**Konzept:**
-
-- In `generate_psi_sample` nicht nur **ein** Zentrum `(cx, cz)` und einen Radius `R`, sondern:
-    
-    - Anzahl `n_crystals` festlegen (z. B. zufällig in [1, 10] oder als Parameter aus `main.jl`),
-        
-    - Vektor `centers_2D = [(cx₁, cz₁), …, (cxₙ, czₙ)]`,
-        
-    - Vektor `radii = [R₁, …, Rₙ]`,
-        
-        - entweder alle gleich,
-            
-        - oder für jeden Kristall per Zufall aus einem Intervall (z. B. [R_min, R_max]).
-            
-- Das Interface `run_sinking_crystals` unterstützt das bereits über die Argumente `centers_2D` und `radii`.
-    
-
-**Einbindung in `main.jl`:**
-
-- Oben in `main.jl`:
-    
-    - Parameter wie **`min_crystals`, `max_crystals`, `R_min`, `R_max`** definieren.
-        
-- In `generate_psi_sample(rng, ...)`:
-    
-    - `n_crystals` aus `[min_crystals, max_crystals]` ziehen,
-        
-    - für jeden Kristall: zufälliges Zentrum und Radius im Bereich,
-        
-    - an `run_sinking_crystals` übergeben.
-        
-
-So kann in `main.jl` die Spannweite der Geometrien kontrolliert werden, ohne den Modulcode jedes Mal zu ändern.
-
----
-
-### 2. Evaluierung nach Kristallanzahl + tabellarische Übersicht
-
-**Ziel:** Eine Evaluierung, die z. B. pro Kristallanzahl (1–10) zusammenfasst, wie gut das Modell ist.
-
-**Vorschlag:**
-
-- Bei der Datengenerierung sicherstellen, dass im `meta`-Tuple pro Sample gespeichert wird:
-    
-    - Kristallanzahl,
-        
-    - ggf. Radii, Positionen etc. (das machst du ja schon für 1 Kristall mit `cx, cz, R`).
-        
-- Eine neue Funktion, z. B. `evaluate_dataset`, die:
-    
-    1. Alle Samples im Datensatz durchläuft,
-        
-    2. Für jedes Sample ψ_pred und ψ_true berechnet,
-        
-    3. **Fehlermetriken** sammelt, gruppiert nach Kristallanzahl (oder Radiusintervall).
-        
-
-**Sinnvolle Größen für die Tabelle:**
-
-Für **ψ**:
-
-- **MSE(ψ)** pro Sample → Mittelwert & Standardabweichung pro Kristallanzahl.
-    
-- **MAE(ψ)** oder maximale Abweichung:
-    
-    - z. B. `max(abs.(ψ_pred - ψ_true))`.
-        
-- **Relative L2-Norm**:
-    
-    ∥ψpred−ψtrue∥2∥ψtrue∥2\frac{\| \psi_{\text{pred}} - \psi_{\text{true}} \|_2} {\| \psi_{\text{true}} \|_2}∥ψtrue​∥2​∥ψpred​−ψtrue​∥2​​
-
-Optional für die aus ψ rekonstruierten **Geschwindigkeiten**:
-
-- **MSE/MAE der Geschwindigkeitskomponenten** Vx, Vz.
-    
-- Relative Fehlernorm im Geschwindigkeitsfeld.
-    
-
-Damit eine Tabelle aufgebaut werden, z. B.:
-
-|Kristallanzahl|N Samples|MSE(ψ) Mittel|MSE(ψ) Std|rel. L2-Fehler ψ|MSE(V) (optional)|
-|---|---|---|---|---|---|
-
-Das beantwortet sehr klar, **wie gut** das System je nach Komplexität der Geometrie funktioniert.
-
----
-
-### 3. Normalisierung vs. Evaluierung – muss ψ zurückskaliert werden?
-
-Kurz: **Ja, wenn du „physikalische“ Größen vergleichen oder interpretieren willst, musst du die Normalisierung nach der Vorhersage wieder umkehren.**  
-Für reine Trainingsmetriken ist der Vergleich im normalisierten Raum aber völlig okay.
-
-**Aktuelle Situation:**
-
-- In den `.jld2`-Dateien speicherst du `input, ψ_norm, scale, meta`.
-    
-- In `DatasetPsi.get_sample` lädst du nur `input` und `ψ_norm`, **nicht** `scale`.
-    
-- Training und `evaluate_single` arbeiten ausschließlich mit ψ_norm.
-    
-
-**Was heißt das?**
-
-- Das Modell lernt eine Funktion im **normalisierten Raum**:  
-    ψ_norm_pred ≈ ψ_norm_true.
-    
-- Solange du MSE usw. auf ψ_norm berechnest, ist alles konsistent.
-    
-
-**Wenn du reale ψ-Werte brauchst (oder Geschwindigkeiten daraus rekonstruierst):**
-
-- Du musst **denselben scale-Faktor verwenden, der beim Sample berechnet wurde**:
-    
-    - ψ_true_phys = ψ_norm_true / scale
-        
-    - ψ_pred_phys = ψ_norm_pred / scale
-        
-- Dafür solltest du bei der Evaluierung:
-    
-    - entweder `scale` mit aus der Datei laden,
-        
-    - oder einen zweiten Datensatz-Loader schreiben, der `scale` zusätzlich ausgibt.
-        
-
-**Gibt es Probleme durch die Normalisierung bei der Vorhersage?**
-
-- Mathematisch ist die Normalisierung nur eine **lineare Skalierung**:
-    
-    - ψ_norm = ψ * scale
-        
-    - ψ = ψ_norm / scale
-        
-- Das bedeutet:
-    
-    - Die Loss-Funktion im normalisierten Raum entspricht der Loss-Funktion im physikalischen Raum bis auf einen konstanten Skalierungsfaktor (pro Sample).
-        
-    - Wenn du bei der Evaluierung sauber zurück skalierst, gibt es **keine prinzipiellen Probleme**.
-        
-- Wichtig ist nur:
-    
-    - Du musst darauf achten, dass **ψ_pred und ψ_true mit demselben scale zurück skaliert werden**.
-        
-    - Für Geschwindigkeiten gilt: wenn du `velocity_from_streamfunction` auf ψ_norm statt auf ψ laufen lässt, bekommst du auch Geschwindigkeit in „normierten“ Einheiten (vergrößert oder verkleinert). Für physikalische Vx/Vz solltest du also mit rückskaliertem ψ arbeiten.
-        
-
-**Fazit zur Normalisierung:**
-
-- Training auf ψ_norm: **gut und sinnvoll**.
-    
-- Evaluierung:
-    
-    - Für reine Modellvergleiche → normalisierter Raum reicht.
-        
-    - Für physikalische Interpretation, Plots in realistischen Größenordnungen, Vergleich mit LaMEM-Vx/Vz → ψ nach der Vorhersage zurück skalieren.
+Ansatz 2 – U-Net auf der Stromfunktion ψ(x, z)
+
+Bei Ansatz 2 steht die Stromfunktion ψ(x, z) im Zentrum. Aus ihr lassen sich die Geschwindigkeitskomponenten rekonstruieren, sodass das Modell implizit ein physikalisch konsistentes Strömungsfeld lernt.
+
+1. Grundidee
+
+Input des U-Nets
+
+Geometrie / Materialinformation auf dem 256×256-Gitter.
+
+Aktuell:
+
+Kristallmaske (phase == 1)
+
+Signed Distance Field (SDF) zum nächsten Kristall
+→ zusammen als 2 Eingabekanäle (Maske + SDF).
+
+Perspektivisch erweiterbar um:
+
+Viskosität
+
+Randbedingungen
+
+weitere physikalische Felder.
+
+Output des U-Nets
+
+Ein Skalarfeld ψ(x, z) auf demselben Gitter.
+
+Implementierung: ein Kanal (nx, nz, 1).
+
+Trainingsziel
+
+Das Netz approximiert die von LaMEM abgeleitete Stromfunktion ψ_LaMEM (bzw. deren normalisierte Version ψ_norm).
+
+Evaluierung (konzeptionell)
+
+Vergleich von ψ_pred (U-Net) und ψ_ref (ψ_LaMEM bzw. Poisson-Lösung).
+
+Optional: Rekonstruktion der Geschwindigkeiten aus ψ_pred und Vergleich mit Vx, Vz aus LaMEM.
+
+2. Datenpipeline für Ansatz 2
+2.1 Datengenerierung in LaMEM
+
+Für jede Stichprobe:
+
+LaMEM-Simulation einer Kristallkonfiguration im 2D-Schnitt.
+
+Kristall-Setup:
+
+Anzahl: 1…n Kristalle.
+
+Positionen zufällig.
+
+Radien: fest oder zufällig in einem Intervall.
+
+Die Funktion run_sinking_crystals liefert:
+
+Phasefeld (Kristall / Matrix),
+
+Vx, Vz,
+
+Gradienten → daraus Wirbelstärke ω,
+
+ψ (über Poisson-Gleichung berechnet).
+
+Alle Simulationen werden seriell ausgeführt (siehe Threading-Abschnitt unten).
+
+2.2 Berechnung von ω und ψ
+
+Wirbelstärke:
+
+ω = ∂Vz/∂x − ∂Vx/∂z, aus den von LaMEM ausgegebenen Geschwindigkeitsgradienten.
+
+Stromfunktion ψ:
+
+Lösung der Poisson-Gleichung
+
+Δ
+𝜓
+=
+−
+𝜔
+Δψ=−ω
+
+Implementiert in poisson2D(omega, dx, dz) mit Dirichlet-Randbedingung ψ = 0 am Rand.
+
+2.3 Vorbereitung der Trainingsdaten
+
+Inputkanäle
+
+build_input_channels(phase, x_vec_1D, z_vec_1D, centers_2D) erzeugt ein Array (nx, nz, 2) mit:
+
+Kristallmaske ∈ {0,1},
+
+Signed Distance Field (SDF):
+
+außen: positive Distanz,
+
+innen: negative Distanz,
+
+normiert auf ungefähr [−1, 1].
+
+Zielgröße
+
+ψ wird als 2D-Feld (nx, nz) berechnet.
+
+ψ wird normalisiert zu ψ_norm (siehe Normalisierung).
+
+Speicherung: ψ_norm + zugehöriger scale.
+
+Speicherung pro Sample
+
+generate_psi_sample erzeugt .jld2-Dateien mit:
+
+input → (nx, nz, 2),
+
+ψ_norm,
+
+scale,
+
+meta (n_crystals, Zentren, Radien, Gitterkoordinaten etc.).
+
+Datensatz-Aufbau
+
+PsiDataset speichert die Dateipfade.
+
+get_sample lädt input und ψ_norm, formt sie zu (nx, nz, C) und gibt x, y zurück.
+
+Splits (Train/Val/Test): über Verzeichnisse/Unterordner der .jld2-Files realisierbar.
+
+3. Normalisierung von ψ
+3.1 Motivation
+
+Die ψ-Werte aus der Poisson-Lösung sind sehr klein
+
+typischerweise in der Größenordnung 10⁻¹²–10⁻¹⁵.
+
+Direkte Verwendung wäre numerisch ungünstig:
+
+schlechte Konditionierung der Loss-Funktion,
+
+langsame oder instabile Konvergenz.
+
+3.2 Dynamische Skalierung pro Sample
+
+In normalize_psi(ψ):
+
+Berechnung der Exponenten:
+
+exponents = log10.(absψ[mask]) (nur über nicht-null Werte).
+
+Bestimmung des mittleren Exponenten:
+
+p_mean = mean(exponents).
+
+Skalierungsfaktor:
+
+scale = 10.0^(-p_mean).
+
+Normierte Stromfunktion:
+
+ψ_norm = ψ * scale.
+
+Rückgabe: (ψ_norm, scale).
+
+Vorteil: ψ_norm liegt typischerweise im Bereich O(1) → stabileres Training.
+
+4. Training des U-Nets
+4.1 Architektur
+
+U-Net aus UNetPsi.build_unet(in_channels, out_channels):
+
+Input-Kanäle: 2 (Maske + SDF).
+
+Output-Kanäle: 1 (ψ_norm).
+
+Encoder:
+
+Convolution-Blocks mit 3×3-Kernen, BatchNorm + ReLU.
+
+Downsampling via strided Conv, keine MaxPool-Layer mehr
+→ reduziert Grid-/Checkerboard-Artefakte.
+
+Decoder:
+
+ConvTranspose zum Upsampling,
+
+Skip-Connections durch Concatenation,
+
+finaler 1×1-Conv auf 1 Kanal.
+
+4.2 Loss-Funktion & Optimierung
+
+Basis-Loss:
+
+Huber-Loss statt reinem MSE:
+
+robust gegenüber Ausreißern,
+
+glatter Übergang zwischen L2- und L1-Verhalten.
+
+Optional:
+
+Weighted MSE:
+
+Kristallregionen werden höher gewichtet als Matrix,
+
+Ziel: bessere Auflösung der Strukturen direkt an den Kristallgrenzen.
+
+Optimierung:
+
+manuelles SGD-Update:
+
+p .= p .- lr * grad
+
+
+GPU/CPU:
+
+optionales CUDA-Training mit sicherer Fallback-Logik.
+
+Geräteselektion: use_gpu = nothing | true | false.
+
+Modell-Parameter werden mit fmap konsistent auf das Zielgerät verschoben.
+
+5. Evaluierung
+5.1 Evaluierungsskript
+
+evaluate_dataset:
+
+lädt Modell (aus .bson),
+
+iteriert über alle Samples im Datensatz,
+
+berechnet:
+
+ψ_pred (normalisiert oder de-normalisiert),
+
+Fehlermaße für ψ, ψ_x, ψ_z,
+
+gruppiert nach Kristallanzahl.
+
+Optionen:
+
+denorm_psi = false:
+
+Evaluierung im normalisierten Raum (ψ_norm).
+
+denorm_psi = true:
+
+Evaluierung im physikalischen Raum (ψ = ψ_norm / scale).
+
+5.2 Metriken
+
+Für ψ:
+
+MSE(ψ):
+
+mittlere quadratische Abweichung.
+
+Relative L2-Norm:
+
+∥
+𝜓
+pred
+−
+𝜓
+true
+∥
+2
+∥
+𝜓
+true
+∥
+2
+∥ψ
+true
+	​
+
+∥
+2
+	​
+
+∥ψ
+pred
+	​
+
+−ψ
+true
+	​
+
+∥
+2
+	​
+
+	​
+
+
+Pixelweise Relativfehler:
+
+Anteil der Pixel mit Fehler > 1 %, 5 %, 10 %:
+
+ε₀₁, ε₀₅, ε₁₀.
+
+Für Ableitungen ψ_x, ψ_z:
+
+MSE(ψ_x), MSE(ψ_z),
+
+relative L2-Normen für ψ_x und ψ_z.
+
+Alles wird pro Kristallanzahl n gesammelt und in einer CSV
+<out_prefix>_by_n.csv abgelegt.
+
+5.3 Plots
+
+Pro Sample (optional):
+
+ψ-Figuren (3 Panels):
+
+ψ_true,
+
+ψ_pred,
+
+Δψ = ψ_pred − ψ_true,
+
+Gradienten-Figur (2×3 Panels):
+
+ψ_x true / pred / Fehler,
+
+ψ_z true / pred / Fehler,
+
+Plots in physikalischen Koordinaten (km),
+
+Kristallumrisse (Kreise) werden überlagert.
+
+6. Threading-Problematik bei der Datengenerierung
+6.1 Ausgangssituation
+
+Ursprünglich wurde versucht, die LaMEM-Simulationen für Ansatz 2 mit Threads zu parallelisieren:
+
+Threads.@threads for i in 1:N
+    run_sinking_crystals(...)
+end
+
+
+Das führte zu zwei grundlegenden Problemen:
+
+6.2 LaMEM ist nicht thread-safe (PETSc/MPI)
+
+Alle Threads teilen sich denselben Prozessraum:
+
+gleicher PETSc-Kontext,
+
+gleicher MPI-State.
+
+Bei parallelen Aufrufen von run_sinking_crystals:
+
+mehrere PETSc-Initialisierungen im selben Prozess,
+
+kollidierende MPI-Kommunikatoren.
+
+Folge:
+
+nach einigen erfolgreichen Samples:
+
+Prozessabbrüche (Exitcode 83),
+
+nicht deterministisches Auftreten → klassische Race-Condition.
+
+6.3 Race-Conditions beim Schreiben von LaMEM-Ausgabedateien
+
+Alle Threads schrieben in dieselben LaMEM-Output-Dateien:
+
+FS_vel_gradient.0000.vtr
+
+FS_vel_gradient.info
+
+FS_vel_gradient.0000.pvtr
+
+Da LaMEM hierfür nicht thread-sicher ausgelegt ist, entstanden:
+
+teilweise korrupt erzeugte Dateien,
+
+Einlesen führte u. a. zu:
+
+XMLParseError: premature end of data,
+
+unvollständigen Arrays (Vorticity, Gradients).
+
+Charakteristisch:
+
+Die Fehler traten erst nach 30–80 Samples auf,
+
+→ typisches Verhalten von Race-Conditions.
+
+7. Versuche und finale Lösung der Datengenerierung
+7.1 Idee: Multi-Prozess (Distributed)
+
+Konzept: mehrere Prozesse statt Threads:
+
+jeder Prozess mit eigenem Speicher,
+
+eigener PETSc/MPI-Kontext,
+
+eigenen Output-Verzeichnissen.
+
+Theoretisch die saubere Lösung (LaMEM mag Prozesse mehr als Threads).
+
+Aber:
+
+hätte bedeutet:
+
+kompletten Umbau der Datengenerierung,
+
+Interprozess-Kommunikation / Queueing,
+
+Verwaltung von getrennten Output-Pfaden (run01/, run02/, …).
+
+Für die Masterarbeit zeitlich zu aufwendig.
+
+7.2 Endgültige Entscheidung: Serielle Ausführung
+
+Alle LaMEM-Simulationen werden jetzt seriell ausgeführt.
+
+Vorteile:
+
+100 % stabil,
+
+keine Datei-Race-Conditions,
+
+keine PETSc/MPI-Konflikte,
+
+deterministisches Verhalten.
+
+Performance (Daumenregel):
+
+ca. 8–10 Sekunden pro Sample,
+
+1 000 Samples ≈ 2.2–3 Stunden,
+
+10 000 Samples ≈ 24–30 Stunden,
+
+→ für den Umfang der Masterarbeit akzeptabel.
+
+8. Architektur- und Trainingsverbesserungen nach Stabilisierung
+
+Nachdem die Datengenerierung stabil war, wurden mehrere Änderungen umgesetzt, um die Qualität der Vorhersagen deutlich zu verbessern.
+
+8.1 Erweiterter Input: Maske + Signed Distance Field (SDF)
+
+Vorher:
+
+nur Kristallmaske (0/1) als Eingabekanal.
+
+Jetzt:
+
+2 Kanäle:
+
+Kristallmaske,
+
+SDF zum nächsten Kristallzentrum (innen negativ, außen positiv, normiert).
+
+Effekt:
+
+glattere Inputs,
+
+weniger harte Kanten,
+
+deutlich weniger vertikale/horizontale Artefakte in ψ_pred.
+
+8.2 U-Net-Redesign: keine MaxPools mehr
+
+Vorher:
+
+Downsampling via MaxPool,
+
+typisch für Grid- und Checkerboard-Artefakte,
+
+in den Fehlerplots sichtbar als vertikale/horizontale Linien.
+
+Jetzt:
+
+Downsampling über strided Convs (Conv mit stride=2),
+
+weiterhin 3×3-Convs + BatchNorm + ReLU,
+
+Up-Sampling über ConvTranspose.
+
+Effekt:
+
+stabilere Gradienten,
+
+glattere Vorhersagen,
+
+deutlich weniger Artefakte entlang Grid-Grenzen.
+
+8.3 Training & Evaluierung
+
+Huber-Loss (statt reinem MSE) → robustere Regression von ψ.
+
+optionaler gewichteter MSE → stärkere Fokussierung auf Kristallregionen.
+
+GPU-Support:
+
+in Training und Evaluierung einheitlich,
+
+Fallback auf CPU, falls CUDA nicht verfügbar/initialisierbar ist.
+
+Evaluierung:
+
+Pixel-Fehlerstatistiken (ε₀₁, ε₀₅, ε₁₀),
+
+Metriken für ψ, ψ_x, ψ_z,
+
+Übersicht nach Kristallanzahl (CSV + Logging),
+
+Plot-Output für ψ und Gradienten.
+
+9. Kurz-Fazit für das Gespräch mit deinem Betreuer
+
+Physikalische Idee:
+Ansatz 2 lernt ψ(x, z) direkt; Geschwindigkeiten sind daraus ableitbar → physikalisch konsistentes Strömungsfeld.
+
+Technische Basis:
+
+LaMEM-Simulationen liefern Vx, Vz, ω, ψ.
+
+ψ wird normalisiert → ψ_norm.
+
+U-Net mit 2 Eingabekanälen (Maske + SDF) und 1 Output-Kanal (ψ_norm).
+
+Wichtige Lessons Learned:
+
+LaMEM/PETSc/MPI sind nicht thread-safe → keine Thread-Parallelisierung.
+
+Serielle Datengenerierung ist der stabile Kompromiss.
+
+Erweiterung des Inputs (SDF) und Umbau der Architektur (strided Convs statt MaxPool) haben die Linien-Artefakte in den Vorhersagen deutlich reduziert.
