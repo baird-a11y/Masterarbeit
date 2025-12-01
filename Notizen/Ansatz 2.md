@@ -1,538 +1,596 @@
-Ansatz 2 – U-Net auf der Stromfunktion ψ(x, z)
-
 Bei Ansatz 2 steht die Stromfunktion ψ(x, z) im Zentrum. Aus ihr lassen sich die Geschwindigkeitskomponenten rekonstruieren, sodass das Modell implizit ein physikalisch konsistentes Strömungsfeld lernt.
 
-1. Grundidee
+---
 
-Input des U-Nets
+## 1. Grundidee
+
+### Input des U-Nets
 
 Geometrie / Materialinformation auf dem 256×256-Gitter.
 
-Aktuell:
+**Aktuell:**
 
-Kristallmaske (phase == 1)
+- Kristallmaske (phase == 1)
+    
+- Signed Distance Field (SDF) zum nächsten Kristall
+    
+- normierte x-Koordinate (x_norm ∈ [−1, 1])
+    
+- normierte z-Koordinate (z_norm ∈ [−1, 1])
+    
 
-Signed Distance Field (SDF) zum nächsten Kristall
-→ zusammen als 2 Eingabekanäle (Maske + SDF).
+→ zusammen **4 Eingabekanäle**:  
+**[Maske, SDF, x_norm, z_norm]**
 
-Perspektivisch erweiterbar um:
+**Perspektivisch erweiterbar um:**
 
-Viskosität
+- Viskosität
+    
+- Randbedingungen
+    
+- weitere physikalische Felder.
+    
 
-Randbedingungen
+Die zusätzlichen Koordinatenkanäle machen die Position im Kasten explizit und helfen, randbedingte und positionsabhängige Artefakte (z. B. quadratische Fehlerstrukturen bei off-center Kristallen) zu reduzieren.
 
-weitere physikalische Felder.
+### Output des U-Nets
 
-Output des U-Nets
+- Ein Skalarfeld ψ(x, z) auf demselben Gitter.
+    
+- Implementierung: ein Kanal (nx, nz, 1) für ψ_norm.
+    
 
-Ein Skalarfeld ψ(x, z) auf demselben Gitter.
+### Trainingsziel
 
-Implementierung: ein Kanal (nx, nz, 1).
+- Das Netz approximiert die von LaMEM abgeleitete Stromfunktion ψ_LaMEM (bzw. deren normalisierte Version ψ_norm).
+    
 
-Trainingsziel
+### Evaluierung (konzeptionell)
 
-Das Netz approximiert die von LaMEM abgeleitete Stromfunktion ψ_LaMEM (bzw. deren normalisierte Version ψ_norm).
+- Vergleich von ψ_pred (U-Net) und ψ_ref (ψ_LaMEM bzw. Poisson-Lösung).
+    
+- Optional: Rekonstruktion der Geschwindigkeiten aus ψ_pred und Vergleich mit Vx, Vz aus LaMEM.
+    
 
-Evaluierung (konzeptionell)
+---
 
-Vergleich von ψ_pred (U-Net) und ψ_ref (ψ_LaMEM bzw. Poisson-Lösung).
+## 2. Datenpipeline für Ansatz 2
 
-Optional: Rekonstruktion der Geschwindigkeiten aus ψ_pred und Vergleich mit Vx, Vz aus LaMEM.
-
-2. Datenpipeline für Ansatz 2
-2.1 Datengenerierung in LaMEM
+### 2.1 Datengenerierung in LaMEM
 
 Für jede Stichprobe:
 
-LaMEM-Simulation einer Kristallkonfiguration im 2D-Schnitt.
+- LaMEM-Simulation einer Kristallkonfiguration im 2D-Schnitt.
+    
 
 Kristall-Setup:
 
-Anzahl: 1…n Kristalle.
+- Anzahl: 1…n Kristalle.
+    
+- Positionen zufällig.
+    
+- Radien: fest oder zufällig in einem Intervall.
+    
 
-Positionen zufällig.
+Die Funktion `run_sinking_crystals` liefert:
 
-Radien: fest oder zufällig in einem Intervall.
-
-Die Funktion run_sinking_crystals liefert:
-
-Phasefeld (Kristall / Matrix),
-
-Vx, Vz,
-
-Gradienten → daraus Wirbelstärke ω,
-
-ψ (über Poisson-Gleichung berechnet).
+- Phasefeld (Kristall / Matrix),
+    
+- Vx, Vz,
+    
+- Gradienten → daraus Wirbelstärke ω,
+    
+- ψ (über Poisson-Gleichung berechnet).
+    
 
 Alle Simulationen werden seriell ausgeführt (siehe Threading-Abschnitt unten).
 
-2.2 Berechnung von ω und ψ
+### 2.2 Berechnung von ω und ψ
 
-Wirbelstärke:
+**Wirbelstärke:**
 
-ω = ∂Vz/∂x − ∂Vx/∂z, aus den von LaMEM ausgegebenen Geschwindigkeitsgradienten.
+- ω = ∂Vz/∂x − ∂Vx/∂z, aus den von LaMEM ausgegebenen Geschwindigkeitsgradienten.
+    
 
-Stromfunktion ψ:
+**Stromfunktion ψ:**
 
-Lösung der Poisson-Gleichung
+- Lösung der Poisson-Gleichung  
+    Δψ = −ω
+    
+- Implementiert in `poisson2D(omega, dx, dz)` mit Dirichlet-Randbedingung ψ = 0 am Rand.
+    
 
-Δ
-𝜓
-=
-−
-𝜔
-Δψ=−ω
+### 2.3 Vorbereitung der Trainingsdaten
 
-Implementiert in poisson2D(omega, dx, dz) mit Dirichlet-Randbedingung ψ = 0 am Rand.
+**Inputkanäle**
 
-2.3 Vorbereitung der Trainingsdaten
+- `build_input_channels(phase, x_vec_1D, z_vec_1D, centers_2D)` erzeugt zunächst ein Array (nx, nz, 2) mit:
+    
+    - Kristallmaske ∈ {0,1},
+        
+    - Signed Distance Field (SDF):
+        
+        - außen: positive Distanz,
+            
+        - innen: negative Distanz,
+            
+        - normiert auf ungefähr [−1, 1].
+            
+- Beim Laden im Dataset (`PsiDataset.get_sample`) werden aus den Gitterkoordinaten `x_vec_1D`, `z_vec_1D` zwei zusätzliche 2D-Kanäle erzeugt:
+    
+    - x_norm ∈ [−1, 1],
+        
+    - z_norm ∈ [−1, 1].
+        
 
-Inputkanäle
+→ finaler Input pro Sample: (nx, nz, **4**) = [Maske, SDF, x_norm, z_norm].
 
-build_input_channels(phase, x_vec_1D, z_vec_1D, centers_2D) erzeugt ein Array (nx, nz, 2) mit:
+**Zielgröße**
 
-Kristallmaske ∈ {0,1},
+- ψ wird als 2D-Feld (nx, nz) berechnet.
+    
+- ψ wird normalisiert zu ψ_norm (siehe Normalisierung).
+    
+- Speicherung: ψ_norm + zugehöriger `scale`.
+    
 
-Signed Distance Field (SDF):
+**Speicherung pro Sample**
 
-außen: positive Distanz,
+`generate_psi_sample` erzeugt `.jld2`-Dateien mit:
 
-innen: negative Distanz,
+- `input` → (nx, nz, 2) (Maske + SDF, Koordinaten werden beim Laden ergänzt),
+    
+- `ψ_norm`,
+    
+- `scale`,
+    
+- `meta` (n_crystals, Zentren, Radien, Gitterkoordinaten etc.).
+    
 
-normiert auf ungefähr [−1, 1].
+**Datensatz-Aufbau**
 
-Zielgröße
+- `PsiDataset` speichert die Dateipfade.
+    
+- `get_sample` lädt `input`, `ψ_norm` und `meta`,
+    
+    - ergänzt x/z-Kanäle,
+        
+    - formt alles zu `(nx, nz, 4)` bzw. `(nx, nz, 1)` und gibt `(x, y)` zurück.
+        
 
-ψ wird als 2D-Feld (nx, nz) berechnet.
+Splits (Train/Val/Test): über Verzeichnisse/Unterordner der `.jld2`-Files realisierbar.
 
-ψ wird normalisiert zu ψ_norm (siehe Normalisierung).
+---
 
-Speicherung: ψ_norm + zugehöriger scale.
+## 3. Normalisierung von ψ
 
-Speicherung pro Sample
+### 3.1 Motivation
 
-generate_psi_sample erzeugt .jld2-Dateien mit:
-
-input → (nx, nz, 2),
-
-ψ_norm,
-
-scale,
-
-meta (n_crystals, Zentren, Radien, Gitterkoordinaten etc.).
-
-Datensatz-Aufbau
-
-PsiDataset speichert die Dateipfade.
-
-get_sample lädt input und ψ_norm, formt sie zu (nx, nz, C) und gibt x, y zurück.
-
-Splits (Train/Val/Test): über Verzeichnisse/Unterordner der .jld2-Files realisierbar.
-
-3. Normalisierung von ψ
-3.1 Motivation
-
-Die ψ-Werte aus der Poisson-Lösung sind sehr klein
-
-typischerweise in der Größenordnung 10⁻¹²–10⁻¹⁵.
+Die ψ-Werte aus der Poisson-Lösung sind sehr klein, typischerweise in der Größenordnung 10⁻¹²–10⁻¹⁵.
 
 Direkte Verwendung wäre numerisch ungünstig:
 
-schlechte Konditionierung der Loss-Funktion,
+- schlechte Konditionierung der Loss-Funktion,
+    
+- langsame oder instabile Konvergenz.
+    
 
-langsame oder instabile Konvergenz.
+### 3.2 Dynamische Skalierung pro Sample
 
-3.2 Dynamische Skalierung pro Sample
+In `normalize_psi(ψ)`:
 
-In normalize_psi(ψ):
+- Berechnung der Exponenten:  
+    exponents = log10.(absψ[mask]) (nur über nicht-null Werte).
+    
+- Bestimmung des mittleren Exponenten:  
+    p_mean = mean(exponents).
+    
+- Skalierungsfaktor:  
+    scale = 10.0^(-p_mean).
+    
+- Normierte Stromfunktion:  
+    ψ_norm = ψ * scale.
+    
 
-Berechnung der Exponenten:
-
-exponents = log10.(absψ[mask]) (nur über nicht-null Werte).
-
-Bestimmung des mittleren Exponenten:
-
-p_mean = mean(exponents).
-
-Skalierungsfaktor:
-
-scale = 10.0^(-p_mean).
-
-Normierte Stromfunktion:
-
-ψ_norm = ψ * scale.
-
-Rückgabe: (ψ_norm, scale).
+Rückgabe: `(ψ_norm, scale)`.
 
 Vorteil: ψ_norm liegt typischerweise im Bereich O(1) → stabileres Training.
 
-4. Training des U-Nets
-4.1 Architektur
+---
 
-U-Net aus UNetPsi.build_unet(in_channels, out_channels):
+## 4. Training des U-Nets
 
-Input-Kanäle: 2 (Maske + SDF).
+### 4.1 Architektur
 
-Output-Kanäle: 1 (ψ_norm).
+U-Net aus `UNetPsi.build_unet(in_channels, out_channels)`:
 
-Encoder:
+- **Input-Kanäle: 4** (Maske + SDF + x + z).
+    
+- Output-Kanäle: 1 (ψ_norm).
+    
 
-Convolution-Blocks mit 3×3-Kernen, BatchNorm + ReLU.
+**Encoder:**
 
-Downsampling via strided Conv, keine MaxPool-Layer mehr
-→ reduziert Grid-/Checkerboard-Artefakte.
+- Convolution-Blocks mit 3×3-Kernen, BatchNorm + ReLU.
+    
+- Downsampling via strided Conv (stride=2), keine MaxPool-Layer mehr  
+    → reduziert Grid-/Checkerboard-Artefakte im Vergleich zu MaxPool.
+    
 
-Decoder:
+**Decoder:**
 
-ConvTranspose zum Upsampling,
+- Upsampling über `ConvTranspose` (2×2, stride=2),
+    
+- Skip-Connections durch Concatenation,
+    
+- finaler 1×1-Conv auf 1 Kanal.
+    
 
-Skip-Connections durch Concatenation,
+Die Koordinatenkanäle helfen dabei, die durch ConvTranspose typischerweise verstärkten, positionsabhängigen Artefakte (quasi-quadratische Fehlerstrukturen) deutlich zu reduzieren, insbesondere wenn der Kristall nicht im Zentrum liegt.
 
-finaler 1×1-Conv auf 1 Kanal.
+### 4.2 Loss-Funktion & Optimierung
 
-4.2 Loss-Funktion & Optimierung
+**Basis-Loss:**
 
-Basis-Loss:
+- Huber-Loss statt reinem MSE:
+    
+    - robust gegenüber Ausreißern,
+        
+    - glatter Übergang zwischen L2- und L1-Verhalten.
+        
 
-Huber-Loss statt reinem MSE:
+**Optional:**
 
-robust gegenüber Ausreißern,
+- Weighted MSE:
+    
+    - Kristallregionen (und ggf. ein Ring um die Kristallgrenze) werden höher gewichtet als die Matrix,
+        
+    - Ziel: bessere Auflösung der Strukturen direkt an den Kristallgrenzen.
+        
 
-glatter Übergang zwischen L2- und L1-Verhalten.
+**Optimierung:**
 
-Optional:
+- manuelles SGD-Update:
+    
+    - p .= p .- lr * grad
+        
 
-Weighted MSE:
+**GPU/CPU:**
 
-Kristallregionen werden höher gewichtet als Matrix,
+- optionales CUDA-Training mit sicherer Fallback-Logik.
+    
+- Geräteselektion: `use_gpu = nothing | true | false`.
+    
+- Modell-Parameter werden mit `fmap` konsistent auf das Zielgerät verschoben.
+    
 
-Ziel: bessere Auflösung der Strukturen direkt an den Kristallgrenzen.
+---
 
-Optimierung:
+## 5. Evaluierung
 
-manuelles SGD-Update:
+### 5.1 Evaluierungsskript
 
-p .= p .- lr * grad
+`evaluate_dataset`:
 
-
-GPU/CPU:
-
-optionales CUDA-Training mit sicherer Fallback-Logik.
-
-Geräteselektion: use_gpu = nothing | true | false.
-
-Modell-Parameter werden mit fmap konsistent auf das Zielgerät verschoben.
-
-5. Evaluierung
-5.1 Evaluierungsskript
-
-evaluate_dataset:
-
-lädt Modell (aus .bson),
-
-iteriert über alle Samples im Datensatz,
-
-berechnet:
-
-ψ_pred (normalisiert oder de-normalisiert),
-
-Fehlermaße für ψ, ψ_x, ψ_z,
-
-gruppiert nach Kristallanzahl.
+- lädt Modell (aus `.bson`),
+    
+- iteriert über alle Samples im Datensatz,
+    
+- berechnet:
+    
+    - ψ_pred (normalisiert oder de-normalisiert),
+        
+    - Fehlermaße für ψ, ψ_x, ψ_z,
+        
+- gruppiert nach Kristallanzahl.
+    
 
 Optionen:
 
-denorm_psi = false:
+- `denorm_psi = false`:
+    
+    - Evaluierung im normalisierten Raum (ψ_norm).
+        
+- `denorm_psi = true`:
+    
+    - Evaluierung im physikalischen Raum (ψ = ψ_norm / scale).
+        
 
-Evaluierung im normalisierten Raum (ψ_norm).
+### 5.2 Metriken
 
-denorm_psi = true:
+**Für ψ:**
 
-Evaluierung im physikalischen Raum (ψ = ψ_norm / scale).
+- MSE(ψ): mittlere quadratische Abweichung.
+    
+- relative L2-Norm:  
+    ∥ψ_pred − ψ_true∥₂ / ∥ψ_true∥₂.
+    
+- Pixelweise Relativfehler:
+    
+    - Anteil der Pixel mit Fehler > 1 %, 5 %, 10 %:
+        
+        - ε₀₁, ε₀₅, ε₁₀.
+            
 
-5.2 Metriken
+**Für Ableitungen ψ_x, ψ_z:**
 
-Für ψ:
+- MSE(ψ_x), MSE(ψ_z),
+    
+- relative L2-Normen für ψ_x und ψ_z.
+    
 
-MSE(ψ):
+Alles wird pro Kristallanzahl n gesammelt und in einer CSV  
+`<out_prefix>_by_n.csv` abgelegt.
 
-mittlere quadratische Abweichung.
-
-Relative L2-Norm:
-
-∥
-𝜓
-pred
-−
-𝜓
-true
-∥
-2
-∥
-𝜓
-true
-∥
-2
-∥ψ
-true
-	​
-
-∥
-2
-	​
-
-∥ψ
-pred
-	​
-
-−ψ
-true
-	​
-
-∥
-2
-	​
-
-	​
-
-
-Pixelweise Relativfehler:
-
-Anteil der Pixel mit Fehler > 1 %, 5 %, 10 %:
-
-ε₀₁, ε₀₅, ε₁₀.
-
-Für Ableitungen ψ_x, ψ_z:
-
-MSE(ψ_x), MSE(ψ_z),
-
-relative L2-Normen für ψ_x und ψ_z.
-
-Alles wird pro Kristallanzahl n gesammelt und in einer CSV
-<out_prefix>_by_n.csv abgelegt.
-
-5.3 Plots
+### 5.3 Plots
 
 Pro Sample (optional):
 
-ψ-Figuren (3 Panels):
+- ψ-Figuren (3 Panels):
+    
+    - ψ_true,
+        
+    - ψ_pred,
+        
+    - Δψ = ψ_pred − ψ_true.
+        
+- Gradienten-Figur (2×3 Panels):
+    
+    - ψ_x true / pred / Fehler,
+        
+    - ψ_z true / pred / Fehler.
+        
+- Plots in physikalischen Koordinaten (km),
+    
+- Kristallumrisse (Kreise) werden überlagert.
+    
 
-ψ_true,
+---
 
-ψ_pred,
+## 6. Threading-Problematik bei der Datengenerierung
 
-Δψ = ψ_pred − ψ_true,
-
-Gradienten-Figur (2×3 Panels):
-
-ψ_x true / pred / Fehler,
-
-ψ_z true / pred / Fehler,
-
-Plots in physikalischen Koordinaten (km),
-
-Kristallumrisse (Kreise) werden überlagert.
-
-6. Threading-Problematik bei der Datengenerierung
-6.1 Ausgangssituation
+### 6.1 Ausgangssituation
 
 Ursprünglich wurde versucht, die LaMEM-Simulationen für Ansatz 2 mit Threads zu parallelisieren:
 
+```julia
 Threads.@threads for i in 1:N
     run_sinking_crystals(...)
 end
-
+```
 
 Das führte zu zwei grundlegenden Problemen:
 
-6.2 LaMEM ist nicht thread-safe (PETSc/MPI)
+### 6.2 LaMEM ist nicht thread-safe (PETSc/MPI)
 
 Alle Threads teilen sich denselben Prozessraum:
 
-gleicher PETSc-Kontext,
+- gleicher PETSc-Kontext,
+    
+- gleicher MPI-State.
+    
 
-gleicher MPI-State.
+Bei parallelen Aufrufen von `run_sinking_crystals`:
 
-Bei parallelen Aufrufen von run_sinking_crystals:
-
-mehrere PETSc-Initialisierungen im selben Prozess,
-
-kollidierende MPI-Kommunikatoren.
+- mehrere PETSc-Initialisierungen im selben Prozess,
+    
+- kollidierende MPI-Kommunikatoren.
+    
 
 Folge:
 
-nach einigen erfolgreichen Samples:
+- nach einigen erfolgreichen Samples:
+    
+    - Prozessabbrüche (Exitcode 83),
+        
+    - nicht deterministisches Auftreten → klassische Race-Condition.
+        
 
-Prozessabbrüche (Exitcode 83),
-
-nicht deterministisches Auftreten → klassische Race-Condition.
-
-6.3 Race-Conditions beim Schreiben von LaMEM-Ausgabedateien
+### 6.3 Race-Conditions beim Schreiben von LaMEM-Ausgabedateien
 
 Alle Threads schrieben in dieselben LaMEM-Output-Dateien:
 
-FS_vel_gradient.0000.vtr
-
-FS_vel_gradient.info
-
-FS_vel_gradient.0000.pvtr
+- FS_vel_gradient.0000.vtr
+    
+- FS_vel_gradient.info
+    
+- FS_vel_gradient.0000.pvtr
+    
 
 Da LaMEM hierfür nicht thread-sicher ausgelegt ist, entstanden:
 
-teilweise korrupt erzeugte Dateien,
-
-Einlesen führte u. a. zu:
-
-XMLParseError: premature end of data,
-
-unvollständigen Arrays (Vorticity, Gradients).
+- teilweise korrupt erzeugte Dateien,
+    
+- Einlesen führte u. a. zu:
+    
+    - `XMLParseError: premature end of data`,
+        
+    - unvollständigen Arrays (Vorticity, Gradients).
+        
 
 Charakteristisch:
 
-Die Fehler traten erst nach 30–80 Samples auf,
+- Die Fehler traten erst nach 30–80 Samples auf,  
+    → typisches Verhalten von Race-Conditions.
+    
 
-→ typisches Verhalten von Race-Conditions.
+---
 
-7. Versuche und finale Lösung der Datengenerierung
-7.1 Idee: Multi-Prozess (Distributed)
+## 7. Versuche und finale Lösung der Datengenerierung
+
+### 7.1 Idee: Multi-Prozess (Distributed)
 
 Konzept: mehrere Prozesse statt Threads:
 
-jeder Prozess mit eigenem Speicher,
-
-eigener PETSc/MPI-Kontext,
-
-eigenen Output-Verzeichnissen.
+- jeder Prozess mit eigenem Speicher,
+    
+- eigener PETSc/MPI-Kontext,
+    
+- eigenen Output-Verzeichnissen.
+    
 
 Theoretisch die saubere Lösung (LaMEM mag Prozesse mehr als Threads).
 
 Aber:
 
-hätte bedeutet:
+- hätte bedeutet:
+    
+    - kompletten Umbau der Datengenerierung,
+        
+    - Interprozess-Kommunikation / Queueing,
+        
+    - Verwaltung von getrennten Output-Pfaden (run01/, run02/, …).
+        
 
-kompletten Umbau der Datengenerierung,
+→ Für die Masterarbeit zeitlich zu aufwendig.
 
-Interprozess-Kommunikation / Queueing,
+### 7.2 Endgültige Entscheidung: Serielle Ausführung
 
-Verwaltung von getrennten Output-Pfaden (run01/, run02/, …).
-
-Für die Masterarbeit zeitlich zu aufwendig.
-
-7.2 Endgültige Entscheidung: Serielle Ausführung
-
-Alle LaMEM-Simulationen werden jetzt seriell ausgeführt.
+- Alle LaMEM-Simulationen werden jetzt seriell ausgeführt.
+    
 
 Vorteile:
 
-100 % stabil,
-
-keine Datei-Race-Conditions,
-
-keine PETSc/MPI-Konflikte,
-
-deterministisches Verhalten.
+- 100 % stabil,
+    
+- keine Datei-Race-Conditions,
+    
+- keine PETSc/MPI-Konflikte,
+    
+- deterministisches Verhalten.
+    
 
 Performance (Daumenregel):
 
-ca. 8–10 Sekunden pro Sample,
-
-1 000 Samples ≈ 2.2–3 Stunden,
-
-10 000 Samples ≈ 24–30 Stunden,
+- ca. 8–10 Sekunden pro Sample,
+    
+- 1 000 Samples ≈ 2.2–3 Stunden,
+    
+- 10 000 Samples ≈ 24–30 Stunden,
+    
 
 → für den Umfang der Masterarbeit akzeptabel.
 
-8. Architektur- und Trainingsverbesserungen nach Stabilisierung
+---
+
+## 8. Architektur- und Trainingsverbesserungen nach Stabilisierung
 
 Nachdem die Datengenerierung stabil war, wurden mehrere Änderungen umgesetzt, um die Qualität der Vorhersagen deutlich zu verbessern.
 
-8.1 Erweiterter Input: Maske + Signed Distance Field (SDF)
+### 8.1 Erweiterter Input: von Maske → Maske + SDF → Maske + SDF + Koordinaten
 
-Vorher:
+**Vorher:**
 
-nur Kristallmaske (0/1) als Eingabekanal.
+- nur Kristallmaske (0/1) als Eingabekanal.
+    
 
-Jetzt:
+**Zwischenschritt:**
 
-2 Kanäle:
+- 2 Kanäle:
+    
+    - Kristallmaske,
+        
+    - SDF zum nächsten Kristallzentrum (innen negativ, außen positiv, normiert).
+        
 
-Kristallmaske,
+**Aktueller Stand:**
 
-SDF zum nächsten Kristallzentrum (innen negativ, außen positiv, normiert).
-
-Effekt:
-
-glattere Inputs,
-
-weniger harte Kanten,
-
-deutlich weniger vertikale/horizontale Artefakte in ψ_pred.
-
-8.2 U-Net-Redesign: keine MaxPools mehr
-
-Vorher:
-
-Downsampling via MaxPool,
-
-typisch für Grid- und Checkerboard-Artefakte,
-
-in den Fehlerplots sichtbar als vertikale/horizontale Linien.
-
-Jetzt:
-
-Downsampling über strided Convs (Conv mit stride=2),
-
-weiterhin 3×3-Convs + BatchNorm + ReLU,
-
-Up-Sampling über ConvTranspose.
+- **4 Kanäle:**
+    
+    - Kristallmaske,
+        
+    - SDF,
+        
+    - normierte x-Koordinate,
+        
+    - normierte z-Koordinate.
+        
 
 Effekt:
 
-stabilere Gradienten,
+- glattere Inputs,
+    
+- weniger harte Kanten,
+    
+- deutlich weniger vertikale/horizontale Artefakte in ψ_pred,
+    
+- Koordinatenkanäle reduzieren insbesondere die positionabhängigen quadratischen Artefakte um off-center Kristalle.
+    
 
-glattere Vorhersagen,
+### 8.2 U-Net-Redesign: keine MaxPools mehr, strided Convs + ConvTranspose
 
-deutlich weniger Artefakte entlang Grid-Grenzen.
+**Vorher:**
 
-8.3 Training & Evaluierung
+- Downsampling via MaxPool,
+    
+- typisch für Grid- und Checkerboard-Artefakte,
+    
+- in den Fehlerplots sichtbar als vertikale/horizontale Linien.
+    
 
-Huber-Loss (statt reinem MSE) → robustere Regression von ψ.
+**Jetzt:**
 
-optionaler gewichteter MSE → stärkere Fokussierung auf Kristallregionen.
+- Downsampling über strided Convs (Conv mit stride=2),
+    
+- weiterhin 3×3-Convs + BatchNorm + ReLU,
+    
+- Up-Sampling über `ConvTranspose` (2×2, stride=2).
+    
 
-GPU-Support:
+Die Koordinatenkanäle helfen, die durch ConvTranspose begünstigten Checkerboard-/Quadrat-Artefakte zu entschärfen, da das Netz die tatsächliche Position im Domain-Kasten kennt.
 
-in Training und Evaluierung einheitlich,
+Effekt:
 
-Fallback auf CPU, falls CUDA nicht verfügbar/initialisierbar ist.
+- stabilere Gradienten,
+    
+- glattere Vorhersagen,
+    
+- deutlich weniger Artefakte entlang Grid-Grenzen und Domain-Rand.
+    
 
-Evaluierung:
+### 8.3 Training & Evaluierung
 
-Pixel-Fehlerstatistiken (ε₀₁, ε₀₅, ε₁₀),
+- Huber-Loss (statt reinem MSE) → robustere Regression von ψ.
+    
+- optionaler gewichteter MSE → stärkere Fokussierung auf Kristallregionen und deren unmittelbares Umfeld.
+    
+- GPU-Support:
+    
+    - in Training und Evaluierung einheitlich,
+        
+    - Fallback auf CPU, falls CUDA nicht verfügbar/initialisierbar ist.
+        
+- Evaluierung:
+    
+    - Pixel-Fehlerstatistiken (ε₀₁, ε₀₅, ε₁₀),
+        
+    - Metriken für ψ, ψ_x, ψ_z,
+        
+    - Übersicht nach Kristallanzahl (CSV + Logging),
+        
+    - Plot-Output für ψ und Gradienten.
+        
 
-Metriken für ψ, ψ_x, ψ_z,
+---
 
-Übersicht nach Kristallanzahl (CSV + Logging),
+## 9. Kurz-Fazit für das Gespräch mit deinem Betreuer
 
-Plot-Output für ψ und Gradienten.
-
-9. Kurz-Fazit für das Gespräch mit deinem Betreuer
-
-Physikalische Idee:
+**Physikalische Idee:**  
 Ansatz 2 lernt ψ(x, z) direkt; Geschwindigkeiten sind daraus ableitbar → physikalisch konsistentes Strömungsfeld.
 
-Technische Basis:
+**Technische Basis:**
 
-LaMEM-Simulationen liefern Vx, Vz, ω, ψ.
+- LaMEM-Simulationen liefern Vx, Vz, ω, ψ.
+    
+- ψ wird normalisiert → ψ_norm.
+    
+- U-Net mit **4 Eingabekanälen** (Maske, SDF, x, z) und 1 Output-Kanal (ψ_norm).
+    
 
-ψ wird normalisiert → ψ_norm.
+**Wichtige Lessons Learned:**
 
-U-Net mit 2 Eingabekanälen (Maske + SDF) und 1 Output-Kanal (ψ_norm).
-
-Wichtige Lessons Learned:
-
-LaMEM/PETSc/MPI sind nicht thread-safe → keine Thread-Parallelisierung.
-
-Serielle Datengenerierung ist der stabile Kompromiss.
-
-Erweiterung des Inputs (SDF) und Umbau der Architektur (strided Convs statt MaxPool) haben die Linien-Artefakte in den Vorhersagen deutlich reduziert.
+- LaMEM/PETSc/MPI sind nicht thread-safe → keine Thread-Parallelisierung.
+    
+- Serielle Datengenerierung ist der stabile Kompromiss.
+    
+- Erweiterung des Inputs (SDF + Koordinatenkanäle) und Umbau der Architektur (strided Convs statt MaxPool, weiterhin ConvTranspose für Upsampling) haben die Linien- und Quadrat-Artefakte in den Vorhersagen deutlich reduziert, insbesondere für Kristalle, die nicht im Kasten-Zentrum liegen.

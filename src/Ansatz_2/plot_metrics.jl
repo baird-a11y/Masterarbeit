@@ -13,10 +13,6 @@ println(names(df))
 
 # ---------------------------------------------------------
 # Hilfsfunktion: Plotten + Speichern
-# - log10_y = true  → y-Werte werden als log10(y) geplottet
-# - ytickformat:
-#     * linear: wissenschaftliche Notation (1.2e-25)
-#     * log10 : normale Zahlen (z.B. -25.3)
 # ---------------------------------------------------------
 function plot_metric(df::DataFrame, xcol::Symbol, ycol::Symbol, yerrcol::Symbol,
                      ylabel::String, title::String, outfile::String;
@@ -38,8 +34,8 @@ function plot_metric(df::DataFrame, xcol::Symbol, ycol::Symbol, yerrcol::Symbol,
     y    = df[!, ycol]
     yerr = df[!, yerrcol]
 
+    # log10-Behandlung
     if log10_y
-        # y → log10(y), Fehler via einfacher Fehlerfortpflanzung
         y_log    = similar(y)
         yerr_log = similar(y)
         for i in eachindex(y)
@@ -49,7 +45,6 @@ function plot_metric(df::DataFrame, xcol::Symbol, ycol::Symbol, yerrcol::Symbol,
                 error("log10 nicht definiert für nicht-positive Werte in $(ycol) bei Index $i (Wert = $yi).")
             end
             y_log[i] = log10(yi)
-            # σ_log10 ≈ σ / (y * ln(10))
             yerr_log[i] = σ > 0 ? σ / (yi * log(10)) : 0.0
         end
         y    = y_log
@@ -65,7 +60,7 @@ function plot_metric(df::DataFrame, xcol::Symbol, ycol::Symbol, yerrcol::Symbol,
 end
 
 # ---------------------------------------------------------
-# 1) ψ: MSE im log10-Raum, relL2 linear
+# 1) ψ: MSE (log10) + relL2 (linear)
 # ---------------------------------------------------------
 plot_metric(df, :n_crystals, :mse_psi_mean,  :mse_psi_std,
             "log₁₀(MSE(ψ))",
@@ -79,7 +74,7 @@ plot_metric(df, :n_crystals, :relL2_psi_mean, :relL2_psi_std,
             "relL2_psi_vs_crystals.png")
 
 # ---------------------------------------------------------
-# 2) ψₓ: MSE log10, relL2 linear
+# 2) ψₓ: MSE (log10) + relL2 (linear)
 # ---------------------------------------------------------
 plot_metric(df, :n_crystals, :mse_psix_mean,  :mse_psix_std,
             "log₁₀(MSE(ψₓ))",
@@ -93,7 +88,7 @@ plot_metric(df, :n_crystals, :relL2_psix_mean, :relL2_psix_std,
             "relL2_psix_vs_crystals.png")
 
 # ---------------------------------------------------------
-# 3) ψ_z: MSE log10, relL2 linear
+# 3) ψ_z: MSE (log10) + relL2 (linear)
 # ---------------------------------------------------------
 plot_metric(df, :n_crystals, :mse_psiz_mean,  :mse_psiz_std,
             "log₁₀(MSE(ψ_z))",
@@ -106,4 +101,23 @@ plot_metric(df, :n_crystals, :relL2_psiz_mean, :relL2_psiz_std,
             "rel. L2(ψ_z) vs. Kristallanzahl",
             "relL2_psiz_vs_crystals.png")
 
-println("Fertig – alle 6 Plots erzeugt.")
+# ---------------------------------------------------------
+# 4) NEU: Pixel-Fehlerraten ε₀₁, ε₀₅, ε₁₀
+# ---------------------------------------------------------
+
+plot_metric(df, :n_crystals, :eps01_psi_mean, :eps01_psi_std,
+            "ε₀₁ (Anteil der Pixel > 1% Fehler)",
+            "Pixel-Fehlerrate ε₀₁ vs. Kristallanzahl",
+            "eps01_vs_crystals.png")
+
+plot_metric(df, :n_crystals, :eps05_psi_mean, :eps05_psi_std,
+            "ε₀₅ (Anteil der Pixel > 5% Fehler)",
+            "Pixel-Fehlerrate ε₀₅ vs. Kristallanzahl",
+            "eps05_vs_crystals.png")
+
+plot_metric(df, :n_crystals, :eps10_psi_mean, :eps10_psi_std,
+            "ε₁₀ (Anteil der Pixel > 10% Fehler)",
+            "Pixel-Fehlerrate ε₁₀ vs. Kristallanzahl",
+            "eps10_vs_crystals.png")
+
+println("Fertig – alle 9 Plots erzeugt.")
