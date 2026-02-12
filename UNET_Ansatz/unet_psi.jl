@@ -1,8 +1,9 @@
-module UNetPsi
+module UNetPsiModel
 
 using Flux
 using Flux: Conv, ConvTranspose, BatchNorm, relu
-using CUDA
+
+export build_unet, UNet2D
 
 
 # ============================================================
