@@ -1,0 +1,53 @@
+% ============================================================================
+% EIGENE BEFEHLE UND DEFINITIONEN
+% ============================================================================
+
+% ---- Mathematische Operatoren ----
+%\newcommand{\grad}{\nabla}
+%\newcommand{\divg}{\nabla \cdot}
+%\newcommand{\curl}{\nabla \times}
+%\newcommand{\laplacian}{\nabla^2}
+
+% ---- Spezielle Definitionen für Geowissenschaften ----
+\newcommand{\reynolds}{\text{Re}}
+\newcommand{\stokes}{\text{St}}
+\newcommand{\peclet}{\text{Pe}}
+
+% ---- Machine Learning / Neural Networks ----
+\newcommand{\psihat}{\hat{\psi}}
+\newcommand{\fnoblock}{\texttt{FNOBlock}}
+\newcommand{\spectconv}{\texttt{SpectralConv2D}}
+\newcommand{\jl}[1]{\texttt{#1}}
+\newcommand{\modul}[1]{\textbf{\texttt{#1}}}
+
+% ---- Abkürzungen für häufige Begriffe ----
+\newcommand{\unet}{UNet}
+\newcommand{\lamem}{LaMEM}
+\newcommand{\mae}{MAE}
+\newcommand{\mse}{MSE}
+
+% ---- Theorem-Umgebungen ----
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{hypothesis}{Hypothesis}[chapter]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}[theorem]{Lemma}
+
+% ---- tcolorbox Umgebungen für Hinweise und Warnungen ----
+\newtcolorbox{hinweis}[1][]{
+  colback=blue!5!white,
+  colframe=blue!60!black,
+  fonttitle=\bfseries,
+  title={Hinweis},
+  #1
+}
+
+\newtcolorbox{warnung}[1][]{
+  colback=red!5!white,
+  colframe=red!60!black,
+  fonttitle=\bfseries,
+  title={Warnung},
+  #1
+}

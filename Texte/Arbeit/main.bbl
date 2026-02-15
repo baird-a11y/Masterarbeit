@@ -1,0 +1,1260 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{nyt/global//global/global/global}
+    \entry{chen_u-net_nodate}{article}{}{}
+      \name{author}{3}{}{%
+        {{un=1,uniquepart=given,hash=e5140c62f50f461658961b9ab6d71857}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={Junfeng},
+           giveni={J\bibinitperiod},
+           givenun=1}}%
+        {{un=0,uniquepart=base,hash=361d1f32696ce7bbd75210712599edff}{%
+           family={Viquerat},
+           familyi={V\bibinitperiod},
+           given={Jonathan},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=3cb1414a98d4f71fc309d6f1cb545c26}{%
+           family={Hachem},
+           familyi={H\bibinitperiod},
+           given={Elie},
+           giveni={E\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{094f1b90f4cfe8b660b4b31c964bc45e}
+      \strng{fullhash}{094f1b90f4cfe8b660b4b31c964bc45e}
+      \strng{fullhashraw}{094f1b90f4cfe8b660b4b31c964bc45e}
+      \strng{bibnamehash}{094f1b90f4cfe8b660b4b31c964bc45e}
+      \strng{authorbibnamehash}{094f1b90f4cfe8b660b4b31c964bc45e}
+      \strng{authornamehash}{094f1b90f4cfe8b660b4b31c964bc45e}
+      \strng{authorfullhash}{094f1b90f4cfe8b660b4b31c964bc45e}
+      \strng{authorfullhashraw}{094f1b90f4cfe8b660b4b31c964bc45e}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{labeldatesource}{nodate}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Machine learning is a popular tool that is being applied to many domains, from computer vision to natural language processing. It is not long ago that its use was extended to physics, but its capabilities remain to be accurately contoured. In this paper, we are interested in the prediction of 2D velocity and pressure ﬁelds around arbitrary shapes in laminar ﬂows using supervised neural networks. To this end, a dataset composed of random shapes is built using B´ezier curves, each shape being labeled with its pressure and velocity ﬁelds by solving Navier-Stokes equations using a CFD solver. Then, several U-net architectures are trained on the latter dataset, and their predictive eﬃciency is assessed on unseen shapes, using ad hoc error functions.}
+      \field{title}{U-net architectures for fast prediction in fluid mechanics}
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\WM2CL78Q\\Chen et al. - U-net architectures for fast prediction in fluid mechanics.pdf:application/pdf
+      \endverb
+    \endentry
+    \entry{jin_nsfnets_2021}{article}{}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=49bead751b0dc385c8709a2831bb6082}{%
+           family={Jin},
+           familyi={J\bibinitperiod},
+           given={Xiaowei},
+           giveni={X\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=446459da16eb3fa7780f7d73fe084c8b}{%
+           family={Cai},
+           familyi={C\bibinitperiod},
+           given={Shengze},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9b1528d0b6c9bc88bfd8c569f290bcec}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Hui},
+           giveni={H\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=bfaf154b1f300f885a75adce4c6b773e}{%
+           family={Karniadakis},
+           familyi={K\bibinitperiod},
+           given={George\bibnamedelima Em},
+           giveni={G\bibinitperiod\bibinitdelim E\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{8666ea16cfeb512e52478e48d3a17b0a}
+      \strng{fullhash}{be4470955ebf9e3809271a5253207609}
+      \strng{fullhashraw}{be4470955ebf9e3809271a5253207609}
+      \strng{bibnamehash}{8666ea16cfeb512e52478e48d3a17b0a}
+      \strng{authorbibnamehash}{8666ea16cfeb512e52478e48d3a17b0a}
+      \strng{authornamehash}{8666ea16cfeb512e52478e48d3a17b0a}
+      \strng{authorfullhash}{be4470955ebf9e3809271a5253207609}
+      \strng{authorfullhashraw}{be4470955ebf9e3809271a5253207609}
+      \field{sortinit}{J}
+      \field{sortinithash}{b2f54a9081ace9966a7cb9413811edb4}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{shorttitle}
+      \field{issn}{00219991}
+      \field{journaltitle}{Journal of Computational Physics}
+      \field{month}{2}
+      \field{shorttitle}{{NSFnets} ({Navier}-{Stokes} flow nets)}
+      \field{title}{{NSFnets} ({Navier}-{Stokes} flow nets): {Physics}-informed neural networks for the incompressible {Navier}-{Stokes} equations}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{426}
+      \field{year}{2021}
+      \field{urldateera}{ce}
+      \field{pages}{109951}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.jcp.2020.109951
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\Z5JVUSYZ\\Jin et al. - 2021 - NSFnets (Navier-Stokes flow nets) Physics-informed neural networks for the incompressible Navier-St.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://linkinghub.elsevier.com/retrieve/pii/S0021999120307257
+      \endverb
+      \verb{url}
+      \verb https://linkinghub.elsevier.com/retrieve/pii/S0021999120307257
+      \endverb
+    \endentry
+    \entry{ladd_numerical_nodate}{article}{}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=ea574591c1f2232e7c9b1fd4aa63feb5}{%
+           family={Ladd},
+           familyi={L\bibinitperiod},
+           given={Anthony\bibnamedelimb J\bibnamedelima C},
+           giveni={A\bibinitperiod\bibinitdelim J\bibinitperiod\bibinitdelim C\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{ea574591c1f2232e7c9b1fd4aa63feb5}
+      \strng{fullhash}{ea574591c1f2232e7c9b1fd4aa63feb5}
+      \strng{fullhashraw}{ea574591c1f2232e7c9b1fd4aa63feb5}
+      \strng{bibnamehash}{ea574591c1f2232e7c9b1fd4aa63feb5}
+      \strng{authorbibnamehash}{ea574591c1f2232e7c9b1fd4aa63feb5}
+      \strng{authornamehash}{ea574591c1f2232e7c9b1fd4aa63feb5}
+      \strng{authorfullhash}{ea574591c1f2232e7c9b1fd4aa63feb5}
+      \strng{authorfullhashraw}{ea574591c1f2232e7c9b1fd4aa63feb5}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{labeldatesource}{nodate}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{A new and very general technique for simulating solid- uid suspensions is described; its most important feature is that the computational cost scales linearly with the number of particles. The method combines Newtonian dynamics of the solid particles with a discretized Boltzmann equation for the uid phase; the many-body hydrodynamic interactions are fully accounted for, both in the creeping- ow regime and at higher Reynolds numbers. Brownian motion of the solid particles arises spontaneously from stochastic uctuations in the uid stress tensor, rather than from random forces or displacements applied directly to the particles. In this paper, the theoretical foundations of the technique are laid out, illustrated by simple analytical and numerical examples; in the companion paper, extensive numerical tests of the method, for stationary ows, time-dependent ows, and nite Reynolds number ows, are reported.}
+      \field{title}{Numerical {Simulations} of {Particulate} {Suspensions} via a {Discretized} {Boltzmann} {Equation} {Part} {I}. {Theoretical} {Foundation}}
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\69GMIEUF\\Ladd - Numerical Simulations of Particulate Suspensions via a Discretized Boltzmann Equation Part I. Theore.pdf:application/pdf
+      \endverb
+    \endentry
+    \entry{leonardi_coupled_2014}{article}{}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=aa30ca4cda3fe79c23b4ac7ffa3644c8}{%
+           family={Leonardi},
+           familyi={L\bibinitperiod},
+           given={Alessandro},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=40d3d865a3df6453abfb9576d106243c}{%
+           family={Wittel},
+           familyi={W\bibinitperiod},
+           given={Falk\bibnamedelima K.},
+           giveni={F\bibinitperiod\bibinitdelim K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=db5002bd9c6c4015a8895d2e0580a2ac}{%
+           family={Mendoza},
+           familyi={M\bibinitperiod},
+           given={Miller},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=8f4d91f025af84b67dcfabdd1f0ae78c}{%
+           family={Herrmann},
+           familyi={H\bibinitperiod},
+           given={Hans\bibnamedelima J.},
+           giveni={H\bibinitperiod\bibinitdelim J\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{2ded0bccc0123705cdd8918caf7716f8}
+      \strng{fullhash}{3f47ca2f055c82a358e402fdbbefe1d7}
+      \strng{fullhashraw}{3f47ca2f055c82a358e402fdbbefe1d7}
+      \strng{bibnamehash}{2ded0bccc0123705cdd8918caf7716f8}
+      \strng{authorbibnamehash}{2ded0bccc0123705cdd8918caf7716f8}
+      \strng{authornamehash}{2ded0bccc0123705cdd8918caf7716f8}
+      \strng{authorfullhash}{3f47ca2f055c82a358e402fdbbefe1d7}
+      \strng{authorfullhashraw}{3f47ca2f055c82a358e402fdbbefe1d7}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The complexity of the interactions between the constituent granular and liquid phases of a suspension requires an adequate treatment of the constituents themselves. A promising way for numerical simulations of such systems is given by hybrid computational frameworks. This is naturally done, when the Lagrangian description of particle dynamics of the granular phase ﬁnds a correspondence in the ﬂuid description. In this work we employ extensions of the Lattice-Boltzmann Method for non-Newtonian rheology, free surfaces, and moving boundaries. The models allows for a full coupling of the phases, but in a simpliﬁed way. An experimental validation is given by an example of gravity driven ﬂow of a particle suspension.}
+      \field{issn}{2196-4378, 2196-4386}
+      \field{journaltitle}{Comp. Part. Mech.}
+      \field{langid}{english}
+      \field{month}{5}
+      \field{number}{1}
+      \field{title}{Coupled {DEM}-{LBM} method for the free-surface simulation of heterogeneous suspensions}
+      \field{urlday}{24}
+      \field{urlmonth}{11}
+      \field{urlyear}{2025}
+      \field{volume}{1}
+      \field{year}{2014}
+      \field{dateera}{ce}
+      \field{urldateera}{ce}
+      \field{pages}{3\bibrangedash 13}
+      \range{pages}{11}
+      \verb{doi}
+      \verb 10.1007/s40571-014-0001-z
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\8N947Z3W\\Leonardi et al. - 2014 - Coupled DEM-LBM method for the free-surface simulation of heterogeneous suspensions.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://link.springer.com/10.1007/s40571-014-0001-z
+      \endverb
+      \verb{url}
+      \verb http://link.springer.com/10.1007/s40571-014-0001-z
+      \endverb
+    \endentry
+    \entry{Li_IBM-LBM-DEM_2022}{article}{}{}
+      \name{author}{5}{}{%
+        {{un=1,uniquepart=given,hash=ba9afdabb422ef30c600dd346a418cea}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Xiaohui},
+           giveni={X\bibinitperiod},
+           givenun=1}}%
+        {{un=0,uniquepart=base,hash=94499897f3cbdd7771a0d386fd479b5a}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Guodong},
+           giveni={G\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=defead6ce3726c8047a4b2c6dd42f130}{%
+           family={Zhao},
+           familyi={Z\bibinitperiod},
+           given={Junnan},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=25aaf47d8ef884fdcc2425197c53ef4b}{%
+           family={Yin},
+           familyi={Y\bibinitperiod},
+           given={Xiaolong},
+           giveni={X\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=108a1bf31c93a22ab6a912011e406d3f}{%
+           family={Lu},
+           familyi={L\bibinitperiod},
+           given={Huilin},
+           giveni={H\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{251be786cba2c6ec88c9fc6613a89ac0}
+      \strng{fullhash}{be5369e800c7403272d490cba069c8cc}
+      \strng{fullhashraw}{be5369e800c7403272d490cba069c8cc}
+      \strng{bibnamehash}{251be786cba2c6ec88c9fc6613a89ac0}
+      \strng{authorbibnamehash}{251be786cba2c6ec88c9fc6613a89ac0}
+      \strng{authornamehash}{251be786cba2c6ec88c9fc6613a89ac0}
+      \strng{authorfullhash}{be5369e800c7403272d490cba069c8cc}
+      \strng{authorfullhashraw}{be5369e800c7403272d490cba069c8cc}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Particle sedimentation is a fundamental process encountered in various industrial applications. In this study, we used immersed boundary lattice Boltzmann method and discrete element method (IBM-LBM-DEM) to investigate two-particle sedimentation. A lattice Boltzmann method was used to simulate fluid flow, a discrete element method was used to simulate particle dynamics, and an immersed boundary method was used to handle particle–fluid interactions. Via the IBM-LBM-DEM, the particles collision process in fluid or between rigid walls can be calculated to capture the information of particles and the flow field more efficiently and accurately. The numerical method was verified by simulating settling of a single three-dimensional particle. Then, the effects of Reynolds number (Re), initial distance, and initial angle of particles on two-particle sedimentation were characterized. A specific focus was to reproduce, analyze, and define the well-known phenomenon of drafting-kissing-tumbling (DKT) interaction between two particles. Further kinematic analysis to define DKT is meaningful for two-particle sedimentation studies at different particle locations. Whether a pair of particles has experienced DKT can be viewed from time plots of the distance between the particles (for kissing), the second-order derivative of distance to time (for drafting), and angular velocities of particles (for tumbling). Simulation results show that DKT’s signatures, including attraction, (near) contact, rotation, and in the end, separation, is only completely demonstrated when particles have nearly vertically aligned initial positions. Hence, not all initial positions of particles and Reynolds numbers lead to DKT and not all particle–particle hydrodynamic interactions are DKT. Whether particle–particle interaction is attractive or repulsive depends on the relative positions of particles and Re. Collision occurs when Re is high and the initial angle is small (<20°), almost independent of the initial distance.}
+      \field{issn}{1996-1073}
+      \field{journaltitle}{Energies}
+      \field{number}{9}
+      \field{title}{IBM-LBM-DEM Study of Two-Particle Sedimentation: Drafting-Kissing-Tumbling and Effects of Particle Reynolds Number and Initial Positions of Particles}
+      \field{volume}{15}
+      \field{year}{2022}
+      \verb{doi}
+      \verb 10.3390/en15093297
+      \endverb
+      \verb{urlraw}
+      \verb https://www.mdpi.com/1996-1073/15/9/3297
+      \endverb
+      \verb{url}
+      \verb https://www.mdpi.com/1996-1073/15/9/3297
+      \endverb
+    \endentry
+    \entry{li_fourier_2021}{misc}{}{}
+      \name{author}{7}{}{%
+        {{un=1,uniquepart=given,hash=009036050bf23abe561429f6eaa0b018}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Zongyi},
+           giveni={Z\bibinitperiod},
+           givenun=1}}%
+        {{un=0,uniquepart=base,hash=d3715d69863d59245589f244c5866bd4}{%
+           family={Kovachki},
+           familyi={K\bibinitperiod},
+           given={Nikola},
+           giveni={N\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=3648b51d63e1ae389e46f87296d4c89a}{%
+           family={Azizzadenesheli},
+           familyi={A\bibinitperiod},
+           given={Kamyar},
+           giveni={K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9caea1a7b561311e5146f4c7f740496c}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Burigede},
+           giveni={B\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=1e523aae18c868f77439b35add494ff9}{%
+           family={Bhattacharya},
+           familyi={B\bibinitperiod},
+           given={Kaushik},
+           giveni={K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9fdd1b883dec513483f9ee5c99b7e251}{%
+           family={Stuart},
+           familyi={S\bibinitperiod},
+           given={Andrew},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=bd4a2be6ede169a3c794a1cd7e3fb9a2}{%
+           family={Anandkumar},
+           familyi={A\bibinitperiod},
+           given={Anima},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \list{publisher}{1}{%
+        {arXiv}%
+      }
+      \strng{namehash}{edf93f47ab09a8c56b86e9ad2e628607}
+      \strng{fullhash}{3e58006f2c869702116637d04136c3b9}
+      \strng{fullhashraw}{3e58006f2c869702116637d04136c3b9}
+      \strng{bibnamehash}{edf93f47ab09a8c56b86e9ad2e628607}
+      \strng{authorbibnamehash}{edf93f47ab09a8c56b86e9ad2e628607}
+      \strng{authornamehash}{edf93f47ab09a8c56b86e9ad2e628607}
+      \strng{authorfullhash}{3e58006f2c869702116637d04136c3b9}
+      \strng{authorfullhashraw}{3e58006f2c869702116637d04136c3b9}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The classical development of neural networks has primarily focused on learning mappings between ﬁnite-dimensional Euclidean spaces. Recently, this has been generalized to neural operators that learn mappings between function spaces. For partial differential equations (PDEs), neural operators directly learn the mapping from any functional parametric dependence to the solution. Thus, they learn an entire family of PDEs, in contrast to classical methods which solve one instance of the equation. In this work, we formulate a new neural operator by parameterizing the integral kernel directly in Fourier space, allowing for an expressive and efﬁcient architecture. We perform experiments on Burgers’ equation, Darcy ﬂow, and Navier-Stokes equation. The Fourier neural operator is the ﬁrst ML-based method to successfully model turbulent ﬂows with zero-shot super-resolution. It is up to three orders of magnitude faster compared to traditional PDE solvers. Additionally, it achieves superior accuracy compared to previous learning-based solvers under ﬁxed resolution.}
+      \field{month}{5}
+      \field{note}{arXiv:2010.08895 [cs]}
+      \field{title}{Fourier {Neural} {Operator} for {Parametric} {Partial} {Differential} {Equations}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{year}{2021}
+      \field{urldateera}{ce}
+      \verb{doi}
+      \verb 10.48550/arXiv.2010.08895
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\S3L3CX27\\Li et al. - 2021 - Fourier Neural Operator for Parametric Partial Differential Equations.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://arxiv.org/abs/2010.08895
+      \endverb
+      \verb{url}
+      \verb http://arxiv.org/abs/2010.08895
+      \endverb
+      \keyw{Computer Science - Machine Learning,Mathematics - Numerical Analysis}
+    \endentry
+    \entry{martin_fluid-dynamical_1989}{article}{}{}
+      \name{author}{2}{}{%
+        {{un=2,uniquepart=given,hash=83d7dbb317584aa5d4d2f70c6f7564fc}{%
+           family={Martin},
+           familyi={M\bibinitperiod},
+           given={D.},
+           giveni={D\bibinitperiod},
+           givenun=2}}%
+        {{un=2,uniquepart=given,hash=96d794a0dbe122e864a2b7a67dd8b040}{%
+           family={Nokes},
+           familyi={N\bibinitperiod},
+           given={R.},
+           giveni={R\bibinitperiod},
+           givenun=2}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{5bacc52991c15a8ac1ffb8bc5da315cb}
+      \strng{fullhash}{5bacc52991c15a8ac1ffb8bc5da315cb}
+      \strng{fullhashraw}{5bacc52991c15a8ac1ffb8bc5da315cb}
+      \strng{bibnamehash}{5bacc52991c15a8ac1ffb8bc5da315cb}
+      \strng{authorbibnamehash}{5bacc52991c15a8ac1ffb8bc5da315cb}
+      \strng{authornamehash}{5bacc52991c15a8ac1ffb8bc5da315cb}
+      \strng{authorfullhash}{5bacc52991c15a8ac1ffb8bc5da315cb}
+      \strng{authorfullhashraw}{5bacc52991c15a8ac1ffb8bc5da315cb}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Thermal convection in magma chambers is believed to be almost always highly time-dependent, or 'turbulent', and predicted convective velocities are commonly orders of magnitude larger than settling velocities for typical crystals calculated from Stokes' Law. To understand crystal settling in magma chambers we have therefore undertaken a theoretical and experimental study of particle settling in a turbulently convecting fluid. The regime of interest is where the ratio, S, of the Stokes' Law settling velocity, v,, to the root mean square vertical component of convective velocity, W, at mid-depth in the fluid is less than unity. Although v, {<} W, settling is still possible because convective velocities are height-dependent and must decrease to zero at the boundaries of the fluid. Particles immediately adjacent to the bottom boundary settle out with their full Stokes' settling velocities. At the same time, convection is vigorous enough to ensure that the distribution of particles in the fluid is uniform. It follows that the number of particles in suspension decays with time according to an exponential law, and the decay constant is simply the ratio of v, to h, the depth of the fluid. Experiments confirm this relationship, at least for low particle concentrations, provided S {<} 0-5 and there is no re-entrainment of particles from the floor of the tank. We apply this relationship to crystals in magma chambers and so calculate residence times for typical crystals. We find that for basaltic magmas the predicted residence times are small compared with the many thousands of years that a chamber takes to solidify if cooling is dominated by conduction through the country rock. We therefore conclude that crystal settling may be an efficient differentiation mechanism. Significant magmatic evolution may, however, take place on time-scales that are competitive with these residence times.}
+      \field{issn}{0022-3530, 1460-2415}
+      \field{journaltitle}{Journal of Petrology}
+      \field{month}{12}
+      \field{number}{6}
+      \field{title}{A {Fluid}-{Dynamical} {Study} of {Crystal} {Settling} in {Convecting} {Magmas}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{30}
+      \field{year}{1989}
+      \field{urldateera}{ce}
+      \field{pages}{1471\bibrangedash 1500}
+      \range{pages}{30}
+      \verb{doi}
+      \verb 10.1093/petrology/30.6.1471
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\EJCHKFMJ\\Martin und Nokes - 1989 - A Fluid-Dynamical Study of Crystal Settling in Convecting Magmas.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://academic.oup.com/petrology/article-lookup/doi/10.1093/petrology/30.6.1471
+      \endverb
+      \verb{url}
+      \verb https://academic.oup.com/petrology/article-lookup/doi/10.1093/petrology/30.6.1471
+      \endverb
+    \endentry
+    \entry{martin_crystal_1988}{article}{}{}
+      \name{author}{2}{}{%
+        {{un=2,uniquepart=given,hash=32aa716a830496e546876cf7f52e4012}{%
+           family={Martin},
+           familyi={M\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod},
+           givenun=2}}%
+        {{un=2,uniquepart=given,hash=b5e945f9088794491154a3b23cce1855}{%
+           family={Nokes},
+           familyi={N\bibinitperiod},
+           given={Roger},
+           giveni={R\bibinitperiod},
+           givenun=2}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{fullhash}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{fullhashraw}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{bibnamehash}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{authorbibnamehash}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{authornamehash}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{authorfullhash}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{authorfullhashraw}{de8a74e56e8559b4219b6fb10f2f647f}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{issn}{0028-0836, 1476-4687}
+      \field{journaltitle}{Nature}
+      \field{month}{4}
+      \field{number}{6164}
+      \field{title}{Crystal settling in a vigorously convecting magma chamber}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{332}
+      \field{year}{1988}
+      \field{urldateera}{ce}
+      \field{pages}{534\bibrangedash 536}
+      \range{pages}{3}
+      \verb{doi}
+      \verb 10.1038/332534a0
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\9DVJMMUA\\Martin und Nokes - 1988 - Crystal settling in a vigorously convecting magma chamber.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://www.nature.com/articles/332534a0
+      \endverb
+      \verb{url}
+      \verb https://www.nature.com/articles/332534a0
+      \endverb
+    \endentry
+    \entry{nissanka_dynamics_2023}{article}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=abceba5c97b77a30bc2d6ea77279da83}{%
+           family={Nissanka},
+           familyi={N\bibinitperiod},
+           given={Kavinda\bibnamedelima J.},
+           giveni={K\bibinitperiod\bibinitdelim J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=2056ae0a3cd1a5a0f3709e97bfd5f6ca}{%
+           family={Ma},
+           familyi={M\bibinitperiod},
+           given={Xiaolei},
+           giveni={X\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=6b895d71b131f2b96a3ab0d897017a17}{%
+           family={Burton},
+           familyi={B\bibinitperiod},
+           given={Justin\bibnamedelima C.},
+           giveni={J\bibinitperiod\bibinitdelim C\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{622dde8a214662011811fb5412cffbb5}
+      \strng{fullhash}{622dde8a214662011811fb5412cffbb5}
+      \strng{fullhashraw}{622dde8a214662011811fb5412cffbb5}
+      \strng{bibnamehash}{622dde8a214662011811fb5412cffbb5}
+      \strng{authorbibnamehash}{622dde8a214662011811fb5412cffbb5}
+      \strng{authornamehash}{622dde8a214662011811fb5412cffbb5}
+      \strng{authorfullhash}{622dde8a214662011811fb5412cffbb5}
+      \strng{authorfullhashraw}{622dde8a214662011811fb5412cffbb5}
+      \field{sortinit}{N}
+      \field{sortinithash}{22369a73d5f88983a108b63f07f37084}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The dynamics of sedimenting particles under gravity are surprisingly complex due to the presence of effective long-ranged forces. When the particles are polar with a well-defined symmetry axis and non-uniform density, recent theoretical predictions suggest that prolate objects will repel and oblate ones will weakly attract. We tested these predictions using mass polar proalte spheroids, which are composed of 2 mm spheres glued together. We probed different aspect rations (\$κ\$) and center of mass offsets (\$χ\$) by combining spheres of different densities. Experiments were done in both quasi-two-dimensional (2D) and three=dimensional (3D) chambers. By optically tracking the motion of single particles, we found that the dynamics were well-described by a reduced mobility matrix model that could be solved analytically. Pairs of particles exhibited an effective repulsion, and their separation roughly scaled as {\textasciitilde}\$(κ-1)/χ{\textasciicircum}\{0.39\}\$, i.e. particles that were more prolate or had smaller mass asymmetry had stronger repulsion effects. In 3D, particles with \$χ{>}0\$ were distributed more uniformly than \$χ=0\$ particles, and the degree of uniformity increased with \$κ\$, indicating that the effective 2-body repulsion manifests for a large number of particles.}
+      \field{issn}{0022-1120, 1469-7645}
+      \field{journaltitle}{Journal of Fluid Mechanics}
+      \field{month}{2}
+      \field{note}{arXiv:2206.09505 [cond-mat]}
+      \field{title}{Dynamics of {Mass} {Polar} {Spheroids} {During} {Sedimentation}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{956}
+      \field{year}{2023}
+      \field{urldateera}{ce}
+      \field{pages}{A28}
+      \range{pages}{-1}
+      \verb{doi}
+      \verb 10.1017/jfm.2023.32
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\HUUWPBSU\\Nissanka et al. - 2023 - Dynamics of Mass Polar Spheroids During Sedimentation.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://arxiv.org/abs/2206.09505
+      \endverb
+      \verb{url}
+      \verb http://arxiv.org/abs/2206.09505
+      \endverb
+      \keyw{Condensed Matter - Soft Condensed Matter}
+    \endentry
+    \entry{oldenburg_geometry_2022}{article}{}{}
+      \name{author}{5}{}{%
+        {{un=0,uniquepart=base,hash=5071a8792266213591ff88be47b9bf03}{%
+           family={Oldenburg},
+           familyi={O\bibinitperiod},
+           given={Jan},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=b4626a91fcc816bccb5538027e01a81e}{%
+           family={Borowski},
+           familyi={B\bibinitperiod},
+           given={Finja},
+           giveni={F\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=64752e4fb64292d12d2546d311fdd6ac}{%
+           family={Öner},
+           familyi={Ö\bibinitperiod},
+           given={Alper},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=e8798060349a78e55fa5f7bff02c78e5}{%
+           family={Schmitz},
+           familyi={S\bibinitperiod},
+           given={Klaus-Peter},
+           giveni={K\bibinithyphendelim P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=193e91851b0d396cfd395e35548fd2bf}{%
+           family={Stiehm},
+           familyi={S\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{4a9c5159e12ca83795f12fe04cda60a9}
+      \strng{fullhash}{014ce08c41206e1fe41d9ef08f2ff98a}
+      \strng{fullhashraw}{014ce08c41206e1fe41d9ef08f2ff98a}
+      \strng{bibnamehash}{4a9c5159e12ca83795f12fe04cda60a9}
+      \strng{authorbibnamehash}{4a9c5159e12ca83795f12fe04cda60a9}
+      \strng{authornamehash}{4a9c5159e12ca83795f12fe04cda60a9}
+      \strng{authorfullhash}{014ce08c41206e1fe41d9ef08f2ff98a}
+      \strng{authorfullhashraw}{014ce08c41206e1fe41d9ef08f2ff98a}
+      \field{sortinit}{O}
+      \field{sortinithash}{2cd7140a07aea5341f9e2771efe90aae}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Many real world problems involve fluid flow phenomena, typically be described by the Navier–Stokes equations. The Navier–Stokes equations are partial differential equations (PDEs) with highly nonlinear properties. Currently mostly used methods solve this dif‑ferential equation by discretizing geometries. In the field of fluid mechanics the finite volume method (FVM) is widely used for numerical flow simulation, so‑called com‑putational fluid dynamics (CFD). Due to high computational costs and cumbersome generation of the discretization they are not widely used in real time applications. Our presented work focuses on advancing PDE‑constrained deep learning frameworks for more real‑world applications with irregular geometries without parameterization. We present a Deep Neural Network framework that generate surrogates for non‑geometric boundaries by data free solely physics driven training, by minimizing the residuals of the governing PDEs (i.e., conservation laws) so that no computationally expensive CFD simulation data is needed. We named this method geometry aware physics informed neural network—GAPINN. The framework involves three network types. The first network reduces the dimensions of the irregular geometries to a latent representation. In this work we used a Variational‑Auto‑Encoder (VAE) for this task. We proposed the concept of using this latent representation in combination with spatial coordinates as input for PINNs. Using PINNs we showed that it is possible to train a surrogate model purely driven on the reduction of the residuals of the underlying PDE for irregular non‑parametric geometries. Furthermore, we showed the way of designing a boundary constraining network (BCN) to hardly enforce boundary conditions during training of the PINN. We evaluated this concept on test cases in the fields of biofluidmechanics. The experiments comprise laminar flow (Re = 500) in irregular shaped vessels. The main highlight of the presented GAPINN is the use of PINNs on irregular non‑parameterized geometries. Despite that we showed the usage of this framework for Navier Stokes equations, it should be feasible to adapt this framework for other problems described by PDEs.}
+      \field{issn}{2213-7467}
+      \field{journaltitle}{Advanced Modeling and Simulation in Engineering Sciences}
+      \field{month}{6}
+      \field{number}{1}
+      \field{title}{Geometry aware physics informed neural network surrogate for solving {Navier}–{Stokes} equation ({GAPINN})}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{9}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \field{pages}{8}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1186/s40323-022-00221-z
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\WFFL6GD2\\Oldenburg et al. - 2022 - Geometry aware physics informed neural network surrogate for solving Navier–Stokes equation (GAPINN).pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://amses-journal.springeropen.com/articles/10.1186/s40323-022-00221-z
+      \endverb
+      \verb{url}
+      \verb https://amses-journal.springeropen.com/articles/10.1186/s40323-022-00221-z
+      \endverb
+    \endentry
+    \entry{penlou_experimental_2023}{article}{}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=76f1b57763e70944826681e9206f0035}{%
+           family={Penlou},
+           familyi={P\bibinitperiod},
+           given={Baptiste},
+           giveni={B\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=1931e08935ba7e2d15005903643ba8d6}{%
+           family={Roche},
+           familyi={R\bibinitperiod},
+           given={Olivier},
+           giveni={O\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=092c6d77443fc5f6c25abd30c7a0aab4}{%
+           family={Manga},
+           familyi={M\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=f291806278aeef236581059f551e51d1}{%
+           family={Van\bibnamedelimb Den\bibnamedelima Wildenberg},
+           familyi={V\bibinitperiod\bibinitdelim D\bibinitperiod\bibinitdelim W\bibinitperiod},
+           given={Siet},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{116a802a533772828837366c4983fa50}
+      \strng{fullhash}{99e741956dc8769298d5b184b8c0dfd1}
+      \strng{fullhashraw}{99e741956dc8769298d5b184b8c0dfd1}
+      \strng{bibnamehash}{116a802a533772828837366c4983fa50}
+      \strng{authorbibnamehash}{116a802a533772828837366c4983fa50}
+      \strng{authornamehash}{116a802a533772828837366c4983fa50}
+      \strng{authorfullhash}{99e741956dc8769298d5b184b8c0dfd1}
+      \strng{authorfullhashraw}{99e741956dc8769298d5b184b8c0dfd1}
+      \field{sortinit}{P}
+      \field{sortinithash}{ff3bcf24f47321b42cb156c2cc8a8422}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The dynamics of geophysical dilute turbulent gas-particles mixtures depends to a large extent on particle concentration, which in turn depends predominantly on the particle settling velocity. We experimentally investigate air-particle mixtures contained in a vertical pipe in which the velocity of an ascending air flux matches the settling velocity of glass particles. To obtain local particle concentrations in these mixtures, we use acoustic probing and air pressure measurements and show that these independent techniques yield similar results for a range of particle sizes and particle concentrations. Moreover, we find that in suspensions of small particles (78 μm) the settling velocity increases with the local particle concentration due to the formation of particle clusters. These clusters settle with a velocity that is four times faster than the terminal settling velocity of single particles, and they double settling speeds of the suspensions. In contrast, in suspensions of larger particles (467 μm) the settling velocity decreases with increasing particle concentration. Although particle clusters are still present in this case, the settling velocity is decreased by 30\%, which is captured by a hindered settling model. These results suggest an interplay between hindered settling and cluster-induced enhanced settling, which in our experiments occur respectively at Stokes number O(100) and O(1). We discuss implications for volcanic plumes and pyroclastic currents. Our study suggests that clustering and related enhanced or hindered particle settling velocities should be considered in models of volcanic phenomena and that drag law corrections are needed for reliable predictions and hazard assessment.}
+      \field{issn}{2169-9313, 2169-9356}
+      \field{journaltitle}{Journal of Geophysical Research: Solid Earth}
+      \field{month}{3}
+      \field{number}{3}
+      \field{title}{Experimental {Measurement} of {Enhanced} and {Hindered} {Particle} {Settling} in {Turbulent} {Gas}‐{Particle} {Suspensions}, and {Geophysical} {Implications}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{128}
+      \field{year}{2023}
+      \field{urldateera}{ce}
+      \field{pages}{e2022JB025809}
+      \range{pages}{-1}
+      \verb{doi}
+      \verb 10.1029/2022JB025809
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\BSNFB9CC\\Penlou et al. - 2023 - Experimental Measurement of Enhanced and Hindered Particle Settling in Turbulent Gas‐Particle Suspen.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2022JB025809
+      \endverb
+      \verb{url}
+      \verb https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2022JB025809
+      \endverb
+    \endentry
+    \entry{raissi_physics-informed_2019}{article}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=a3194cb4f8e3959e569236521aa2fd86}{%
+           family={Raissi},
+           familyi={R\bibinitperiod},
+           given={M.},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c2e8423b7b49343a85abf9af92ee2a82}{%
+           family={Perdikaris},
+           familyi={P\bibinitperiod},
+           given={P.},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=1c2f5930e36485e8d38a87746769fdcc}{%
+           family={Karniadakis},
+           familyi={K\bibinitperiod},
+           given={G.\bibnamedelimi E.},
+           giveni={G\bibinitperiod\bibinitdelim E\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{a17a0649dc8bad70026488d4ea37c508}
+      \strng{fullhash}{a17a0649dc8bad70026488d4ea37c508}
+      \strng{fullhashraw}{a17a0649dc8bad70026488d4ea37c508}
+      \strng{bibnamehash}{a17a0649dc8bad70026488d4ea37c508}
+      \strng{authorbibnamehash}{a17a0649dc8bad70026488d4ea37c508}
+      \strng{authornamehash}{a17a0649dc8bad70026488d4ea37c508}
+      \strng{authorfullhash}{a17a0649dc8bad70026488d4ea37c508}
+      \strng{authorfullhashraw}{a17a0649dc8bad70026488d4ea37c508}
+      \field{sortinit}{R}
+      \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{We introduce physics-informed neural networks – neural networks that are trained to solve supervised learning tasks while respecting any given laws of physics described by general nonlinear partial differential equations. In this work, we present our developments in the context of solving two main classes of problems: data-driven solution and data-driven discovery of partial differential equations. Depending on the nature and arrangement of the available data, we devise two distinct types of algorithms, namely continuous time and discrete time models. The first type of models forms a new family of data-efficient spatio-temporal function approximators, while the latter type allows the use of arbitrarily accurate implicit Runge–Kutta time stepping schemes with unlimited number of stages. The effectiveness of the proposed framework is demonstrated through a collection of classical problems in fluids, quantum mechanics, reaction–diffusion systems, and the propagation of nonlinear shallow-water waves.}
+      \field{issn}{0021-9991}
+      \field{journaltitle}{Journal of Computational Physics}
+      \field{title}{Physics-informed neural networks: {A} deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations}
+      \field{volume}{378}
+      \field{year}{2019}
+      \field{pages}{686\bibrangedash 707}
+      \range{pages}{22}
+      \verb{doi}
+      \verb https://doi.org/10.1016/j.jcp.2018.10.045
+      \endverb
+      \verb{urlraw}
+      \verb https://www.sciencedirect.com/science/article/pii/S0021999118307125
+      \endverb
+      \verb{url}
+      \verb https://www.sciencedirect.com/science/article/pii/S0021999118307125
+      \endverb
+      \keyw{Data-driven scientific computing,Machine learning,Nonlinear dynamics,Predictive modeling,Runge–Kutta methods}
+    \endentry
+    \entry{ribeiro_deepcfd_nodate}{article}{}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=722fa0a37ef2ee186656c3835c8efabc}{%
+           family={Ribeiro},
+           familyi={R\bibinitperiod},
+           given={Mateus\bibnamedelima Dias},
+           giveni={M\bibinitperiod\bibinitdelim D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=a4c5c05982dafd3255f8dafa7e83fc47}{%
+           family={Rehman},
+           familyi={R\bibinitperiod},
+           given={Abdul},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=7407b7acfa262023851056a7cd752a26}{%
+           family={Ahmed},
+           familyi={A\bibinitperiod},
+           given={Sheraz},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=39509991baf1f5b54ef9eede853edd37}{%
+           family={Dengel},
+           familyi={D\bibinitperiod},
+           given={Andreas},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{124e4b182c900afc91c9b9aef0706d92}
+      \strng{fullhash}{9646a1b4d389d72c99612629368779bb}
+      \strng{fullhashraw}{9646a1b4d389d72c99612629368779bb}
+      \strng{bibnamehash}{124e4b182c900afc91c9b9aef0706d92}
+      \strng{authorbibnamehash}{124e4b182c900afc91c9b9aef0706d92}
+      \strng{authornamehash}{124e4b182c900afc91c9b9aef0706d92}
+      \strng{authorfullhash}{9646a1b4d389d72c99612629368779bb}
+      \strng{authorfullhashraw}{9646a1b4d389d72c99612629368779bb}
+      \field{sortinit}{R}
+      \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
+      \field{labeldatesource}{nodate}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Computational Fluid Dynamics (CFD) simulation by the numerical solution of the Navier-Stokes equations is an essential tool in a wide range of applications from engineering design to climate modeling. However, the computational cost and memory demand required by CFD codes may become very high for ﬂows of practical interest, such as in aerodynamic shape optimization. This expense is associated with the complexity of the ﬂuid ﬂow governing equations, which include non-linear partial derivative terms that are of diﬃcult solution, leading to long computational times and limiting the number of hypotheses that can be tested during the process of iterative design. Therefore, we propose DeepCFD: a convolutional neural network (CNN) based model that eﬃciently approximates solutions for the problem of non-uniform steady laminar ﬂows. The proposed model is able to learn complete solutions of the Navier-Stokes equations, for both velocity and pressure ﬁelds, directly from ground-truth data generated using a state-of-the-art CFD code. Using DeepCFD, we found a speedup of up to 3 orders of magnitude compared to the standard CFD approach at a cost of low error rates.}
+      \field{title}{{DeepCFD}: {Efficient} {Steady}-{State} {Laminar} {Flow} {Approximation} with {Deep} {Convolutional} {Neural} {Networks}}
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\TKMXS2V6\\Ribeiro et al. - DeepCFD Efficient Steady-State Laminar Flow Approximation with Deep Convolutional Neural Networks.pdf:application/pdf
+      \endverb
+    \endentry
+    \entry{richter-powell_neural_nodate}{article}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=8c983ca3f0bb700a5728bb56405e2c36}{%
+           family={Richter-Powell},
+           familyi={R\bibinithyphendelim P\bibinitperiod},
+           given={Jack},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=007e1ec9be65793d22967618e750f5a2}{%
+           family={Lipman},
+           familyi={L\bibinitperiod},
+           given={Yaron},
+           giveni={Y\bibinitperiod},
+           givenun=0}}%
+        {{un=1,uniquepart=given,hash=9db211fe28b9db15bc04d29bedf2e03f}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={Ricky\bibnamedelimb T\bibnamedelima Q},
+           giveni={R\bibinitperiod\bibinitdelim T\bibinitperiod\bibinitdelim Q\bibinitperiod},
+           givenun=1}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{3d4c01a9f24ed55aa7ac4f823428758a}
+      \strng{fullhash}{3d4c01a9f24ed55aa7ac4f823428758a}
+      \strng{fullhashraw}{3d4c01a9f24ed55aa7ac4f823428758a}
+      \strng{bibnamehash}{3d4c01a9f24ed55aa7ac4f823428758a}
+      \strng{authorbibnamehash}{3d4c01a9f24ed55aa7ac4f823428758a}
+      \strng{authornamehash}{3d4c01a9f24ed55aa7ac4f823428758a}
+      \strng{authorfullhash}{3d4c01a9f24ed55aa7ac4f823428758a}
+      \strng{authorfullhashraw}{3d4c01a9f24ed55aa7ac4f823428758a}
+      \field{sortinit}{R}
+      \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
+      \field{labeldatesource}{nodate}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{We investigate the parameterization of deep neural networks that by design satisfy the continuity equation, a fundamental conservation law. This is enabled by the observation that any solution of the continuity equation can be represented as a divergence-free vector field. We hence propose building divergence-free neural networks through the concept of differential forms, and with the aid of automatic differentiation, realize two practical constructions. As a result, we can parameterize pairs of densities and vector fields that always exactly satisfy the continuity equation, foregoing the need for extra penalty methods or expensive numerical simulation. Furthermore, we prove these models are universal and so can be used to represent any divergence-free vector field. Finally, we experimentally validate our approaches by computing neural network-based solutions to fluid equations, solving for the Hodge decomposition, and learning dynamical optimal transport maps.}
+      \field{title}{Neural {Conservation} {Laws}: {A} {Divergence}-{Free} {Perspective}}
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\2EJUHHVU\\Richter-Powell et al. - Neural Conservation Laws A Divergence-Free Perspective.pdf:application/pdf
+      \endverb
+    \endentry
+    \entry{ronneberger_u-net_2015}{misc}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=8e46da9de9e53ea5d37089897d69cdd9}{%
+           family={Ronneberger},
+           familyi={R\bibinitperiod},
+           given={Olaf},
+           giveni={O\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=168e84ce3582cbc6bac5e2ebc3ef8442}{%
+           family={Fischer},
+           familyi={F\bibinitperiod},
+           given={Philipp},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=b452a32296958371572717940f900884}{%
+           family={Brox},
+           familyi={B\bibinitperiod},
+           given={Thomas},
+           giveni={T\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \list{publisher}{1}{%
+        {arXiv}%
+      }
+      \strng{namehash}{f23ccc5160c62c7866172335b2c76e11}
+      \strng{fullhash}{f23ccc5160c62c7866172335b2c76e11}
+      \strng{fullhashraw}{f23ccc5160c62c7866172335b2c76e11}
+      \strng{bibnamehash}{f23ccc5160c62c7866172335b2c76e11}
+      \strng{authorbibnamehash}{f23ccc5160c62c7866172335b2c76e11}
+      \strng{authornamehash}{f23ccc5160c62c7866172335b2c76e11}
+      \strng{authorfullhash}{f23ccc5160c62c7866172335b2c76e11}
+      \strng{authorfullhashraw}{f23ccc5160c62c7866172335b2c76e11}
+      \field{sortinit}{R}
+      \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{shorttitle}
+      \field{abstract}{There is large consent that successful training of deep networks requires many thousand annotated training samples. In this paper, we present a network and training strategy that relies on the strong use of data augmentation to use the available annotated samples more eﬃciently. The architecture consists of a contracting path to capture context and a symmetric expanding path that enables precise localization. We show that such a network can be trained end-to-end from very few images and outperforms the prior best method (a sliding-window convolutional network) on the ISBI challenge for segmentation of neuronal structures in electron microscopic stacks. Using the same network trained on transmitted light microscopy images (phase contrast and DIC) we won the ISBI cell tracking challenge 2015 in these categories by a large margin. Moreover, the network is fast. Segmentation of a 512x512 image takes less than a second on a recent GPU. The full implementation (based on Caﬀe) and the trained networks are available at http://lmb.informatik.uni-freiburg.de/people/ronneber/u-net.}
+      \field{month}{5}
+      \field{note}{arXiv:1505.04597 [cs]}
+      \field{shorttitle}{U-{Net}}
+      \field{title}{U-{Net}: {Convolutional} {Networks} for {Biomedical} {Image} {Segmentation}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{year}{2015}
+      \field{urldateera}{ce}
+      \verb{doi}
+      \verb 10.48550/arXiv.1505.04597
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\G444I7CP\\Ronneberger et al. - 2015 - U-Net Convolutional Networks for Biomedical Image Segmentation.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://arxiv.org/abs/1505.04597
+      \endverb
+      \verb{url}
+      \verb http://arxiv.org/abs/1505.04597
+      \endverb
+      \keyw{Computer Science - Computer Vision and Pattern Recognition}
+    \endentry
+    \entry{sun_surrogate_2020}{article}{}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=3619892fbd32e4f6752b25dafce591b8}{%
+           family={Sun},
+           familyi={S\bibinitperiod},
+           given={Luning},
+           giveni={L\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=1f6d8f8c54b2a4de971e93ff71ef61c6}{%
+           family={Gao},
+           familyi={G\bibinitperiod},
+           given={Han},
+           giveni={H\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=ec6c0bf244703cb22b33bf75ad607383}{%
+           family={Pan},
+           familyi={P\bibinitperiod},
+           given={Shaowu},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=181adb2409340bdc74df7ba3e5809e2f}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Jian-Xun},
+           giveni={J\bibinithyphendelim X\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{8f3952542ddd485c6857a60c4a2edc74}
+      \strng{fullhash}{1233b4997ec92099938337b67b4147a4}
+      \strng{fullhashraw}{1233b4997ec92099938337b67b4147a4}
+      \strng{bibnamehash}{8f3952542ddd485c6857a60c4a2edc74}
+      \strng{authorbibnamehash}{8f3952542ddd485c6857a60c4a2edc74}
+      \strng{authornamehash}{8f3952542ddd485c6857a60c4a2edc74}
+      \strng{authorfullhash}{1233b4997ec92099938337b67b4147a4}
+      \strng{authorfullhashraw}{1233b4997ec92099938337b67b4147a4}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Numerical simulations on fluid dynamics problems primarily rely on spatially or/and temporally discretization of the governing equation into the finite-dimensional algebraic system solved by computers. Due to complicated nature of the physics and geometry, such process can be computational prohibitive for most real-time applications and many-query analyses. Therefore, developing a cost-effective surrogate model is of great practical significance. Deep learning (DL) has shown new promises for surrogate modeling due to its capability of handling strong nonlinearity and high dimensionality. However, the off-the-shelf DL architectures fail to operate when the data becomes sparse. Unfortunately, data is often insufficient in most parametric fluid dynamics problems since each data point in the parameter space requires an expensive numerical simulation based on the first principle, e.g., Naiver--Stokes equations. In this paper, we provide a physics-constrained DL approach for surrogate modeling of fluid flows without relying on any simulation data. Specifically, a structured deep neural network (DNN) architecture is devised to enforce the initial and boundary conditions, and the governing partial differential equations are incorporated into the loss of the DNN to drive the training. Numerical experiments are conducted on a number of internal flows relevant to hemodynamics applications, and the forward propagation of uncertainties in fluid properties and domain geometry is studied as well. The results show excellent agreement on the flow field and forward-propagated uncertainties between the DL surrogate approximations and the first-principle numerical simulations.}
+      \field{issn}{00457825}
+      \field{journaltitle}{Computer Methods in Applied Mechanics and Engineering}
+      \field{month}{4}
+      \field{note}{arXiv:1906.02382 [physics]}
+      \field{title}{Surrogate {Modeling} for {Fluid} {Flows} {Based} on {Physics}-{Constrained} {Deep} {Learning} {Without} {Simulation} {Data}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{361}
+      \field{year}{2020}
+      \field{urldateera}{ce}
+      \field{pages}{112732}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.cma.2019.112732
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\D89Q86IW\\Sun et al. - 2020 - Surrogate Modeling for Fluid Flows Based on Physics-Constrained Deep Learning Without Simulation Dat.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://arxiv.org/abs/1906.02382
+      \endverb
+      \verb{url}
+      \verb http://arxiv.org/abs/1906.02382
+      \endverb
+      \keyw{Physics - Computational Physics}
+    \endentry
+    \entry{thieulot_choice_2022}{article}{}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=2fc561c57d20b31ae2f2ce3680c9f4f5}{%
+           family={Thieulot},
+           familyi={T\bibinitperiod},
+           given={Cedric},
+           giveni={C\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=a0f0b53f384514b9aaf851c53fe69930}{%
+           family={Bangerth},
+           familyi={B\bibinitperiod},
+           given={Wolfgang},
+           giveni={W\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{dce3c100b00ab4819280eb2398b92ed5}
+      \strng{fullhash}{dce3c100b00ab4819280eb2398b92ed5}
+      \strng{fullhashraw}{dce3c100b00ab4819280eb2398b92ed5}
+      \strng{bibnamehash}{dce3c100b00ab4819280eb2398b92ed5}
+      \strng{authorbibnamehash}{dce3c100b00ab4819280eb2398b92ed5}
+      \strng{authornamehash}{dce3c100b00ab4819280eb2398b92ed5}
+      \strng{authorfullhash}{dce3c100b00ab4819280eb2398b92ed5}
+      \strng{authorfullhashraw}{dce3c100b00ab4819280eb2398b92ed5}
+      \field{sortinit}{T}
+      \field{sortinithash}{9af77f0292593c26bde9a56e688eaee9}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Geodynamical simulations over the past decades have widely been built on quadrilateral and hexahedral ﬁnite elements. For the discretization of the key Stokes equation describing slow, viscous ﬂow, most codes use either the unstable Q1 × P0 element, a stabilized version of the equalorder Q1 × Q1 element, or more recently the stable Taylor–Hood element with continuous (Q2 × Q1) or discontinuous (Q2 × P−1) pressure. However, it is not clear which of these choices is actually the best at accurately simulating “typical” geodynamic situations.}
+      \field{issn}{1869-9529}
+      \field{journaltitle}{Solid Earth}
+      \field{month}{1}
+      \field{number}{1}
+      \field{title}{On the choice of finite element for applications in geodynamics}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{13}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \field{pages}{229\bibrangedash 249}
+      \range{pages}{21}
+      \verb{doi}
+      \verb 10.5194/se-13-229-2022
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\L94SJ5CU\\Thieulot und Bangerth - 2022 - On the choice of finite element for applications in geodynamics.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://se.copernicus.org/articles/13/229/2022/
+      \endverb
+      \verb{url}
+      \verb https://se.copernicus.org/articles/13/229/2022/
+      \endverb
+    \endentry
+    \entry{thuerey_deep_2020}{article}{}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=2152ffa5edd9076710fb73812c1037b2}{%
+           family={Thuerey},
+           familyi={T\bibinitperiod},
+           given={Nils},
+           giveni={N\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=7fef596f6d9070839f165cda2eab56f7}{%
+           family={Weißenow},
+           familyi={W\bibinitperiod},
+           given={Konstantin},
+           giveni={K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=7931d141782b230c74530443d2f07c3f}{%
+           family={Prantl},
+           familyi={P\bibinitperiod},
+           given={Lukas},
+           giveni={L\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9be6af658c94174fe477db4bf590768a}{%
+           family={Hu},
+           familyi={H\bibinitperiod},
+           given={Xiangyu},
+           giveni={X\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{7ca013e8f748f47bfcddb49cc265bd99}
+      \strng{fullhash}{18385dd1fbc10ce0f6b9e90aa8837dd9}
+      \strng{fullhashraw}{18385dd1fbc10ce0f6b9e90aa8837dd9}
+      \strng{bibnamehash}{7ca013e8f748f47bfcddb49cc265bd99}
+      \strng{authorbibnamehash}{7ca013e8f748f47bfcddb49cc265bd99}
+      \strng{authornamehash}{7ca013e8f748f47bfcddb49cc265bd99}
+      \strng{authorfullhash}{18385dd1fbc10ce0f6b9e90aa8837dd9}
+      \strng{authorfullhashraw}{18385dd1fbc10ce0f6b9e90aa8837dd9}
+      \field{sortinit}{T}
+      \field{sortinithash}{9af77f0292593c26bde9a56e688eaee9}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{With this study, we investigate the accuracy of deep learning models for the inference of Reynolds-Averaged Navier-Stokes solutions. We focus on a modernized Unet architecture and evaluate a large number of trained neural networks with respect to their accuracy for the calculation of pressure and velocity distributions. In particular, we illustrate how training data size and the number of weights inﬂuence the accuracy of the solutions. With our best models, we arrive at a mean relative pressure and velocity error of less than 3\% across a range of previously unseen airfoil shapes. In addition all source code is publicly available in order to ensure reproducibility and to provide a starting point for researchers interested in deep learning methods for physics problems. While this work focuses on RANS solutions, the neural network architecture and learning setup are very generic and applicable to a wide range of PDE boundary value problems on Cartesian grids.}
+      \field{issn}{0001-1452, 1533-385X}
+      \field{journaltitle}{AIAA Journal}
+      \field{month}{1}
+      \field{number}{1}
+      \field{title}{Deep {Learning} {Methods} for {Reynolds}-{Averaged} {Navier}–{Stokes} {Simulations} of {Airfoil} {Flows}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{58}
+      \field{year}{2020}
+      \field{urldateera}{ce}
+      \field{pages}{25\bibrangedash 36}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.2514/1.J058291
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\3URMHN53\\Thuerey et al. - 2020 - Deep Learning Methods for Reynolds-Averaged Navier–Stokes Simulations of Airfoil Flows.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://arc.aiaa.org/doi/10.2514/1.J058291
+      \endverb
+      \verb{url}
+      \verb https://arc.aiaa.org/doi/10.2514/1.J058291
+      \endverb
+    \endentry
+    \entry{uhlmann_sedimentation_2014}{article}{}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=b555023bbeaf1ce90eada1ac264a0518}{%
+           family={Uhlmann},
+           familyi={U\bibinitperiod},
+           given={Markus},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9e393d453e8dc35b223b5dbdcc73ab14}{%
+           family={Doychev},
+           familyi={D\bibinitperiod},
+           given={Todor},
+           giveni={T\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{e60e485c2d08887efaf4b74c1ef81561}
+      \strng{fullhash}{e60e485c2d08887efaf4b74c1ef81561}
+      \strng{fullhashraw}{e60e485c2d08887efaf4b74c1ef81561}
+      \strng{bibnamehash}{e60e485c2d08887efaf4b74c1ef81561}
+      \strng{authorbibnamehash}{e60e485c2d08887efaf4b74c1ef81561}
+      \strng{authornamehash}{e60e485c2d08887efaf4b74c1ef81561}
+      \strng{authorfullhash}{e60e485c2d08887efaf4b74c1ef81561}
+      \strng{authorfullhashraw}{e60e485c2d08887efaf4b74c1ef81561}
+      \field{sortinit}{U}
+      \field{sortinithash}{6901a00e45705986ee5e7ca9fd39adca}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{shorttitle}
+      \field{abstract}{Direct numerical simulation of the gravity-induced settling of ﬁnite-size particles in triplyperiodic domains has been performed under dilute conditions. For a single solid-to-ﬂuid density ratio of 1.5 we have considered two values of the Galileo number corresponding to steady vertical motion (Ga = 121) and to steady oblique motion (Ga = 178) in the case of one isolated sphere. For the multi-particle system we observe strong particle clustering only in the latter case. The geometry and time scales related to clustering are determined from Voronoı¨ tesselation and particle-conditioned averaging. As a consequence of clustering, the average particle settling velocity is increased by 12\% as compared to the value of an isolated sphere; such a collective eﬀect is not observed in the non-clustering case. By deﬁning a local (instantaneous) ﬂuid velocity average in the vicinity of the ﬁnite-size particles it is shown that the observed enhancement of the settling velocity is due to the fact that the downward ﬂuid motion (with respect to the global average) which is induced in the cluster regions is preferentially sampled by the particles. It is further observed that the variance of the particle velocity is strongly enhanced in the clustering case. With the aid of a decomposition of the particle velocity it is shown that this increase is due to enhanced ﬂuid velocity ﬂuctuations (due to clustering) in the vicinity of the particles. Finally, we discuss a possible explanation for the observation of a critical Galileo number marking the onset of clustering under dilute conditions.}
+      \field{issn}{0022-1120, 1469-7645}
+      \field{journaltitle}{Journal of Fluid Mechanics}
+      \field{month}{8}
+      \field{note}{arXiv:1406.1667 [physics]}
+      \field{shorttitle}{Sedimentation of a dilute suspension of rigid spheres at intermediate {Galileo} numbers}
+      \field{title}{Sedimentation of a dilute suspension of rigid spheres at intermediate {Galileo} numbers: the effect of clustering upon the particle motion}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{752}
+      \field{year}{2014}
+      \field{urldateera}{ce}
+      \field{pages}{310\bibrangedash 348}
+      \range{pages}{39}
+      \verb{doi}
+      \verb 10.1017/jfm.2014.330
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\YK9M9DR9\\Uhlmann und Doychev - 2014 - Sedimentation of a dilute suspension of rigid spheres at intermediate Galileo numbers the effect of.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://arxiv.org/abs/1406.1667
+      \endverb
+      \verb{url}
+      \verb http://arxiv.org/abs/1406.1667
+      \endverb
+      \keyw{Physics - Fluid Dynamics}
+    \endentry
+    \entry{weinstein_evolution_1988}{article}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=3e1e6a72d60baded14607be386d01b22}{%
+           family={Weinstein},
+           familyi={W\bibinitperiod},
+           given={Stuart\bibnamedelima A.},
+           giveni={S\bibinitperiod\bibinitdelim A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=b4aca31a69cb688bc0acb0a84f775469}{%
+           family={Yuen},
+           familyi={Y\bibinitperiod},
+           given={David\bibnamedelima A.},
+           giveni={D\bibinitperiod\bibinitdelim A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=043e7d63172907b4517fe1899ebe4f9b}{%
+           family={Olson},
+           familyi={O\bibinitperiod},
+           given={Peter\bibnamedelima L.},
+           giveni={P\bibinitperiod\bibinitdelim L\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{3eb4caca77627499c1ad324de256a28a}
+      \strng{fullhash}{3eb4caca77627499c1ad324de256a28a}
+      \strng{fullhashraw}{3eb4caca77627499c1ad324de256a28a}
+      \strng{bibnamehash}{3eb4caca77627499c1ad324de256a28a}
+      \strng{authorbibnamehash}{3eb4caca77627499c1ad324de256a28a}
+      \strng{authornamehash}{3eb4caca77627499c1ad324de256a28a}
+      \strng{authorfullhash}{3eb4caca77627499c1ad324de256a28a}
+      \strng{authorfullhashraw}{3eb4caca77627499c1ad324de256a28a}
+      \field{sortinit}{W}
+      \field{sortinithash}{4315d78024d0cea9b57a0c6f0e35ed0d}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The motion of negatively buoyant particles embedded within kinematically prescribed convective velocity fields is used to study the evolution of crystal settling in magma chambers. We consider the effects of Stokesian settling velocity, crystal growth, aspect ratio of the convective domain and the site of crystal nucleation on mixing and transport of heavy crystals in this system. The percentage of particles retained in a convecting fluid is very sensitive to the site of nucleation. Particles nucleating along the cold roof or within the wall boundary layers are generally not retained. As a consequence, crystal settling can occur even in rapidly convecting magma chambers. Equilibrium crystal densities are reached relatively quickly, within one overturn, and the distribution of particles deposited on the bottom of the chamber is always asymmetric. This feature may facilitate the formation of primary sedimentary structures in plutons. Laboratory experiments using small, negatively buoyant spheres in a highly viscous fluid with axisymmetric thermal convection confirm the basic predictions of this model.}
+      \field{issn}{0012-821X}
+      \field{journaltitle}{Earth and Planetary Science Letters}
+      \field{number}{1}
+      \field{title}{Evolution of crystal-settling in magma-chamber convection}
+      \field{volume}{87}
+      \field{year}{1988}
+      \field{pages}{237\bibrangedash 248}
+      \range{pages}{12}
+      \verb{doi}
+      \verb https://doi.org/10.1016/0012-821X(88)90078-7
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\ZTBZ7DHW\\Weinstein et al. - 1988 - Evolution of crystal-settling in magma-chamber convection.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://www.sciencedirect.com/science/article/pii/0012821X88900787
+      \endverb
+      \verb{url}
+      \verb https://www.sciencedirect.com/science/article/pii/0012821X88900787
+      \endverb
+    \endentry
+  \enddatalist
+  \missing{belkin_reconciling_2019}
+  \missing{fortes_nonlinear_1987}
+  \missing{happel_low_1991}
+  \missing{ladd_numerical_1994}
+  \missing{luo_cfdbench_2023}
+  \missing{navab_u-net_2015}
+  \missing{stokes_mathematical_2009}
+\endrefsection
+\endinput
+

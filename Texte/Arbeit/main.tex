@@ -1,0 +1,100 @@
+\documentclass[
+    paper = a4,
+    fontsize = 12pt,
+    headinclude = true,
+    open = right,        % Kapitel auf rechter Seite starten
+    twoside = true,
+    BCOR = 10mm,
+    toc = listofnumbered,
+    toc = bibnumbered,
+    numbers = noendperiod
+]{scrreprt}
+
+% ============================================================================
+% PRÄAMBEL - Alle Pakete und Einstellungen
+% ============================================================================
+\input{config/packages}       % zuerst: Pakete (inkl. amsthm)
+\input{config/commands}       % dann: Theorem-Umgebungen usw.
+\input{config/julia_listing}  % optional: Listings-Stil
+
+
+% ============================================================================
+% METADATEN
+% ============================================================================
+\title{Machine Learning for Predicting Flow Fields Around Settling Crystals}
+\subtitle{Generalization Capability of UNet Architectures for Multi-Crystal Sedimentation Systems}
+\author{Paul Baselt}
+\date{\today}
+
+% ============================================================================
+% DOKUMENT
+% ============================================================================
+\begin{document}
+
+% -----------------------------
+% Titelseite (ohne Kopf/Fuß)
+% -----------------------------
+\pagestyle{empty}       % keine Kopf-/Fußzeilen
+\pagenumbering{Roman}   % römische Nummerierung fürs Frontmatter
+
+\input{frontmatter/titlepage}
+
+% ab hier wieder normaler Seitenstil
+\cleardoublepage
+\pagestyle{scrheadings}
+
+% -----------------------------
+% Frontmatter
+% -----------------------------
+%\input{frontmatter/declaration}
+%\input{frontmatter/abstract_de}
+%\input{frontmatter/abstract_en}
+
+\tableofcontents
+
+% =====================================================
+% Lists – numbered with Roman numerals (I, II, III)
+% =====================================================
+
+\cleardoublepage
+\setcounter{chapter}{0}               % Kapitelzähler für die Listen neu starten
+\renewcommand{\thechapter}{\Roman{chapter}}  % Kapitelnummern: I, II, III
+
+\listoffigures
+\listoftables
+\lstlistoflistings
+
+% -----------------------------
+% Hauptteil (arabische Nummern)
+% -----------------------------
+\cleardoublepage
+\pagenumbering{arabic}
+\setcounter{chapter}{0}                 % Kapitelzählung für den Hauptteil neu starten
+\renewcommand{\thechapter}{\arabic{chapter}}  % Kapitelnummern wieder 1, 2, 3, ...
+
+\input{chapters/01_introduction}
+\input{chapters/02_related_work}
+\input{chapters/03_theory}
+\input{chapters/04_methodology}
+\input{chapters/05_implementation}
+%\input{chapters/06_experiments}
+%\input{chapters/07_experemental}
+%\input{chapters/08_results}
+%\input{chapters/09_validation}
+%\input{chapters/10_discussion}
+%\input{chapters/11_conclusions}
+
+% -----------------------------
+% Anhänge
+% -----------------------------
+\appendix
+\input{appendix/A_additional_results}
+\input{appendix/B_code_documentation}
+
+% -----------------------------
+% Literaturverzeichnis
+% -----------------------------
+\cleardoublepage
+\printbibliography
+
+\end{document}

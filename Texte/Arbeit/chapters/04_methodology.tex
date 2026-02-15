@@ -1,0 +1,409 @@
+\chapter{Methodology}
+\label{ch:methodology}
+
+This chapter describes the complete computational workflow used to generate
+training data, construct machine-learning inputs, train surrogate models, and
+evaluate their generalization performance. The methodology builds on the
+surrogate modeling literature reviewed in Chapter~\ref{ch:related} and
+implements a reproducible end-to-end pipeline for structured-grid flow-field
+prediction.
+
+Both surrogate architectures considered in this thesis—U-Net and Fourier
+Neural Operator (FNO)—predict the stream function $\psi$ on a fixed
+$256 \times 256$ grid. The velocity field is then recovered analytically from
+$\psi$ via its spatial derivatives, guaranteeing incompressibility by
+construction. The simulation setup, input encoding, optimization procedure,
+and evaluation protocol are kept identical for both architectures, so that
+performance differences can be attributed to the architectural design—spatial
+hierarchical processing (U-Net) versus spectral global processing (FNO)—rather
+than to confounding factors in data or training.
+
+% ==========================================================
+\section{Learning Target: Stream-Function Prediction}
+\label{sec:learning_target}
+% ==========================================================
+
+Both surrogate architectures predict the scalar stream function
+$\psi(x,z)$ on the computational grid. The velocity field is recovered
+analytically via
+\[
+    \mathbf{u}=\left(\frac{\partial \psi}{\partial z},\;
+    -\frac{\partial \psi}{\partial x}\right),
+\]
+which enforces incompressibility by construction. The theoretical motivation
+for this formulation and its advantages over direct velocity prediction were
+discussed in Chapter~\ref{ch:theory}.
+
+From the perspective of surrogate modeling, predicting $\psi$ instead of
+$\mathbf{u}$ directly offers two key benefits. First, it reduces the learning
+problem from a vector-valued to a scalar regression task, lowering the
+effective degrees of freedom. Second, incompressibility is guaranteed
+analytically rather than having to be learned from data, which eliminates a
+common source of systematic error in purely data-driven velocity surrogates
+\cite{ribeiro_deepcfd_nodate,thuerey_deep_2020}. This choice injects physical
+structure into the learning problem through the output representation rather
+than through penalty terms, consistent with divergence-free parameterizations
+advocated in related work \cite{richter-powell_neural_nodate}.
+
+The central experimental factor in this thesis is therefore not the choice of
+learning target—which is fixed to $\psi$ for all experiments—but the choice
+of network architecture. By training both U-Net and FNO on identical data
+with the same learning target, performance differences can be attributed to
+the architectural inductive bias: spatial hierarchical processing versus
+spectral global processing.
+
+% ==========================================================
+\section{LaMEM Simulations for Data Generation}
+\label{sec:lamem_generation}
+% ==========================================================
+
+Training data are generated using the geodynamic finite-element code
+\textsc{LaMEM}, which solves the incompressible Stokes equations on a regular
+Cartesian grid. The simulation setup follows established geodynamic Stokes
+discretization practices, where robustness under viscosity and density
+contrasts is essential \cite{thieulot_choice_2022}.  
+
+Each simulation represents a steady (quasi-static) configuration of
+$1\ldots N_{\max}$ rigid crystals settling in a viscous matrix. Simulations
+are advanced until a quasi-steady velocity field is obtained; transient
+effects are not considered further, as the surrogate models are trained to
+predict steady-state fields.
+
+\subsection{Domain and Discretization}
+
+The computational domain is a rectangular box discretized on a fixed
+$256\times256$ grid with uniform spacing $\Delta x=\Delta z$. The surrogate
+models operate on fields represented on this grid. While physical units are
+retained internally during simulation, learning is performed on consistently
+scaled grid-based fields, and the fixed discretization provides a controlled
+benchmark for comparing output representations.
+
+Crystals are modeled as rigid circular inclusions with prescribed radii and
+randomized positions. The number of crystals $N$ is drawn uniformly from
+$\{1,\ldots,N_{\max}\}$ to expose the surrogate to a broad range of interaction
+regimes, from isolated single-crystal wakes to strongly interacting clusters.
+Such multi-particle interaction effects are well documented in classical
+sedimentation studies \cite{fortes_nonlinear_1987,ladd_numerical_1994} and
+motivate an explicit evaluation of generalization across particle number.
+Randomization is performed independently for each simulation run, such that
+the training distribution samples a diverse subset of the configuration space.
+
+\subsection{Material Properties and Governing Equations}
+
+The matrix phase is assigned viscosity $\mu$ and density $\rho_f$. Crystals are
+approximated as effectively rigid particles by assigning a viscosity several
+orders of magnitude larger than $\mu$ and a density $\rho_p>\rho_f$ to induce
+gravitational settling. Within LaMEM, this results in a two-phase Stokes
+problem with sharp viscosity and density contrasts.
+
+The governing equations are the incompressible Stokes equations
+\[
+\mathbf{0}=-\nabla p + \mu\nabla^2\mathbf{u} + \rho\mathbf{g},
+\qquad
+\nabla\cdot\mathbf{u}=0,
+\]
+solved with free-slip boundary conditions on all walls. Free-slip is enforced
+by vanishing normal velocity and vanishing tangential shear stress at the
+boundaries, reducing artificial boundary-layer effects and providing a simple,
+well-posed benchmark setting.
+
+\subsection{Extraction of Flow Quantities}
+
+For each simulation, LaMEM outputs grid-based fields including the phase
+indicator and the velocity components as well as velocity gradients:
+\[
+\{\text{phase field},\,u_x,\,u_z,\,\nabla u_x,\,\nabla u_z\}.
+\]
+The phase field indicates whether a cell belongs to the crystal or matrix.
+
+From the velocity gradients, the scalar vorticity is computed as
+\[
+\omega=\frac{\partial u_z}{\partial x}-\frac{\partial u_x}{\partial z},
+\]
+consistent with the two-dimensional convention used in
+Chapter~\ref{ch:theory}. The vorticity field serves as the right-hand side for
+reconstructing the stream function $\psi$ via a Poisson solve, as described in
+Section~\ref{sec:psi}.
+
+% ==========================================================
+\section{Computing and Normalizing the Stream Function}
+\label{sec:psi}
+% ==========================================================
+
+The stream function is reconstructed from vorticity by solving the Poisson
+equation
+\[
+\Delta\psi=-\omega
+\]
+on the same $256\times256$ grid. Reconstructing $\psi$ via a Poisson problem
+is standard in two-dimensional incompressible low-Reynolds-number flow theory
+\cite{happel_low_1991}. In the present workflow, this Poisson solve is used
+only to define a physically consistent scalar learning target; the underlying
+reference solution remains the LaMEM Stokes solution.
+
+\subsection{Discretization and Boundary Conditions}
+
+The Laplace operator is discretized with a second-order five-point stencil on
+interior grid points. Homogeneous Dirichlet conditions $\psi|_{\partial\Omega}=0$
+are imposed on the domain boundary to fix the stream-function gauge and yield
+a unique discrete solution. Since all evaluation comparisons are ultimately
+performed against LaMEM-derived quantities on the same grid, the Poisson solve
+serves as an auxiliary reconstruction step rather than an independent physical
+model.
+
+The resulting sparse linear system is solved iteratively. The specific solver
+is not critical for the learning setup, provided the reconstruction error is
+small compared to the surrogate prediction error.
+
+\subsection{Motivation and Procedure for Normalization}
+
+Raw values of $\psi$ can span several orders of magnitude (typically
+$10^{-16}$ to $10^{-10}$), depending on velocity magnitude, viscosity, and
+grid spacing. While such values are well resolved in the numerical solver,
+they are unfavorable for gradient-based learning because they lead to
+ill-conditioned losses and large sample-to-sample dynamic range.
+
+To improve numerical conditioning, each sample is normalized individually. We
+compute a characteristic order of magnitude
+\[
+p_{\mathrm{mean}}=
+\mathrm{round}\!\left(
+\mathrm{mean}\left(\log_{10}(|\psi|+\epsilon)\right)
+\right),
+\qquad \epsilon=10^{-30},
+\]
+and scale the field as
+\[
+\psi_{\mathrm{norm}}=\psi\cdot 10^{-p_{\mathrm{mean}}}.
+\]
+Training is performed on $\psi_{\mathrm{norm}}$, and predictions are rescaled
+after inference by multiplying with $10^{p_{\mathrm{mean}}}$. This preserves
+the spatial structure and sign of $\psi$ while shifting values into an
+$\mathcal{O}(1)$ range that yields stable optimization.
+
+% ==========================================================
+\section{Input Representation: Mask, Distance Field, and Coordinates}
+\label{sec:input_channels}
+% ==========================================================
+
+All approaches use the same four-channel input representation on the
+$256\times256$ grid. This encoding combines sharp geometric information with
+smooth spatial context and is designed to be interpretable from both a
+physical and a machine-learning perspective. Encoding geometry through masks
+and distance-based fields is common in structured-grid PDE surrogates and
+geometry-aware learning frameworks \cite{thuerey_deep_2020,oldenburg_geometry_2022}.
+
+\begin{enumerate}
+    \item \textbf{Crystal mask.}  
+    A binary indicator field $M(x,z)\in\{0,1\}$ specifying crystal locations:
+    \[
+        M(x,z)=
+        \begin{cases}
+            1, & \text{inside any crystal},\\
+            0, & \text{in the matrix}.
+        \end{cases}
+    \]
+    This channel provides explicit information about the location of strong
+    material contrasts and rigid inclusions.
+
+    \item \textbf{Signed distance field (SDF proxy).}  
+    For each grid point, the Euclidean distance to the nearest crystal center
+    is computed and assigned a negative sign inside crystals and a positive
+    sign outside. The resulting field is normalized to approximately $[-1,1]$.
+    While this is a center-distance proxy rather than an exact boundary SDF,
+    it provides a smooth measure of proximity to inclusions, complementing the
+    sharp mask with continuous geometric context.
+
+    \item \textbf{Normalized $x$-coordinate.}  
+    The horizontal coordinate is linearly mapped to $x_{\mathrm{norm}}\in[-1,1]$,
+    providing the network with absolute positional information.
+
+    \item \textbf{Normalized $z$-coordinate.}  
+    Analogously, the vertical coordinate is mapped to $z_{\mathrm{norm}}\in[-1,1]$.
+    Together, the coordinate channels reduce symmetry-induced and
+    position-dependent artifacts and improve generalization across spatially
+    varying configurations.
+\end{enumerate}
+
+Each sample is therefore represented by an input tensor of shape
+$(256,256,4)$. In physical terms, the input encodes inclusion geometry and
+domain position; in ML terms, it provides both high-frequency (mask) and
+low-frequency (distance and coordinate) information to support multiscale
+feature learning.
+
+% ==========================================================
+\section{Surrogate Architectures}
+\label{sec:architectures}
+% ==========================================================
+
+Two architectures are compared in this thesis. Both receive the same
+four-channel input of shape $(256,256,4)$ and produce a single-channel output
+$\psi_{\mathrm{norm}}$ of shape $(256,256,1)$. The theoretical foundations
+of both architectures were introduced in Chapter~\ref{ch:theory}; this section
+describes the specific configurations used in the experiments.
+
+\subsection{U-Net}
+\label{sec:unet_architecture}
+
+The U-Net follows the encoder--decoder principle of the original architecture
+\cite{navab_u-net_2015} and common adaptations for laminar flow-field
+prediction on Cartesian grids \cite{thuerey_deep_2020,chen_u-net_nodate}.
+
+\paragraph{Encoder.}
+The encoder consists of four resolution levels. Spatial resolution is reduced
+by a factor of two at each level, while feature widths increase as
+$32 \rightarrow 64 \rightarrow 128 \rightarrow 256$. Each level contains two
+$3\times3$ convolutions with batch normalization and ReLU activations, followed
+by downsampling via a strided convolution (stride~2). Strided downsampling is
+used instead of max pooling to keep the operation learnable and to reduce
+grid-aligned artifacts in smooth Stokes-flow targets.
+
+\paragraph{Bottleneck.}
+At the coarsest resolution, a bottleneck block with two $3\times3$ convolutions
+encodes global flow structure conditioned on the entire crystal configuration.
+This compressed representation provides the long-range context required to
+model hydrodynamic interactions between distant inclusions.
+
+\paragraph{Decoder.}
+The decoder mirrors the encoder: transposed convolutions upsample the feature
+maps, which are then concatenated with encoder activations through skip
+connections. Each decoding stage applies a two-layer $3\times3$ convolutional
+block with batch normalization and ReLU activation. Skip connections preserve
+high-resolution geometric detail, which is essential to reconstruct sharp
+structures near crystal boundaries while maintaining global consistency.
+
+\paragraph{Output layer.}
+A final $1\times1$ convolution projects the decoder features onto a single
+output channel ($\psi_{\mathrm{norm}}$). No activation is applied in the
+final layer, as the task is a continuous regression problem.
+
+\subsection{Fourier Neural Operator}
+\label{sec:fno_architecture}
+
+The FNO follows the architecture proposed by \textcite{li_fourier_2021},
+consisting of a pointwise lifting layer, a sequence of Fourier layers, and a
+pointwise projection layer.
+
+\paragraph{Lifting.}
+A pointwise linear layer maps the four input channels into a
+higher-dimensional feature space of width $d_v$.
+
+\paragraph{Fourier layers.}
+Each Fourier layer applies the operation defined in
+Equation~\eqref{eq:fourier_layer}: the input is transformed into Fourier
+space via a two-dimensional FFT, multiplied with a learnable complex weight
+tensor $R_l$ for the lowest $k_{\max}$ modes, and transformed back. This
+spectral path is combined with a pointwise linear transformation (bias path)
+and a nonlinear activation. A stack of $L$ such layers forms the core of the
+model.
+
+\paragraph{Projection.}
+A pointwise linear layer maps the learned feature representation to the
+single output channel $\psi_{\mathrm{norm}}$.
+
+\paragraph{Hyperparameters.}
+The specific values of $d_v$, $k_{\max}$, and $L$ are reported together with
+the experimental results in Chapter~\ref{ch:results}, where they are chosen
+to yield a model with comparable parameter count to the U-Net to ensure a
+fair comparison.
+
+\subsection{Regularization and Practical Considerations}
+
+Both architectures are deliberately kept lightweight to enable repeated
+training runs on standard GPU hardware. For the U-Net, batch normalization
+stabilizes optimization. For the FNO, the implicit spectral smoothness prior
+imposed by mode truncation serves as an architectural regularizer.
+Generalization is primarily promoted through geometric diversity in the
+training data and the physically structured output representation. Dropout is
+not used, as preliminary experiments indicated that on-the-fly sampling of
+random crystal configurations provides sufficient regularization.
+
+% ==========================================================
+\section{Training Procedure}
+\label{sec:training}
+% ==========================================================
+
+\subsection{Data Splits and Benchmark Design}
+
+The dataset is conceptually divided into training, validation, and test
+splits. Training and validation data are generated from randomized crystal
+configurations, whereas the test split consists of a fixed set of geometries
+held constant throughout the study. This design ensures that model selection
+is performed on distributions similar to training, while the reported test
+performance reflects generalization to a reproducible benchmark.
+
+\subsection{Batching and Device Handling}
+
+Samples are stored in \texttt{.jld2} format to enable efficient loading of
+multi-channel arrays in Julia. Mini-batches are assembled on the fly, with
+batch size chosen as a compromise between gradient stability and GPU memory
+constraints. Data tensors and model parameters are explicitly moved to CPU or
+GPU to ensure consistent device placement and portable execution.
+
+\subsection{Loss Function}
+
+The primary loss is the mean-squared error
+\[
+\mathcal{L}_{\mathrm{MSE}}=
+\frac{1}{N_{\mathrm{pix}}}\sum_i
+\left(y^{\mathrm{pred}}_i-y^{\mathrm{true}}_i\right)^2.
+\]
+In addition, the implementation supports Huber loss and weighted MSE to
+increase robustness in regions with sharp gradients or to emphasize accuracy
+near inclusion boundaries. The present study uses a consistent baseline loss
+for both architectures to ensure a controlled comparison.
+
+\subsection{Optimization and Checkpointing}
+
+Model parameters are optimized using AdamW, which combines adaptive learning
+rates with decoupled weight decay regularization. A fixed learning rate is
+used within each run, without learning rate scheduling, to keep experiments
+comparable. After each epoch, model checkpoints are stored in a CPU-compatible
+format to enable reproducible evaluation on systems without GPU support. For
+each run, training configuration metadata (hyperparameters, data paths, and
+random seeds) are archived alongside the checkpoint.
+
+% ==========================================================
+\section{Evaluation Pipeline}
+\label{sec:evaluation}
+% ==========================================================
+
+Model predictions are evaluated on the fixed test dataset containing crystal
+geometries not used during training. This separation is essential for
+assessing generalization beyond the specific configurations seen during
+optimization.
+
+Primary evaluation metrics include:
+\begin{itemize}
+    \item mean-squared error (MSE) of the predicted target field,
+    \item relative $L_2$ errors for $\psi$, $\partial_x\psi$, and $\partial_z\psi$,
+          which quantify errors in both amplitude and derived velocity gradients,
+    \item pixelwise error thresholds $\epsilon_{0.01}$, $\epsilon_{0.05}$, and
+          $\epsilon_{0.10}$, defined as the fraction of grid points exceeding
+          relative error levels of $1\%$, $5\%$, and $10\%$.
+\end{itemize}
+
+Errors are grouped by the number of crystals in the test sample
+($1\ldots N_{\max}$), enabling direct assessment of how prediction quality
+changes as hydrodynamic interactions become more complex. The use of MSE and
+relative norms follows common practice in benchmarking data-driven CFD
+surrogates \cite{luo_cfdbench_2023}. The same evaluation framework is applied
+identically to both U-Net and FNO predictions, ensuring that all reported
+differences reflect architectural properties rather than evaluation
+artifacts.
+
+% ==========================================================
+\section{Summary}
+\label{sec:method_summary}
+% ==========================================================
+
+This chapter described the full surrogate modeling workflow: LaMEM-based data
+generation, reconstruction and normalization of the stream function, input
+encoding, U-Net and FNO architecture configurations, training procedure, and
+evaluation protocol. The modular design ensures that all pipeline components
+except the network architecture are identical between the two models, so that
+performance differences can be attributed to the architectural inductive
+bias. The next chapter applies this methodology to present numerical results,
+with particular emphasis on generalization across crystal numbers and spatial
+configurations and on the comparative strengths and limitations of U-Net and
+FNO for stream-function prediction.

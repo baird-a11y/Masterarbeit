@@ -1,0 +1,326 @@
+\chapter{Theory and Physical Background}
+\label{ch:theory}
+
+This chapter summarizes the physical, mathematical, and architectural
+foundations underlying the surrogate modeling approaches developed in this
+thesis. The first part covers low-Reynolds-number fluid mechanics and the
+stream-function formulation, which motivate the choice of learning target. The
+second part introduces the two neural network architectures compared in this
+work—the U-Net and the Fourier Neural Operator (FNO)—and discusses their
+structural properties in the context of flow-field prediction.
+
+% ==========================================================
+\section{Incompressible Stokes Flow at Low Reynolds Number}
+\label{sec:stokes_flow}
+% ==========================================================
+
+Crystal settling in magmatic systems typically occurs at very low Reynolds
+numbers, where viscous forces dominate over inertial effects
+\cite{happel_low_1991,stokes_mathematical_2009}. In this creeping-flow regime,
+the governing equations reduce to the incompressible Stokes equations
+\begin{equation}
+\mathbf{0} = -\nabla p + \mu \nabla^2 \mathbf{u} + \rho \mathbf{g},
+\qquad
+\nabla \cdot \mathbf{u} = 0,
+\end{equation}
+where $\mathbf{u}$ denotes the velocity field, $p$ the pressure, $\mu$ the
+dynamic viscosity, $\rho$ the density, and $\mathbf{g}$ the gravitational
+acceleration.
+
+A defining property of Stokes flow is its linearity with respect to the
+velocity field for fixed material parameters and boundary conditions. This
+implies that hydrodynamic interactions between rigid inclusions are long-ranged
+and additive, such that the disturbance induced by one particle influences the
+flow field throughout the domain. These long-range interactions form the
+physical basis for collective sedimentation phenomena, including wake
+interaction, drafting--kissing--tumbling dynamics, and clustering effects
+\cite{fortes_nonlinear_1987,ladd_numerical_1994,uhlmann_sedimentation_2014}.
+
+In geophysical contexts, such interactions have been shown to strongly affect
+crystal settling rates and spatial distributions in magma chambers
+\cite{martin_crystal_1988,weinstein_evolution_1988,martin_fluid-dynamical_1989}.
+Accurately capturing these effects therefore requires resolving the full flow
+field around multiple interacting crystals rather than relying on isolated
+particle approximations.
+
+From a surrogate modeling perspective, the Stokes regime offers two important
+advantages. First, the absence of inertia leads to smooth, steady-state flow
+fields for fixed crystal configurations. Second, incompressibility imposes a
+strong global constraint on admissible velocity fields, which can be exploited
+through appropriate output representations.
+
+% ==========================================================
+\section{Stream-Function Formulation in Two Dimensions}
+\label{sec:stream_function}
+% ==========================================================
+
+In two-dimensional incompressible flow, the divergence-free condition
+$\nabla \cdot \mathbf{u} = 0$ can be satisfied identically by introducing a
+scalar stream function $\psi(x,z)$ such that
+\begin{equation}
+u_x = \frac{\partial \psi}{\partial z},
+\qquad
+u_z = -\frac{\partial \psi}{\partial x}.
+\end{equation}
+This transformation reduces the vector-valued velocity field to a single
+scalar potential and guarantees incompressibility by construction
+\cite{happel_low_1991}.
+
+The stream-function formulation has a long tradition in classical
+hydrodynamics, particularly for planar Stokes flow problems involving rigid
+inclusions and sedimentation \cite{stokes_mathematical_2009}. Streamlines
+coincide with level sets of $\psi$, allowing qualitative flow features such as
+recirculation zones, wakes, and stagnation points to be identified directly.
+
+From a numerical and learning perspective, the stream function offers several
+advantages. As a scalar field, $\psi$ typically exhibits smoother spatial
+structure than individual velocity components, as it integrates information
+over spatial derivatives. Moreover, representing the solution in terms of
+$\psi$ eliminates the need to explicitly enforce the incompressibility
+constraint during learning, in contrast to direct velocity-based approaches.
+
+These properties motivate the use of the stream function as a learning target
+in this thesis, particularly in comparison to direct prediction of velocity
+components.
+
+% ==========================================================
+\section{Vorticity and Poisson Reconstruction of the Stream Function}
+\label{sec:poisson_psi}
+% ==========================================================
+
+In two-dimensional incompressible flow, the scalar vorticity is defined as
+\begin{equation}
+\omega = \frac{\partial u_z}{\partial x}
+       - \frac{\partial u_x}{\partial z}.
+\end{equation}
+Taking the curl of the Stokes momentum equation eliminates the pressure term and
+yields a Poisson equation for the stream function,
+\begin{equation}
+\Delta \psi = -\omega.
+\end{equation}
+
+This relationship provides a natural link between velocity-based numerical
+solutions and the stream-function representation. Given a divergence-free
+velocity field, the corresponding vorticity can be computed, and the stream
+function can be reconstructed by solving a Poisson problem with appropriate
+boundary conditions. In the present work, this procedure is applied to
+high-fidelity LaMEM simulations to construct $\psi$ as a learning target.
+
+It is important to emphasize that this Poisson solve does not introduce new
+physics. Instead, it constitutes an auxiliary transformation that maps the
+numerical reference solution into a representation that is more amenable to
+learning. Similar transformations are commonly used in classical fluid
+mechanics to analyze Stokes flow around particles and inclusions
+\cite{happel_low_1991}.
+
+% ==========================================================
+\section{Learning Targets as Physically Motivated Inductive Biases}
+\label{sec:inductive_bias}
+% ==========================================================
+
+From a machine-learning perspective, the choice of output representation
+introduces an implicit \emph{inductive bias}, i.e.\ a structural constraint on
+the space of functions that the model can represent \cite{belkin_reconciling_2019}.
+In the context of surrogate modeling for incompressible flow, this choice
+strongly influences the degree to which physical structure must be learned
+from data rather than enforced analytically.
+
+Direct velocity prediction treats the learning task as an unconstrained
+regression problem on a vector field. Incompressibility and momentum balance
+are not enforced explicitly but must be inferred from the training data. While
+this approach has been successfully applied in many CNN-based flow surrogates
+\cite{ribeiro_deepcfd_nodate,chen_u-net_nodate,thuerey_deep_2020}, it can lead to
+small but systematic violations of physical constraints.
+
+Predicting the stream function $\psi$ introduces a stronger inductive bias by
+restricting the hypothesis space to divergence-free velocity fields by
+construction. This approach is conceptually related to divergence-free neural
+representations proposed in the context of physics-informed and
+structure-preserving learning \cite{richter-powell_neural_nodate}. By reducing
+the effective degrees of freedom of the output, the learning problem is
+simplified and numerical conditioning can be improved.
+
+Residual learning further modifies the inductive bias by decomposing the
+solution into a physically motivated baseline and a learned correction. If the
+baseline captures the dominant large-scale behavior of the flow, the residual
+field is typically smoother and of lower amplitude. Such strategies have been
+shown to improve learning efficiency and generalization in physics-based
+surrogate models \cite{sun_surrogate_2020}.
+
+% ==========================================================
+\section{U-Net Architecture}
+\label{sec:unet}
+% ==========================================================
+
+The U-Net \cite{navab_u-net_2015} is an encoder--decoder convolutional neural
+network originally developed for biomedical image segmentation. Its
+architecture consists of three principal components: a contracting encoder
+path, an expanding decoder path, and skip connections that bridge
+corresponding resolution levels.
+
+\subsection{Encoder Path}
+
+The encoder successively reduces the spatial resolution of the input through
+repeated application of convolutional layers followed by downsampling
+operations (typically max-pooling or strided convolutions). At each stage, the
+number of feature channels is increased, enabling the network to learn
+increasingly abstract and spatially coarse representations. For an input of
+spatial dimension $H \times W$, $L$ encoding stages produce feature maps at
+resolutions $H/2^l \times W/2^l$ for $l = 1, \ldots, L$.
+
+\subsection{Decoder Path and Skip Connections}
+
+The decoder mirrors the encoder structure and progressively recovers spatial
+resolution through upsampling operations (transposed convolutions or
+interpolation) followed by convolutional layers. At each decoder stage, the
+upsampled feature map is concatenated with the corresponding encoder feature
+map via a skip connection. These skip connections are critical: they provide
+the decoder with high-resolution spatial information that would otherwise be
+lost during the encoding process, enabling the network to produce spatially
+precise outputs.
+
+\subsection{Multiscale Feature Extraction}
+
+The hierarchical structure of the U-Net endows it with an inherently
+multiscale receptive field. Shallow layers operate at fine spatial resolution
+and capture localized features such as boundary layers and sharp gradients
+near crystal surfaces. Deep layers operate at coarse resolution with large
+effective receptive fields and can represent domain-scale flow structures.
+The skip connections allow the final prediction to integrate information
+across all scales simultaneously.
+
+For multi-crystal Stokes flow, this multiscale property is directly relevant:
+localized velocity gradients near crystal boundaries coexist with long-range
+hydrodynamic interactions that span the entire computational domain. The
+U-Net's ability to process both scales within a single forward pass makes it a
+natural candidate for this class of problems.
+
+% ==========================================================
+\section{Fourier Neural Operator}
+\label{sec:fno}
+% ==========================================================
+
+The Fourier Neural Operator (FNO) \cite{li_fourier_2021} belongs to the family
+of neural operators that learn mappings between infinite-dimensional function
+spaces. Unlike conventional convolutional networks, which learn local spatial
+kernels, the FNO parameterizes integral kernel operators in the spectral
+domain.
+
+\subsection{Fourier Layer}
+
+The core building block of the FNO is the Fourier layer, which applies a
+linear transformation in frequency space. Given an input function
+$v(x) \in \mathbb{R}^{d_v}$ defined on a spatial domain, the Fourier layer
+computes
+\begin{equation}
+\label{eq:fourier_layer}
+v_{l+1}(x) = \sigma\!\Bigl(W_l\, v_l(x) + \mathcal{F}^{-1}\!\bigl(R_l \cdot \mathcal{F}(v_l)\bigr)(x)\Bigr),
+\end{equation}
+where $\mathcal{F}$ and $\mathcal{F}^{-1}$ denote the Fast Fourier Transform
+and its inverse, $R_l \in \mathbb{C}^{k_{\max} \times d_v \times d_v}$ is a
+learnable weight tensor applied to the lowest $k_{\max}$ Fourier modes, $W_l$
+is a pointwise linear transformation (bias path), and $\sigma$ is a nonlinear
+activation function.
+
+The key operation is the multiplication $R_l \cdot \mathcal{F}(v_l)$ in
+Fourier space, which is equivalent to a global convolution in physical space.
+By retaining only $k_{\max}$ modes, the FNO implicitly applies a low-pass
+filter while keeping the number of learnable parameters independent of the
+spatial discretization.
+
+\subsection{Architecture}
+
+A complete FNO model consists of three stages:
+\begin{enumerate}
+    \item A pointwise lifting layer $P: \mathbb{R}^{d_a} \to \mathbb{R}^{d_v}$ that projects the input channels into a higher-dimensional feature space.
+    \item A sequence of $L$ Fourier layers as defined in Equation~\eqref{eq:fourier_layer}, each combining spectral and local processing.
+    \item A pointwise projection layer $Q: \mathbb{R}^{d_v} \to \mathbb{R}^{d_o}$ that maps the learned features to the desired output dimension.
+\end{enumerate}
+
+\subsection{Properties Relevant to Stokes Flow}
+
+The FNO architecture has several properties that are relevant for the
+surrogate modeling task considered in this work:
+
+\begin{itemize}
+    \item \textbf{Global receptive field.} Each Fourier layer captures
+    dependencies across the entire spatial domain in a single operation. For
+    Stokes flow, where the elliptic character of the governing equations
+    implies that local perturbations propagate globally, this is a structurally
+    natural property.
+    \item \textbf{Spectral bias.} The truncation to $k_{\max}$ Fourier modes
+    introduces an implicit smoothness prior. While this favors the
+    representation of large-scale flow structures, it may limit accuracy near
+    sharp interfaces such as crystal boundaries, where high-frequency content
+    is physically significant.
+    \item \textbf{Discretization invariance.} Because the FNO operates on
+    continuous function representations via their Fourier coefficients, a model
+    trained on one grid resolution can, in principle, be evaluated on a
+    different resolution without retraining.
+\end{itemize}
+
+% ==========================================================
+\section{Architectural Comparison: U-Net vs.\ FNO}
+\label{sec:arch_comparison}
+% ==========================================================
+
+The U-Net and FNO embody fundamentally different inductive biases for
+structured prediction tasks. Table~\ref{tab:arch_comparison} summarizes the
+key distinctions.
+
+\begin{table}[htbp]
+\centering
+\caption{Structural comparison of U-Net and FNO architectures.}
+\label{tab:arch_comparison}
+\begin{tabular}{lll}
+\toprule
+\textbf{Property} & \textbf{U-Net} & \textbf{FNO} \\
+\midrule
+Domain of operation & Spatial & Spectral (Fourier) \\
+Receptive field & Hierarchical, local-to-global & Global per layer \\
+Multiscale mechanism & Encoder--decoder + skip connections & Mode truncation \\
+High-frequency content & Preserved via skip connections & Limited by $k_{\max}$ \\
+Parameter scaling & Depends on depth and channels & Independent of resolution \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For multi-crystal Stokes flow, these differences translate into complementary
+strengths: the U-Net is expected to excel at resolving sharp boundary layers
+and localized wake structures due to its hierarchical spatial processing,
+while the FNO may offer advantages in capturing the global, elliptic character
+of Stokes interactions through its spectral representation. The empirical
+comparison of these architectures on identical training data and evaluation
+metrics is a central contribution of this thesis.
+
+% ==========================================================
+\section{Implications for Multi-Crystal Sedimentation Modeling}
+\label{sec:theory_implications}
+% ==========================================================
+
+The theoretical considerations discussed above have direct implications for
+surrogate modeling of multi-crystal sedimentation. Long-range hydrodynamic
+interactions and incompressibility impose global structure on the flow field,
+which is difficult to capture through purely local regression of velocity
+components. Predicting the stream function $\psi$ provides a principled way to
+reduce the complexity of the learning task by enforcing incompressibility
+analytically.
+
+The choice of network architecture interacts with this physical structure in
+complementary ways. The U-Net's hierarchical encoder--decoder processing
+naturally mirrors the multiscale character of the flow: sharp boundary layers
+near crystal surfaces are captured at fine resolution levels, while
+domain-scale circulation patterns are represented in the deep, coarse layers.
+The FNO's spectral approach, on the other hand, directly reflects the
+elliptic nature of the Stokes equations, where local perturbations propagate
+globally—a property that is inherently encoded in the Fourier representation.
+
+These complementary architectural biases motivate the systematic comparison
+pursued in this thesis: by training both architectures on the same data and
+evaluating them under identical conditions, we can disentangle the effects of
+physical output representation (stream function) from those of architectural
+design (spatial vs.\ spectral processing).
+
+The next chapter builds on this theoretical foundation by translating these
+considerations into a concrete computational methodology for data generation,
+network design, training, and evaluation.

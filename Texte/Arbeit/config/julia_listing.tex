@@ -1,0 +1,73 @@
+% ============================================================================
+% JULIA LISTINGS – Syntax-Highlighting für Julia-Code
+% ============================================================================
+
+% ---- Farben für Code-Listings ----
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{codeframe}{RGB}{200,200,200}
+\definecolor{keyword}{RGB}{0,0,180}
+\definecolor{comment}{RGB}{0,128,0}
+\definecolor{string}{RGB}{163,21,21}
+\definecolor{identifier}{RGB}{0,0,0}
+
+% Legacy-Farben (falls alte Stile verwendet werden)
+\definecolor{jl_comments}{rgb}{0, 0.5, 0}
+\definecolor{jl_linenumbers}{rgb}{0.2, 0.2, 0.2}
+\definecolor{jl_keywords}{rgb}{0, 0, 0.6}
+\definecolor{jl_strings}{rgb}{0.6, 0, 0}
+\definecolor{jl_background}{rgb}{0.97, 0.97, 0.97}
+
+% ---- Julia-Sprache definieren (erweitert) ----
+\lstdefinelanguage{Julia}{
+  keywords={
+    function,end,if,else,elseif,for,while,return,struct,module,
+    using,import,export,const,let,begin,do,try,catch,finally,
+    true,false,nothing,mutable,abstract,type,where,macro,
+    break,case,continue,in,local,primitive,quote
+  },
+  keywordstyle=\color{keyword}\bfseries,
+  sensitive=true,
+  comment=[l]{\#},
+  commentstyle=\color{comment}\itshape,
+  string=[b]",
+  stringstyle=\color{string},
+  identifierstyle=\color{identifier},
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=4,
+}
+
+% ---- Standard-Listing-Style (modern) ----
+\lstset{
+  language=Julia,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{codeframe},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  xleftmargin=2em,
+  framexleftmargin=1.5em,
+  aboveskip=1em,
+  belowskip=1em,
+}
+
+% ---- Legacy Julia-Style (falls benötigt) ----
+\lstdefinestyle{julia_style}{
+    language=Julia,
+    backgroundcolor=\color{jl_background},
+    basicstyle=\ttfamily\footnotesize,
+    commentstyle=\color{jl_comments}\itshape,
+    keywordstyle=\color{jl_keywords}\bfseries,
+    stringstyle=\color{jl_strings},
+    numberstyle=\tiny\color{jl_linenumbers},
+    numbers=left,
+    stepnumber=1,
+    numbersep=7pt,
+    xleftmargin=2em,
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4,
+    captionpos=b
+}

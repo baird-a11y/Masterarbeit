@@ -1,0 +1,367 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{setspace}
+
+\onehalfspacing
+
+\title{Speaker Notes – Master’s Thesis Status Talk}
+\author{Paul Baselt}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+% -------------------------------------------------
+\section*{Slide 1: Title}
+% -------------------------------------------------
+
+Today I present the current status of my master’s thesis.
+The focus of this talk is not on final performance numbers, but on understanding
+how well machine-learning-based surrogate models can generalize to increasingly
+complex geometries in a physically constrained flow problem.
+
+I will mainly discuss what already works reliably, where current limitations
+appear, and how these observations motivate the next steps of the project.
+
+% -------------------------------------------------
+\section*{Slide 2: Outlook}
+% -------------------------------------------------
+
+We will start with a brief motivation and introduce the central research question.
+I will then outline the relevant physical background and the chosen learning strategy.
+After that, I will present selected results focusing on generalization behavior.
+Finally, I will discuss current limitations and possible next steps.
+
+% -------------------------------------------------
+\section*{Slide 3: Motivation}
+% -------------------------------------------------
+
+In magmatic systems, changes in temperature, pressure, and chemical composition can lead to crystallization along well-known differentiation and unmixing sequences.
+Once formed, these crystals are typically denser than the surrounding melt and
+start to sink.
+
+During this process, crystals interact with the surrounding viscous magma and with each other through the induced flow field.
+Over geological timescales, this leads to crystal accumulation at the chamber floor and can contribute to the formation of economically relevant ore deposits.
+
+Crystal sedimentation in viscous magmas therefore plays a key role in magmatic differentiation, the formation of cumulates, and the internal dynamics of magma chambers.
+
+Even at very low Reynolds numbers — meaning that inertial effects are negligible and viscous forces dominate — individual crystals induce long-range flow perturbations in the surrounding melt.
+
+When multiple crystals are present, these perturbations interact in a highly non-trivial way.
+Even in the Stokes regime, particles do not simply sediment independently.
+
+Instead, hydrodynamic interactions can lead to complex collective dynamics such as drafting–kissing–tumbling behavior, wake capture, and repeated particle reordering.
+Small changes in relative position, orientation, or particle shape can qualitatively change the interaction outcome.
+
+As a result, the flow field is extremely sensitive to geometry, even though the governing Stokes equations themselves are linear.
+
+Understanding and efficiently predicting these interactions is therefore a relevant challenge in geophysical modeling.
+
+In this thesis, I address this challenge by investigating whether physically informed convolutional neural networks can act as surrogate models for viscous flow, and—crucially—how well such models generalize as geometric complexity increases.
+
+% -------------------------------------------------
+\section*{Slide 4: Why This is a Hard Problem}
+% -------------------------------------------------
+
+Although Stokes flow is linear, it is not local.
+Instead, it is:
+
+\begin{itemize}
+    \item globally coupled,
+    \item highly sensitive to geometric details,
+    \item dominated by long-range interactions.
+\end{itemize}
+
+Already a small number of crystals can lead to complex interaction patterns.
+Well-known examples include drafting–kissing–tumbling dynamics, clustering, and screening effects.
+
+These interaction patterns depend strongly on relative positions and distances, which makes the problem particularly challenging for data-driven models.
+
+% -------------------------------------------------
+\section*{Slide 5: Computational Challenge}
+% -------------------------------------------------
+
+Accurately resolving these flow fields requires fully resolved Stokes simulations.
+While such simulations are feasible for individual configurations, they become computationally expensive when used for systematic parameter studies or large ensembles of geometries.
+
+In particular, the computational cost increases rapidly with the number of crystals.
+
+This practical limitation strongly shaped the direction of this thesis.
+Rather than aiming to replace high-fidelity simulations, the goal is to explore whether fast surrogate models can reproduce their essential flow characteristics and, crucially, generalize beyond the configurations they were trained on.
+
+This motivates the use of surrogate models that can approximate full flow fields much faster, while still respecting the underlying physical structure of the problem.
+
+The central research question of this thesis is therefore:
+
+\emph{How well can convolutional neural networks generalize flow-field predictions as geometric complexity increases?}
+
+Importantly, the goal is not interpolation between nearly identical configurations, but generalization to qualitatively new crystal arrangements.
+
+% -------------------------------------------------
+\section*{Slide 6: Physical Background}
+% -------------------------------------------------
+
+The considered flows are governed by the incompressible Stokes equations.
+In this regime, inertial terms are negligible and the balance is dominated by viscous stresses and body forces.
+
+A key constraint is incompressibility:
+\[
+\nabla \cdot \mathbf{v} = 0
+\]
+
+Physically, this means that the fluid cannot locally accumulate or vanish:
+any inflow into a region must be balanced by an equal outflow.
+
+This constraint plays a central role when choosing a physically meaningful learning target for neural networks.
+
+% -------------------------------------------------
+\section*{Slide 7: Stream Function}
+% -------------------------------------------------
+
+In two dimensions, incompressible flow can be represented using a stream
+function $\psi(x,z)$.
+
+The velocity components are obtained as:
+\[
+v_x = \frac{\partial \psi}{\partial z}, \qquad
+v_z = -\frac{\partial \psi}{\partial x}.
+\]
+
+By construction, this formulation satisfies the incompressibility condition
+exactly.
+
+A second advantage is that the learning target is reduced from a vector-valued
+field to a single scalar field with smoother spatial structure.
+
+For these reasons, the stream function is a natural and physically motivated
+learning target for convolutional neural networks.
+
+% -------------------------------------------------
+\section*{Slide 8: Stream Function Solution}
+% -------------------------------------------------
+
+The stream function is obtained by solving a Poisson equation of the form
+\[
+\Delta \psi = -\omega,
+\]
+where $\omega$ denotes the vorticity.
+
+In this project, LaMEM directly provides the necessary quantities.
+The stream function is therefore treated as a derived but physically consistent
+output of the reference simulations.
+
+Due to the extremely small magnitude of $\psi$ (typically $10^{-12}$–$10^{-15}$),
+each sample is RMS-normalized individually to ensure numerical stability during
+training.
+
+% -------------------------------------------------
+\section*{Slide 9: Learning Strategy}
+% -------------------------------------------------
+
+In principle, three learning strategies are possible:
+\begin{itemize}
+    \item direct prediction of velocities,
+    \item prediction of the stream function,
+    \item residual learning relative to an analytical reference solution.
+\end{itemize}
+
+All approaches use the same network architecture and training setup.
+Only the learning target is changed.
+
+At the current stage of the project, I focus exclusively on the stream function
+approach, as it provides the most physically consistent and interpretable results
+so far.
+
+% -------------------------------------------------
+\section*{Slide 10: Data}
+% -------------------------------------------------
+
+All training and evaluation data are generated using LaMEM as a reference solver.
+The simulations are performed in two dimensions on a fixed $256 \times 256$ grid,
+representing a $2 \times 2$ km magma chamber cross-section.
+
+At the current stage, the training data consists of configurations with one,
+two, or three crystals.
+Crystal positions are randomized, while material parameters are kept fixed.
+
+This setup allows for a controlled investigation of geometric generalization
+while keeping computational costs manageable.
+Extensions to larger crystal numbers are ongoing.
+
+% -------------------------------------------------
+\section*{Slide 11: Input Representation}
+% -------------------------------------------------
+
+The input to the neural network consists of five channels.
+
+A binary crystal mask encodes the phase distribution.
+Geometric proximity is represented using a signed distance field expressed in
+units of the nearest crystal radius, which provides a scale-invariant description
+of the geometry.
+
+In addition, the radius of the nearest crystal is supplied as an explicit input
+channel, allowing the network to model size-dependent effects.
+
+Finally, normalized spatial coordinates are included to encode absolute position
+within the domain and to reduce grid-aligned artefacts.
+
+All input channels are normalized to comparable magnitudes to improve numerical
+stability and training convergence.
+
+% -------------------------------------------------
+\section*{Slide 12: Architecture}
+% -------------------------------------------------
+
+A U-Net architecture is used throughout the thesis.
+Its encoder–decoder structure with skip connections provides multi-scale receptive
+fields, which align well with the long-range nature of Stokes flow.
+
+The network consists of four encoder blocks, a bottleneck layer, and four decoder
+blocks.
+
+Strided convolutions are used instead of max pooling, allowing the network to
+learn how spatial information is downsampled.
+This improves accuracy for geometrically sensitive problems.
+
+The same architecture is used for all experiments to ensure comparability.
+
+% -------------------------------------------------
+\section*{Slide 13: Training Setup}
+% -------------------------------------------------
+
+For each crystal configuration, approximately 4000 training samples are used.
+The models are trained for 300 epochs with a fixed learning rate and batch size.
+
+All evaluations shown in this talk are performed on geometries that were not seen
+during training, ensuring that the reported errors reflect true generalization
+performance.
+
+The Adam optimizer is used as a robust default choice.
+
+In addition to a mean-squared error loss on the stream function, a gradient-based
+loss term is introduced.
+This term penalizes errors in the spatial derivatives of $\psi$.
+
+The gradient loss is computed in physical units using the grid spacing, ensuring
+scale-consistent regularization of the reconstructed velocity field.
+This is motivated by the fact that small errors in $\psi$ can be strongly amplified
+by numerical differentiation.
+
+% -------------------------------------------------
+\section*{Slide 14: Results – Single Crystal}
+% -------------------------------------------------
+
+For the single-crystal case, the stream function is predicted with relative
+$L^2$ errors on the order of $10^{-2}$.
+The large-scale structure and symmetry of the flow field are well reproduced.
+
+Velocities reconstructed from the predicted stream function show larger relative
+errors, as expected due to the amplifying effect of numerical differentiation.
+
+Quantitatively, the results are:
+\[
+\text{rel } L^2(\psi): \quad
+\mu = 2.09 \times 10^{-2}, \quad
+\sigma = 1.13 \times 10^{-2},
+\]
+\[
+\text{rel } L^2(|\mathbf{v}|): \quad
+\mu = 1.67 \times 10^{-1}.
+\]
+
+% -------------------------------------------------
+\section*{Slide 16: Visualization – One Crystal}
+% -------------------------------------------------
+
+[Arbeit/Bilder/sample\_0002\_psi.png] \\
+[Arbeit/Bilder/sample\_0002\_speed\_frompsi\_psi.png]
+
+% -------------------------------------------------
+\section*{Slide 17: First Generalization – Two Crystals}
+% -------------------------------------------------
+
+Based on the strong single-crystal results, the same model is evaluated on
+configurations with two crystals.
+
+[Arbeit/Bilder/sample\_00015\_psi.png] \\
+[Arbeit/Bilder/sample\_00015\_speed\_frompsi\_psi.png]
+
+% -------------------------------------------------
+\section*{Slide 18: First Generalization – Three Crystals}
+% -------------------------------------------------
+
+The same evaluation is performed for three-crystal configurations.
+
+[Arbeit/Bilder/sample\_00021\_psi.png] \\
+[Arbeit/Bilder/sample\_00021\_speed\_frompsi\_psi.png]
+
+% -------------------------------------------------
+\section*{Slide 19: Results – Multiple Crystals}
+% -------------------------------------------------
+
+When increasing the number of crystals from one to three, the stream function
+error remains remarkably stable.
+
+This indicates that the model captures dominant interaction patterns rather than
+memorizing individual configurations.
+However, certain interaction regions remain challenging.
+
+% -------------------------------------------------
+\section*{Slide 23: Velocity Artefacts}
+% -------------------------------------------------
+
+Why do line-like artefacts appear in the velocity magnitude?
+
+The neural network predicts the stream function $\psi$, not the velocity
+directly.
+Velocities are reconstructed via spatial derivatives:
+\[
+v_x = \partial_z \psi, \qquad
+v_z = -\partial_x \psi.
+\]
+
+Although the predicted stream function is visually smooth, small grid-aligned
+errors remain.
+These errors are barely visible in $\psi$ itself, but are strongly amplified by
+numerical differentiation, which acts as a high-pass filter.
+
+As a result, stripe-like artefacts appear in the velocity magnitude.
+This is not a physical effect, but a numerical consequence of differentiating
+a learned field without explicitly constraining its gradients.
+
+The gradient-based loss significantly reduces these artefacts by enforcing
+derivative consistency during training.
+
+% -------------------------------------------------
+\section*{Slide 24: Outlook}
+% -------------------------------------------------
+
+The next major step of the thesis is residual learning relative to an analytical
+stream function.
+
+In this approach, the neural network learns only the deviation between a known
+analytical solution and the numerical reference.
+This reduces the dynamic range of the learning target and focuses the model on
+interaction-driven corrections.
+
+Initial experiments with this approach are currently starting.
+
+% -------------------------------------------------
+\section*{Backup: Fourier Neural Operators}
+% -------------------------------------------------
+
+Fourier Neural Operators are a powerful class of models for learning global
+operators.
+However, they implicitly assume translation invariance and global smoothness.
+
+The present problem is dominated by localized geometric inclusions and
+non-periodic boundary conditions.
+At this stage, a U-Net provides better control over locality and interpretability.
+
+Fourier-based operator learning remains an interesting future direction, but
+establishing a physically interpretable baseline is the current priority.
+
+\end{document}

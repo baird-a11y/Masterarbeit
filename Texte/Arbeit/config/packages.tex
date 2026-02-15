@@ -1,0 +1,71 @@
+% ============================================================================
+% PAKETE – für KOMA-Script (scrreprt) optimiert
+% ============================================================================
+
+% ---- Schrift & Sprache ----
+\usepackage[utf8]{inputenc}        % bei pdfLaTeX
+\usepackage[T1]{fontenc}
+\usepackage[ngerman,english]{babel}
+\usepackage{lmodern}
+\usepackage{csquotes}
+
+% ---- Mathematik ----
+\usepackage{amsmath, amssymb, amsthm, amsfonts, mathtools}
+\usepackage{bm}                     % bold math symbols
+\usepackage{physics}                % \pdv, \norm, etc.
+\usepackage{siunitx}
+
+% ---- Seitenlayout ----
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+% ---- Tabellen ----
+\usepackage{booktabs}
+\usepackage{longtable}
+
+% ---- Grafiken ----
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes.geometric, arrows, arrows.meta, fit, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+% ---- Code & Algorithmen ----
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% ---- Listen & Aufzählungen ----
+\usepackage{enumitem}
+
+% ---- Boxen & Hervorhebungen ----
+\usepackage{tcolorbox}
+\tcbuselibrary{listings,skins}
+
+% ---- Literatur (BibLaTeX) ----
+\usepackage[
+    backend=biber,
+    style=authoryear,
+    maxbibnames=3
+]{biblatex}
+\addbibresource{references.bib}
+
+% ---- Zeilenabstand ----
+\usepackage{setspace}
+\onehalfspacing
+
+% ---- Seitenstil mit KOMA: Kopf-/Fußzeilen ----
+\usepackage[headsepline,automark]{scrlayer-scrpage}
+\clearpairofpagestyles
+\ihead{\headmark}       % Kapitel / Abschnitt in der Kopfzeile innen
+\ohead{\thepage}        % Seitenzahl außen
+\pagestyle{scrheadings}
+
+% ---- Hyperref (fast zuletzt) ----
+\usepackage[hidelinks]{hyperref}
+
+% ---- Cleveref (nach hyperref) ----
+\usepackage{cleveref}

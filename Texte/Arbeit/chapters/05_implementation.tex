@@ -1,0 +1,260 @@
+% ----------------------------------------------------------------------------
+% Chapter 5: Implementation
+% ----------------------------------------------------------------------------
+\chapter{Implementation}
+\label{ch:implementation}
+
+This chapter describes the technical realization of the surrogate modeling
+framework introduced in Chapter~\ref{ch:methodology}. While the previous
+chapter motivated the modeling choices (learning targets, input encoding, and
+architecture), the focus here is on the concrete implementation of the full
+workflow in a reproducible and modular software stack.
+
+All components are implemented in Julia and designed to be hardware-agnostic:
+the same code paths run on CPU and GPU without modification. Wherever
+possible, explicit implementations are preferred over high-level abstractions
+to retain full control over numerical behavior, memory usage, and device
+placement.
+
+% ----------------------------------------------------------------------------
+\section{Software Environment}
+% ----------------------------------------------------------------------------
+
+All experiments are implemented in \textbf{Julia~1.10.4}. The core
+dependencies are:
+
+\begin{itemize}
+    \item \textbf{Flux.jl} (v0.16.5) for neural network layers, automatic
+          differentiation, and parameter handling.
+    \item \textbf{CUDA.jl} (v5.9.3) for GPU acceleration on CUDA-capable
+          hardware.
+    \item \textbf{NNlib.jl} for low-level neural network operations, in
+          particular batched matrix multiplication used in the FNO spectral
+          convolution layers.
+    \item \textbf{FFTW.jl} for the Fast Fourier Transform operations required
+          by the Fourier Neural Operator.
+    \item \textbf{Optimisers.jl} for optimizer definitions, in particular
+          AdamW (U-Net) and Adam with gradient clipping (FNO).
+    \item \textbf{JLD2.jl} for efficient storage and loading of multi-channel
+          training samples.
+    \item \textbf{BSON.jl} for serializing and restoring model checkpoints.
+    \item \textbf{PyPlot.jl / CairoMakie.jl} for visualization of predicted
+          and reference fields during evaluation.
+\end{itemize}
+
+At runtime, CUDA availability is detected automatically. If a compatible GPU
+is present, arrays and model parameters are moved to the GPU; otherwise, the
+implementation falls back transparently to CPU execution.
+
+% ----------------------------------------------------------------------------
+\section{Code Organization and Execution Flow}
+% ----------------------------------------------------------------------------
+
+The code base is organized into two parallel module trees that share common
+infrastructure but implement architecture-specific components independently:
+
+\begin{itemize}
+    \item \texttt{UNET\_Ansatz/} contains the U-Net model, training pipeline,
+          and evaluation routines.
+    \item \texttt{FNO\_Ansatz/} contains the FNO model, spectral convolution
+          layers, composite loss functions, and its own training and evaluation
+          pipelines.
+\end{itemize}
+
+Both trees share the same LaMEM interface module for data generation and the
+same Poisson solver for stream-function reconstruction. Within each tree, a
+main execution script dispatches to dedicated modules depending on the
+selected workflow stage: data generation, preprocessing, training, or
+evaluation. Each stage can be executed independently, enabling flexible
+experimentation and reducing coupling between components.
+
+% ----------------------------------------------------------------------------
+\section{Model Implementations}
+% ----------------------------------------------------------------------------
+
+Both architectures are implemented explicitly using Flux primitives. They
+share the same input and output interface: a four-channel input tensor of
+shape $(256,256,4)$—consisting of the crystal mask, a signed distance proxy
+field, and normalized $x$- and $z$-coordinate channels—and a single-channel
+output $\psi_{\mathrm{norm}}$ of shape $(256,256,1)$. This input
+representation is geometry-agnostic: configurations with varying numbers of
+crystals are encoded on the same fixed grid without architectural changes.
+
+\subsection*{U-Net}
+
+The encoder--decoder structure follows a classical U-Net design with skip
+connections. Downsampling uses strided convolutions instead of max pooling to
+keep the operation learnable and reduce grid-alignment artifacts in smooth
+flow fields. Each resolution level applies two successive $3\times3$
+convolutions, followed by batch normalization and ReLU activation.
+
+Upsampling is implemented via transposed convolutions. Skip connections
+concatenate encoder feature maps with decoder feature maps at matching
+resolutions. A final $1\times1$ convolution maps the decoder output to the
+single output channel. No activation is applied in the output layer, as the
+network performs pure regression. The model is constructed via a
+\texttt{build\_unet()} factory function with configurable base channel width
+(default: 32).
+
+\subsection*{Fourier Neural Operator}
+
+The FNO implementation consists of two custom layer types and a model
+constructor:
+
+\paragraph{SpectralConv2D.}
+The spectral convolution layer implements the frequency-space multiplication
+described in Chapter~\ref{ch:theory}. It uses a real-valued FFT
+(\texttt{rfft}) instead of a full complex FFT, reducing memory consumption by
+approximately 50\%. Two sets of complex-valued weight matrices
+$W_1, W_2 \in \mathbb{C}^{k_{\max} \times d_v \times d_v}$ are learned for
+positive and negative frequency components along the vertical axis. The
+forward pass applies a batched matrix multiplication in Fourier space via
+\texttt{NNlib.batched\_mul}, which is compatible with Zygote's automatic
+differentiation (no in-place array mutations). Weights are initialized with
+small magnitude ($\sigma = 0.02$) to provide implicit warmup during early
+training.
+
+\paragraph{FNOBlock.}
+Each FNO block combines the spectral convolution path with a pointwise
+$1\times1$ convolution (local bias path). Both outputs are added element-wise
+and passed through a GELU activation function. This parallel-path design
+allows each block to simultaneously capture global spectral structure and
+local spatial features.
+
+\paragraph{Model assembly.}
+The complete model chains a pointwise lifting convolution
+($4 \to d_v$ channels), a stack of $L$ FNO blocks, and a two-layer pointwise
+projection ($d_v \to d_v$, GELU, $d_v \to 1$). The default configuration
+uses $d_v = 64$, $k_{\max} = 16$ modes in each spatial direction, and
+$L = 4$ Fourier layers.
+
+% ----------------------------------------------------------------------------
+\section{Data Pipeline and Dataset Interfaces}
+% ----------------------------------------------------------------------------
+
+Training samples are stored as individual \texttt{.jld2} files. Each file
+contains:
+\begin{itemize}
+    \item the input tensor,
+    \item the normalized target field,
+    \item metadata describing crystal configuration and grid parameters.
+\end{itemize}
+
+All arrays are stored and processed in single precision (\texttt{Float32}) to
+reduce memory usage and improve GPU throughput, without measurable loss of
+accuracy for the present regression task.
+
+\subsection*{Dataset abstraction and batching}
+
+Custom dataset types provide fine-grained control over data loading and batch
+assembly. Rather than relying on high-level data loaders, batches are
+constructed explicitly to minimize memory overhead and to enable dynamic
+adjustment of batch size. The dataset interface supports:
+\begin{itemize}
+    \item random shuffling of samples,
+    \item variable batch sizes (typically between 2 and 16),
+    \item transparent transfer of batches to CPU or GPU.
+\end{itemize}
+
+LaMEM-based data generation is executed serially. This avoids race conditions
+and ensures deterministic behavior in the presence of a solver that is not
+thread-safe.
+
+% ----------------------------------------------------------------------------
+\section{Stream-Function Reconstruction and Normalization}
+% ----------------------------------------------------------------------------
+
+For stream-function learning, the vorticity field produced by LaMEM is
+converted into a stream function by solving the Poisson equation
+\[
+\Delta \psi = -\omega
+\]
+on the same Cartesian grid using a finite-difference discretization with
+homogeneous Dirichlet boundary conditions. This reconstruction step is used
+exclusively to define the learning target and is not part of the inference
+pipeline.
+
+The reconstructed stream function is normalized on a per-sample basis to
+shift values into an $\mathcal{O}(1)$ range. The network is trained only on
+the normalized field $\psi_{\mathrm{norm}}$, while rescaling to physical units
+is applied during post-processing and evaluation. This prevents extremely
+small target magnitudes from approaching machine precision and improves
+numerical conditioning of the regression loss.
+
+% ----------------------------------------------------------------------------
+\section{Training Loop and Optimization}
+% ----------------------------------------------------------------------------
+
+Training is implemented using an explicit loop to retain full control over
+gradient computation, parameter updates, checkpointing, and device placement.
+Gradients are computed via Flux's automatic differentiation.
+
+\subsection*{Optimizer configuration}
+
+The U-Net uses AdamW with decoupled weight decay. The FNO uses Adam combined
+with gradient norm clipping (\texttt{ClipNorm}) to stabilize training in the
+presence of spectral operations that can produce large gradient magnitudes.
+Typical learning rates lie between $5\times10^{-5}$ and $10^{-4}$, and
+training runs span between 100 and 300 epochs, depending on batch size and
+dataset composition.
+
+\subsection*{Loss functions}
+
+The U-Net is trained with a standard MSE loss on $\psi_{\mathrm{norm}}$.
+The FNO uses a composite loss
+\[
+\mathcal{L} = \mathcal{L}_{\mathrm{MSE}}
++ \alpha_{\mathrm{grad}} \cdot \mathcal{L}_{\mathrm{grad}}
++ \alpha_{\mathrm{bnd}} \cdot \mathcal{L}_{\mathrm{bnd}},
+\]
+where $\mathcal{L}_{\mathrm{grad}}$ penalizes errors in the spatial
+derivatives $\partial\psi/\partial x$ and $\partial\psi/\partial z$ (computed
+via finite differences), and $\mathcal{L}_{\mathrm{bnd}}$ enforces the
+homogeneous Dirichlet boundary condition $\psi|_{\partial\Omega} = 0$. The
+gradient loss coefficient $\alpha_{\mathrm{grad}}$ is ramped from zero over a
+configurable number of warmup epochs to avoid destabilizing early
+optimization. This composite loss encourages the FNO to produce predictions
+that are not only accurate in $\psi$ itself but also yield physically
+consistent velocity fields.
+
+\subsection*{Checkpointing}
+
+Model checkpoints are written at the end of each epoch using BSON. All
+checkpoints are stored in a CPU-compatible format, ensuring that trained
+models can be loaded and evaluated on systems without GPU support.
+
+% ----------------------------------------------------------------------------
+\section{Evaluation Utilities}
+% ----------------------------------------------------------------------------
+
+Both implementations include dedicated evaluation toolboxes that support
+quantitative benchmarking and qualitative diagnostics. Quantitative metrics
+include mean-squared error, mean absolute error, relative $L_2$ norms, and
+maximum absolute error, computed on the stream function $\psi$ as well as
+on derived velocity fields obtained via
+$\mathbf{u} = (\partial\psi/\partial z,\, -\partial\psi/\partial x)$.
+The FNO evaluation additionally reports gradient MSE and boundary MSE to
+assess the quality of the composite loss components. Errors are aggregated
+by crystal count to assess generalization as a function of geometric
+complexity.
+
+Qualitative diagnostics include side-by-side visualizations of predicted and
+reference fields, difference plots, and derived velocity representations such
+as quiver and streamline plots. All evaluation routines operate independently
+of the training code and can be applied to any stored checkpoint, enabling
+systematic comparison between U-Net and FNO across training runs.
+
+% ----------------------------------------------------------------------------
+\section{Summary}
+% ----------------------------------------------------------------------------
+
+This chapter described the concrete implementation of the surrogate modeling
+framework, including the software environment, code organization, U-Net and
+FNO realizations, dataset interfaces, training loop, and evaluation
+utilities. Key implementation decisions—such as the use of \texttt{rfft} and
+Zygote-compatible operations in the FNO, and the composite loss with gradient
+and boundary terms—are motivated by the specific requirements of
+stream-function prediction for multi-crystal Stokes flow. Together with the
+methodology in Chapter~\ref{ch:methodology}, this implementation provides a
+reproducible basis for the numerical experiments presented in the following
+chapters.
