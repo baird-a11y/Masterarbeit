@@ -103,10 +103,26 @@ ch:validation
 ch:conclusions
 ch:discussion
 
-Kapitel 5 Implementaions ist schon zum großteil geschrieben und muss ggf. inhaltlich etwas angepasst werden. Genauso wie die andere Kapitel. Meist nur Kleinigkeiten, wie Quellen richtig angeben oder einige Technische Details wie 5 statt 4 Input Informationen (x,z,SDF, Abstand zum nächsten Kristall für jeden Punk, Maske)
+Kapitel 5 Implementaions ist schon zum großteil geschrieben und muss ggf. inhaltlich etwas angepasst werden. Genauso wie die andere Kapitel. Meist nur Kleinigkeiten, wie Quellen richtig angeben oder einige Technische 
 Bei den Folge Kapiteln bin ich mir noch nicht sicher, ob ich diese auch so nennen will bzw. was dort genau stehen soll.
 In Kapitel 6 dachte ich vielleicht daran, kurz zu erklären, Welche Parameter ich nutze und wieso. Also Lernrate, Batchsize etc., aber was mache ich dann in Kapitel 7 Experemental?
 Kapitel 8 ist wieder klar, da zeig ich einfach nur die Ergebnisse aus meinen verschiedenen Settings und stelle dir etwas gegenüber.
 In Kaptiel 9 Validation schaue ich mir dann an, wie gut die Modelle sind und wo Probleme auftauchen. Im nächsten Kapitel würde ich dann schreiben wie gut das ganze jetzt funktioniert hat, was so die limitationen sind, was man besser machen kann etc. Im letzten Kapitel dann würde ich schauen ob und wie gut ich meine Forshcungsfrage beantwortet habe und was man besser machen könnte oder potenzielle nächste schritte wären.
 
 Allgemein muss ich noch passende Bilder suchen für ein paar Visualisierungen wie die Kristallisierungsprozesse und so
+Die beiden Abstacte (deutsche und englische Version) müssen noch aktualisiert werden. Erster Entwurf steht zwar schon, ist aber noch der alte Stand
+
+Überschrift der Masterarbeit muss ggf. neu formuliert und angepasst werden, da sich das ursprüngliche ziel geändert hat.
+
+Allgemein muss ich in den Kapitel mehr Quellen belege einbauen und ggf. die Mathematik und Physik etwas ausführlicher erklären
+
+In Kapitel 4 muss ich noch folgendes ergänzen
+ 5 statt 4 Input Informationen (x,z,SDF, Abstand zum nächsten Kristall für jeden Punk, Maske)
+ Unet soll auch Adam nutzen statt AdamW (Code dazu auch anpassen)
+ In 4.5 den Sätze ändern, in dem gesagt wird, dass die Daten jedes mal vor dem Training erstellt werden. Diese wurden nur einmal erstellt.
+ Irgendwo steht auch, dass die Evaluierungs und oder Validierungsdaten spezifisch erstellt wurden. Stimmt nicht ganz. Ich habe fürs Training, Validieurng während des Trainings und später zu Evaluierung verschiedene Datensätzen einmalig vorab erstellt und nutze diese jetzt für beide Modelle. 
+
+Ich muss auch die Art wie ich Quellen Angebe vereinheitlichen. So werden in Kapitel 1 immer (Name, Jahr) geschrieben und später ohne die Klammern. Das muss ich immer einheitlich machen mit (Name, Jahr).
+Habe schon angepasst, dass immer nur die ersten beiden genannt werden und dann et al.
+Bei einigen meiner Quellen fehlten durch Zotero die Jahreszahlen. Habe diese nachgetragen.
+
