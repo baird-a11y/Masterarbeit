@@ -189,6 +189,7 @@
 	abstract = {Computational Fluid Dynamics (CFD) simulation by the numerical solution of the Navier-Stokes equations is an essential tool in a wide range of applications from engineering design to climate modeling. However, the computational cost and memory demand required by CFD codes may become very high for ﬂows of practical interest, such as in aerodynamic shape optimization. This expense is associated with the complexity of the ﬂuid ﬂow governing equations, which include non-linear partial derivative terms that are of diﬃcult solution, leading to long computational times and limiting the number of hypotheses that can be tested during the process of iterative design. Therefore, we propose DeepCFD: a convolutional neural network (CNN) based model that eﬃciently approximates solutions for the problem of non-uniform steady laminar ﬂows. The proposed model is able to learn complete solutions of the Navier-Stokes equations, for both velocity and pressure ﬁelds, directly from ground-truth data generated using a state-of-the-art CFD code. Using DeepCFD, we found a speedup of up to 3 orders of magnitude compared to the standard CFD approach at a cost of low error rates.},
 	language = {en},
 	author = {Ribeiro, Mateus Dias and Rehman, Abdul and Ahmed, Sheraz and Dengel, Andreas},
+	year={2021},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\TKMXS2V6\\Ribeiro et al. - DeepCFD Efficient Steady-State Laminar Flow Approximation with Deep Convolutional Neural Networks.pdf:application/pdf},
 }
 
@@ -682,6 +683,7 @@
 	abstract = {Machine learning is a popular tool that is being applied to many domains, from computer vision to natural language processing. It is not long ago that its use was extended to physics, but its capabilities remain to be accurately contoured. In this paper, we are interested in the prediction of 2D velocity and pressure ﬁelds around arbitrary shapes in laminar ﬂows using supervised neural networks. To this end, a dataset composed of random shapes is built using B´ezier curves, each shape being labeled with its pressure and velocity ﬁelds by solving Navier-Stokes equations using a CFD solver. Then, several U-net architectures are trained on the latter dataset, and their predictive eﬃciency is assessed on unseen shapes, using ad hoc error functions.},
 	language = {en},
 	author = {Chen, Junfeng and Viquerat, Jonathan and Hachem, Elie},
+	year = {2019},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\WM2CL78Q\\Chen et al. - U-net architectures for fast prediction in fluid mechanics.pdf:application/pdf},
 }
 
@@ -856,4 +858,14 @@ DOI = {10.3390/en15093297}
 	date = {2014-05},
 	langid = {english},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\8N947Z3W\\Leonardi et al. - 2014 - Coupled DEM-LBM method for the free-surface simulation of heterogeneous suspensions.pdf:application/pdf},
+}
+
+@inproceedings{Popov2013LaMEM,
+  author    = {Popov, Anton and Kaus, Boris J. P.},
+  title     = {{LaMEM} ({L}ithosphere and {M}antle {E}volution {M}odel): advancing a staggered-grid finite difference version of the code},
+  booktitle = {EGU General Assembly 2013},
+  year      = {2013},
+  volume    = {15},
+  pages     = {EGU2013-7761},
+  note      = {Source code available at \url{https://github.com/UniMainzGeo/LaMEM}}
 }
