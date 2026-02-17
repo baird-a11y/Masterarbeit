@@ -40,10 +40,10 @@ problem from a vector-valued to a scalar regression task, lowering the
 effective degrees of freedom. Second, incompressibility is guaranteed
 analytically rather than having to be learned from data, which eliminates a
 common source of systematic error in purely data-driven velocity surrogates
-\cite{ribeiro_deepcfd_nodate,thuerey_deep_2020}. This choice injects physical
+\parencite{ribeiro_deepcfd_nodate,thuerey_deep_2020}. This choice injects physical
 structure into the learning problem through the output representation rather
 than through penalty terms, consistent with divergence-free parameterizations
-advocated in related work \cite{richter-powell_neural_nodate}.
+advocated in related work \parencite{richter-powell_neural_nodate}.
 
 The central experimental factor in this thesis is therefore not the choice of
 learning target—which is fixed to $\psi$ for all experiments—but the choice
@@ -61,7 +61,7 @@ Training data are generated using the geodynamic finite-element code
 \textsc{LaMEM}, which solves the incompressible Stokes equations on a regular
 Cartesian grid. The simulation setup follows established geodynamic Stokes
 discretization practices, where robustness under viscosity and density
-contrasts is essential \cite{thieulot_choice_2022}.  
+contrasts is essential \parencite{thieulot_choice_2022}.  
 
 Each simulation represents a steady (quasi-static) configuration of
 $1\ldots N_{\max}$ rigid crystals settling in a viscous matrix. Simulations
@@ -83,7 +83,7 @@ randomized positions. The number of crystals $N$ is drawn uniformly from
 $\{1,\ldots,N_{\max}\}$ to expose the surrogate to a broad range of interaction
 regimes, from isolated single-crystal wakes to strongly interacting clusters.
 Such multi-particle interaction effects are well documented in classical
-sedimentation studies \cite{fortes_nonlinear_1987,ladd_numerical_1994} and
+sedimentation studies \parencite{fortes_nonlinear_1987,ladd_numerical_1994} and
 motivate an explicit evaluation of generalization across particle number.
 Randomization is performed independently for each simulation run, such that
 the training distribution samples a diverse subset of the configuration space.
@@ -137,7 +137,7 @@ equation
 \]
 on the same $256\times256$ grid. Reconstructing $\psi$ via a Poisson problem
 is standard in two-dimensional incompressible low-Reynolds-number flow theory
-\cite{happel_low_1991}. In the present workflow, this Poisson solve is used
+\parencite{happel_low_1991}. In the present workflow, this Poisson solve is used
 only to define a physically consistent scalar learning target; the underlying
 reference solution remains the LaMEM Stokes solution.
 
@@ -186,15 +186,15 @@ $\mathcal{O}(1)$ range that yields stable optimization.
 \label{sec:input_channels}
 % ==========================================================
 
-All approaches use the same four-channel input representation on the
+All approaches use the same five-channel input representation on the
 $256\times256$ grid. This encoding combines sharp geometric information with
 smooth spatial context and is designed to be interpretable from both a
 physical and a machine-learning perspective. Encoding geometry through masks
 and distance-based fields is common in structured-grid PDE surrogates and
-geometry-aware learning frameworks \cite{thuerey_deep_2020,oldenburg_geometry_2022}.
+geometry-aware learning frameworks \parencite{thuerey_deep_2020,oldenburg_geometry_2022}.
 
 \begin{enumerate}
-    \item \textbf{Crystal mask.}  
+    \item \textbf{Crystal mask.}
     A binary indicator field $M(x,z)\in\{0,1\}$ specifying crystal locations:
     \[
         M(x,z)=
@@ -206,7 +206,7 @@ geometry-aware learning frameworks \cite{thuerey_deep_2020,oldenburg_geometry_20
     This channel provides explicit information about the location of strong
     material contrasts and rigid inclusions.
 
-    \item \textbf{Signed distance field (SDF proxy).}  
+    \item \textbf{Signed distance field (SDF proxy).}
     For each grid point, the Euclidean distance to the nearest crystal center
     is computed and assigned a negative sign inside crystals and a positive
     sign outside. The resulting field is normalized to approximately $[-1,1]$.
@@ -214,11 +214,20 @@ geometry-aware learning frameworks \cite{thuerey_deep_2020,oldenburg_geometry_20
     it provides a smooth measure of proximity to inclusions, complementing the
     sharp mask with continuous geometric context.
 
-    \item \textbf{Normalized $x$-coordinate.}  
+    \item \textbf{Distance to nearest crystal boundary.}
+    For each grid point, the Euclidean distance to the nearest crystal
+    boundary is computed. This field provides a direct measure of how close
+    each point in the domain is to the nearest solid--fluid interface, which
+    is where the steepest velocity gradients occur. Unlike the SDF proxy,
+    which encodes distance to crystal centers, this channel captures
+    boundary proximity explicitly and helps the network resolve thin
+    boundary layers and interaction zones between closely spaced crystals.
+
+    \item \textbf{Normalized $x$-coordinate.}
     The horizontal coordinate is linearly mapped to $x_{\mathrm{norm}}\in[-1,1]$,
     providing the network with absolute positional information.
 
-    \item \textbf{Normalized $z$-coordinate.}  
+    \item \textbf{Normalized $z$-coordinate.}
     Analogously, the vertical coordinate is mapped to $z_{\mathrm{norm}}\in[-1,1]$.
     Together, the coordinate channels reduce symmetry-induced and
     position-dependent artifacts and improve generalization across spatially
@@ -226,10 +235,10 @@ geometry-aware learning frameworks \cite{thuerey_deep_2020,oldenburg_geometry_20
 \end{enumerate}
 
 Each sample is therefore represented by an input tensor of shape
-$(256,256,4)$. In physical terms, the input encodes inclusion geometry and
-domain position; in ML terms, it provides both high-frequency (mask) and
-low-frequency (distance and coordinate) information to support multiscale
-feature learning.
+$(256,256,5)$. In physical terms, the input encodes inclusion geometry,
+boundary proximity, and domain position; in ML terms, it provides both
+high-frequency (mask) and low-frequency (distance and coordinate)
+information to support multiscale feature learning.
 
 % ==========================================================
 \section{Surrogate Architectures}
@@ -237,7 +246,7 @@ feature learning.
 % ==========================================================
 
 Two architectures are compared in this thesis. Both receive the same
-four-channel input of shape $(256,256,4)$ and produce a single-channel output
+five-channel input of shape $(256,256,5)$ and produce a single-channel output
 $\psi_{\mathrm{norm}}$ of shape $(256,256,1)$. The theoretical foundations
 of both architectures were introduced in Chapter~\ref{ch:theory}; this section
 describes the specific configurations used in the experiments.
@@ -246,8 +255,8 @@ describes the specific configurations used in the experiments.
 \label{sec:unet_architecture}
 
 The U-Net follows the encoder--decoder principle of the original architecture
-\cite{navab_u-net_2015} and common adaptations for laminar flow-field
-prediction on Cartesian grids \cite{thuerey_deep_2020,chen_u-net_nodate}.
+\parencite{navab_u-net_2015} and common adaptations for laminar flow-field
+prediction on Cartesian grids \parencite{thuerey_deep_2020,chen_u-net_nodate}.
 
 \paragraph{Encoder.}
 The encoder consists of four resolution levels. Spatial resolution is reduced
@@ -285,7 +294,7 @@ consisting of a pointwise lifting layer, a sequence of Fourier layers, and a
 pointwise projection layer.
 
 \paragraph{Lifting.}
-A pointwise linear layer maps the four input channels into a
+A pointwise linear layer maps the five input channels into a
 higher-dimensional feature space of width $d_v$.
 
 \paragraph{Fourier layers.}
@@ -314,9 +323,10 @@ training runs on standard GPU hardware. For the U-Net, batch normalization
 stabilizes optimization. For the FNO, the implicit spectral smoothness prior
 imposed by mode truncation serves as an architectural regularizer.
 Generalization is primarily promoted through geometric diversity in the
-training data and the physically structured output representation. Dropout is
-not used, as preliminary experiments indicated that on-the-fly sampling of
-random crystal configurations provides sufficient regularization.
+pre-generated training data and the physically structured output
+representation. Dropout is not used, as the large variety of randomized
+crystal configurations in the training set provides sufficient
+regularization.
 
 % ==========================================================
 \section{Training Procedure}
@@ -325,12 +335,13 @@ random crystal configurations provides sufficient regularization.
 
 \subsection{Data Splits and Benchmark Design}
 
-The dataset is conceptually divided into training, validation, and test
-splits. Training and validation data are generated from randomized crystal
-configurations, whereas the test split consists of a fixed set of geometries
-held constant throughout the study. This design ensures that model selection
-is performed on distributions similar to training, while the reported test
-performance reflects generalization to a reproducible benchmark.
+The dataset is divided into three fixed splits—training, validation, and
+test—each generated once from randomized crystal configurations and stored
+on disk prior to any model training. All three splits are identical for both
+the U-Net and FNO pipelines, ensuring that performance differences between
+architectures are not confounded by differences in training or evaluation
+data. The validation split is used for monitoring during training, while the
+test split provides a reproducible benchmark for the final evaluation.
 
 \subsection{Batching and Device Handling}
 
@@ -355,10 +366,9 @@ for both architectures to ensure a controlled comparison.
 
 \subsection{Optimization and Checkpointing}
 
-Model parameters are optimized using AdamW, which combines adaptive learning
-rates with decoupled weight decay regularization. A fixed learning rate is
-used within each run, without learning rate scheduling, to keep experiments
-comparable. After each epoch, model checkpoints are stored in a CPU-compatible
+Model parameters are optimized using the Adam optimizer with adaptive
+learning rates. A fixed learning rate is used within each run, without
+learning rate scheduling, to keep experiments comparable. After each epoch, model checkpoints are stored in a CPU-compatible
 format to enable reproducible evaluation on systems without GPU support. For
 each run, training configuration metadata (hyperparameters, data paths, and
 random seeds) are archived alongside the checkpoint.
@@ -387,7 +397,7 @@ Errors are grouped by the number of crystals in the test sample
 ($1\ldots N_{\max}$), enabling direct assessment of how prediction quality
 changes as hydrodynamic interactions become more complex. The use of MSE and
 relative norms follows common practice in benchmarking data-driven CFD
-surrogates \cite{luo_cfdbench_2023}. The same evaluation framework is applied
+surrogates \parencite{luo_cfdbench_2023}. The same evaluation framework is applied
 identically to both U-Net and FNO predictions, ensuring that all reported
 differences reflect architectural properties rather than evaluation
 artifacts.

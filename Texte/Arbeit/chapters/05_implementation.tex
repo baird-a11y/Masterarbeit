@@ -34,7 +34,7 @@ dependencies are:
     \item \textbf{FFTW.jl} for the Fast Fourier Transform operations required
           by the Fourier Neural Operator.
     \item \textbf{Optimisers.jl} for optimizer definitions, in particular
-          AdamW (U-Net) and Adam with gradient clipping (FNO).
+          Adam (U-Net) and Adam with gradient clipping (FNO).
     \item \textbf{JLD2.jl} for efficient storage and loading of multi-channel
           training samples.
     \item \textbf{BSON.jl} for serializing and restoring model checkpoints.
@@ -73,9 +73,10 @@ experimentation and reducing coupling between components.
 % ----------------------------------------------------------------------------
 
 Both architectures are implemented explicitly using Flux primitives. They
-share the same input and output interface: a four-channel input tensor of
-shape $(256,256,4)$—consisting of the crystal mask, a signed distance proxy
-field, and normalized $x$- and $z$-coordinate channels—and a single-channel
+share the same input and output interface: a five-channel input tensor of
+shape $(256,256,5)$—consisting of the crystal mask, a signed distance proxy
+field, the distance to the nearest crystal boundary, and normalized $x$- and
+$z$-coordinate channels—and a single-channel
 output $\psi_{\mathrm{norm}}$ of shape $(256,256,1)$. This input
 representation is geometry-agnostic: configurations with varying numbers of
 crystals are encoded on the same fixed grid without architectural changes.
@@ -123,7 +124,7 @@ local spatial features.
 
 \paragraph{Model assembly.}
 The complete model chains a pointwise lifting convolution
-($4 \to d_v$ channels), a stack of $L$ FNO blocks, and a two-layer pointwise
+($5 \to d_v$ channels), a stack of $L$ FNO blocks, and a two-layer pointwise
 projection ($d_v \to d_v$, GELU, $d_v \to 1$). The default configuration
 uses $d_v = 64$, $k_{\max} = 16$ modes in each spatial direction, and
 $L = 4$ Fourier layers.
@@ -191,7 +192,7 @@ Gradients are computed via Flux's automatic differentiation.
 
 \subsection*{Optimizer configuration}
 
-The U-Net uses AdamW with decoupled weight decay. The FNO uses Adam combined
+The U-Net uses the Adam optimizer. The FNO uses Adam combined
 with gradient norm clipping (\texttt{ClipNorm}) to stabilize training in the
 presence of spectral operations that can produce large gradient magnitudes.
 Typical learning rates lie between $5\times10^{-5}$ and $10^{-4}$, and

@@ -16,7 +16,7 @@ structural properties in the context of flow-field prediction.
 
 Crystal settling in magmatic systems typically occurs at very low Reynolds
 numbers, where viscous forces dominate over inertial effects
-\cite{happel_low_1991,stokes_mathematical_2009}. In this creeping-flow regime,
+\parencite{happel_low_1991,stokes_mathematical_2009}. In this creeping-flow regime,
 the governing equations reduce to the incompressible Stokes equations
 \begin{equation}
 \mathbf{0} = -\nabla p + \mu \nabla^2 \mathbf{u} + \rho \mathbf{g},
@@ -34,11 +34,11 @@ and additive, such that the disturbance induced by one particle influences the
 flow field throughout the domain. These long-range interactions form the
 physical basis for collective sedimentation phenomena, including wake
 interaction, drafting--kissing--tumbling dynamics, and clustering effects
-\cite{fortes_nonlinear_1987,ladd_numerical_1994,uhlmann_sedimentation_2014}.
+\parencite{fortes_nonlinear_1987,ladd_numerical_1994,uhlmann_sedimentation_2014}.
 
 In geophysical contexts, such interactions have been shown to strongly affect
 crystal settling rates and spatial distributions in magma chambers
-\cite{martin_crystal_1988,weinstein_evolution_1988,martin_fluid-dynamical_1989}.
+\parencite{martin_crystal_1988,weinstein_evolution_1988,martin_fluid-dynamical_1989}.
 Accurately capturing these effects therefore requires resolving the full flow
 field around multiple interacting crystals rather than relying on isolated
 particle approximations.
@@ -64,11 +64,11 @@ u_z = -\frac{\partial \psi}{\partial x}.
 \end{equation}
 This transformation reduces the vector-valued velocity field to a single
 scalar potential and guarantees incompressibility by construction
-\cite{happel_low_1991}.
+\parencite{happel_low_1991}.
 
 The stream-function formulation has a long tradition in classical
 hydrodynamics, particularly for planar Stokes flow problems involving rigid
-inclusions and sedimentation \cite{stokes_mathematical_2009}. Streamlines
+inclusions and sedimentation \parencite{stokes_mathematical_2009}. Streamlines
 coincide with level sets of $\psi$, allowing qualitative flow features such as
 recirculation zones, wakes, and stagnation points to be identified directly.
 
@@ -111,7 +111,7 @@ physics. Instead, it constitutes an auxiliary transformation that maps the
 numerical reference solution into a representation that is more amenable to
 learning. Similar transformations are commonly used in classical fluid
 mechanics to analyze Stokes flow around particles and inclusions
-\cite{happel_low_1991}.
+\parencite{happel_low_1991}.
 
 % ==========================================================
 \section{Learning Targets as Physically Motivated Inductive Biases}
@@ -120,7 +120,7 @@ mechanics to analyze Stokes flow around particles and inclusions
 
 From a machine-learning perspective, the choice of output representation
 introduces an implicit \emph{inductive bias}, i.e.\ a structural constraint on
-the space of functions that the model can represent \cite{belkin_reconciling_2019}.
+the space of functions that the model can represent \parencite{belkin_reconciling_2019}.
 In the context of surrogate modeling for incompressible flow, this choice
 strongly influences the degree to which physical structure must be learned
 from data rather than enforced analytically.
@@ -129,14 +129,14 @@ Direct velocity prediction treats the learning task as an unconstrained
 regression problem on a vector field. Incompressibility and momentum balance
 are not enforced explicitly but must be inferred from the training data. While
 this approach has been successfully applied in many CNN-based flow surrogates
-\cite{ribeiro_deepcfd_nodate,chen_u-net_nodate,thuerey_deep_2020}, it can lead to
+\parencite{ribeiro_deepcfd_nodate,chen_u-net_nodate,thuerey_deep_2020}, it can lead to
 small but systematic violations of physical constraints.
 
 Predicting the stream function $\psi$ introduces a stronger inductive bias by
 restricting the hypothesis space to divergence-free velocity fields by
 construction. This approach is conceptually related to divergence-free neural
 representations proposed in the context of physics-informed and
-structure-preserving learning \cite{richter-powell_neural_nodate}. By reducing
+structure-preserving learning \parencite{richter-powell_neural_nodate}. By reducing
 the effective degrees of freedom of the output, the learning problem is
 simplified and numerical conditioning can be improved.
 
@@ -145,14 +145,14 @@ solution into a physically motivated baseline and a learned correction. If the
 baseline captures the dominant large-scale behavior of the flow, the residual
 field is typically smoother and of lower amplitude. Such strategies have been
 shown to improve learning efficiency and generalization in physics-based
-surrogate models \cite{sun_surrogate_2020}.
+surrogate models \parencite{sun_surrogate_2020}.
 
 % ==========================================================
 \section{U-Net Architecture}
 \label{sec:unet}
 % ==========================================================
 
-The U-Net \cite{navab_u-net_2015} is an encoder--decoder convolutional neural
+The U-Net \parencite{navab_u-net_2015} is an encoder--decoder convolutional neural
 network originally developed for biomedical image segmentation. Its
 architecture consists of three principal components: a contracting encoder
 path, an expanding decoder path, and skip connections that bridge
@@ -200,7 +200,7 @@ natural candidate for this class of problems.
 \label{sec:fno}
 % ==========================================================
 
-The Fourier Neural Operator (FNO) \cite{li_fourier_2021} belongs to the family
+The Fourier Neural Operator (FNO) \parencite{li_fourier_2021} belongs to the family
 of neural operators that learn mappings between infinite-dimensional function
 spaces. Unlike conventional convolutional networks, which learn local spatial
 kernels, the FNO parameterizes integral kernel operators in the spectral

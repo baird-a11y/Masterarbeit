@@ -23,7 +23,7 @@ Deep neural networks have emerged as powerful tools for approximating solutions
 of partial differential equations, especially in fluid dynamics. Convolutional 
 neural networks (CNNs) and encoder–decoder architectures such as the U-Net have 
 proven particularly effective for mapping geometric input fields to structured 
-solution fields \cite{navab_u-net_2015,thuerey_deep_2020}. Their success can be 
+solution fields \parencite{navab_u-net_2015,thuerey_deep_2020}. Their success can be 
 attributed to a combination of local feature extraction, multiscale 
 representation, and translation-invariant convolutional operators.
 
@@ -31,7 +31,7 @@ Early studies on CNN-based surrogates for steady laminar flows demonstrated
 that these models can reproduce high-fidelity Navier--Stokes or Stokes 
 solutions with speed-ups of several orders of magnitude compared to 
 traditional solvers, while maintaining acceptable accuracy 
-\cite{ribeiro_deepcfd_nodate,chen_u-net_nodate}. These results established deep 
+\parencite{ribeiro_deepcfd_nodate,chen_u-net_nodate}. These results established deep 
 learning as a viable surrogate modeling strategy for computational fluid 
 dynamics.
 
@@ -40,7 +40,7 @@ boundary conditions. In particular, scalable U-Net variants for flow
 prediction in multi-obstacle environments showed that multiscale 
 encoder–decoder architectures with skip connections are well suited for 
 problems that require simultaneous resolution of sharp boundary layers and 
-global flow structures \cite{thuerey_deep_2020}. This combination of local and 
+global flow structures \parencite{thuerey_deep_2020}. This combination of local and 
 global context is directly relevant for multi-crystal sedimentation, where 
 localized wake structures around individual crystals interact with 
 domain-scale circulation patterns.
@@ -51,15 +51,15 @@ domain-scale circulation patterns.
 Physics-Informed Neural Networks (PINNs) aim to incorporate physical knowledge 
 directly into the learning process by augmenting the loss function with 
 residuals of the governing partial differential equations 
-\cite{raissi_physics-informed_2019}. Rather than relying exclusively on paired 
+\parencite{raissi_physics-informed_2019}. Rather than relying exclusively on paired 
 input–output data, PINNs enforce approximate satisfaction of the underlying 
 equations at collocation points within the computational domain. For 
 incompressible flow, this typically involves penalizing the momentum equations 
-together with the divergence-free constraint \cite{jin_nsfnets_2021}.
+together with the divergence-free constraint \parencite{jin_nsfnets_2021}.
 
 Hybrid extensions of this idea include geometry-aware PINNs, which embed 
 geometric information through distance functions or latent representations to 
-improve learning on irregular domains \cite{oldenburg_geometry_2022}. While 
+improve learning on irregular domains \parencite{oldenburg_geometry_2022}. While 
 these approaches can enhance physical consistency, they often introduce 
 additional challenges. In practice, PINNs and hybrid formulations tend to be 
 sensitive to the relative weighting of loss terms, exhibit slow convergence, 
@@ -94,12 +94,12 @@ it achieves discretization invariance, meaning that a model trained on one
 grid resolution can, in principle, be evaluated on a different resolution
 without retraining. FNOs have demonstrated strong performance on benchmark
 PDE problems including Darcy flow, Burgers' equation, and two-dimensional
-Navier--Stokes turbulence \cite{li_fourier_2021}.
+Navier--Stokes turbulence \parencite{li_fourier_2021}.
 
 More broadly, convolution-based neural operators on structured grids have
 demonstrated the ability to generalize across variations in material
 parameters, forcing terms, and boundary conditions
-\cite{thuerey_deep_2020}. These properties make neural operators appealing
+\parencite{thuerey_deep_2020}. These properties make neural operators appealing
 candidates for surrogate modeling in multiphase flow problems.
 
 However, most existing studies focus on flows in relatively regular domains
@@ -120,7 +120,7 @@ classical computational fluid dynamics. Fully resolved numerical approaches,
 including lattice Boltzmann, immersed boundary, and fictitious-domain methods, 
 have been used to study drafting–kissing–tumbling dynamics, clustering, and 
 collective settling behavior in particulate flows 
-\cite{fortes_nonlinear_1987,ladd_numerical_1994,leonardi_coupled_2014}. These 
+\parencite{fortes_nonlinear_1987,ladd_numerical_1994,leonardi_coupled_2014}. These 
 methods provide detailed physical insight but are computationally expensive, 
 particularly as the number of particles increases.
 
@@ -173,19 +173,19 @@ Grid-based convolutional neural networks operate directly on structured
 meshes and are therefore well suited for problems in which both inputs and
 outputs are defined on regular grids. U-Net architectures combine local feature
 extraction with global context through their encoder–decoder structure and
-skip connections \cite{navab_u-net_2015}. A key advantage of this paradigm is
+skip connections \parencite{navab_u-net_2015}. A key advantage of this paradigm is
 its geometry-agnostic input representation: masks and distance fields can
 encode an arbitrary number of inclusions without requiring architectural
 modifications.
 
 Previous studies demonstrate that CNN-based surrogates can generalize
 effectively across variable geometries and boundary conditions
-\cite{thuerey_deep_2020}. These properties make grid-based convolutional models
+\parencite{thuerey_deep_2020}. These properties make grid-based convolutional models
 particularly attractive for multi-crystal sedimentation problems.
 
 \subsection{Spectral Neural Operators}
 
-Fourier Neural Operators \cite{li_fourier_2021} constitute an alternative
+Fourier Neural Operators \parencite{li_fourier_2021} constitute an alternative
 grid-based paradigm that operates in the spectral rather than the spatial
 domain. Instead of learning localized convolutional kernels, FNOs learn
 global kernel functions parameterized by their Fourier coefficients. This

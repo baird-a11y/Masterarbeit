@@ -2,7 +2,7 @@
 % Chapter 6: Experiments
 % ----------------------------------------------------------------------------
 \chapter{Results and Discussion}
-\label{ch:results}
+\label{ch:experiments}
 
 This chapter presents the empirical performance of the surrogate modelling
 framework for \textbf{Approach~2} (stream–function prediction). We first report
@@ -20,25 +20,24 @@ The surrogate model is the U-Net architecture described in
 Chapters~\ref{ch:methodology} and~\ref{ch:implementation}.
 Training follows the implementation in Chapter~\ref{ch:implementation}:
 gradients are computed with automatic differentiation and parameters are updated
-using the AdamW optimizer, which combines adaptive learning-rate updates with
-decoupled weight decay regularization.
+using the Adam optimizer with adaptive learning rates.
 
 Across the runs reported in this chapter, training durations range from
 100 to 800 epochs, batch sizes range from 2 to 16, and learning rates were
 varied between $10^{-6}$ and $3\cdot 10^{-4}$. Unless stated otherwise, the loss
 function is the mean-squared error (MSE) on the normalized stream function
-$\psi_{\mathrm{norm}}$. Unless otherwise noted, a fixed weight decay is used
-within AdamW to provide mild regularization across runs.
+$\psi_{\mathrm{norm}}$.
 
 \subsection{Learning task and reconstruction of velocity}
 \label{sec:learning_task}
 
 The network predicts the \emph{normalized} stream function
-$\psi_{\mathrm{norm}}$ from a 4-channel input consisting of
+$\psi_{\mathrm{norm}}$ from a 5-channel input consisting of
 (i) the crystal mask,
 (ii) a signed distance field (SDF),
-(iii) normalized $x$ coordinates, and
-(iv) normalized $z$ coordinates.
+(iii) the distance to the nearest crystal boundary,
+(iv) normalized $x$ coordinates, and
+(v) normalized $z$ coordinates.
 The physical stream function $\psi$ is reconstructed using the sample-wise
 scaling factor stored with each dataset entry (see Chapter~\ref{ch:implementation}).
 
