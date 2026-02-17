@@ -3,21 +3,15 @@
 
 \section{Geoscientific Context}
 
-Crystal sedimentation in viscous magmatic fluids is a fundamental process governing the evolution, differentiation, and internal dynamics of magma reservoirs. During cooling, crystals nucleate and grow within the melt and begin to settle 
-due to density contrasts between the solid and liquid phases. This settling process directly influences the thermal and chemical evolution of the system and contributes to the formation of cumulate layers that are preserved as macroscopic 
-structures in plutonic bodies.
+Crystal sedimentation in viscous magmatic fluids is a fundamental process governing the evolution, differentiation, and internal dynamics of magma reservoirs. During cooling, crystals nucleate and grow within the melt and begin to settle due to density contrasts between the solid and liquid phases. This settling process directly influences the thermal and chemical evolution of the system and contributes to the formation of cumulate layers that are preserved as macroscopic structures in plutonic bodies.
 
-Early work by \textcite{martin_crystal_1988} demonstrated that crystal settling can occur even in vigorously convecting magma chambers, provided that the Stokes settling velocity exceeds characteristic convective flow velocities. 
-This result challenged the classical assumption that convection necessarily suppresses sedimentation and emphasized the role of local particle--fluid interactions. A settling crystal perturbs the surrounding flow field by generating viscous 
-boundary layers and wake structures that extend over several crystal diameters. These flow perturbations are not confined to the immediate vicinity of a single particle but can modify the trajectories and settling behavior of neighboring crystals.
+Early work by \textcite{martin_crystal_1988} demonstrated that crystal settling can occur even in vigorously convecting magma chambers, provided that the Stokes settling velocity exceeds characteristic convective flow velocities. This result challenged the classical assumption that convection necessarily suppresses sedimentation and emphasized the role of local particle--fluid interactions. A settling crystal perturbs the surrounding flow field by generating viscous boundary layers and wake structures that extend over several crystal diameters. These flow perturbations are not confined to the immediate vicinity of a single particle but can modify the trajectories and settling behavior of neighboring crystals.
 
-Subsequent experimental and numerical investigations \parencite{martin_fluid-dynamical_1989,weinstein_evolution_1988,uhlmann_sedimentation_2014,penlou_experimental_2023,nissanka_dynamics_2023} revealed that such interactions may lead to asymmetric flow patterns, 
-recirculation zones, and clustering phenomena. As a consequence, even small variations in crystal geometry, spatial arrangement, or relative positioning can strongly affect collective settling dynamics and the development of mineralogical layering. 
-These findings highlight that multi-crystal sedimentation is inherently a multiscale and interaction-dominated process, which places stringent demands on numerical modeling approaches intended to capture its essential physics.
+Subsequent experimental and numerical investigations \parencite{martin_fluid-dynamical_1989,weinstein_evolution_1988,uhlmann_sedimentation_2014,penlou_experimental_2023,nissanka_dynamics_2023} revealed that such interactions may lead to asymmetric flow patterns, recirculation zones, and clustering phenomena. As a consequence, even small variations in crystal geometry, spatial arrangement, or relative positioning can strongly affect collective settling dynamics and the development of mineralogical layering. These findings highlight that multi-crystal sedimentation is inherently a multiscale and interaction-dominated process, which places stringent demands on numerical modeling approaches intended to capture its essential physics.
 
 \section{Computational Challenges}
 
-Accurate numerical simulation of multi-crystal sedimentation remains computationally demanding due to the strongly multiscale nature of crystal--fluid interactions. A physically faithful model must simultaneously resolve:
+Accurate numerical simulation of multi-crystal sedimentation remains computationally demanding due to the strongly multiscale nature of crystal fluid interactions. A physically faithful model must simultaneously resolve:
 
 \begin{itemize}
     \item \textbf{Microscale crystal boundaries}, where steep velocity gradients and localized shear layers develop,
@@ -25,13 +19,9 @@ Accurate numerical simulation of multi-crystal sedimentation remains computation
     \item \textbf{Domain-scale flow structures} that control the large-scale transport of crystals and melt.
 \end{itemize}
 
-The computational cost of resolving hydrodynamic interactions typically scales between $\mathcal{O}(N^2)$ and $\mathcal{O}(N^3)$ with the number of particles $N$ \parencite{ladd_numerical_nodate}. Numerical methods that explicitly couple particle and 
-fluid dynamics—such as lattice Boltzmann--discrete element methods (LBM--DEM) or immersed boundary approaches—generally require each particle to be resolved by tens to hundreds of grid cells. Even in two-dimensional configurations, this leads 
-to simulations with $10^5$--$10^6$ fluid nodes per particle \parencite{Li_IBM-LBM-DEM_2022,leonardi_coupled_2014}. For systems containing more than ten crystals, total grid sizes can easily exceed $10^7$--$10^8$ degrees of freedom, resulting in 
-runtimes ranging from several hours to multiple days per simulation \parencite[cf.][]{Li_IBM-LBM-DEM_2022}.
+The computational cost of resolving hydrodynamic interactions typically scales between $\mathcal{O}(N^2)$ and $\mathcal{O}(N^3)$ with the number of particles $N$ \parencite{ladd_numerical_nodate}. Numerical methods that explicitly couple particle and fluid dynamics—such as lattice Boltzmann discrete element methods (LBM-DEM) or immersed boundary approaches—generally require each particle to be resolved by tens to hundreds of grid cells. Even in two-dimensional configurations, this leads to simulations with $10^5$-$10^6$ fluid nodes per particle \parencite{Li_IBM-LBM-DEM_2022,leonardi_coupled_2014}. For systems containing more than ten crystals, total grid sizes can easily exceed $10^7$--$10^8$ degrees of freedom, resulting in runtimes ranging from several hours to multiple days per simulation \parencite{Li_IBM-LBM-DEM_2022}.
 
-Such computational demands render systematic parameter studies infeasible. Investigating the influence of crystal size, viscosity contrast, particle number, or spatial arrangement would require thousands of high-fidelity simulations and thus exceed 
-practical computational budgets. This limitation motivates the development of surrogate models capable of approximating the underlying flow fields at a substantially reduced computational cost while retaining sufficient physical fidelity.
+Such computational demands render systematic parameter studies infeasible. Investigating the influence of crystal size, viscosity contrast, particle number, or spatial arrangement would require thousands of high-fidelity simulations and thus exceed practical computational budgets. This limitation motivates the development of surrogate models capable of approximating the underlying flow fields at a substantially reduced computational cost while retaining sufficient physical fidelity.
 
 \section{Machine Learning as a Surrogate Modeling Strategy}
 
@@ -84,11 +74,11 @@ Derive practical guidelines for the construction of surrogate models for multiph
 To maintain computational feasibility while addressing the core research questions, this study is restricted to:
 
 \begin{itemize}
-    \item two-dimensional incompressible Stokes flow formulated in stream-function--vorticity form,
+    \item two-dimensional incompressible Stokes flow formulated in stream-function-vorticity form,
     \item rigid circular crystal geometries without collision or lubrication forces,
     \item steady-state flow fields defined on a fixed $256 \times 256$ grid,
-    \item synthetic training data generated using the LaMEM code \parencite{thieulot_choice_2022},
-    \item sample-wise data generation during training to enhance geometric diversity and reduce overfitting.
+    \item synthetic training data generated using the LaMEM code \parencite{Popov2013LaMEM},
+    \item sample-wise data generation during training to enhance geometric diversity and reduce overfitting. (Daten werden vorab einmal erstellt und dann geladen, Daher kann das hier sehr wahrscheinlich raus)
 \end{itemize}
 
 These assumptions allow for a focused investigation of surrogate modeling strategies while preserving the essential physical characteristics of multi-crystal sedimentation dynamics.
@@ -100,3 +90,23 @@ Chapter~\ref{ch:related} reviews recent machine-learning-based surrogate models 
 Chapter~\ref{ch:theory} introduces the physical and mathematical foundations of Stokes flow, the stream-function formulation, and the U-Net and FNO architectures employed for structured flow-field prediction.  
 Chapter~\ref{ch:methodology} describes the computational workflow employed in this thesis, including LaMEM data generation, stream-function computation, input construction, network architecture, and training and evaluation procedures.  
 Subsequent chapters present the numerical results, analyze the generalization behavior of the models, and discuss implications and directions for future research.
+
+Notizen der noch offenen Punkte für das erste Kapitel:
+
+Unter Structure of the Thesis noch die Fehlenden Kapitel einbauen und prüfen ob noch alle benötigt werden.
+Es fehlen noch:
+ch:implementation
+ch:experiments
+ch:experemental
+ch:results
+ch:validation
+ch:conclusions
+ch:discussion
+
+Kapitel 5 Implementaions ist schon zum großteil geschrieben und muss ggf. inhaltlich etwas angepasst werden. Genauso wie die andere Kapitel. Meist nur Kleinigkeiten, wie Quellen richtig angeben oder einige Technische Details wie 5 statt 4 Input Informationen (x,z,SDF, Abstand zum nächsten Kristall für jeden Punk, Maske)
+Bei den Folge Kapiteln bin ich mir noch nicht sicher, ob ich diese auch so nennen will bzw. was dort genau stehen soll.
+In Kapitel 6 dachte ich vielleicht daran, kurz zu erklären, Welche Parameter ich nutze und wieso. Also Lernrate, Batchsize etc., aber was mache ich dann in Kapitel 7 Experemental?
+Kapitel 8 ist wieder klar, da zeig ich einfach nur die Ergebnisse aus meinen verschiedenen Settings und stelle dir etwas gegenüber.
+In Kaptiel 9 Validation schaue ich mir dann an, wie gut die Modelle sind und wo Probleme auftauchen. Im nächsten Kapitel würde ich dann schreiben wie gut das ganze jetzt funktioniert hat, was so die limitationen sind, was man besser machen kann etc. Im letzten Kapitel dann würde ich schauen ob und wie gut ich meine Forshcungsfrage beantwortet habe und was man besser machen könnte oder potenzielle nächste schritte wären.
+
+Allgemein muss ich noch passende Bilder suchen für ein paar Visualisierungen wie die Kristallisierungsprozesse und so
