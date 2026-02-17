@@ -55,6 +55,7 @@
 	abstract = {We introduce the Autoregressive PDE Emulator Benchmark (APEBench), a comprehensive benchmark suite to evaluate autoregressive neural emulators for solving partial differential equations. APEBench is based on JAX and provides a seamlessly integrated differentiable simulation framework employing efficient pseudo-spectral methods, enabling 46 distinct PDEs across 1D, 2D, and 3D. Facilitating systematic analysis and comparison of learned emulators, we propose a novel taxonomy for unrolled training and introduce a unique identifier for PDE dynamics that directly relates to the stability criteria of classical numerical methods. APEBench enables the evaluation of diverse neural architectures, and unlike existing benchmarks, its tight integration of the solver enables support for differentiable physics training and neural-hybrid emulators. Moreover, APEBench emphasizes rollout metrics to understand temporal generalization, providing insights into the long-term behavior of emulating PDE dynamics. In several experiments, we highlight the similarities between neural emulators and numerical simulators. The code is available at https://github.com/tum-pbs/apebench and APEBench can be installed via pip install apebench.},
 	language = {en},
 	author = {Koehler, Felix and Niedermayr, Simon and Westermann, Rüdiger and Thuerey, Nils},
+	year = {2024},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\ZGCF94QS\\Koehler et al. - APEBench A Benchmark for Autoregressive Neural Emulators of PDEs.pdf:application/pdf},
 }
 
@@ -198,6 +199,7 @@
 	abstract = {Fourier neural operators (FNOs) can learn highly nonlinear mappings between function spaces, and have recently become a popular tool for learning responses of complex physical systems. However, to achieve good accuracy and efficiency, FNOs rely on the Fast Fourier transform (FFT), which is restricted to modeling problems on rectangular domains. To lift such a restriction and permit FFT on irregular geometries as well as topology changes, we introduce domain agnostic Fourier neural operator (DAFNO), a novel neural operator architecture for learning surrogates with irregular geometries and evolving domains. The key idea is to incorporate a smoothed characteristic function in the integral layer architecture of FNOs, and leverage FFT to achieve rapid computations, in such a way that the geometric information is explicitly encoded in the architecture. In our empirical evaluation, DAFNO has achieved state-of-the-art accuracy as compared to baseline neural operator models on two benchmark datasets of material modeling and airfoil simulation. To further demonstrate the capability and generalizability of DAFNO in handling complex domains with topology changes, we consider a brittle material fracture evolution problem. With only one training crack simulation sample, DAFNO has achieved generalizability to unseen loading scenarios and substantially different crack patterns from the trained scenario. Our code and data accompanying this paper are available at https://github.com/ningliu-iga/DAFNO.},
 	language = {en},
 	author = {Liu, Ning and Jafarzadeh, Siavash and Yu, Yue},
+	year = {2023},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\WAUMIJIA\\Liu et al. - Domain Agnostic Fourier Neural Operators.pdf:application/pdf},
 }
 
@@ -271,6 +273,7 @@
 	abstract = {Deep learning surrogate models have shown promise in solving partial differential equations (PDEs). Among them, the Fourier neural operator (FNO) achieves good accuracy, and is significantly faster compared to numerical solvers, on a variety of PDEs, such as fluid flows. However, the FNO uses the Fast Fourier transform (FFT), which is limited to rectangular domains with uniform grids. In this work, we propose a new framework, viz., Geo-FNO, to solve PDEs on arbitrary geometries. Geo-FNO learns to deform the input (physical) domain, which may be irregular, into a latent space with a uniform grid. The FNO model with the FFT is applied in the latent space. The resulting Geo-FNO model has both the computation efficiency of FFT and the flexibility of handling arbitrary geometries. Our Geo-FNO is also flexible in terms of its input formats, viz., point clouds, meshes, and design parameters are all valid inputs. We consider a variety of PDEs such as the Elasticity, Plasticity, Euler’s, and Navier-Stokes equations, and both forward modeling and inverse design problems. Comprehensive cost-accuracy experiments show that Geo-FNO is 105 times faster than the standard numerical solvers and twice more accurate compared to direct interpolation on existing ML-based PDE solvers such as the standard FNO.},
 	language = {en},
 	author = {Li, Zongyi and Huang, Daniel Zhengyu and Liu, Burigede},
+	year = {2022},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\GIRELEU3\\Li et al. - Fourier Neural Operator with Learned Deformations for PDEs on General Geometries.pdf:application/pdf},
 }
 
@@ -369,6 +372,7 @@
 	abstract = {Here we present a machine learning framework and model implementation that can learn to simulate a wide variety of challenging physical domains, involving ﬂuids, rigid solids, and deformable materials interacting with one another. Our framework—which we term “Graph Network-based Simulators” (GNS)—represents the state of a physical system with particles, expressed as nodes in a graph, and computes dynamics via learned message-passing. Our results show that our model can generalize from single-timestep predictions with thousands of particles during training, to different initial conditions, thousands of timesteps, and at least an order of magnitude more particles at test time. Our model was robust to hyperparameter choices across various evaluation metrics: the main determinants of long-term performance were the number of message-passing steps, and mitigating the accumulation of error by corrupting the training data with noise. Our GNS framework advances the state-of-the-art in learned physical simulation, and holds promise for solving a wide range of complex forward and inverse problems.},
 	language = {en},
 	author = {Sanchez-Gonzalez, Alvaro and Godwin, Jonathan and Pfaff, Tobias and Ying, Rex and Leskovec, Jure and Battaglia, Peter W},
+	year = {2020},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\BHDL2LZZ\\Sanchez-Gonzalez et al. - Learning to Simulate Complex Physics with Graph Networks.pdf:application/pdf},
 }
 
@@ -392,6 +396,7 @@
 	abstract = {The classical development of neural networks has primarily focused on learning mappings between finite dimensional Euclidean spaces or finite sets. We propose a generalization of neural networks to learn operators, termed neural operators, that map between infinite dimensional function spaces. We formulate the neural operator as a composition of linear integral operators and nonlinear activation functions. We prove a universal approximation theorem for our proposed neural operator, showing that it can approximate any given nonlinear continuous operator. The proposed neural operators are also discretization-invariant, i.e., they share the same model parameters among different discretization of the underlying function spaces. Furthermore, we introduce four classes of efficient parameterization, viz., graph neural operators, multi-pole graph neural operators, lowrank neural operators, and Fourier neural operators. An important application for neural operators is learning surrogate maps for the solution operators of partial differential equations (PDEs). We consider standard PDEs such as the Burgers, Darcy subsurface flow, and the Navier-Stokes equations, and show that the proposed neural operators have superior performance compared to existing machine learning based methodologies, while being several orders of magnitude faster than conventional PDE solvers.},
 	language = {en},
 	author = {Kovachki, Nikola and Li, Zongyi and Liu, Burigede and Azizzadenesheli, Kamyar and Bhattacharya, Kaushik and Stuart, Andrew},
+	year = {2021},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\BIHFK5EL\\Kovachki et al. - Neural Operator Learning Maps Between Function Spaces With Applications to PDEs.pdf:application/pdf},
 }
 
@@ -445,6 +450,7 @@
 	abstract = {Operator learning refers to the application of ideas from machine learning to approximate (typically nonlinear) operators mapping between Banach spaces of functions. Such operators often arise from physical models expressed in terms of partial differential equations (PDEs). In this context, such approximate operators hold great potential as efficient surrogate models to complement traditional numerical methods in many-query tasks. Being data-driven, they also enable model discovery when a mathematical description in terms of a PDE is not available. This review focuses primarily on neural operators, built on the success of deep neural networks in the approximation of functions defined on finite dimensional Euclidean spaces. Empirically, neural operators have shown success in a variety of applications, but our theoretical understanding remains incomplete. This review article summarizes recent progress and the current state of our theoretical understanding of neural operators, focusing on an approximation theoretic point of view.},
 	language = {en},
 	author = {Kovachki, Nikola B and Lanthaler, Samuel and Stuart, Andrew M},
+	year = {2024},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\77CBM9QZ\\Kovachki et al. - OPERATOR LEARNING ALGORITHMS AND ANALYSIS.pdf:application/pdf},
 }
 
@@ -453,6 +459,7 @@
 	abstract = {Machine learning-based modeling of physical systems has experienced increased interest in recent years. Despite some impressive progress, there is still a lack of benchmarks for Scientific ML that are easy to use but still challenging and representative of a wide range of problems. We introduce PDEBENCH, a benchmark suite of time-dependent simulation tasks based on Partial Differential Equations (PDEs). PDEBENCH comprises both code and data to benchmark the performance of novel machine learning models against both classical numerical simulations and machine learning baselines. Our proposed set of benchmark problems contribute the following unique features: (1) A much wider range of PDEs compared to existing benchmarks, ranging from relatively common examples to more realistic and difficult problems; (2) much larger ready-to-use datasets compared to prior work, comprising multiple simulation runs across a larger number of initial and boundary conditions and PDE parameters; (3) more extensible source codes with user-friendly APIs for data generation and baseline results with popular machine learning models (FNO, U-Net, PINN, Gradient-Based Inverse Method). PDEBENCH allows researchers to extend the benchmark freely for their own purposes using a standardized API and to compare the performance of new models to existing baseline methods. We also propose new evaluation metrics with the aim to provide a more holistic understanding of learning methods in the context of Scientific ML. With those metrics we identify tasks which are challenging for recent ML methods and propose these tasks as future challenges for the community. The code is available at https://github.com/pdebench/PDEBench.},
 	language = {en},
 	author = {Takamoto, Makoto and Praditia, Timothy and Leiteritz, Raphael and MacKinlay, Dan and Alesiani, Francesco and Pflüger, Dirk and Niepert, Mathias},
+	year = {2022},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\R365KEXU\\Takamoto et al. - PDEBENCH An Extensive Benchmark for Scientific Machine Learning.pdf:application/pdf},
 }
 
@@ -570,6 +577,7 @@
 	abstract = {We investigate the parameterization of deep neural networks that by design satisfy the continuity equation, a fundamental conservation law. This is enabled by the observation that any solution of the continuity equation can be represented as a divergence-free vector field. We hence propose building divergence-free neural networks through the concept of differential forms, and with the aid of automatic differentiation, realize two practical constructions. As a result, we can parameterize pairs of densities and vector fields that always exactly satisfy the continuity equation, foregoing the need for extra penalty methods or expensive numerical simulation. Furthermore, we prove these models are universal and so can be used to represent any divergence-free vector field. Finally, we experimentally validate our approaches by computing neural network-based solutions to fluid equations, solving for the Hodge decomposition, and learning dynamical optimal transport maps.},
 	language = {en},
 	author = {Richter-Powell, Jack and Lipman, Yaron and Chen, Ricky T Q},
+	ysear = {2022},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\2EJUHHVU\\Richter-Powell et al. - Neural Conservation Laws A Divergence-Free Perspective.pdf:application/pdf},
 }
 
@@ -857,6 +865,7 @@ DOI = {10.3390/en15093297}
 	urldate = {2025-11-24},
 	date = {2014-05},
 	langid = {english},
+	year = {2014},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\8N947Z3W\\Leonardi et al. - 2014 - Coupled DEM-LBM method for the free-surface simulation of heterogeneous suspensions.pdf:application/pdf},
 }
 
