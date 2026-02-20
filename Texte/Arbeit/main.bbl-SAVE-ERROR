@@ -46,20 +46,18 @@
       \strng{namehash}{094f1b90f4cfe8b660b4b31c964bc45e}
       \strng{fullhash}{094f1b90f4cfe8b660b4b31c964bc45e}
       \strng{fullhashraw}{094f1b90f4cfe8b660b4b31c964bc45e}
-      \strng{bibnamehash}{4c59782bee4ce19d50e778a2f53c9523}
-      \strng{authorbibnamehash}{4c59782bee4ce19d50e778a2f53c9523}
+      \strng{bibnamehash}{094f1b90f4cfe8b660b4b31c964bc45e}
+      \strng{authorbibnamehash}{094f1b90f4cfe8b660b4b31c964bc45e}
       \strng{authornamehash}{094f1b90f4cfe8b660b4b31c964bc45e}
       \strng{authorfullhash}{094f1b90f4cfe8b660b4b31c964bc45e}
       \strng{authorfullhashraw}{094f1b90f4cfe8b660b4b31c964bc45e}
       \field{sortinit}{C}
       \field{sortinithash}{4d103a86280481745c9c897c925753c0}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
+      \field{labeldatesource}{nodate}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{abstract}{Machine learning is a popular tool that is being applied to many domains, from computer vision to natural language processing. It is not long ago that its use was extended to physics, but its capabilities remain to be accurately contoured. In this paper, we are interested in the prediction of 2D velocity and pressure ﬁelds around arbitrary shapes in laminar ﬂows using supervised neural networks. To this end, a dataset composed of random shapes is built using B´ezier curves, each shape being labeled with its pressure and velocity ﬁelds by solving Navier-Stokes equations using a CFD solver. Then, several U-net architectures are trained on the latter dataset, and their predictive eﬃciency is assessed on unseen shapes, using ad hoc error functions.}
       \field{title}{U-net architectures for fast prediction in fluid mechanics}
-      \field{year}{2019}
       \verb{file}
       \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\WM2CL78Q\\Chen et al. - U-net architectures for fast prediction in fluid mechanics.pdf:application/pdf
       \endverb
@@ -156,13 +154,11 @@
       \strng{authorfullhashraw}{ea574591c1f2232e7c9b1fd4aa63feb5}
       \field{sortinit}{L}
       \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
+      \field{labeldatesource}{nodate}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{abstract}{A new and very general technique for simulating solid- uid suspensions is described; its most important feature is that the computational cost scales linearly with the number of particles. The method combines Newtonian dynamics of the solid particles with a discretized Boltzmann equation for the uid phase; the many-body hydrodynamic interactions are fully accounted for, both in the creeping- ow regime and at higher Reynolds numbers. Brownian motion of the solid particles arises spontaneously from stochastic uctuations in the uid stress tensor, rather than from random forces or displacements applied directly to the particles. In this paper, the theoretical foundations of the technique are laid out, illustrated by simple analytical and numerical examples; in the companion paper, extensive numerical tests of the method, for stationary ows, time-dependent ows, and nite Reynolds number ows, are reported.}
       \field{title}{Numerical {Simulations} of {Particulate} {Suspensions} via a {Discretized} {Boltzmann} {Equation} {Part} {I}. {Theoretical} {Foundation}}
-      \field{year}{1994}
       \verb{file}
       \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\69GMIEUF\\Ladd - Numerical Simulations of Particulate Suspensions via a Discretized Boltzmann Equation Part I. Theore.pdf:application/pdf
       \endverb
@@ -533,8 +529,8 @@
       \strng{namehash}{622dde8a214662011811fb5412cffbb5}
       \strng{fullhash}{622dde8a214662011811fb5412cffbb5}
       \strng{fullhashraw}{622dde8a214662011811fb5412cffbb5}
-      \strng{bibnamehash}{df1cae3240d6e93edae8b9d857e85c11}
-      \strng{authorbibnamehash}{df1cae3240d6e93edae8b9d857e85c11}
+      \strng{bibnamehash}{622dde8a214662011811fb5412cffbb5}
+      \strng{authorbibnamehash}{622dde8a214662011811fb5412cffbb5}
       \strng{authornamehash}{622dde8a214662011811fb5412cffbb5}
       \strng{authorfullhash}{622dde8a214662011811fb5412cffbb5}
       \strng{authorfullhashraw}{622dde8a214662011811fb5412cffbb5}
@@ -720,43 +716,6 @@
       \verb https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2022JB025809
       \endverb
     \endentry
-    \entry{Popov2013LaMEM}{inproceedings}{}{}
-      \name{author}{2}{}{%
-        {{un=0,uniquepart=base,hash=812eb441dcce7b7192711cb94182c502}{%
-           family={Popov},
-           familyi={P\bibinitperiod},
-           given={Anton},
-           giveni={A\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=66e1a9228fcdb70ab8a8c234d3fc4ab5}{%
-           family={Kaus},
-           familyi={K\bibinitperiod},
-           given={Boris\bibnamedelimb J.\bibnamedelimi P.},
-           giveni={B\bibinitperiod\bibinitdelim J\bibinitperiod\bibinitdelim P\bibinitperiod},
-           givenun=0}}%
-      }
-      \strng{namehash}{9ce56796a4b864e6b5b279f55070e1d0}
-      \strng{fullhash}{9ce56796a4b864e6b5b279f55070e1d0}
-      \strng{fullhashraw}{9ce56796a4b864e6b5b279f55070e1d0}
-      \strng{bibnamehash}{9ce56796a4b864e6b5b279f55070e1d0}
-      \strng{authorbibnamehash}{9ce56796a4b864e6b5b279f55070e1d0}
-      \strng{authornamehash}{9ce56796a4b864e6b5b279f55070e1d0}
-      \strng{authorfullhash}{9ce56796a4b864e6b5b279f55070e1d0}
-      \strng{authorfullhashraw}{9ce56796a4b864e6b5b279f55070e1d0}
-      \field{sortinit}{P}
-      \field{sortinithash}{ff3bcf24f47321b42cb156c2cc8a8422}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{booktitle}{EGU General Assembly 2013}
-      \field{note}{Source code available at \url{https://github.com/UniMainzGeo/LaMEM}}
-      \field{title}{{LaMEM} ({L}ithosphere and {M}antle {E}volution {M}odel): advancing a staggered-grid finite difference version of the code}
-      \field{volume}{15}
-      \field{year}{2013}
-      \field{pages}{EGU2013\bibrangedash 7761}
-      \range{pages}{-1}
-    \endentry
     \entry{raissi_physics-informed_2019}{article}{}{}
       \name{author}{3}{}{%
         {{un=0,uniquepart=base,hash=a3194cb4f8e3959e569236521aa2fd86}{%
@@ -781,8 +740,8 @@
       \strng{namehash}{a17a0649dc8bad70026488d4ea37c508}
       \strng{fullhash}{a17a0649dc8bad70026488d4ea37c508}
       \strng{fullhashraw}{a17a0649dc8bad70026488d4ea37c508}
-      \strng{bibnamehash}{38cf3149596a29a18976b23d267bacc7}
-      \strng{authorbibnamehash}{38cf3149596a29a18976b23d267bacc7}
+      \strng{bibnamehash}{a17a0649dc8bad70026488d4ea37c508}
+      \strng{authorbibnamehash}{a17a0649dc8bad70026488d4ea37c508}
       \strng{authornamehash}{a17a0649dc8bad70026488d4ea37c508}
       \strng{authorfullhash}{a17a0649dc8bad70026488d4ea37c508}
       \strng{authorfullhashraw}{a17a0649dc8bad70026488d4ea37c508}
@@ -851,13 +810,11 @@
       \strng{authorfullhashraw}{9646a1b4d389d72c99612629368779bb}
       \field{sortinit}{R}
       \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
+      \field{labeldatesource}{nodate}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{abstract}{Computational Fluid Dynamics (CFD) simulation by the numerical solution of the Navier-Stokes equations is an essential tool in a wide range of applications from engineering design to climate modeling. However, the computational cost and memory demand required by CFD codes may become very high for ﬂows of practical interest, such as in aerodynamic shape optimization. This expense is associated with the complexity of the ﬂuid ﬂow governing equations, which include non-linear partial derivative terms that are of diﬃcult solution, leading to long computational times and limiting the number of hypotheses that can be tested during the process of iterative design. Therefore, we propose DeepCFD: a convolutional neural network (CNN) based model that eﬃciently approximates solutions for the problem of non-uniform steady laminar ﬂows. The proposed model is able to learn complete solutions of the Navier-Stokes equations, for both velocity and pressure ﬁelds, directly from ground-truth data generated using a state-of-the-art CFD code. Using DeepCFD, we found a speedup of up to 3 orders of magnitude compared to the standard CFD approach at a cost of low error rates.}
       \field{title}{{DeepCFD}: {Efficient} {Steady}-{State} {Laminar} {Flow} {Approximation} with {Deep} {Convolutional} {Neural} {Networks}}
-      \field{year}{2021}
       \verb{file}
       \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\TKMXS2V6\\Ribeiro et al. - DeepCFD Efficient Steady-State Laminar Flow Approximation with Deep Convolutional Neural Networks.pdf:application/pdf
       \endverb
@@ -889,8 +846,8 @@
       \strng{namehash}{3d4c01a9f24ed55aa7ac4f823428758a}
       \strng{fullhash}{3d4c01a9f24ed55aa7ac4f823428758a}
       \strng{fullhashraw}{3d4c01a9f24ed55aa7ac4f823428758a}
-      \strng{bibnamehash}{71fbc4b4f25ad70af4cc20f6dd43a0ce}
-      \strng{authorbibnamehash}{71fbc4b4f25ad70af4cc20f6dd43a0ce}
+      \strng{bibnamehash}{3d4c01a9f24ed55aa7ac4f823428758a}
+      \strng{authorbibnamehash}{3d4c01a9f24ed55aa7ac4f823428758a}
       \strng{authornamehash}{3d4c01a9f24ed55aa7ac4f823428758a}
       \strng{authorfullhash}{3d4c01a9f24ed55aa7ac4f823428758a}
       \strng{authorfullhashraw}{3d4c01a9f24ed55aa7ac4f823428758a}
@@ -935,8 +892,8 @@
       \strng{namehash}{f23ccc5160c62c7866172335b2c76e11}
       \strng{fullhash}{f23ccc5160c62c7866172335b2c76e11}
       \strng{fullhashraw}{f23ccc5160c62c7866172335b2c76e11}
-      \strng{bibnamehash}{9a497128db448eba9bbb6e27b1ed57ed}
-      \strng{authorbibnamehash}{9a497128db448eba9bbb6e27b1ed57ed}
+      \strng{bibnamehash}{f23ccc5160c62c7866172335b2c76e11}
+      \strng{authorbibnamehash}{f23ccc5160c62c7866172335b2c76e11}
       \strng{authornamehash}{f23ccc5160c62c7866172335b2c76e11}
       \strng{authorfullhash}{f23ccc5160c62c7866172335b2c76e11}
       \strng{authorfullhashraw}{f23ccc5160c62c7866172335b2c76e11}
@@ -1257,8 +1214,8 @@
       \strng{namehash}{3eb4caca77627499c1ad324de256a28a}
       \strng{fullhash}{3eb4caca77627499c1ad324de256a28a}
       \strng{fullhashraw}{3eb4caca77627499c1ad324de256a28a}
-      \strng{bibnamehash}{e9126b346c915c90ad7ffbfda14c5c8f}
-      \strng{authorbibnamehash}{e9126b346c915c90ad7ffbfda14c5c8f}
+      \strng{bibnamehash}{3eb4caca77627499c1ad324de256a28a}
+      \strng{authorbibnamehash}{3eb4caca77627499c1ad324de256a28a}
       \strng{authornamehash}{3eb4caca77627499c1ad324de256a28a}
       \strng{authorfullhash}{3eb4caca77627499c1ad324de256a28a}
       \strng{authorfullhashraw}{3eb4caca77627499c1ad324de256a28a}

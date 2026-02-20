@@ -46,12 +46,43 @@
 \tcbuselibrary{listings,skins}
 
 % ---- Literatur (BibLaTeX) ----
+%\usepackage[
+%    backend=biber,
+%    style=authoryear,
+%    maxbibnames=2,
+%    defernumbers=true
+%]{biblatex}
+%\addbibresource{references.bib}
+
+
 \usepackage[
     backend=biber,
     style=authoryear,
-    maxbibnames=2
+    maxbibnames=2,
+    defernumbers=true,
+    labelnumber=true % Erzeugt intern die Nummern trotz Autor-Jahr-Stil
 ]{biblatex}
 \addbibresource{references.bib}
+
+% --- Layout-Anpassung für Nummern im Verzeichnis ---
+\DeclareFieldFormat{labelnumberwidth}{\mkbibbrackets{#1}} % Nummern in [ ] setzen
+
+\defbibenvironment{bibliography}
+  {\list
+     {\printtext[labelnumberwidth]{%
+        \printfield{labelprefix}%
+        \printfield{labelnumber}}}
+     {\setlength{\labelwidth}{\labelnumberwidth}%
+      \setlength{\leftmargin}{\labelwidth}%
+      \setlength{\labelsep}{\biblabelsep}%
+      \addtolength{\leftmargin}{\labelsep}%
+      \setlength{\itemsep}{\bibitemsep}%
+      \setlength{\parsep}{\bibparsep}}%
+      \renewcommand*{\makelabel}[1]{##1\hss}}
+  {\endlist}
+  {\item}
+
+
 
 % ---- Zeilenabstand ----
 \usepackage{setspace}
