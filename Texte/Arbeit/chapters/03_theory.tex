@@ -14,10 +14,7 @@ structural properties in the context of flow-field prediction.
 \label{sec:stokes_flow}
 % ==========================================================
 
-Crystal settling in magmatic systems typically occurs at very low Reynolds
-numbers, where viscous forces dominate over inertial effects
-\parencite{happel_low_1991,stokes_mathematical_2009}. In this creeping-flow regime,
-the governing equations reduce to the incompressible Stokes equations
+Crystal settling in magmatic systems typically occurs at very low Reynolds numbers, where viscous forces dominate over inertial effects (Quellen suchen!). In this creeping-flow regime, the governing equations reduce to the incompressible Stokes equations
 \begin{equation}
 \mathbf{0} = -\nabla p + \mu \nabla^2 \mathbf{u} + \rho \mathbf{g},
 \qquad
@@ -34,7 +31,7 @@ and additive, such that the disturbance induced by one particle influences the
 flow field throughout the domain. These long-range interactions form the
 physical basis for collective sedimentation phenomena, including wake
 interaction, drafting--kissing--tumbling dynamics, and clustering effects
-\parencite{fortes_nonlinear_1987,ladd_numerical_1994,uhlmann_sedimentation_2014}.
+\parencite{add_numerical_nodate,uhlmann_sedimentation_2014}.
 
 In geophysical contexts, such interactions have been shown to strongly affect
 crystal settling rates and spatial distributions in magma chambers
@@ -64,11 +61,11 @@ u_z = -\frac{\partial \psi}{\partial x}.
 \end{equation}
 This transformation reduces the vector-valued velocity field to a single
 scalar potential and guarantees incompressibility by construction
-\parencite{happel_low_1991}.
+(Quelle!)
 
 The stream-function formulation has a long tradition in classical
 hydrodynamics, particularly for planar Stokes flow problems involving rigid
-inclusions and sedimentation \parencite{stokes_mathematical_2009}. Streamlines
+inclusions and sedimentation (Stokes Buch organisieren). Streamlines
 coincide with level sets of $\psi$, allowing qualitative flow features such as
 recirculation zones, wakes, and stagnation points to be identified directly.
 
@@ -111,7 +108,7 @@ physics. Instead, it constitutes an auxiliary transformation that maps the
 numerical reference solution into a representation that is more amenable to
 learning. Similar transformations are commonly used in classical fluid
 mechanics to analyze Stokes flow around particles and inclusions
-\parencite{happel_low_1991}.
+
 
 % ==========================================================
 \section{Learning Targets as Physically Motivated Inductive Biases}
@@ -120,7 +117,7 @@ mechanics to analyze Stokes flow around particles and inclusions
 
 From a machine-learning perspective, the choice of output representation
 introduces an implicit \emph{inductive bias}, i.e.\ a structural constraint on
-the space of functions that the model can represent \parencite{belkin_reconciling_2019}.
+the space of functions that the model can represent.
 In the context of surrogate modeling for incompressible flow, this choice
 strongly influences the degree to which physical structure must be learned
 from data rather than enforced analytically.
@@ -152,7 +149,7 @@ surrogate models \parencite{sun_surrogate_2020}.
 \label{sec:unet}
 % ==========================================================
 
-The U-Net \parencite{navab_u-net_2015} is an encoder--decoder convolutional neural
+The U-Net \parencite{onneberger_u-net_2015} is an encoder--decoder convolutional neural
 network originally developed for biomedical image segmentation. Its
 architecture consists of three principal components: a contracting encoder
 path, an expanding decoder path, and skip connections that bridge

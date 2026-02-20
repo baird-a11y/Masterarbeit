@@ -1,216 +1,87 @@
 \chapter{State of the Art}
 \label{ch:related}
 
-This chapter reviews recent developments in machine-learning-based surrogate 
-models for fluid dynamics, with a particular emphasis on incompressible Stokes 
-flow, flow–structure interaction, and neural architectures operating on 
-structured grids. While classical numerical methods remain the reference 
-standard in terms of physical fidelity, their computational cost often renders 
-large parameter studies infeasible. This limitation has motivated the growing 
-interest in data-driven surrogate models that aim to approximate solution 
-operators at a fraction of the computational expense.
+This chapter reviews recent developments in machine-learning-based surrogate models for fluid dynamics, with a particular emphasis on incompressible Stokes flow, flow–structure interaction, and neural architectures operating on structured grids. While classical numerical methods remain the reference standard in terms of physical fidelity, their computational cost often renders large parameter studies infeasible. This limitation has motivated the growing interest in data-driven surrogate models that aim to approximate solution operators at a fraction of the computational expense.
 
-The literature surveyed in this chapter provides the conceptual and 
-methodological foundation for the modeling choices made in this thesis. In 
-particular, it highlights both the opportunities and the limitations of 
-existing surrogate approaches when applied to problems involving complex, 
-geometry-dependent flow fields.
+The literature surveyed in this chapter provides the conceptual and methodological foundation for the modeling choices made in this thesis. In particular, it highlights both the opportunities and the limitations of existing surrogate approaches when applied to problems involving complex, geometry-dependent flow fields.
 
 % ----------------------------------------------------------------------
 \section{Deep Learning for Fluid Dynamics}
 
-Deep neural networks have emerged as powerful tools for approximating solutions 
-of partial differential equations, especially in fluid dynamics. Convolutional 
-neural networks (CNNs) and encoder–decoder architectures such as the U-Net have 
-proven particularly effective for mapping geometric input fields to structured 
-solution fields \parencite{navab_u-net_2015,thuerey_deep_2020}. Their success can be 
-attributed to a combination of local feature extraction, multiscale 
-representation, and translation-invariant convolutional operators.
+Deep neural networks have emerged as powerful tools for approximating solutions of partial differential equations, especially in fluid dynamics. Convolutional neural networks (CNNs) and encoder–decoder architectures such as the U-Net have proven particularly effective for mapping geometric input fields to structured solution fields \parencite{ronneberger_u-net_2015,thuerey_deep_2020}. Their success can be attributed to a combination of local feature extraction, multiscale representation, and translation-invariant convolutional operators.
 
-Early studies on CNN-based surrogates for steady laminar flows demonstrated 
-that these models can reproduce high-fidelity Navier--Stokes or Stokes 
-solutions with speed-ups of several orders of magnitude compared to 
-traditional solvers, while maintaining acceptable accuracy 
-\parencite{ribeiro_deepcfd_nodate,chen_u-net_nodate}. These results established deep 
-learning as a viable surrogate modeling strategy for computational fluid 
-dynamics.
+Early studies on CNN-based surrogates for steady laminar flows demonstrated that these models can reproduce high-fidelity Navier--Stokes or Stokes solutions with speed-ups of several orders of magnitude compared to traditional solvers, while maintaining acceptable accuracy \parencite{ribeiro_deepcfd_nodate,chen_u-net_nodate}. These results established deep learning as a viable surrogate modeling strategy for computational fluid dynamics.
 
-Subsequent work extended these approaches to more complex geometries and 
-boundary conditions. In particular, scalable U-Net variants for flow 
-prediction in multi-obstacle environments showed that multiscale 
-encoder–decoder architectures with skip connections are well suited for 
-problems that require simultaneous resolution of sharp boundary layers and 
-global flow structures \parencite{thuerey_deep_2020}. This combination of local and 
-global context is directly relevant for multi-crystal sedimentation, where 
-localized wake structures around individual crystals interact with 
-domain-scale circulation patterns.
+Subsequent work extended these approaches to more complex geometries and boundary conditions. In particular, scalable U-Net variants for flow prediction in multi-obstacle environments showed that multiscale encoder–decoder architectures with skip connections are well suited for problems that require simultaneous resolution of sharp boundary layers and global flow structures \parencite{thuerey_deep_2020}. This combination of local and global context is directly relevant for multi-crystal sedimentation, where localized wake structures around individual crystals interact with domain-scale circulation patterns.
 
 % ----------------------------------------------------------------------
 \section{Physics-Informed and Hybrid Approaches}
 
-Physics-Informed Neural Networks (PINNs) aim to incorporate physical knowledge 
-directly into the learning process by augmenting the loss function with 
-residuals of the governing partial differential equations 
-\parencite{raissi_physics-informed_2019}. Rather than relying exclusively on paired 
-input–output data, PINNs enforce approximate satisfaction of the underlying 
-equations at collocation points within the computational domain. For 
-incompressible flow, this typically involves penalizing the momentum equations 
-together with the divergence-free constraint \parencite{jin_nsfnets_2021}.
+Physics-Informed Neural Networks (PINNs) aim to incorporate physical knowledge directly into the learning process by augmenting the loss function with residuals of the governing partial differential equations \parencite{raissi_physics-informed_2019}. Rather than relying exclusively on paired input–output data, PINNs enforce approximate satisfaction of the underlying equations at collocation points within the computational domain. For incompressible flow, this typically involves penalizing the momentum equations together with the divergence-free constraint \parencite{jin_nsfnets_2021}.
 
-Hybrid extensions of this idea include geometry-aware PINNs, which embed 
-geometric information through distance functions or latent representations to 
-improve learning on irregular domains \parencite{oldenburg_geometry_2022}. While 
-these approaches can enhance physical consistency, they often introduce 
-additional challenges. In practice, PINNs and hybrid formulations tend to be 
-sensitive to the relative weighting of loss terms, exhibit slow convergence, 
-and incur significant computational overhead due to repeated evaluation of 
-spatial derivatives.
+Hybrid extensions of this idea include geometry-aware PINNs, which embed geometric information through distance functions or latent representations to improve learning on irregular domains \parencite{oldenburg_geometry_2022}. While these approaches can enhance physical consistency, they often introduce additional challenges. In practice, PINNs and hybrid formulations tend to be sensitive to the relative weighting of loss terms, exhibit slow convergence, and incur significant computational overhead due to repeated evaluation of spatial derivatives.
 
-These difficulties become particularly pronounced for creeping Stokes flow 
-with multiple rigid inclusions, where sharp gradients near particle boundaries 
-coexist with long-range hydrodynamic interactions. For this reason, the 
-present thesis does not adopt a full physics-informed formulation. Instead, 
-physical structure is incorporated implicitly through the choice of target 
-representation, most notably by predicting the stream function $\psi$, which 
-enforces incompressibility by construction while retaining the efficiency of a 
-purely data-driven training procedure.
+These difficulties become particularly pronounced for creeping Stokes flow with multiple rigid inclusions, where sharp gradients near particle boundaries coexist with long-range hydrodynamic interactions. For this reason, the present thesis does not adopt a full physics-informed formulation. Instead, physical structure is incorporated implicitly through the choice of target representation, most notably by predicting the stream function $\psi$, which enforces incompressibility by construction while retaining the efficiency of a purely data-driven training procedure.
 
 % ----------------------------------------------------------------------
 \section{Neural Operators and Generalization Across Geometries}
 
-Neural operators seek to learn mappings between function spaces rather than
-between individual solution instances. In contrast to classical surrogate
-models, which approximate a solution for a fixed discretization or geometry,
-neural operators aim to approximate the underlying solution operator itself.
+Neural operators seek to learn mappings between function spaces rather than between individual solution instances. In contrast to classical surrogate models, which approximate a solution for a fixed discretization or geometry, neural operators aim to approximate the underlying solution operator itself.
 
-A particularly prominent representative is the Fourier Neural Operator (FNO)
-proposed by \textcite{li_fourier_2021}. The FNO parameterizes integral kernel
-operators in the spectral domain by applying the Fast Fourier Transform,
-learning a truncated set of Fourier coefficients at each layer. This
-architecture offers two key advantages: first, it captures global, long-range
-dependencies in a single layer—a property that is naturally suited for
-problems governed by elliptic operators such as the Stokes equations; second,
-it achieves discretization invariance, meaning that a model trained on one
-grid resolution can, in principle, be evaluated on a different resolution
-without retraining. FNOs have demonstrated strong performance on benchmark
-PDE problems including Darcy flow, Burgers' equation, and two-dimensional
-Navier--Stokes turbulence \parencite{li_fourier_2021}.
+A particularly prominent representative is the Fourier Neural Operator (FNO) proposed by \textcite{li_fourier_2021}. The FNO parameterizes integral kernel operators in the spectral domain by applying the Fast Fourier Transform, learning a truncated set of Fourier coefficients at each layer. This architecture offers two key advantages: first, it captures global, long-range dependencies in a single layer—a property that is naturally suited for problems governed by elliptic operators such as the Stokes equations; second, it achieves discretization invariance, meaning that a model trained on one grid resolution can, in principle, be evaluated on a different resolution without retraining. FNOs have demonstrated strong performance on benchmark PDE problems including Darcy flow, Burgers' equation, and two-dimensional Navier--Stokes turbulence \parencite{li_fourier_2021}.
 
-More broadly, convolution-based neural operators on structured grids have
-demonstrated the ability to generalize across variations in material
-parameters, forcing terms, and boundary conditions
-\parencite{thuerey_deep_2020}. These properties make neural operators appealing
-candidates for surrogate modeling in multiphase flow problems.
+More broadly, convolution-based neural operators on structured grids have demonstrated the ability to generalize across variations in material parameters, forcing terms, and boundary conditions \parencite{thuerey_deep_2020}. These properties make neural operators appealing candidates for surrogate modeling in multiphase flow problems.
 
-However, most existing studies focus on flows in relatively regular domains
-or on smoothly varying geometries. Applications to systems with many
-interacting rigid inclusions—such as sedimenting crystals with strong
-hydrodynamic coupling—remain scarce. In particular, the question of whether
-learned operators can generalize across changes in topological complexity,
-such as varying particle numbers ($1 \ldots N$), has not been systematically
-addressed. This gap is especially relevant for geophysical sedimentation
-problems, where the number and spatial arrangement of crystals are inherently
-variable.
+However, most existing studies focus on flows in relatively regular domains or on smoothly varying geometries. Applications to systems with many interacting rigid inclusions—such as sedimenting crystals with strong
+hydrodynamic coupling—remain scarce. In particular, the question of whether learned operators can generalize across changes in topological complexity, such as varying particle numbers ($1 \ldots N$), has not been systematically addressed. This gap is especially relevant for geophysical sedimentation problems, where the number and spatial arrangement of crystals are inherently variable.
 
 % ----------------------------------------------------------------------
 \section{Machine Learning for Particle- and Crystal-Laden Flows}
 
-Fluid–particle interaction has long been an active area of research in 
-classical computational fluid dynamics. Fully resolved numerical approaches, 
-including lattice Boltzmann, immersed boundary, and fictitious-domain methods, 
-have been used to study drafting–kissing–tumbling dynamics, clustering, and 
-collective settling behavior in particulate flows 
-\parencite{fortes_nonlinear_1987,ladd_numerical_1994,leonardi_coupled_2014}. These 
-methods provide detailed physical insight but are computationally expensive, 
-particularly as the number of particles increases.
+Fluid–particle interaction has long been an active area of research in classical computational fluid dynamics. Fully resolved numerical approaches, including lattice Boltzmann, immersed boundary, and fictitious-domain methods, have been used to study drafting–kissing–tumbling dynamics, clustering, and collective settling behavior in particulate flows \parencite{ladd_numerical_nodate,leonardi_coupled_2014}. These 
+methods provide detailed physical insight but are computationally expensive, particularly as the number of particles increases.
 
-Machine-learning-based surrogates for particle- or crystal-laden flows are 
-only beginning to emerge. Existing studies primarily focus on learning reduced 
-quantities, such as drag corrections, closure terms, or accelerations within 
-coupled CFD–DEM frameworks. In contrast, surrogate models that directly map 
-multi-particle geometric configurations to full flow fields remain largely 
-unexplored, especially in the low-Reynolds-number regime characteristic of 
-magmatic systems.
+Machine-learning-based surrogates for particle- or crystal-laden flows are only beginning to emerge. Existing studies primarily focus on learning reduced quantities, such as drag corrections, closure terms, or accelerations within coupled CFD–DEM frameworks. In contrast, surrogate models that directly map multi-particle geometric configurations to full flow fields remain largely unexplored, especially in the low-Reynolds-number regime characteristic of magmatic systems.
 
-This lack of full-field surrogates represents a significant limitation for 
-applications where detailed spatial information is required, for example to 
-analyze wake interactions, boundary-layer structures, or the emergence of 
+This lack of full-field surrogates represents a significant limitation for applications where detailed spatial information is required, for example to analyze wake interactions, boundary-layer structures, or the emergence of 
 collective sedimentation patterns.
 
 % ----------------------------------------------------------------------
 \section{Comparison of Network Paradigms for Flow-Field Surrogates}
 
-A wide range of machine-learning architectures has been proposed for 
-approximating solutions of partial differential equations. For flow-field 
-prediction problems, three paradigms are particularly relevant: 
-coordinate-based implicit models, linear reduced-order models, and grid-based 
-convolutional architectures.
+A wide range of machine-learning architectures has been proposed for approximating solutions of partial differential equations. For flow-field prediction problems, three paradigms are particularly relevant: coordinate-based implicit models, linear reduced-order models, and grid-based convolutional architectures.
 
 \subsection{Coordinate-Based Implicit Models}
 
-Coordinate-based neural networks represent physical fields as continuous 
-functions of spatial coordinates. These models can achieve high accuracy and 
-produce smooth reconstructions on fixed geometries. However, explicitly 
-encoding complex and variable geometries within coordinate-based 
-representations remains challenging. Extending such approaches to systems 
-with multiple interacting inclusions typically requires substantial redesign 
-of the input representation, limiting their scalability across varying 
-particle numbers.
+Coordinate-based neural networks represent physical fields as continuous functions of spatial coordinates. These models can achieve high accuracy and produce smooth reconstructions on fixed geometries. However, explicitly 
+encoding complex and variable geometries within coordinate-based representations remains challenging. Extending such approaches to systems with multiple interacting inclusions typically requires substantial redesign 
+of the input representation, limiting their scalability across varying particle numbers.
 
 \subsection{Linear Reduced-Order Models}
 
-Linear reduced-order models, such as Proper Orthogonal Decomposition or 
-Principal Component Analysis, project high-dimensional flow fields onto a 
-small number of dominant modes. While computationally efficient and 
-interpretable, their linear nature fundamentally restricts their ability to 
-capture nonlinear flow–geometry interactions. This limitation is particularly 
-severe for multi-crystal Stokes flow, where wake interactions and boundary-layer 
-effects play a central role.
+Linear reduced-order models, such as Proper Orthogonal Decomposition or Principal Component Analysis, project high-dimensional flow fields onto a small number of dominant modes. While computationally efficient and 
+interpretable, their linear nature fundamentally restricts their ability to capture nonlinear flow–geometry interactions. This limitation is particularly severe for multi-crystal Stokes flow, where wake interactions and boundary-layer effects play a central role.
 
 \subsection{Grid-Based Convolutional Surrogates}
 
-Grid-based convolutional neural networks operate directly on structured
-meshes and are therefore well suited for problems in which both inputs and
-outputs are defined on regular grids. U-Net architectures combine local feature
-extraction with global context through their encoder–decoder structure and
-skip connections \parencite{navab_u-net_2015}. A key advantage of this paradigm is
-its geometry-agnostic input representation: masks and distance fields can
-encode an arbitrary number of inclusions without requiring architectural
-modifications.
+Grid-based convolutional neural networks operate directly on structured meshes and are therefore well suited for problems in which both inputs and outputs are defined on regular grids. U-Net architectures combine local feature extraction with global context through their encoder–decoder structure and skip connections \parencite{ronneberger_u-net_2015}. A key advantage of this paradigm is its geometry-agnostic input representation: masks and distance fields can encode an arbitrary number of inclusions without requiring architectural modifications.
 
-Previous studies demonstrate that CNN-based surrogates can generalize
-effectively across variable geometries and boundary conditions
-\parencite{thuerey_deep_2020}. These properties make grid-based convolutional models
+Previous studies demonstrate that CNN-based surrogates can generalize effectively across variable geometries and boundary conditions \parencite{thuerey_deep_2020}. These properties make grid-based convolutional models
 particularly attractive for multi-crystal sedimentation problems.
 
 \subsection{Spectral Neural Operators}
 
-Fourier Neural Operators \parencite{li_fourier_2021} constitute an alternative
-grid-based paradigm that operates in the spectral rather than the spatial
-domain. Instead of learning localized convolutional kernels, FNOs learn
-global kernel functions parameterized by their Fourier coefficients. This
-spectral perspective provides inherent access to long-range correlations
-within a single network layer, which is advantageous for elliptic problems
+Fourier Neural Operators \parencite{li_fourier_2021} constitute an alternative grid-based paradigm that operates in the spectral rather than the spatial domain. Instead of learning localized convolutional kernels, FNOs learn
+global kernel functions parameterized by their Fourier coefficients. This spectral perspective provides inherent access to long-range correlations within a single network layer, which is advantageous for elliptic problems
 where local perturbations propagate throughout the entire domain.
 
-A potential limitation of the standard FNO architecture is its reliance on
-low-frequency Fourier modes: the truncation of high-frequency coefficients
-may reduce accuracy near sharp interfaces such as crystal boundaries, where
-steep velocity gradients require high-frequency content. How this trade-off
-affects predictive performance in multi-crystal Stokes flow is one of the
-central questions investigated in this thesis.
+A potential limitation of the standard FNO architecture is its reliance on low-frequency Fourier modes: the truncation of high-frequency coefficients may reduce accuracy near sharp interfaces such as crystal boundaries, where
+steep velocity gradients require high-frequency content. How this trade-off affects predictive performance in multi-crystal Stokes flow is one of the central questions investigated in this thesis.
 
 \subsection{Implications for This Work}
 
-The comparison of these paradigms reveals a trade-off between accuracy,
-geometric flexibility, and scalability. Coordinate-based implicit models
-excel on fixed geometries, and linear reduced-order models offer
-interpretability, but neither scales naturally to variable multi-inclusion
-configurations. Among grid-based approaches, U-Net and FNO architectures
-represent two complementary strategies: U-Nets capture multiscale spatial
-features through hierarchical encoder–decoder processing, while FNOs
-capture global structure through spectral convolutions. Comparing these two
-paradigms on the same multi-crystal Stokes flow problem constitutes a core
+The comparison of these paradigms reveals a trade-off between accuracy, geometric flexibility, and scalability. Coordinate-based implicit models excel on fixed geometries, and linear reduced-order models offer interpretability, but neither scales naturally to variable multi-inclusion configurations. Among grid-based approaches, U-Net and FNO architectures represent two complementary strategies: U-Nets capture multiscale spatial
+features through hierarchical encoder–decoder processing, while FNOs capture global structure through spectral convolutions. Comparing these two paradigms on the same multi-crystal Stokes flow problem constitutes a core
 contribution of this thesis.
 
 % ----------------------------------------------------------------------
@@ -225,8 +96,5 @@ Based on the reviewed literature, four key gaps can be identified:
     \item No direct comparison of spatial (U-Net) and spectral (FNO) architectures for surrogate modeling of particle-laden Stokes flow with variable geometry.
 \end{enumerate}
 
-This thesis addresses these gaps by constructing a dataset of multi-crystal
-Stokes simulations, predicting the stream function $\psi$ as a physically
-structured learning target, and systematically comparing U-Net and FNO
-architectures with respect to generalization performance across varying
-crystal numbers and geometric configurations.
+This thesis addresses these gaps by constructing a dataset of multi-crystal Stokes simulations, predicting the stream function $\psi$ as a physically structured learning target, and systematically comparing U-Net and FNO
+architectures with respect to generalization performance across varying crystal numbers and geometric configurations.

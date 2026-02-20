@@ -58,7 +58,7 @@
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{abstract}{Machine learning is a popular tool that is being applied to many domains, from computer vision to natural language processing. It is not long ago that its use was extended to physics, but its capabilities remain to be accurately contoured. In this paper, we are interested in the prediction of 2D velocity and pressure ﬁelds around arbitrary shapes in laminar ﬂows using supervised neural networks. To this end, a dataset composed of random shapes is built using B´ezier curves, each shape being labeled with its pressure and velocity ﬁelds by solving Navier-Stokes equations using a CFD solver. Then, several U-net architectures are trained on the latter dataset, and their predictive eﬃciency is assessed on unseen shapes, using ad hoc error functions.}
-      \field{title}{U-net architectures for fast prediction in fluid mechanics}
+      \field{title}{U-net architectures for fast prediction of incompressible laminar flows}
       \field{year}{2019}
       \verb{file}
       \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\WM2CL78Q\\Chen et al. - U-net architectures for fast prediction in fluid mechanics.pdf:application/pdf
@@ -1291,13 +1291,8 @@
       \endverb
     \endentry
   \enddatalist
-  \missing{belkin_reconciling_2019}
-  \missing{fortes_nonlinear_1987}
-  \missing{happel_low_1991}
-  \missing{ladd_numerical_1994}
-  \missing{luo_cfdbench_2023}
-  \missing{navab_u-net_2015}
-  \missing{stokes_mathematical_2009}
+  \missing{add_numerical_nodate}
+  \missing{onneberger_u-net_2015}
 \endrefsection
 \endinput
 

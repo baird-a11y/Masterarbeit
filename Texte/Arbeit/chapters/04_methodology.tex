@@ -83,7 +83,7 @@ randomized positions. The number of crystals $N$ is drawn uniformly from
 $\{1,\ldots,N_{\max}\}$ to expose the surrogate to a broad range of interaction
 regimes, from isolated single-crystal wakes to strongly interacting clusters.
 Such multi-particle interaction effects are well documented in classical
-sedimentation studies \parencite{fortes_nonlinear_1987,ladd_numerical_1994} and
+sedimentation studies \parencite{ladd_numerical_nodate} and
 motivate an explicit evaluation of generalization across particle number.
 Randomization is performed independently for each simulation run, such that
 the training distribution samples a diverse subset of the configuration space.
@@ -136,8 +136,7 @@ equation
 \Delta\psi=-\omega
 \]
 on the same $256\times256$ grid. Reconstructing $\psi$ via a Poisson problem
-is standard in two-dimensional incompressible low-Reynolds-number flow theory
-\parencite{happel_low_1991}. In the present workflow, this Poisson solve is used
+is standard in two-dimensional incompressible low-Reynolds-number flow theory. In the present workflow, this Poisson solve is used
 only to define a physically consistent scalar learning target; the underlying
 reference solution remains the LaMEM Stokes solution.
 
@@ -255,7 +254,7 @@ describes the specific configurations used in the experiments.
 \label{sec:unet_architecture}
 
 The U-Net follows the encoder--decoder principle of the original architecture
-\parencite{navab_u-net_2015} and common adaptations for laminar flow-field
+\parencite{ronneberger_u-net_2015} and common adaptations for laminar flow-field
 prediction on Cartesian grids \parencite{thuerey_deep_2020,chen_u-net_nodate}.
 
 \paragraph{Encoder.}
@@ -397,7 +396,7 @@ Errors are grouped by the number of crystals in the test sample
 ($1\ldots N_{\max}$), enabling direct assessment of how prediction quality
 changes as hydrodynamic interactions become more complex. The use of MSE and
 relative norms follows common practice in benchmarking data-driven CFD
-surrogates \parencite{luo_cfdbench_2023}. The same evaluation framework is applied
+surrogates. The same evaluation framework is applied
 identically to both U-Net and FNO predictions, ensuring that all reported
 differences reflect architectural properties rather than evaluation
 artifacts.
