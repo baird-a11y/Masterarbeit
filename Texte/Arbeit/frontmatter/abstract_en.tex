@@ -32,13 +32,12 @@ data-driven velocity surrogates.
 Training data are generated using the \textsc{LaMEM} geodynamic finite-element
 code, providing steady-state incompressible Stokes solutions for configurations
 of $1$ to $N_{\max}$ randomly placed rigid circular crystals on a fixed
-$256 \times 256$ grid. A systematic hyperparameter study for single-crystal
-configurations identifies an effective U-Net training setup achieving a relative
-$L_2$ error of approximately $2.1\,\%$ on the stream function. Evaluation on
-two-crystal configurations reveals a systematic increase in mean error to
-approximately $7.6\,\%$, accompanied by substantially higher variance, indicating
-that hydrodynamic interaction complexity introduces geometry-dependent prediction
-difficulty. Gradient-derived velocity quantities prove consistently harder to
+$256 \times 256$ grid. 
+
+Siehe Anmerkung in der deutschen Zusammenfassung bezüglich genauer Zahlen, die ich noch einpflegen muss sobald ich die Versuche gemacht habe.
+
+
+Gradient-derived velocity quantities prove consistently harder to
 reproduce than $\psi$ itself, with relative errors roughly an order of magnitude
 larger, reflecting the amplification of residuals under numerical differentiation.
 Error diagnostics further show that prediction difficulty increases near crystal
