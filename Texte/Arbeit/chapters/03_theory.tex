@@ -14,7 +14,7 @@ structural properties in the context of flow-field prediction.
 \label{sec:stokes_flow}
 % ==========================================================
 
-Crystal settling in magmatic systems typically occurs at very low Reynolds numbers, where viscous forces dominate over inertial effects (Quellen suchen!). In this creeping-flow regime, the governing equations reduce to the incompressible Stokes equations
+Crystal settling in magmatic systems typically occurs at very low Reynolds numbers, where viscous forces dominate over inertial effects \parencite{martin_crystal_1988,ladd_numerical_nodate}. In this creeping-flow regime, the governing equations reduce to the incompressible Stokes equations
 \begin{equation}
 \mathbf{0} = -\nabla p + \mu \nabla^2 \mathbf{u} + \rho \mathbf{g},
 \qquad
@@ -31,7 +31,7 @@ and additive, such that the disturbance induced by one particle influences the
 flow field throughout the domain. These long-range interactions form the
 physical basis for collective sedimentation phenomena, including wake
 interaction, drafting--kissing--tumbling dynamics, and clustering effects
-\parencite{add_numerical_nodate,uhlmann_sedimentation_2014}.
+\parencite{ladd_numerical_nodate,uhlmann_sedimentation_2014}.
 
 In geophysical contexts, such interactions have been shown to strongly affect
 crystal settling rates and spatial distributions in magma chambers
@@ -60,12 +60,14 @@ u_x = \frac{\partial \psi}{\partial z},
 u_z = -\frac{\partial \psi}{\partial x}.
 \end{equation}
 This transformation reduces the vector-valued velocity field to a single
-scalar potential and guarantees incompressibility by construction
-(Quelle!)
+scalar potential and guarantees incompressibility by construction.
+% TODO: Klassische Fluid-Mechanik-Referenz ergänzen, z.\,B. Batchelor (1967) ``An Introduction to Fluid Dynamics'' oder Kim \& Karrila (1991) ``Microhydrodynamics'' -- noch nicht in references.bib
 
 The stream-function formulation has a long tradition in classical
 hydrodynamics, particularly for planar Stokes flow problems involving rigid
-inclusions and sedimentation (Stokes Buch organisieren). Streamlines
+inclusions and sedimentation \parencite{ladd_numerical_nodate,uhlmann_sedimentation_2014}.
+% TODO: Lehrbuch-Referenz ergänzen, z.\,B. Kim \& Karrila (1991) ``Microhydrodynamics'' -- noch nicht in references.bib
+Streamlines
 coincide with level sets of $\psi$, allowing qualitative flow features such as
 recirculation zones, wakes, and stagnation points to be identified directly.
 
@@ -107,7 +109,8 @@ It is important to emphasize that this Poisson solve does not introduce new
 physics. Instead, it constitutes an auxiliary transformation that maps the
 numerical reference solution into a representation that is more amenable to
 learning. Similar transformations are commonly used in classical fluid
-mechanics to analyze Stokes flow around particles and inclusions
+mechanics to analyze Stokes flow around particles and inclusions \parencite{ladd_numerical_nodate}.
+% TODO: Ggf. Lehrbuch-Referenz ergänzen (Pozrikidis 1992 ``A Practical Guide to Boundary Element Methods'' o.\,ä.) -- noch nicht in references.bib
 
 
 % ==========================================================
@@ -133,7 +136,10 @@ Predicting the stream function $\psi$ introduces a stronger inductive bias by
 restricting the hypothesis space to divergence-free velocity fields by
 construction. This approach is conceptually related to divergence-free neural
 representations proposed in the context of physics-informed and
-structure-preserving learning \parencite{richter-powell_neural_nodate}. By reducing
+structure-preserving learning \parencite{richter-powell_neural_nodate}, and is
+consistent with the neural operator framework \parencite{kovachki_neural_nodate}
+that views surrogate models as approximations of solution operators on
+function spaces. By reducing
 the effective degrees of freedom of the output, the learning problem is
 simplified and numerical conditioning can be improved.
 
@@ -149,7 +155,7 @@ surrogate models \parencite{sun_surrogate_2020}.
 \label{sec:unet}
 % ==========================================================
 
-The U-Net \parencite{onneberger_u-net_2015} is an encoder--decoder convolutional neural
+The U-Net \parencite{ronneberger_u-net_2015} is an encoder--decoder convolutional neural
 network originally developed for biomedical image segmentation. Its
 architecture consists of three principal components: a contracting encoder
 path, an expanding decoder path, and skip connections that bridge
@@ -249,7 +255,7 @@ surrogate modeling task considered in this work:
     introduces an implicit smoothness prior. While this favors the
     representation of large-scale flow structures, it may limit accuracy near
     sharp interfaces such as crystal boundaries, where high-frequency content
-    is physically significant.
+    is physically significant \parencite{qin_toward_2024}.
     \item \textbf{Discretization invariance.} Because the FNO operates on
     continuous function representations via their Fourier coefficients, a model
     trained on one grid resolution can, in principle, be evaluated on a

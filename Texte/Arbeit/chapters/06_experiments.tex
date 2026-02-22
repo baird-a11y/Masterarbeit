@@ -1,6 +1,29 @@
 % ----------------------------------------------------------------------------
 % Chapter 6: Experiments
 % ----------------------------------------------------------------------------
+%
+% ============================================================
+% QUELLENVORSCHLÄGE FÜR DIESES KAPITEL
+% ============================================================
+% Experimentelles Setup / Hyperparameter:
+%   \parencite{thuerey_deep_2020}            -- Referenz für typische U-Net-Trainingsparameter
+%   \parencite{li_fourier_2021}              -- FNO-Hyperparameter (k_max, d_v, Schichtanzahl)
+%   \parencite{margenberg_structure_2021}    -- Vergleichspunkt für Neural-Multigrid-Setup
+%
+% Fehlermetriken (MSE, relL2, Exceedance Fractions):
+%   \parencite{takamoto_pdebench_nodate}     -- PDEBench: Standard-Metriken für PDE-Surrogate
+%   \parencite{lu_comprehensive_2022}        -- Faire Vergleichsmethodik für Neural Operators
+%   \parencite{morimoto_generalization_2022} -- Stratifizierung von Fehlern nach Geometriekomplexität
+%
+% Lernaufgabe / Stream-Function als Lernziel:
+%   \parencite{richter-powell_neural_nodate} -- Divergenzfreiheit durch Output-Repräsentation
+%   \parencite{ribeiro_deepcfd_nodate}       -- MSE-Verlust auf normalisiertem Strömungsfeld
+%
+% Mehrkristall-Generalisierung:
+%   \parencite{rana_scalable_2024}               -- Generalisierung auf mehr Hindernisse als im Training
+%   \parencite{sanchez-gonzalez_learning_nodate} -- Interaktionsregime in Mehrteilchensystemen
+% ============================================================
+%
 \chapter{Experiments}
 \label{ch:experiments}
 

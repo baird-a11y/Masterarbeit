@@ -394,12 +394,14 @@ Primary evaluation metrics include:
 
 Errors are grouped by the number of crystals in the test sample
 ($1\ldots N_{\max}$), enabling direct assessment of how prediction quality
-changes as hydrodynamic interactions become more complex. The use of MSE and
-relative norms follows common practice in benchmarking data-driven CFD
-surrogates. The same evaluation framework is applied
-identically to both U-Net and FNO predictions, ensuring that all reported
-differences reflect architectural properties rather than evaluation
-artifacts.
+changes as hydrodynamic interactions become more complex—an approach motivated
+by generalization studies that stratify performance across geometric complexity
+\parencite{morimoto_generalization_2022}. The use of MSE and relative norms follows
+common practice in benchmarking data-driven CFD surrogates
+\parencite{takamoto_pdebench_nodate,lu_comprehensive_2022}. The same evaluation
+framework is applied identically to both U-Net and FNO predictions, ensuring
+that all reported differences reflect architectural properties rather than
+evaluation artifacts.
 
 % ==========================================================
 \section{Summary}

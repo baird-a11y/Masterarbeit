@@ -64,6 +64,134 @@
       \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\WM2CL78Q\\Chen et al. - U-net architectures for fast prediction in fluid mechanics.pdf:application/pdf
       \endverb
     \endentry
+    \entry{guo_convolutional_2016}{inproceedings}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=755a7561cf689c79634b3b170450d6b1}{%
+           family={Guo},
+           familyi={G\bibinitperiod},
+           given={Xiaoxiao},
+           giveni={X\bibinitperiod},
+           givenun=0}}%
+        {{un=1,uniquepart=given,hash=be6f1b6df7f1ddfafad18806238fa391}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Wei},
+           giveni={W\bibinitperiod},
+           givenun=1}}%
+        {{un=0,uniquepart=base,hash=c350cfa864ebb4ef1bb4f5d98d3d81b3}{%
+           family={Iorio},
+           familyi={I\bibinitperiod},
+           given={Francesco},
+           giveni={F\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \list{location}{1}{%
+        {San Francisco California USA}%
+      }
+      \list{publisher}{1}{%
+        {ACM}%
+      }
+      \strng{namehash}{5776f790e1ef156ec9c05d44d092b81d}
+      \strng{fullhash}{5776f790e1ef156ec9c05d44d092b81d}
+      \strng{fullhashraw}{5776f790e1ef156ec9c05d44d092b81d}
+      \strng{bibnamehash}{bc94d8e68aa86b665b0629246ec6c16c}
+      \strng{authorbibnamehash}{bc94d8e68aa86b665b0629246ec6c16c}
+      \strng{authornamehash}{5776f790e1ef156ec9c05d44d092b81d}
+      \strng{authorfullhash}{5776f790e1ef156ec9c05d44d092b81d}
+      \strng{authorfullhashraw}{5776f790e1ef156ec9c05d44d092b81d}
+      \field{sortinit}{G}
+      \field{sortinithash}{32d67eca0634bf53703493fb1090a2e8}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{In aerodynamics related design, analysis and optimization problems, ﬂow ﬁelds are simulated using computational ﬂuid dynamics (CFD) solvers. However, CFD simulation is usually a computationally expensive, memory demanding and time consuming iterative process. These drawbacks of CFD limit opportunities for design space exploration and forbid interactive design. We propose a general and ﬂexible approximation model for real-time prediction of non-uniform steady laminar ﬂow in a 2D or 3D domain based on convolutional neural networks (CNNs). We explored alternatives for the geometry representation and the network architecture of CNNs. We show that convolutional neural networks can estimate the velocity ﬁeld two orders of magnitude faster than a GPU-accelerated CFD solver and four orders of magnitude faster than a CPU-based CFD solver at a cost of a low error rate. This approach can provide immediate feedback for real-time design iterations at the early stage of design. Compared with existing approximation models in the aerodynamics domain, CNNs enable an eﬃcient estimation for the entire velocity ﬁeld. Furthermore, designers and engineers can directly apply the CNN approximation model in their design space exploration algorithms without training extra lower-dimensional surrogate models.}
+      \field{booktitle}{Proceedings of the 22nd {ACM} {SIGKDD} {International} {Conference} on {Knowledge} {Discovery} and {Data} {Mining}}
+      \field{isbn}{978-1-4503-4232-2}
+      \field{month}{8}
+      \field{title}{Convolutional {Neural} {Networks} for {Steady} {Flow} {Approximation}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{year}{2016}
+      \field{urldateera}{ce}
+      \field{pages}{481\bibrangedash 490}
+      \range{pages}{10}
+      \verb{doi}
+      \verb 10.1145/2939672.2939738
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\39AMKNFU\\Guo et al. - 2016 - Convolutional Neural Networks for Steady Flow Approximation.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://dl.acm.org/doi/10.1145/2939672.2939738
+      \endverb
+      \verb{url}
+      \verb https://dl.acm.org/doi/10.1145/2939672.2939738
+      \endverb
+    \endentry
+    \entry{hu_applying_2023}{article}{}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=d0405df1fad2d3b036115afd2719b469}{%
+           family={Hu},
+           familyi={H\bibinitperiod},
+           given={Beichao},
+           giveni={B\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=8e843f54363669708d740632566a44c5}{%
+           family={McDaniel},
+           familyi={M\bibinitperiod},
+           given={Dwayne},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{541cdfcc3cd64ec9f49dae8a947fc332}
+      \strng{fullhash}{541cdfcc3cd64ec9f49dae8a947fc332}
+      \strng{fullhashraw}{541cdfcc3cd64ec9f49dae8a947fc332}
+      \strng{bibnamehash}{541cdfcc3cd64ec9f49dae8a947fc332}
+      \strng{authorbibnamehash}{541cdfcc3cd64ec9f49dae8a947fc332}
+      \strng{authornamehash}{541cdfcc3cd64ec9f49dae8a947fc332}
+      \strng{authorfullhash}{541cdfcc3cd64ec9f49dae8a947fc332}
+      \strng{authorfullhashraw}{541cdfcc3cd64ec9f49dae8a947fc332}
+      \field{sortinit}{H}
+      \field{sortinithash}{23a3aa7c24e56cfa16945d55545109b5}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{In recent years, Physics-Informed Neural Networks (PINNs) have drawn great interest among researchers as a tool to solve computational physics problems. Unlike conventional neural networks, which are black-box models that “blindly” establish a correlation between input and output variables using a large quantity of labeled data, PINNs directly embed physical laws (primarily partial differential equations) within the loss function of neural networks. By minimizing the loss function, this approach allows the output variables to automatically satisfy physical equations without the need for labeled data. The Navier–Stokes equation is one of the most classic governing equations in thermal ﬂuid engineering. This study constructs a PINN to solve the Navier–Stokes equations for a 2D incompressible laminar ﬂow problem. Flows passing around a 2D circular particle are chosen as the benchmark case, and an elliptical particle is also examined to enrich the research. The velocity and pressure ﬁelds are predicted by the PINNs, and the results are compared with those derived from Computational Fluid Dynamics (CFD). Additionally, the particle drag force coefﬁcient is calculated to quantify the discrepancy in the results of the PINNs as compared to CFD outcomes. The drag coefﬁcient maintained an error within 10\% across all test scenarios.}
+      \field{issn}{2297-8747}
+      \field{journaltitle}{Mathematical and Computational Applications}
+      \field{month}{10}
+      \field{number}{5}
+      \field{title}{Applying {Physics}-{Informed} {Neural} {Networks} to {Solve} {Navier}–{Stokes} {Equations} for {Laminar} {Flow} around a {Particle}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{28}
+      \field{year}{2023}
+      \field{urldateera}{ce}
+      \field{pages}{102}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.3390/mca28050102
+      \endverb
+      \verb{file}
+      \verb A Fluid-Dynamical Study of Crystal Settling in:C\:\\Users\\Paul Baselt\\Zotero\\storage\\R3LFU8FB\\A Fluid-Dynamical Study of Crystal Settling in.pdf:application/pdf;PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\R7XYVKXH\\Hu und McDaniel - 2023 - Applying Physics-Informed Neural Networks to Solve Navier–Stokes Equations for Laminar Flow around a.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://www.mdpi.com/2297-8747/28/5/102
+      \endverb
+      \verb{url}
+      \verb https://www.mdpi.com/2297-8747/28/5/102
+      \endverb
+    \endentry
     \entry{jin_nsfnets_2021}{article}{}{}
       \name{author}{4}{}{%
         {{un=0,uniquepart=base,hash=49bead751b0dc385c8709a2831bb6082}{%
@@ -134,6 +262,69 @@
       \verb https://linkinghub.elsevier.com/retrieve/pii/S0021999120307257
       \endverb
     \endentry
+    \entry{kovachki_neural_nodate}{article}{}{}
+      \name{author}{6}{}{%
+        {{un=0,uniquepart=base,hash=d3715d69863d59245589f244c5866bd4}{%
+           family={Kovachki},
+           familyi={K\bibinitperiod},
+           given={Nikola},
+           giveni={N\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=009036050bf23abe561429f6eaa0b018}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Zongyi},
+           giveni={Z\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9caea1a7b561311e5146f4c7f740496c}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Burigede},
+           giveni={B\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=3648b51d63e1ae389e46f87296d4c89a}{%
+           family={Azizzadenesheli},
+           familyi={A\bibinitperiod},
+           given={Kamyar},
+           giveni={K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=1e523aae18c868f77439b35add494ff9}{%
+           family={Bhattacharya},
+           familyi={B\bibinitperiod},
+           given={Kaushik},
+           giveni={K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9fdd1b883dec513483f9ee5c99b7e251}{%
+           family={Stuart},
+           familyi={S\bibinitperiod},
+           given={Andrew},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{d1a1701be8d68f5d464310f6647611ca}
+      \strng{fullhash}{078512b57b8a9d515380736bbc9b9136}
+      \strng{fullhashraw}{078512b57b8a9d515380736bbc9b9136}
+      \strng{bibnamehash}{d1a1701be8d68f5d464310f6647611ca}
+      \strng{authorbibnamehash}{d1a1701be8d68f5d464310f6647611ca}
+      \strng{authornamehash}{d1a1701be8d68f5d464310f6647611ca}
+      \strng{authorfullhash}{078512b57b8a9d515380736bbc9b9136}
+      \strng{authorfullhashraw}{078512b57b8a9d515380736bbc9b9136}
+      \field{sortinit}{K}
+      \field{sortinithash}{c02bf6bff1c488450c352b40f5d853ab}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The classical development of neural networks has primarily focused on learning mappings between finite dimensional Euclidean spaces or finite sets. We propose a generalization of neural networks to learn operators, termed neural operators, that map between infinite dimensional function spaces. We formulate the neural operator as a composition of linear integral operators and nonlinear activation functions. We prove a universal approximation theorem for our proposed neural operator, showing that it can approximate any given nonlinear continuous operator. The proposed neural operators are also discretization-invariant, i.e., they share the same model parameters among different discretization of the underlying function spaces. Furthermore, we introduce four classes of efficient parameterization, viz., graph neural operators, multi-pole graph neural operators, lowrank neural operators, and Fourier neural operators. An important application for neural operators is learning surrogate maps for the solution operators of partial differential equations (PDEs). We consider standard PDEs such as the Burgers, Darcy subsurface flow, and the Navier-Stokes equations, and show that the proposed neural operators have superior performance compared to existing machine learning based methodologies, while being several orders of magnitude faster than conventional PDE solvers.}
+      \field{title}{Neural {Operator}: {Learning} {Maps} {Between} {Function} {Spaces} {With} {Applications} to {PDEs}}
+      \field{year}{2021}
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\BIHFK5EL\\Kovachki et al. - Neural Operator Learning Maps Between Function Spaces With Applications to PDEs.pdf:application/pdf
+      \endverb
+    \endentry
     \entry{ladd_numerical_nodate}{article}{}{}
       \name{author}{1}{}{%
         {{un=0,uniquepart=base,hash=ea574591c1f2232e7c9b1fd4aa63feb5}{%
@@ -165,6 +356,71 @@
       \field{year}{1994}
       \verb{file}
       \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\69GMIEUF\\Ladd - Numerical Simulations of Particulate Suspensions via a Discretized Boltzmann Equation Part I. Theore.pdf:application/pdf
+      \endverb
+    \endentry
+    \entry{le_u-net-based_2022}{article}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=72aaf93037c53d2f4db8eb80e0f38fe1}{%
+           family={Le},
+           familyi={L\bibinitperiod},
+           given={Tuyen\bibnamedelima Quang},
+           giveni={T\bibinitperiod\bibinitdelim Q\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=351c5247f6da22b4a566d471e71ff113}{%
+           family={Chiu},
+           familyi={C\bibinitperiod},
+           given={Pao-Hsiung},
+           giveni={P\bibinithyphendelim H\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=5a2a0b49449d121b0c8137b7f9226bd4}{%
+           family={Ooi},
+           familyi={O\bibinitperiod},
+           given={Chinchun},
+           giveni={C\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{3bc78e0c92d71e02a10d02028af8660f}
+      \strng{fullhash}{3bc78e0c92d71e02a10d02028af8660f}
+      \strng{fullhashraw}{3bc78e0c92d71e02a10d02028af8660f}
+      \strng{bibnamehash}{027e7a643429c9775640e651ec804a4c}
+      \strng{authorbibnamehash}{027e7a643429c9775640e651ec804a4c}
+      \strng{authornamehash}{3bc78e0c92d71e02a10d02028af8660f}
+      \strng{authorfullhash}{3bc78e0c92d71e02a10d02028af8660f}
+      \strng{authorfullhashraw}{3bc78e0c92d71e02a10d02028af8660f}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Microfluidics have shown great promise in multiple applications, especially in biomedical diagnostics and separations. While the flow properties of these microfluidic devices can be solved by numerical methods such as computational fluid dynamics (CFD), the process of mesh generation and setting up a numerical solver requires some domain familiarity, while more intuitive commercial programs such as Fluent and StarCCM can be expensive. Hence, in this work, we demonstrated the use of a U-Net convolutional neural network as a surrogate model for predicting the velocity and pressure fields that would result for a particular set of microfluidic filter designs. The surrogate model is fast, easy to set-up and can be used to predict and assess the flow velocity and pressure fields across the domain for new designs of interest via the input of a geometry-encoding matrix. In addition, we demonstrate that the same methodology can also be used to train a network to predict pressure based on velocity data, and propose that this can be an alternative to numerical algorithms for calculating pressure based on velocity measurements from particle-image velocimetry measurements. Critically, in both applications, we demonstrate prediction test errors of less than 1\%, suggesting that this is indeed a viable method.}
+      \field{issn}{0219-8762, 1793-6969}
+      \field{journaltitle}{International Journal of Computational Methods}
+      \field{month}{9}
+      \field{number}{07}
+      \field{title}{U-{Net}-{Based} {Surrogate} {Model} for {Evaluation} of {Microfluidic} {Channels}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{19}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \field{pages}{2141018}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1142/S0219876221410188
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\B5H3GTVG\\Le et al. - 2022 - U-Net-Based Surrogate Model for Evaluation of Microfluidic Channels.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://www.worldscientific.com/doi/10.1142/S0219876221410188
+      \endverb
+      \verb{url}
+      \verb https://www.worldscientific.com/doi/10.1142/S0219876221410188
       \endverb
     \endentry
     \entry{leonardi_coupled_2014}{article}{}{}
@@ -389,6 +645,94 @@
       \endverb
       \keyw{Computer Science - Machine Learning,Mathematics - Numerical Analysis}
     \endentry
+    \entry{lu_comprehensive_2022}{article}{}{}
+      \name{author}{7}{}{%
+        {{un=0,uniquepart=base,hash=6f6f1357e5a7fb658e3e9c999886ce83}{%
+           family={Lu},
+           familyi={L\bibinitperiod},
+           given={Lu},
+           giveni={L\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=1428f666f3f6f857d3ebcd69597b7b29}{%
+           family={Meng},
+           familyi={M\bibinitperiod},
+           given={Xuhui},
+           giveni={X\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=446459da16eb3fa7780f7d73fe084c8b}{%
+           family={Cai},
+           familyi={C\bibinitperiod},
+           given={Shengze},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=4b932ac8e0209cf315dc740bb2a82a6e}{%
+           family={Mao},
+           familyi={M\bibinitperiod},
+           given={Zhiping},
+           giveni={Z\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=5e3b1d109ffc258f5270f313987d01b4}{%
+           family={Goswami},
+           familyi={G\bibinitperiod},
+           given={Somdatta},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=8d7acff517951d0a9eba8e9b39a167dc}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Zhongqiang},
+           giveni={Z\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=bfaf154b1f300f885a75adce4c6b773e}{%
+           family={Karniadakis},
+           familyi={K\bibinitperiod},
+           given={George\bibnamedelima Em},
+           giveni={G\bibinitperiod\bibinitdelim E\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{fdebff66447a2ecc33abe80490823209}
+      \strng{fullhash}{0575d327b79f8a6542f3cad4e89f0fcd}
+      \strng{fullhashraw}{0575d327b79f8a6542f3cad4e89f0fcd}
+      \strng{bibnamehash}{fdebff66447a2ecc33abe80490823209}
+      \strng{authorbibnamehash}{fdebff66447a2ecc33abe80490823209}
+      \strng{authornamehash}{fdebff66447a2ecc33abe80490823209}
+      \strng{authorfullhash}{0575d327b79f8a6542f3cad4e89f0fcd}
+      \strng{authorfullhashraw}{0575d327b79f8a6542f3cad4e89f0fcd}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Neural operators can learn nonlinear mappings between function spaces and offer a new simulation paradigm for real-time prediction of complex dynamics for realistic diverse applications as well as for system identification in science and engineering. Herein, we investigate the performance of two neural operators, which have shown promising results so far, and we develop new practical extensions that will make them more accurate and robust and importantly more suitable for industrial-complexity applications. The first neural operator, DeepONet, was published in 2019 (Lu et al., 2019), and its original architecture was based on the universal approximation theorem of Chen \& Chen (1995). The second one, named Fourier Neural Operator or FNO, was published in 2020 (Li et al., 2020), and it is based on parameterizing the integral kernel in the Fourier space. DeepONet is represented by a summation of products of neural networks (NNs), corresponding to the branch NN for the input function and the trunk NN for the output function; both NNs are general architectures, e.g., the branch NN can be replaced with a CNN or a ResNet. According to Kovachki et al. (2021), FNO in its continuous form can be viewed conceptually as a DeepONet with a specific architecture of the branch NN and a trunk NN represented by a trigonometric basis. In order to compare FNO with DeepONet computationally for realistic setups, we develop several extensions of FNO that can deal with complex geometric domains as well as mappings where the input and output function spaces are of different dimensions. We also develop an extended DeepONet with special features that provide inductive bias and accelerate training, and we present a faster implementation of DeepONet with cost comparable to the computational cost of FNO, which is based on the Fast Fourier Transform.}
+      \field{issn}{00457825}
+      \field{journaltitle}{Computer Methods in Applied Mechanics and Engineering}
+      \field{month}{4}
+      \field{title}{A comprehensive and fair comparison of two neural operators (with practical extensions) based on {FAIR} data}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{393}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \field{pages}{114778}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.cma.2022.114778
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\NRT27QUB\\Lu et al. - 2022 - A comprehensive and fair comparison of two neural operators (with practical extensions) based on FAI.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://linkinghub.elsevier.com/retrieve/pii/S0045782522001207
+      \endverb
+      \verb{url}
+      \verb https://linkinghub.elsevier.com/retrieve/pii/S0045782522001207
+      \endverb
+    \endentry
     \entry{martin_fluid-dynamical_1989}{article}{}{}
       \name{author}{2}{}{%
         {{un=2,uniquepart=given,hash=83d7dbb317584aa5d4d2f70c6f7564fc}{%
@@ -504,6 +848,77 @@
       \endverb
       \verb{url}
       \verb https://www.nature.com/articles/332534a0
+      \endverb
+    \endentry
+    \entry{morimoto_generalization_2022}{article}{}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=f69618164e1baf769b4da7bb0bfd21da}{%
+           family={Morimoto},
+           familyi={M\bibinitperiod},
+           given={Masaki},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9fa684349c674def1be1b6a71923a57c}{%
+           family={Fukami},
+           familyi={F\bibinitperiod},
+           given={Kai},
+           giveni={K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=accfaf086a407bfb746d7875478d9130}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Kai},
+           giveni={K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=a88281f45a6dbd755da9aa26d59ef5ba}{%
+           family={Fukagata},
+           familyi={F\bibinitperiod},
+           given={Koji},
+           giveni={K\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{1a86e5ad0013941d1d909d242831cabb}
+      \strng{fullhash}{28803334b732b583b2190a76eeab17b3}
+      \strng{fullhashraw}{28803334b732b583b2190a76eeab17b3}
+      \strng{bibnamehash}{1a86e5ad0013941d1d909d242831cabb}
+      \strng{authorbibnamehash}{1a86e5ad0013941d1d909d242831cabb}
+      \strng{authornamehash}{1a86e5ad0013941d1d909d242831cabb}
+      \strng{authorfullhash}{28803334b732b583b2190a76eeab17b3}
+      \strng{authorfullhashraw}{28803334b732b583b2190a76eeab17b3}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{We demonstrate several techniques to encourage practical uses of neural networks for ﬂuid ﬂow estimation. In the present paper, three perspectives which are remaining challenges for applications of machine learning to ﬂuid dynamics are considered: 1. interpretability of machine-learned results, 2. bulking out of training data, and 3. generalizability of neural networks. For the interpretability, we ﬁrst demonstrate two methods to observe the internal procedure of neural networks, i.e., visualization of hidden layers and application of gradient-weighted class activation mapping (Grad-CAM), applied to canonical ﬂuid ﬂow estimation problems—(1) drag coefﬁcient estimation of a cylinder wake and (2) velocity estimation from particle images. It is exempliﬁed that both approaches can successfully tell us evidences of the great capability of machine learning-based estimations. We then utilize some techniques to bulk out training data for super-resolution analysis and temporal prediction for cylinder wake and NOAA sea surface temperature data to demonstrate that sufﬁcient training of neural networks with limited amount of training data can be achieved for ﬂuid ﬂow problems. The generalizability of machine learning model is also discussed by accounting for the perspectives of inter/extrapolation of training data, considering super-resolution of wakes behind two parallel cylinders. We ﬁnd that various ﬂow patterns generated by complex interaction between two cylinders can be reconstructed well, even for the test conﬁgurations regarding the distance factor. The present paper can be a signiﬁcant step toward practical uses of neural networks for both laminar and turbulent ﬂow problems.}
+      \field{issn}{0941-0643, 1433-3058}
+      \field{journaltitle}{Neural Computing and Applications}
+      \field{month}{3}
+      \field{number}{5}
+      \field{title}{Generalization techniques of neural networks for fluid flow estimation}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{34}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \field{pages}{3647\bibrangedash 3669}
+      \range{pages}{23}
+      \verb{doi}
+      \verb 10.1007/s00521-021-06633-z
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\SP8JIJUY\\Morimoto et al. - 2022 - Generalization techniques of neural networks for fluid flow estimation.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://link.springer.com/10.1007/s00521-021-06633-z
+      \endverb
+      \verb{url}
+      \verb https://link.springer.com/10.1007/s00521-021-06633-z
       \endverb
     \endentry
     \entry{nissanka_dynamics_2023}{article}{}{}
@@ -649,6 +1064,73 @@
       \verb https://amses-journal.springeropen.com/articles/10.1186/s40323-022-00221-z
       \endverb
     \endentry
+    \entry{patocka_settling_2020}{article}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=69c7ebd694d070cfdb7accc4d52a1bc6}{%
+           family={Patocka},
+           familyi={P\bibinitperiod},
+           given={Vojtech},
+           giveni={V\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=706b59f26153f79ff5ad91be333c99a3}{%
+           family={Calzavarini},
+           familyi={C\bibinitperiod},
+           given={Enrico},
+           giveni={E\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=a4c3113a87752b4836c8dd6551059be6}{%
+           family={Tosi},
+           familyi={T\bibinitperiod},
+           given={Nicola},
+           giveni={N\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{8e797e5e1136699a5237aff66456fd19}
+      \strng{fullhash}{8e797e5e1136699a5237aff66456fd19}
+      \strng{fullhashraw}{8e797e5e1136699a5237aff66456fd19}
+      \strng{bibnamehash}{f011c9ba70d13fdc642917e1ace37482}
+      \strng{authorbibnamehash}{f011c9ba70d13fdc642917e1ace37482}
+      \strng{authornamehash}{8e797e5e1136699a5237aff66456fd19}
+      \strng{authorfullhash}{8e797e5e1136699a5237aff66456fd19}
+      \strng{authorfullhashraw}{8e797e5e1136699a5237aff66456fd19}
+      \field{sortinit}{P}
+      \field{sortinithash}{ff3bcf24f47321b42cb156c2cc8a8422}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The settling behaviour of small inertial particles in turbulent convection is a fundamental problem across several disciplines, from geophysics to metallurgy. In a geophysical context, the settling of dense crystals controls the mode of solidification of magma chambers and planetary-scale magma oceans, while rising of light bubbles of volatiles drives volcanic outgassing and the formation of primordial atmospheres. Motivated by these geophysical systems, we perform a systematic numerical study on the settling rate of particles in a rectangular two-dimensional Rayleigh-Benard system with Rayleigh number up to 10{\textasciicircum}12 and Prandtl number from 10 to 50. Under the idealized condition of spherically-shaped particles with small Reynolds number, two limiting behaviours exist for the settling velocity. On the one hand, Stokes' law applies to particles with small but finite response time, leading to a constant settling rate. On the other hand, particles with a vanishing response time are expected to settle at an exponential rate. Based on our simulations, we present a new physical model that bridges the gap between the above limiting behaviours by describing the sedimentation of inertial particles as a random process with two key components: i) the transport of particles from vigorously convecting regions into sluggish, low-velocity "piles" that naturally develop at the horizontal boundaries of the system, and ii) the probability that particles escape such low-velocity regions without settling at their base. In addition, we identify four distinct settling regimes and analyze the horizontal distribution of sedimented particles. For two of these regimes settling is particularly slow and the distribution is strongly non-uniform, with dense particles being deposited preferentially below major clusters of upwellings.}
+      \field{issn}{2469-990X}
+      \field{journaltitle}{Physical Review Fluids}
+      \field{month}{11}
+      \field{note}{arXiv:2005.05448 [physics]}
+      \field{number}{11}
+      \field{title}{Settling of inertial particles in turbulent {Rayleigh}-{Benard} convection}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{5}
+      \field{year}{2020}
+      \field{urldateera}{ce}
+      \field{pages}{114304}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1103/PhysRevFluids.5.114304
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\NYM3DAKS\\Patocka et al. - 2020 - Settling of inertial particles in turbulent Rayleigh-Benard convection.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://arxiv.org/abs/2005.05448
+      \endverb
+      \verb{url}
+      \verb http://arxiv.org/abs/2005.05448
+      \endverb
+      \keyw{Condensed Matter - Soft Condensed Matter,Physics - Fluid Dynamics,Physics - Geophysics}
+    \endentry
     \entry{penlou_experimental_2023}{article}{}{}
       \name{author}{4}{}{%
         {{un=0,uniquepart=base,hash=76f1b57763e70944826681e9206f0035}{%
@@ -757,26 +1239,132 @@
       \field{pages}{EGU2013\bibrangedash 7761}
       \range{pages}{-1}
     \endentry
+    \entry{qin_toward_2024}{misc}{}{}
+      \name{author}{10}{}{%
+        {{un=0,uniquepart=base,hash=cb4feeabe73f91eaee801fb32dab6c7c}{%
+           family={Qin},
+           familyi={Q\bibinitperiod},
+           given={Shaoxiang},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=8689be2225bc4270461ff8a1c38c72c9}{%
+           family={Lyu},
+           familyi={L\bibinitperiod},
+           given={Fuyuan},
+           giveni={F\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=95a10130c641b7f1c91d359b0655f3a6}{%
+           family={Peng},
+           familyi={P\bibinitperiod},
+           given={Wenhui},
+           giveni={W\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=8dbcf8be148584708d889db117c90e03}{%
+           family={Geng},
+           familyi={G\bibinitperiod},
+           given={Dingyang},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=4f6bd73e6b951c12b3c85c81c8144d3e}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Ju},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=3be73c30451fb2db1d433ef1f0f25821}{%
+           family={Tang},
+           familyi={T\bibinitperiod},
+           given={Xing},
+           giveni={X\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=2375575bb470b24676e242a112483318}{%
+           family={Leroyer},
+           familyi={L\bibinitperiod},
+           given={Sylvie},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=3dd576b7c91b0c5d5283aa42a81d9508}{%
+           family={Gao},
+           familyi={G\bibinitperiod},
+           given={Naiping},
+           giveni={N\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=0c308e80c2f3d35fdabad2956a9c14e9}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Xue},
+           giveni={X\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=a806d834dd6e45e03ed88396a459db6a}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Liangzhu\bibnamedelima Leon},
+           giveni={L\bibinitperiod\bibinitdelim L\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \list{publisher}{1}{%
+        {arXiv}%
+      }
+      \strng{namehash}{c954f140b50ef4165dcfddc676cab138}
+      \strng{fullhash}{0a6536bacae5fa143cdff56329a0f9a9}
+      \strng{fullhashraw}{0a6536bacae5fa143cdff56329a0f9a9}
+      \strng{bibnamehash}{c954f140b50ef4165dcfddc676cab138}
+      \strng{authorbibnamehash}{c954f140b50ef4165dcfddc676cab138}
+      \strng{authornamehash}{c954f140b50ef4165dcfddc676cab138}
+      \strng{authorfullhash}{0a6536bacae5fa143cdff56329a0f9a9}
+      \strng{authorfullhashraw}{0a6536bacae5fa143cdff56329a0f9a9}
+      \field{sortinit}{Q}
+      \field{sortinithash}{ce69a400a872ddd02ee7fdb3b38c6abd}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{In solving partial differential equations (PDEs), Fourier Neural Operators (FNOs) have exhibited notable effectiveness. However, FNO is observed to be ineffective with large Fourier kernels that parameterize more frequencies. Current solutions rely on setting small kernels, restricting FNO’s ability to capture complex PDE data in real-world applications. This paper offers empirical insights into FNO’s difficulty with large kernels through spectral analysis: FNO exhibits a unique Fourier parameterization bias, excelling at learning dominant frequencies in target data while struggling with non-dominant frequencies. To mitigate such a bias, we propose SpecB-FNO to enhance the capture of non-dominant frequencies by adopting additional residual modules to learn from the previous ones’ prediction residuals iteratively. By effectively utilizing large Fourier kernels, SpecB-FNO achieves better prediction accuracy on diverse PDE applications, with an average improvement of 50\%.}
+      \field{month}{10}
+      \field{note}{arXiv:2404.07200 [cs]}
+      \field{title}{Toward a {Better} {Understanding} of {Fourier} {Neural} {Operators} from a {Spectral} {Perspective}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{year}{2024}
+      \field{urldateera}{ce}
+      \verb{doi}
+      \verb 10.48550/arXiv.2404.07200
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\RMC8F5A4\\Qin et al. - 2024 - Toward a Better Understanding of Fourier Neural Operators from a Spectral Perspective.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://arxiv.org/abs/2404.07200
+      \endverb
+      \verb{url}
+      \verb http://arxiv.org/abs/2404.07200
+      \endverb
+      \keyw{Computer Science - Machine Learning}
+    \endentry
     \entry{raissi_physics-informed_2019}{article}{}{}
       \name{author}{3}{}{%
-        {{un=0,uniquepart=base,hash=a3194cb4f8e3959e569236521aa2fd86}{%
+        {{un=2,uniquepart=given,hash=a3194cb4f8e3959e569236521aa2fd86}{%
            family={Raissi},
            familyi={R\bibinitperiod},
            given={M.},
            giveni={M\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=c2e8423b7b49343a85abf9af92ee2a82}{%
+           givenun=2}}%
+        {{un=2,uniquepart=given,hash=c2e8423b7b49343a85abf9af92ee2a82}{%
            family={Perdikaris},
            familyi={P\bibinitperiod},
            given={P.},
            giveni={P\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=1c2f5930e36485e8d38a87746769fdcc}{%
+           givenun=2}}%
+        {{un=2,uniquepart=given,hash=1c2f5930e36485e8d38a87746769fdcc}{%
            family={Karniadakis},
            familyi={K\bibinitperiod},
            given={G.\bibnamedelimi E.},
            giveni={G\bibinitperiod\bibinitdelim E\bibinitperiod},
-           givenun=0}}%
+           givenun=2}}%
       }
       \strng{namehash}{a17a0649dc8bad70026488d4ea37c508}
       \strng{fullhash}{a17a0649dc8bad70026488d4ea37c508}
@@ -810,6 +1398,236 @@
       \verb https://www.sciencedirect.com/science/article/pii/S0021999118307125
       \endverb
       \keyw{Data-driven scientific computing,Machine learning,Nonlinear dynamics,Predictive modeling,Runge–Kutta methods}
+    \endentry
+    \entry{raissi_physics_2017}{misc}{}{}
+      \name{author}{3}{}{%
+        {{un=2,uniquepart=given,hash=95a17c39168b9e6b8812f207b4e036c1}{%
+           family={Raissi},
+           familyi={R\bibinitperiod},
+           given={Maziar},
+           giveni={M\bibinitperiod},
+           givenun=2}}%
+        {{un=2,uniquepart=given,hash=197d71332633e07aa578718628fdc405}{%
+           family={Perdikaris},
+           familyi={P\bibinitperiod},
+           given={Paris},
+           giveni={P\bibinitperiod},
+           givenun=2}}%
+        {{un=2,uniquepart=given,hash=bfaf154b1f300f885a75adce4c6b773e}{%
+           family={Karniadakis},
+           familyi={K\bibinitperiod},
+           given={George\bibnamedelima Em},
+           giveni={G\bibinitperiod\bibinitdelim E\bibinitperiod},
+           givenun=2}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \list{publisher}{1}{%
+        {arXiv}%
+      }
+      \strng{namehash}{767366a7d0fdde767496da8385111e76}
+      \strng{fullhash}{767366a7d0fdde767496da8385111e76}
+      \strng{fullhashraw}{767366a7d0fdde767496da8385111e76}
+      \strng{bibnamehash}{d313186ef90b9962b2cc1c7bc257c3f7}
+      \strng{authorbibnamehash}{d313186ef90b9962b2cc1c7bc257c3f7}
+      \strng{authornamehash}{767366a7d0fdde767496da8385111e76}
+      \strng{authorfullhash}{767366a7d0fdde767496da8385111e76}
+      \strng{authorfullhashraw}{767366a7d0fdde767496da8385111e76}
+      \field{sortinit}{R}
+      \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{shorttitle}
+      \field{abstract}{We introduce physics informed neural networks – neural networks that are trained to solve supervised learning tasks while respecting any given law of physics described by general nonlinear partial diﬀerential equations. In this two part treatise, we present our developments in the context of solving two main classes of problems: data-driven solution and data-driven discovery of partial diﬀerential equations. Depending on the nature and arrangement of the available data, we devise two distinct classes of algorithms, namely continuous time and discrete time models. The resulting neural networks form a new class of data-eﬃcient universal function approximators that naturally encode any underlying physical laws as prior information. In this ﬁrst part, we demonstrate how these networks can be used to infer solutions to partial diﬀerential equations, and obtain physics-informed surrogate models that are fully diﬀerentiable with respect to all input coordinates and free parameters.}
+      \field{month}{11}
+      \field{note}{arXiv:1711.10561 [cs]}
+      \field{shorttitle}{Physics {Informed} {Deep} {Learning} ({Part} {I})}
+      \field{title}{Physics {Informed} {Deep} {Learning} ({Part} {I}): {Data}-driven {Solutions} of {Nonlinear} {Partial} {Differential} {Equations}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{year}{2017}
+      \field{urldateera}{ce}
+      \verb{doi}
+      \verb 10.48550/arXiv.1711.10561
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\ZAY8ZRXV\\Raissi et al. - 2017 - Physics Informed Deep Learning (Part I) Data-driven Solutions of Nonlinear Partial Differential Equ.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://arxiv.org/abs/1711.10561
+      \endverb
+      \verb{url}
+      \verb http://arxiv.org/abs/1711.10561
+      \endverb
+      \keyw{Computer Science - Machine Learning,Statistics - Machine Learning,Mathematics - Dynamical Systems,Mathematics - Numerical Analysis,Computer Science - Artificial Intelligence}
+    \endentry
+    \entry{rana_scalable_2024}{article}{}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=b0a607c19d785234461d1159b7301794}{%
+           family={Rana},
+           familyi={R\bibinitperiod},
+           given={Pratip},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=94cd169c739efa5fdd603ce5a887ccac}{%
+           family={Weigand},
+           familyi={W\bibinitperiod},
+           given={Timothy\bibnamedelima M.},
+           giveni={T\bibinitperiod\bibinitdelim M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=eeffe4093de9d7826efe9c6abe64bede}{%
+           family={Pilkiewicz},
+           familyi={P\bibinitperiod},
+           given={Kevin\bibnamedelima R.},
+           giveni={K\bibinitperiod\bibinitdelim R\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=5e85c251cbfd99afec98d8079f8d0cad}{%
+           family={Mayo},
+           familyi={M\bibinitperiod},
+           given={Michael\bibnamedelima L.},
+           giveni={M\bibinitperiod\bibinitdelim L\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{279475e488ee4c0a455b8ffe2a46335a}
+      \strng{fullhash}{47576dc57979586602088ce08fd7f711}
+      \strng{fullhashraw}{47576dc57979586602088ce08fd7f711}
+      \strng{bibnamehash}{279475e488ee4c0a455b8ffe2a46335a}
+      \strng{authorbibnamehash}{279475e488ee4c0a455b8ffe2a46335a}
+      \strng{authornamehash}{279475e488ee4c0a455b8ffe2a46335a}
+      \strng{authorfullhash}{47576dc57979586602088ce08fd7f711}
+      \strng{authorfullhashraw}{47576dc57979586602088ce08fd7f711}
+      \field{sortinit}{R}
+      \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{We evaluate the capability of convolutional neural networks (CNNs) to predict a velocity field as it relates to fluid flow around various arrangements of obstacles within a two-dimensional, rectangular channel. We base our network architecture on a gated residual U-Net template and train it on velocity fields generated from computational fluid dynamics (CFD) simulations. We then assess the extent to which our model can accurately and efficiently predict steady flows in terms of velocity fields associated with inlet speeds and obstacle configurations not included in our training set. Real-world applications often require fluid-flow predictions in larger and more complex domains that contain more obstacles than used in model training. To address this problem, we propose a method that decomposes a domain into subdomains for which our model can individually and accurately predict the fluid flow, after which we apply smoothness and continuity constraints to reconstruct velocity fields across the whole of the original domain. This piecewise, semicontinuous approach is computationally more efficient than the alternative, which involves generation of CFD datasets required to retrain the model on larger and more spatially complex domains. We introduce a local orientational vector field entropy (LOVE) metric, which quantifies a decorrelation scale for velocity fields in geometric domains with one or more obstacles, and use it to devise a strategy for decomposing complex domains into weakly interacting subsets suitable for application of our modeling approach. We end with an assessment of error propagation across modeled domains of increasing size.}
+      \field{issn}{2045-2322}
+      \field{journaltitle}{Scientific Reports}
+      \field{month}{10}
+      \field{number}{1}
+      \field{title}{A scalable convolutional neural network approach to fluid flow prediction in complex environments}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{14}
+      \field{year}{2024}
+      \field{urldateera}{ce}
+      \field{pages}{23080}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1038/s41598-024-73529-y
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\Q5RRXRUW\\Rana et al. - 2024 - A scalable convolutional neural network approach to fluid flow prediction in complex environments.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://www.nature.com/articles/s41598-024-73529-y
+      \endverb
+      \verb{url}
+      \verb https://www.nature.com/articles/s41598-024-73529-y
+      \endverb
+    \endentry
+    \entry{raonic_convolutional_2023}{misc}{}{}
+      \name{author}{8}{}{%
+        {{un=0,uniquepart=base,hash=0d902e17cfb2a7786d1a5e25e28438dc}{%
+           family={Raonić},
+           familyi={R\bibinitperiod},
+           given={Bogdan},
+           giveni={B\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=14e1d73a56a5ad8d944956bb85f1b428}{%
+           family={Molinaro},
+           familyi={M\bibinitperiod},
+           given={Roberto},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=6821d8a1984704e534ea969182c3b8b4}{%
+           family={Ryck},
+           familyi={R\bibinitperiod},
+           given={Tim\bibnamedelima De},
+           giveni={T\bibinitperiod\bibinitdelim D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=964e416b2ba1d1d4588a7aa7a7c392d0}{%
+           family={Rohner},
+           familyi={R\bibinitperiod},
+           given={Tobias},
+           giveni={T\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=2f870cd909d0e49bafeb2aec1d46948e}{%
+           family={Bartolucci},
+           familyi={B\bibinitperiod},
+           given={Francesca},
+           giveni={F\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=0e2c7c912e97e271adb324effa26621d}{%
+           family={Alaifari},
+           familyi={A\bibinitperiod},
+           given={Rima},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=202d2742653588d0b8e2bddcf2377672}{%
+           family={Mishra},
+           familyi={M\bibinitperiod},
+           given={Siddhartha},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=5ed6564e3978c8ff8e16f615891d5be7}{%
+           family={Bézenac},
+           familyi={B\bibinitperiod},
+           given={Emmanuel\bibnamedelima de},
+           giveni={E\bibinitperiod\bibinitdelim d\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \list{publisher}{1}{%
+        {arXiv}%
+      }
+      \strng{namehash}{270a22c8bdb3e7a621eb385ddaf06a64}
+      \strng{fullhash}{9aaa28d33f3a838b797699c2563fe22d}
+      \strng{fullhashraw}{9aaa28d33f3a838b797699c2563fe22d}
+      \strng{bibnamehash}{270a22c8bdb3e7a621eb385ddaf06a64}
+      \strng{authorbibnamehash}{270a22c8bdb3e7a621eb385ddaf06a64}
+      \strng{authornamehash}{270a22c8bdb3e7a621eb385ddaf06a64}
+      \strng{authorfullhash}{9aaa28d33f3a838b797699c2563fe22d}
+      \strng{authorfullhashraw}{9aaa28d33f3a838b797699c2563fe22d}
+      \field{sortinit}{R}
+      \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Although very successfully used in conventional machine learning, convolution based neural network architectures – believed to be inconsistent in function space – have been largely ignored in the context of learning solution operators of PDEs. Here, we present novel adaptations for convolutional neural networks to demonstrate that they are indeed able to process functions as inputs and outputs. The resulting architecture, termed as convolutional neural operators (CNOs), is designed specifically to preserve its underlying continuous nature, even when implemented in a discretized form on a computer. We prove a universality theorem to show that CNOs can approximate operators arising in PDEs to desired accuracy. CNOs are tested on a novel suite of benchmarks, encompassing a diverse set of PDEs with possibly multi-scale solutions and are observed to significantly outperform baselines, paving the way for an alternative framework for robust and accurate operator learning. Our code is publicly available at https://github.com/bogdanraonic3/ConvolutionalNeuralOperator.}
+      \field{month}{12}
+      \field{note}{arXiv:2302.01178 [cs]}
+      \field{title}{Convolutional {Neural} {Operators} for robust and accurate learning of {PDEs}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{year}{2023}
+      \field{urldateera}{ce}
+      \verb{doi}
+      \verb 10.48550/arXiv.2302.01178
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\NAAA959V\\Raonić et al. - 2023 - Convolutional Neural Operators for robust and accurate learning of PDEs.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://arxiv.org/abs/2302.01178
+      \endverb
+      \verb{url}
+      \verb http://arxiv.org/abs/2302.01178
+      \endverb
+      \keyw{Computer Science - Machine Learning}
     \endentry
     \entry{ribeiro_deepcfd_nodate}{article}{}{}
       \name{author}{4}{}{%
@@ -970,6 +1788,69 @@
       \endverb
       \keyw{Computer Science - Computer Vision and Pattern Recognition}
     \endentry
+    \entry{sanchez-gonzalez_learning_nodate}{article}{}{}
+      \name{author}{6}{}{%
+        {{un=0,uniquepart=base,hash=cfe62c9365c523ba7d4f7fd1147cff41}{%
+           family={Sanchez-Gonzalez},
+           familyi={S\bibinithyphendelim G\bibinitperiod},
+           given={Alvaro},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=3f8b59cd2dfceed714d405a08c389acb}{%
+           family={Godwin},
+           familyi={G\bibinitperiod},
+           given={Jonathan},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=a726408819b6f955652c3ffaaedef966}{%
+           family={Pfaff},
+           familyi={P\bibinitperiod},
+           given={Tobias},
+           giveni={T\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=6b37c8aefa150635663b2a6525952a7a}{%
+           family={Ying},
+           familyi={Y\bibinitperiod},
+           given={Rex},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=900d107125ff0ca84698cb909e4f6c51}{%
+           family={Leskovec},
+           familyi={L\bibinitperiod},
+           given={Jure},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=2e5b4b0fd5bc4903da838ce86f63998b}{%
+           family={Battaglia},
+           familyi={B\bibinitperiod},
+           given={Peter\bibnamedelima W},
+           giveni={P\bibinitperiod\bibinitdelim W\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{14d8f3954a2d583ad1e2230c17d6060a}
+      \strng{fullhash}{3d5b64021935f881dbba3091a29904aa}
+      \strng{fullhashraw}{3d5b64021935f881dbba3091a29904aa}
+      \strng{bibnamehash}{14d8f3954a2d583ad1e2230c17d6060a}
+      \strng{authorbibnamehash}{14d8f3954a2d583ad1e2230c17d6060a}
+      \strng{authornamehash}{14d8f3954a2d583ad1e2230c17d6060a}
+      \strng{authorfullhash}{3d5b64021935f881dbba3091a29904aa}
+      \strng{authorfullhashraw}{3d5b64021935f881dbba3091a29904aa}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Here we present a machine learning framework and model implementation that can learn to simulate a wide variety of challenging physical domains, involving ﬂuids, rigid solids, and deformable materials interacting with one another. Our framework—which we term “Graph Network-based Simulators” (GNS)—represents the state of a physical system with particles, expressed as nodes in a graph, and computes dynamics via learned message-passing. Our results show that our model can generalize from single-timestep predictions with thousands of particles during training, to different initial conditions, thousands of timesteps, and at least an order of magnitude more particles at test time. Our model was robust to hyperparameter choices across various evaluation metrics: the main determinants of long-term performance were the number of message-passing steps, and mitigating the accumulation of error by corrupting the training data with noise. Our GNS framework advances the state-of-the-art in learned physical simulation, and holds promise for solving a wide range of complex forward and inverse problems.}
+      \field{title}{Learning to {Simulate} {Complex} {Physics} with {Graph} {Networks}}
+      \field{year}{2020}
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\BHDL2LZZ\\Sanchez-Gonzalez et al. - Learning to Simulate Complex Physics with Graph Networks.pdf:application/pdf
+      \endverb
+    \endentry
     \entry{sun_surrogate_2020}{article}{}{}
       \name{author}{4}{}{%
         {{un=0,uniquepart=base,hash=3619892fbd32e4f6752b25dafce591b8}{%
@@ -1041,6 +1922,75 @@
       \verb http://arxiv.org/abs/1906.02382
       \endverb
       \keyw{Physics - Computational Physics}
+    \endentry
+    \entry{takamoto_pdebench_nodate}{article}{}{}
+      \name{author}{7}{}{%
+        {{un=0,uniquepart=base,hash=d9a5cf169a1e1ff25ce4d1cefa58d94a}{%
+           family={Takamoto},
+           familyi={T\bibinitperiod},
+           given={Makoto},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=35781fd53ee87319fbfdb144d84f1688}{%
+           family={Praditia},
+           familyi={P\bibinitperiod},
+           given={Timothy},
+           giveni={T\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=72d48b6a035cadf5c45541cf0f4331fb}{%
+           family={Leiteritz},
+           familyi={L\bibinitperiod},
+           given={Raphael},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=5ea912a645531ff946363b2b1954d653}{%
+           family={MacKinlay},
+           familyi={M\bibinitperiod},
+           given={Dan},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=ce6138d5b39917e0f25328a939096216}{%
+           family={Alesiani},
+           familyi={A\bibinitperiod},
+           given={Francesco},
+           giveni={F\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=f54860793c01cc839e2c0fefe8c50097}{%
+           family={Pflüger},
+           familyi={P\bibinitperiod},
+           given={Dirk},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=24887ab1e4dffd3ecab8144e7c657e65}{%
+           family={Niepert},
+           familyi={N\bibinitperiod},
+           given={Mathias},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{b55dc51ed2a96200ae3ff85f68acd43b}
+      \strng{fullhash}{6ce8fc6ccdcaafefb872157fe0affb9e}
+      \strng{fullhashraw}{6ce8fc6ccdcaafefb872157fe0affb9e}
+      \strng{bibnamehash}{b55dc51ed2a96200ae3ff85f68acd43b}
+      \strng{authorbibnamehash}{b55dc51ed2a96200ae3ff85f68acd43b}
+      \strng{authornamehash}{b55dc51ed2a96200ae3ff85f68acd43b}
+      \strng{authorfullhash}{6ce8fc6ccdcaafefb872157fe0affb9e}
+      \strng{authorfullhashraw}{6ce8fc6ccdcaafefb872157fe0affb9e}
+      \field{sortinit}{T}
+      \field{sortinithash}{9af77f0292593c26bde9a56e688eaee9}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Machine learning-based modeling of physical systems has experienced increased interest in recent years. Despite some impressive progress, there is still a lack of benchmarks for Scientific ML that are easy to use but still challenging and representative of a wide range of problems. We introduce PDEBENCH, a benchmark suite of time-dependent simulation tasks based on Partial Differential Equations (PDEs). PDEBENCH comprises both code and data to benchmark the performance of novel machine learning models against both classical numerical simulations and machine learning baselines. Our proposed set of benchmark problems contribute the following unique features: (1) A much wider range of PDEs compared to existing benchmarks, ranging from relatively common examples to more realistic and difficult problems; (2) much larger ready-to-use datasets compared to prior work, comprising multiple simulation runs across a larger number of initial and boundary conditions and PDE parameters; (3) more extensible source codes with user-friendly APIs for data generation and baseline results with popular machine learning models (FNO, U-Net, PINN, Gradient-Based Inverse Method). PDEBENCH allows researchers to extend the benchmark freely for their own purposes using a standardized API and to compare the performance of new models to existing baseline methods. We also propose new evaluation metrics with the aim to provide a more holistic understanding of learning methods in the context of Scientific ML. With those metrics we identify tasks which are challenging for recent ML methods and propose these tasks as future challenges for the community. The code is available at https://github.com/pdebench/PDEBench.}
+      \field{title}{{PDEBENCH}: {An} {Extensive} {Benchmark} for {Scientific} {Machine} {Learning}}
+      \field{year}{2022}
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\R365KEXU\\Takamoto et al. - PDEBENCH An Extensive Benchmark for Scientific Machine Learning.pdf:application/pdf
+      \endverb
     \endentry
     \entry{thieulot_choice_2022}{article}{}{}
       \name{author}{2}{}{%
@@ -1233,6 +2183,65 @@
       \endverb
       \keyw{Physics - Fluid Dynamics}
     \endentry
+    \entry{verhoeven_numerical_2009}{article}{}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=afee3490e6096184a5250d5a12faba66}{%
+           family={Verhoeven},
+           familyi={V\bibinitperiod},
+           given={J.},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=022f15c9a0dc01fc03670d1700b77dd5}{%
+           family={Schmalzl},
+           familyi={S\bibinitperiod},
+           given={J.},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{64d9da0d2c542533eadcb2ff01b23116}
+      \strng{fullhash}{64d9da0d2c542533eadcb2ff01b23116}
+      \strng{fullhashraw}{64d9da0d2c542533eadcb2ff01b23116}
+      \strng{bibnamehash}{64d9da0d2c542533eadcb2ff01b23116}
+      \strng{authorbibnamehash}{64d9da0d2c542533eadcb2ff01b23116}
+      \strng{authornamehash}{64d9da0d2c542533eadcb2ff01b23116}
+      \strng{authorfullhash}{64d9da0d2c542533eadcb2ff01b23116}
+      \strng{authorfullhashraw}{64d9da0d2c542533eadcb2ff01b23116}
+      \field{sortinit}{V}
+      \field{sortinithash}{afb52128e5b4dc4b843768c0113d673b}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Magma chambers can be considered as thermochemically driven convection systems. We present a new numerical method that describes the movement of crystallized minerals in terms of active spherical particles in a convecting magma that is represented by an infinite Prandtl number fluid. The main part focuses on the results we obtained. A finite volume thermochemical convection model for two and three dimensions and a discrete element method, which is used to model granular material, are combined. The new model is validated with floating experiments using particles of different densities and an investigation of single and multiparticle settling velocities. The resulting velocities are compared with theoretical predictions by Stokes's law and a hindered settling function for the multiparticle system. Two fundamental convection regimes are identified in the parameter space that is spanned by the Rayleigh number and the chemical Rayleigh number, which is a measure for the density of the particles. We define the T regime that is dominated by thermal convection. Here the thermal driving force is strong enough to keep all particles in suspension. As the particles get denser, they start settling to the ground, which results in a C regime. The C regime is characterized by the existence of a sediment layer with particle‐rich material and a suspension layer with few particles. It is shown that the presence of particles can reduce the vigor of thermal convection. In the frame of a parameter study we discuss the change between the regimes that is systematically investigated. We show that the so‐called TC transition fits a power law. Furthermore, we investigate the settling behavior of the particles in vigorous thermal convection, which can be linked to crystal settling in magma chambers. We develop an analytical settling law that describes the number of settled particles against time and show that the results fit the observations from numerical and laboratory experiments.}
+      \field{issn}{1525-2027, 1525-2027}
+      \field{journaltitle}{Geochemistry, Geophysics, Geosystems}
+      \field{month}{12}
+      \field{number}{12}
+      \field{title}{A numerical method for investigating crystal settling in convecting magma chambers}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{10}
+      \field{year}{2009}
+      \field{urldateera}{ce}
+      \field{pages}{2009GC002509}
+      \range{pages}{-1}
+      \verb{doi}
+      \verb 10.1029/2009GC002509
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\C8NMHK7H\\Verhoeven und Schmalzl - 2009 - A numerical method for investigating crystal settling in convecting magma chambers.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2009GC002509
+      \endverb
+      \verb{url}
+      \verb https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2009GC002509
+      \endverb
+    \endentry
     \entry{weinstein_evolution_1988}{article}{}{}
       \name{author}{3}{}{%
         {{un=0,uniquepart=base,hash=3e1e6a72d60baded14607be386d01b22}{%
@@ -1290,9 +2299,215 @@
       \verb https://www.sciencedirect.com/science/article/pii/0012821X88900787
       \endverb
     \endentry
+    \entry{wen_u-fnoenhanced_2022}{article}{}{}
+      \name{author}{5}{}{%
+        {{un=0,uniquepart=base,hash=1008cc6e354b8cd4a105e915d4b3d34b}{%
+           family={Wen},
+           familyi={W\bibinitperiod},
+           given={Gege},
+           giveni={G\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=009036050bf23abe561429f6eaa0b018}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Zongyi},
+           giveni={Z\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=3648b51d63e1ae389e46f87296d4c89a}{%
+           family={Azizzadenesheli},
+           familyi={A\bibinitperiod},
+           given={Kamyar},
+           giveni={K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=bd4a2be6ede169a3c794a1cd7e3fb9a2}{%
+           family={Anandkumar},
+           familyi={A\bibinitperiod},
+           given={Anima},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=09aa8fff817fcbbcfa0962991a65bc12}{%
+           family={Benson},
+           familyi={B\bibinitperiod},
+           given={Sally\bibnamedelima M.},
+           giveni={S\bibinitperiod\bibinitdelim M\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{b02df1c39971d57d6c3cd164c5b549cc}
+      \strng{fullhash}{e41650c7cba2b36500dcc11577913511}
+      \strng{fullhashraw}{e41650c7cba2b36500dcc11577913511}
+      \strng{bibnamehash}{b02df1c39971d57d6c3cd164c5b549cc}
+      \strng{authorbibnamehash}{b02df1c39971d57d6c3cd164c5b549cc}
+      \strng{authornamehash}{b02df1c39971d57d6c3cd164c5b549cc}
+      \strng{authorfullhash}{e41650c7cba2b36500dcc11577913511}
+      \strng{authorfullhashraw}{e41650c7cba2b36500dcc11577913511}
+      \field{sortinit}{W}
+      \field{sortinithash}{4315d78024d0cea9b57a0c6f0e35ed0d}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Numerical simulation of multiphase flow in porous media is essential for many geoscience applications. Machine learning models trained with numerical simulation data can provide a faster alternative to traditional simulators. Here we present U-FNO, a novel neural network architecture for solving multiphase flow problems with superior accuracy, speed, and data efficiency. U-FNO is designed based on the newly proposed Fourier neural operator (FNO), which has shown excellent performance in single-phase flows. We extend the FNObased architecture to a highly complex CO2-water multiphase problem with wide ranges of permeability and porosity heterogeneity, anisotropy, reservoir conditions, injection configurations, flow rates, and multiphase flow properties. The U-FNO architecture is more accurate in gas saturation and pressure buildup predictions than the original FNO and a state-of-the-art convolutional neural network (CNN) benchmark. Meanwhile, it has superior data utilization efficiency, requiring only a third of the training data to achieve the equivalent accuracy as CNN. U-FNO provides superior performance in highly heterogeneous geological formations and critically important applications such as gas saturation and pressure buildup ‘‘fronts’’ determination. The trained model can serve as a general-purpose alternative to routine numerical simulations of 2D-radial CO2 injection problems with significant speed-ups than traditional simulators.}
+      \field{issn}{03091708}
+      \field{journaltitle}{Advances in Water Resources}
+      \field{month}{5}
+      \field{title}{U-{FNO}—{An} enhanced {Fourier} neural operator-based deep-learning model for multiphase flow}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{163}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \field{pages}{104180}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.advwatres.2022.104180
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\P9SWMCJ2\\Wen et al. - 2022 - U-FNO—An enhanced Fourier neural operator-based deep-learning model for multiphase flow.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://linkinghub.elsevier.com/retrieve/pii/S0309170822000562
+      \endverb
+      \verb{url}
+      \verb https://linkinghub.elsevier.com/retrieve/pii/S0309170822000562
+      \endverb
+    \endentry
+    \entry{zhu_bayesian_2018}{article}{}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=d9f15ff0102b5cebc7caafec1a4c7e07}{%
+           family={Zhu},
+           familyi={Z\bibinitperiod},
+           given={Yinhao},
+           giveni={Y\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=338a8079a3ccfab0cf6f5defd230a834}{%
+           family={Zabaras},
+           familyi={Z\bibinitperiod},
+           given={Nicholas},
+           giveni={N\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{d7371e9585dd65bafa3ef340a6a961a0}
+      \strng{fullhash}{d7371e9585dd65bafa3ef340a6a961a0}
+      \strng{fullhashraw}{d7371e9585dd65bafa3ef340a6a961a0}
+      \strng{bibnamehash}{d7371e9585dd65bafa3ef340a6a961a0}
+      \strng{authorbibnamehash}{d7371e9585dd65bafa3ef340a6a961a0}
+      \strng{authornamehash}{d7371e9585dd65bafa3ef340a6a961a0}
+      \strng{authorfullhash}{d7371e9585dd65bafa3ef340a6a961a0}
+      \strng{authorfullhashraw}{d7371e9585dd65bafa3ef340a6a961a0}
+      \field{sortinit}{Z}
+      \field{sortinithash}{96892c0b0a36bb8557c40c49813d48b3}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{We are interested in the development of surrogate models for uncertainty quantification and propagation in problems governed by stochastic PDEs using a deep convolutional encoder-decoder network in a similar fashion to approaches considered in deep learning for image-to-image regression tasks. Since normal neural networks are data intensive and cannot provide predictive uncertainty, we propose a Bayesian approach to convolutional neural nets. A recently introduced variational gradient descent algorithm based on Stein's method is scaled to deep convolutional networks to perform approximate Bayesian inference on millions of uncertain network parameters. This approach achieves state of the art performance in terms of predictive accuracy and uncertainty quantification in comparison to other approaches in Bayesian neural networks as well as techniques that include Gaussian processes and ensemble methods even when the training data size is relatively small. To evaluate the performance of this approach, we consider standard uncertainty quantification benchmark problems including flow in heterogeneous media defined in terms of limited data-driven permeability realizations. The performance of the surrogate model developed is very good even though there is no underlying structure shared between the input (permeability) and output (flow/pressure) fields as is often the case in the image-to-image regression models used in computer vision problems. Studies are performed with an underlying stochastic input dimensionality up to \$4,225\$ where most other uncertainty quantification methods fail. Uncertainty propagation tasks are considered and the predictive output Bayesian statistics are compared to those obtained with Monte Carlo estimates.}
+      \field{issn}{00219991}
+      \field{journaltitle}{Journal of Computational Physics}
+      \field{month}{8}
+      \field{note}{arXiv:1801.06879 [physics]}
+      \field{title}{Bayesian {Deep} {Convolutional} {Encoder}-{Decoder} {Networks} for {Surrogate} {Modeling} and {Uncertainty} {Quantification}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{366}
+      \field{year}{2018}
+      \field{urldateera}{ce}
+      \field{pages}{415\bibrangedash 447}
+      \range{pages}{33}
+      \verb{doi}
+      \verb 10.1016/j.jcp.2018.04.018
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\76YAR2ZS\\Zhu und Zabaras - 2018 - Bayesian Deep Convolutional Encoder-Decoder Networks for Surrogate Modeling and Uncertainty Quantifi.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://arxiv.org/abs/1801.06879
+      \endverb
+      \verb{url}
+      \verb http://arxiv.org/abs/1801.06879
+      \endverb
+      \keyw{Computer Science - Computer Vision and Pattern Recognition,Computer Science - Machine Learning,Physics - Computational Physics,Statistics - Machine Learning}
+    \endentry
+    \entry{zhu_physics-constrained_2019}{article}{}{}
+      \name{author}{4}{ul=2}{%
+        {{un=0,uniquepart=base,hash=d9f15ff0102b5cebc7caafec1a4c7e07}{%
+           family={Zhu},
+           familyi={Z\bibinitperiod},
+           given={Yinhao},
+           giveni={Y\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=338a8079a3ccfab0cf6f5defd230a834}{%
+           family={Zabaras},
+           familyi={Z\bibinitperiod},
+           given={Nicholas},
+           giveni={N\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=69b073c8ad52e0fd6cbe99993555e016}{%
+           family={Koutsourelakis},
+           familyi={K\bibinitperiod},
+           given={Phaedon-Stelios},
+           giveni={P\bibinithyphendelim S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=197d71332633e07aa578718628fdc405}{%
+           family={Perdikaris},
+           familyi={P\bibinitperiod},
+           given={Paris},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{49c8f0dc996c893dde9ac81c6491d591}
+      \strng{fullhash}{3d2751e6f84e600c2a72f04bd1b4ef31}
+      \strng{fullhashraw}{3d2751e6f84e600c2a72f04bd1b4ef31}
+      \strng{bibnamehash}{49c8f0dc996c893dde9ac81c6491d591}
+      \strng{authorbibnamehash}{49c8f0dc996c893dde9ac81c6491d591}
+      \strng{authornamehash}{49c8f0dc996c893dde9ac81c6491d591}
+      \strng{authorfullhash}{3d2751e6f84e600c2a72f04bd1b4ef31}
+      \strng{authorfullhashraw}{3d2751e6f84e600c2a72f04bd1b4ef31}
+      \field{sortinit}{Z}
+      \field{sortinithash}{96892c0b0a36bb8557c40c49813d48b3}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Surrogate modeling and uncertainty quantification tasks for PDE systems are most often considered as supervised learning problems where input and output data pairs are used for training. The construction of such emulators is by definition a small data problem which poses challenges to deep learning approaches that have been developed to operate in the big data regime. Even in cases where such models have been shown to have good predictive capability in high dimensions, they fail to address constraints in the data implied by the PDE model. This paper provides a methodology that incorporates the governing equations of the physical model in the loss/likelihood functions. The resulting physics-constrained, deep learning models are trained without any labeled data (e.g. employing only input data) and provide comparable predictive responses with data-driven models while obeying the constraints of the problem at hand. This work employs a convolutional encoder-decoder neural network approach as well as a conditional flow-based generative model for the solution of PDEs, surrogate model construction, and uncertainty quantification tasks. The methodology is posed as a minimization problem of the reverse Kullback-Leibler (KL) divergence between the model predictive density and the reference conditional density, where the later is defined as the Boltzmann-Gibbs distribution at a given inverse temperature with the underlying potential relating to the PDE system of interest. The generalization capability of these models to out-of-distribution input is considered. Quantification and interpretation of the predictive uncertainty is provided for a number of problems.}
+      \field{issn}{00219991}
+      \field{journaltitle}{Journal of Computational Physics}
+      \field{month}{10}
+      \field{note}{arXiv:1901.06314 [physics]}
+      \field{title}{Physics-{Constrained} {Deep} {Learning} for {High}-dimensional {Surrogate} {Modeling} and {Uncertainty} {Quantification} without {Labeled} {Data}}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{394}
+      \field{year}{2019}
+      \field{urldateera}{ce}
+      \field{pages}{56\bibrangedash 81}
+      \range{pages}{26}
+      \verb{doi}
+      \verb 10.1016/j.jcp.2019.05.024
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\R72Z3QMF\\Zhu et al. - 2019 - Physics-Constrained Deep Learning for High-dimensional Surrogate Modeling and Uncertainty Quantifica.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://arxiv.org/abs/1901.06314
+      \endverb
+      \verb{url}
+      \verb http://arxiv.org/abs/1901.06314
+      \endverb
+      \keyw{Computer Science - Computer Vision and Pattern Recognition,Computer Science - Machine Learning,Physics - Computational Physics,Statistics - Machine Learning}
+    \endentry
   \enddatalist
-  \missing{add_numerical_nodate}
-  \missing{onneberger_u-net_2015}
 \endrefsection
 \endinput
 

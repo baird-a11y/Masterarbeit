@@ -2,13 +2,52 @@
 % Abstract (English, unnumbered)
 % -------------------------------------------------------
 
-\chapter*{Abstract (English)}
-\addcontentsline{toc}{chapter}{Abstract (English)}
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
 
 \begin{otherlanguage}{english}
-This master's thesis investigates the generalization capability of UNet architectures for predicting flow fields in multi-crystal sedimentation systems. While traditional computational fluid dynamics (CFD) methods are computationally intensive for complex multi-particle systems, machine learning approaches offer the potential for significant acceleration.
+Crystal sedimentation in viscous magmatic fluids is a fundamental geodynamic
+process that drives chemical differentiation and controls the internal structure
+of magma reservoirs. Accurate simulation of multi-crystal settling requires the
+simultaneous resolution of microscale boundary layers around individual crystals
+and long-range hydrodynamic interactions spanning the full computational domain.
+This multi-scale character, combined with the near-quadratic scaling of
+interaction costs with particle number, renders systematic parameter studies
+with classical solvers computationally prohibitive.
 
-This exploratory study systematically evaluates whether UNet networks trained on a fixed number of crystals (e.g., 10 crystals) can successfully generalize to arbitrary other crystal configurations (1--15 crystals). Using LaMEM simulations as ground truth, controlled experiments are conducted where the model trained on $N$ crystals is evaluated across the entire spectrum from 1 to $N$ crystals. The results demonstrate [placeholder for actual findings], thereby characterizing both the possibilities and fundamental limitations of UNet generalization across different particle numbers.
+This thesis investigates whether data-driven surrogate models can effectively
+replace high-fidelity Stokes solvers for predicting flow fields in multi-crystal
+sedimentation scenarios. Two neural network architectures are systematically
+compared on identical data and evaluation metrics: the U-Net, an encoder--decoder
+model with skip connections that extracts spatially hierarchical features, and
+the Fourier Neural Operator (FNO), which operates in the spectral domain and
+provides a global receptive field per layer. Both models are trained to predict
+the stream function $\psi$ from a five-channel geometric input encoding consisting
+of a crystal mask, a signed distance proxy field, the distance to the nearest
+crystal boundary, and normalized spatial coordinates. Predicting $\psi$ rather
+than velocity components directly enforces incompressibility by construction,
+eliminating a common source of systematic constraint violations in purely
+data-driven velocity surrogates.
 
-This work contributes methodologically to physics-informed machine learning research and provides practical insights for geoscientific modeling applications.
+Training data are generated using the \textsc{LaMEM} geodynamic finite-element
+code, providing steady-state incompressible Stokes solutions for configurations
+of $1$ to $N_{\max}$ randomly placed rigid circular crystals on a fixed
+$256 \times 256$ grid. A systematic hyperparameter study for single-crystal
+configurations identifies an effective U-Net training setup achieving a relative
+$L_2$ error of approximately $2.1\,\%$ on the stream function. Evaluation on
+two-crystal configurations reveals a systematic increase in mean error to
+approximately $7.6\,\%$, accompanied by substantially higher variance, indicating
+that hydrodynamic interaction complexity introduces geometry-dependent prediction
+difficulty. Gradient-derived velocity quantities prove consistently harder to
+reproduce than $\psi$ itself, with relative errors roughly an order of magnitude
+larger, reflecting the amplification of residuals under numerical differentiation.
+Error diagnostics further show that prediction difficulty increases near crystal
+boundaries and domain edges.
+
+The controlled comparison of U-Net and FNO architectures on this benchmark
+quantifies the trade-off between spatially local multiscale processing and global
+spectral representations for surrogate modeling of elliptic, multi-inclusion
+Stokes flow. The results provide practical guidelines for input encoding, output
+representation, and architecture selection in geophysical sedimentation
+applications.
 \end{otherlanguage}

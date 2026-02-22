@@ -2,5 +2,53 @@
 \addcontentsline{toc}{chapter}{Zusammenfassung}
 
 \begin{otherlanguage}{ngerman}
-% Dein deutscher Abstract hier
+Kristallsedimentation in viskosen magmatischen Fluiden ist ein fundamentaler
+geodynamischer Prozess, der die chemische Differentiation und innere Struktur
+von Magmakammern steuert. Die numerisch exakte Simulation von
+Mehrkristall-Sedimentation erfordert die gleichzeitige Auflösung mikroskopischer
+Grenzschichten um einzelne Kristalle und weitreichender hydrodynamischer
+Wechselwirkungen über das gesamte Strömungsgebiet. Dieser ausgeprägt multiskalige
+Charakter, kombiniert mit dem nahezu quadratischen Skalierungsverhalten der
+Interaktionskosten mit der Partikelzahl, macht systematische Parameterstudien
+mit klassischen Solvern rechnerisch kaum durchführbar.
+
+Diese Masterarbeit untersucht, ob datengetriebene Surrogatmodelle
+Hochpräzisions-Stokes-Solver für die Strömungsfeldvorhersage in
+Mehrkristall-Sedimentationsszenarien ersetzen können. Zwei neuronale
+Netzarchitekturen werden auf identischen Daten und Evaluationsmetriken
+systematisch verglichen: das U-Net, ein Encoder-Decoder-Modell mit
+Skip-Connections zur Extraktion räumlich hierarchischer Merkmale, und der
+Fourier Neural Operator (FNO), der im Spektralbereich operiert und pro Schicht
+ein globales rezeptives Feld besitzt. Beide Modelle werden darauf trainiert, die
+Stromfunktion~$\psi$ aus einer fünfkanaligen geometrischen Eingabekodierung
+vorherzusagen, bestehend aus einer Kristallmaske, einem Signed-Distance-Proxy,
+dem Abstand zur nächsten Kristallgrenze sowie normierten Raumkoordinaten. Die
+Vorhersage von~$\psi$ statt direkter Geschwindigkeitskomponenten erzwingt
+Inkompressibilität per Konstruktion und eliminiert so eine häufige Quelle
+systematischer Verletzungen physikalischer Nebenbedingungen in rein
+datengetriebenen Strömungssurrogaten.
+
+Trainingsdaten werden mit dem geodynamischen Finite-Elemente-Code
+\textsc{LaMEM} generiert und liefern stationäre inkompressible Stokes-Lösungen
+für Konfigurationen mit $1$ bis $N_{\max}$ zufällig platzierten starren
+kreisförmigen Kristallen auf einem festen $256 \times 256$-Gitter. Eine
+systematische Hyperparameterstudie für Einkristall-Konfigurationen identifiziert
+ein effektives U-Net-Trainingssetup mit einem relativen $L_2$-Fehler von
+ca.~$2{,}1\,\%$ auf der Stromfunktion. Die Auswertung auf
+Zweikristall-Konfigurationen zeigt einen systematischen Anstieg des mittleren
+Fehlers auf ca.~$7{,}6\,\%$ bei gleichzeitig deutlich höherer Varianz, was auf
+geometrieabhängige Vorhersageschwierigkeit durch hydrodynamische Wechselwirkungen
+hinweist. Aus~$\psi$ abgeleitete Geschwindigkeitsfelder erweisen sich
+konsistent als schwieriger zu reproduzieren als die Stromfunktion selbst, mit
+relativen Fehlern, die rund eine Größenordnung größer sind und die
+Hochfrequenzverstärkung numerischer Differentiation widerspiegeln.
+Fehlerdiagnostik zeigt zudem, dass die Vorhersageschwierigkeit an
+Kristallrändern und Domänengrenzen erhöht ist.
+
+Der kontrollierte Vergleich der U-Net- und FNO-Architekturen auf diesem Benchmark
+quantifiziert den Zielkonflikt zwischen räumlich lokaler Multiskalenverarbeitung
+und globaler Spektraldarstellung für die Surrogatmodellierung elliptischer
+Stokes-Strömungen mit mehreren Einschlüssen. Die Ergebnisse liefern praktische
+Richtlinien für Eingabekodierung, Ausgaberepräsentation und Architekturwahl in
+geophysikalischen Sedimentationsanwendungen.
 \end{otherlanguage}
