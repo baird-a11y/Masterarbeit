@@ -195,7 +195,8 @@ function evaluate_dataset(model, ds::PsiDataset;
         if save_dir !== nothing
             fname = "pred_$(lpad(i, 6, '0')).jld2"
             jldsave(joinpath(save_dir, fname);
-                    ψ_pred_norm=ψ̂_norm, ψ_true_norm=ψ_norm, metrics=metrics)
+                    ψ_pred_norm=ψ̂_norm, ψ_true_norm=ψ_norm, metrics=metrics,
+                    sample_meta=smeta)
         end
 
         if verbose && i % max(1, n ÷ 10) == 0
