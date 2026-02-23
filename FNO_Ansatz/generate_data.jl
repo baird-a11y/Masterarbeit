@@ -43,7 +43,7 @@ function random_crystal_config(n_crystals::Int;
                                domain::Tuple{Float64,Float64} = (-0.8, 0.8),
                                r_range::Tuple{Float64,Float64} = (0.05, 0.05),
                                min_gap::Float64 = 0.02,
-                               max_attempts::Int = 200)
+                               max_attempts::Int = 200000)
     lo, hi = domain
     r_min, r_max = r_range
     centers = Tuple{Float64,Float64}[]
