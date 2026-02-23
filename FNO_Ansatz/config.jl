@@ -34,7 +34,7 @@ function load_config()
     return Config(
         nx=256,
         nz=256,
-        modes=16,
+        modes=24,
         width=64,
         depth=4,
         lr=0.001,
