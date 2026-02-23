@@ -31,6 +31,7 @@ export plot_training_history,
        plot_divergence_map,
        plot_metrics_vs_crystals,
        make_eval_gallery,
+       overlay_crystals!,
        common_clim,
        speed,
        safe_title
@@ -81,6 +82,47 @@ function safe_title(meta::NamedTuple; max_len::Int = 60)
 
     title = join(parts, " | ")
     return length(title) > max_len ? title[1:max_len] * "…" : title
+end
+
+# =============================================================================
+# P8b – Crystal Overlay
+# =============================================================================
+
+"""
+    overlay_crystals!(p, centers_2D, radii, x_vec, z_vec)
+
+Zeichnet schwarze Kreise an den Kristallpositionen in einen bestehenden Plot.
+Konvertiert physikalische Koordinaten → Gitterindizes (Pixel-Koordinaten),
+da die Heatmaps mit Array-Indizes arbeiten.
+
+- `centers_2D`: Vector{Tuple{Float64,Float64}} – Kristall-Mittelpunkte (phys.)
+- `radii`: Vector{Float64} – Kristall-Radien (phys.)
+- `x_vec`, `z_vec`: 1D-Vektoren der Gitterkoordinaten
+"""
+function overlay_crystals!(p, centers_2D, radii, x_vec, z_vec;
+                           color::Symbol = :black, lw::Real = 1.5,
+                           n_pts::Int = 60)
+    nx = length(x_vec)
+    nz = length(z_vec)
+    x_min, x_max = extrema(x_vec)
+    z_min, z_max = extrema(z_vec)
+
+    for (k, (cx, cz)) in enumerate(centers_2D)
+        r = radii[k]
+
+        # Kreis in physikalischen Koordinaten → Gitterindizes
+        # Heatmap(M') hat x-Achse = 1. Dim von M, y-Achse = 2. Dim von M
+        θ = range(0, 2π; length=n_pts)
+        x_phys = cx .+ r .* cos.(θ)
+        z_phys = cz .+ r .* sin.(θ)
+
+        # Physikalische Koordinaten → Pixel-Indizes (1-basiert)
+        ix = @. (x_phys - x_min) / (x_max - x_min) * (nx - 1) + 1
+        iz = @. (z_phys - z_min) / (z_max - z_min) * (nz - 1) + 1
+
+        plot!(p, ix, iz; label="", color=color, lw=lw, seriestype=:path)
+    end
+    return p
 end
 
 # =============================================================================
@@ -185,7 +227,11 @@ Gleiche Farbskala für true/pred, eigene für Error.
 function plot_psi_comparison(ψ_true::AbstractMatrix, ψ_pred::AbstractMatrix;
                              out_path::AbstractString = "psi_comparison.png",
                              title::AbstractString = "",
-                             clim = nothing)
+                             clim = nothing,
+                             centers_2D = nothing,
+                             radii = nothing,
+                             x_vec = nothing,
+                             z_vec = nothing)
     err = ψ_pred .- ψ_true
 
     # Farbskala
@@ -202,6 +248,13 @@ function plot_psi_comparison(ψ_true::AbstractMatrix, ψ_pred::AbstractMatrix;
                  aspect_ratio=:equal, xlabel="x", ylabel="z")
     p3 = heatmap(err'; title="Error (pred−true)", clim=ecl, color=:RdBu,
                  aspect_ratio=:equal, xlabel="x", ylabel="z")
+
+    # Kristalle als schwarze Kreise einzeichnen
+    if centers_2D !== nothing && radii !== nothing && x_vec !== nothing && z_vec !== nothing
+        for p in (p1, p2, p3)
+            overlay_crystals!(p, centers_2D, radii, x_vec, z_vec)
+        end
+    end
 
     sup_title = isempty(title) ? "ψ Comparison" : title
     fig = plot(p1, p2, p3; layout=(1, 3), size=(1500, 400),
@@ -398,14 +451,28 @@ function make_eval_gallery(pred_dir::AbstractString, out_dir::AbstractString;
                         readdir(pred_dir; join=true)))
     isempty(files) && error("Keine pred_*.jld2 in $pred_dir gefunden")
 
-    # Metriken + n_crystals extrahieren
+    # Metriken + n_crystals + Kristall-Geometrie extrahieren
     entries = []
     for f in files
         d = load(f)
         m = d["metrics"]
         nc = haskey(m, :n_crystals) ? Int(m.n_crystals) : -1
+
+        # Kristall-Metadaten für Overlay (aus sample_meta.meta)
+        smeta = get(d, "sample_meta", nothing)
+        inner = nothing
+        if smeta !== nothing
+            inner = hasproperty(smeta, :meta) ? smeta.meta : smeta
+        end
+        centers = (inner !== nothing && hasproperty(inner, :centers_2D)) ? inner.centers_2D : nothing
+        radii_c = (inner !== nothing && hasproperty(inner, :radii)) ? inner.radii : nothing
+        xv = (inner !== nothing && hasproperty(inner, :x_vec_1D)) ? inner.x_vec_1D : nothing
+        zv = (inner !== nothing && hasproperty(inner, :z_vec_1D)) ? inner.z_vec_1D : nothing
+
         push!(entries, (file=f, rel_l2=Float64(m.psi_rel_l2), n_crystals=nc,
-                        ψ_pred=d["ψ_pred_norm"], ψ_true=d["ψ_true_norm"]))
+                        ψ_pred=d["ψ_pred_norm"], ψ_true=d["ψ_true_norm"],
+                        centers_2D=centers, radii=radii_c,
+                        x_vec=xv, z_vec=zv))
     end
 
     # Nach Kristallanzahl gruppieren
@@ -440,10 +507,12 @@ function make_eval_gallery(pred_dir::AbstractString, out_dir::AbstractString;
         for (idx, entry) in enumerate(group[1:n_sel])
             prefix = @sprintf("%s/%03d_rel%.4f", sub_dir, idx, entry.rel_l2)
 
-            # ψ Comparison
+            # ψ Comparison (mit Kristall-Overlay falls verfügbar)
             plot_psi_comparison(entry.ψ_true, entry.ψ_pred;
                                 out_path="$(prefix)_psi.png",
-                                title=@sprintf("n=%d #%d rel_l2=%.4f", nc, idx, entry.rel_l2))
+                                title=@sprintf("n=%d #%d rel_l2=%.4f", nc, idx, entry.rel_l2),
+                                centers_2D=entry.centers_2D, radii=entry.radii,
+                                x_vec=entry.x_vec, z_vec=entry.z_vec)
 
             # Velocity + Divergence (falls dx/dz gegeben)
             if dx !== nothing && dz !== nothing
