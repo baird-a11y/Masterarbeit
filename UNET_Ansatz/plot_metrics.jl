@@ -1,123 +1,159 @@
-using CSV
-using DataFrames
-using CairoMakie
+#!/usr/bin/env julia
+# ================================
+# main.jl – Steuerung für Ansatz 2
+# ================================
+
+using Random
+using Dates
 using Printf
+using CUDA
 
-# ---------------------------------------------------------
-# CSV laden
-# ---------------------------------------------------------
-df = CSV.read("eval_psi_by_n.csv", DataFrame)
+# Eigene Dateien (alle im selben Ordner)
+include("streamfunction_poisson.jl")
+include("lamem_interface.jl")
+include("data_generation_psi.jl")
+include("dataset_psi.jl")
+include("unet_psi.jl")
+include("training_psi.jl")
+include("evaluate_psi.jl")
 
-println("Spalten im DataFrame:")
-println(names(df))
 
-# ---------------------------------------------------------
-# Hilfsfunktion: Plotten + Speichern
-# ---------------------------------------------------------
-function plot_metric(df::DataFrame, xcol::Symbol, ycol::Symbol, yerrcol::Symbol,
-                     ylabel::String, title::String, outfile::String;
-                     log10_y::Bool=false)
+# Module verfügbar machen
+using .StreamFunctionPoisson
+using .LaMEMInterface
+using .DataGenerationPsi
+using .DatasetPsi
+using .UNetPsi
+using .TrainingPsi
+using .EvaluatePsi
 
-    ax_ytickformat = log10_y ?
-        (xs -> [@sprintf("%.1f", x) for x in xs]) :
-        (xs -> [@sprintf("%.1e", x) for x in xs])
 
-    fig = Figure(resolution = (700, 450))
-    ax = Axis(fig[1, 1];
-        xlabel = "Kristallanzahl",
-        ylabel = ylabel,
-        title  = title,
-        ytickformat = ax_ytickformat,
+
+# ================================
+# Konfiguration
+# ================================
+
+# mode:
+#   "generate_data"  → viele Samples als .jld2 speichern
+#   "train"          → U-Net auf Daten trainieren
+#   "eval_dataset"   → gesamten Datensatz auswerten (Statistik je Kristallanzahl)
+mode          = "eval_dataset"   # z.B. zum Testen
+
+
+# Zufall
+seed = 42
+rng  = MersenneTwister(seed)
+
+# --- Geometrie-Parameter für die Datengenerierung ---
+min_crystals = 1      # minimum Anzahl Kristalle pro Sample
+max_crystals = 1      # maximum Anzahl Kristalle pro Sample
+
+radius_mode  = :fixed # :fixed oder :range
+
+R_fixed      = 0.1    # wird nur benutzt, wenn radius_mode == :fixed
+R_min        = 0.02   # wird nur benutzt, wenn radius_mode == :range
+R_max        = 0.05
+
+
+# Datengenerierung
+n_train   = 2000                # nur benutzt, wenn mode == "generate_data"
+outdir    = "/local/home/baselt/src/Daten/data_psi"          # Ordner für .jld2-Samples
+
+# Training
+epochs        = 300
+batch_size    = 8
+learning_rate = 5e-5
+model_path    = "unet_psi.bson"
+
+# Eval
+eval_sample_idx = 1
+eval_prefix     = "eval_psi"
+plots_save      = "eval_plots_phys_validation"
+psi_denorm = true                       # ob im physikalischen ψ-Raum ausgewertet wird
+
+
+@info "Starte main.jl im Modus: $mode"
+
+# ================================
+# Ablaufsteuerung
+# ================================
+
+if mode == "generate_data"
+
+    mkpath(outdir)
+    @info "Erzeuge $n_train Trainings-Samples in Ordner: $outdir"
+    DataGenerationPsi.generate_dataset(
+    outdir;
+    n_train     = n_train,
+    rng         = rng,
+    nx          = 256,
+    nz          = 256,
+    η           = 1e20,
+    Δρ          = 200.0,
+    min_crystals = min_crystals,
+    max_crystals = max_crystals,
+    radius_mode  = radius_mode,
+    R_fixed      = R_fixed,
+    R_min        = R_min,
+    R_max        = R_max,
     )
 
-    x    = df[!, xcol]
-    y    = df[!, ycol]
-    yerr = df[!, yerrcol]
+    @info "Datengenerierung abgeschlossen."
 
-    # log10-Behandlung
-    if log10_y
-        y_log    = similar(y)
-        yerr_log = similar(y)
-        for i in eachindex(y)
-            yi = y[i]
-            σ  = yerr[i]
-            if yi <= 0
-                error("log10 nicht definiert für nicht-positive Werte in $(ycol) bei Index $i (Wert = $yi).")
-            end
-            y_log[i] = log10(yi)
-            yerr_log[i] = σ > 0 ? σ / (yi * log(10)) : 0.0
-        end
-        y    = y_log
-        yerr = yerr_log
-    end
+elseif mode == "train"
 
-    errorbars!(ax, x, y, yerr)
-    scatter!(ax, x, y)
-    lines!(ax, x, y)
+    # mkpath(outdir)
+    # @info "Erzeuge $n_train Trainings-Samples in Ordner: $outdir"
+    # DataGenerationPsi.generate_dataset(
+    # outdir;
+    # n_train     = n_train,
+    # rng         = rng,
+    # nx          = 256,
+    # nz          = 256,
+    # η           = 1e20,
+    # Δρ          = 200.0,
+    # min_crystals = min_crystals,
+    # max_crystals = max_crystals,
+    # radius_mode  = radius_mode,
+    # R_fixed      = R_fixed,
+    # R_min        = R_min,
+    # R_max        = R_max,
+    # )
 
-    save(outfile, fig)
-    println("✔ gespeichert: $outfile")
+    # @info "Datengenerierung abgeschlossen."
+
+    @info "Starte Training auf Datensatz in $outdir"
+    TrainingPsi.train_unet(; data_dir=outdir,
+                            epochs=epochs,
+                            batch_size=batch_size,
+                            lr=learning_rate,
+                            rng=rng,
+                            save_path=model_path)
+
+    @info "Training abgeschlossen."
+
+    # @info "Evaluiere gesamten Datensatz in $outdir mit Modell $model_path"
+    # EvaluatePsi.evaluate_dataset(; data_dir   = outdir,
+    #                              model_path  = model_path,
+    #                              out_prefix  = eval_prefix,
+    #                              save_plots  = true,
+    #                              plot_dir    = plots_save,
+    #                              denorm_psi  = psi_denorm)
+
+    
+
+
+elseif mode == "eval_dataset"
+
+    @info "Evaluiere gesamten Datensatz in $outdir mit Modell $model_path"
+    EvaluatePsi.evaluate_dataset(; data_dir   = outdir,
+                                 model_path  = model_path,
+                                 out_prefix  = eval_prefix,
+                                 save_plots  = true,
+                                 plot_dir    = plots_save,
+                                 denorm_psi  = psi_denorm)
+
+
+else
+    error("Unbekannter Modus: $mode")
 end
-
-# ---------------------------------------------------------
-# 1) ψ: MSE (log10) + relL2 (linear)
-# ---------------------------------------------------------
-plot_metric(df, :n_crystals, :mse_psi_mean,  :mse_psi_std,
-            "log₁₀(MSE(ψ))",
-            "MSE(ψ) vs. Kristallanzahl (log₁₀)",
-            "mse_psi_vs_crystals_log10.png";
-            log10_y = true)
-
-plot_metric(df, :n_crystals, :relL2_psi_mean, :relL2_psi_std,
-            "relative L2-Norm(ψ)",
-            "rel. L2(ψ) vs. Kristallanzahl",
-            "relL2_psi_vs_crystals.png")
-
-# ---------------------------------------------------------
-# 2) ψₓ: MSE (log10) + relL2 (linear)
-# ---------------------------------------------------------
-plot_metric(df, :n_crystals, :mse_psix_mean,  :mse_psix_std,
-            "log₁₀(MSE(ψₓ))",
-            "MSE(ψₓ) vs. Kristallanzahl (log₁₀)",
-            "mse_psix_vs_crystals_log10.png";
-            log10_y = true)
-
-plot_metric(df, :n_crystals, :relL2_psix_mean, :relL2_psix_std,
-            "relative L2-Norm(ψₓ)",
-            "rel. L2(ψₓ) vs. Kristallanzahl",
-            "relL2_psix_vs_crystals.png")
-
-# ---------------------------------------------------------
-# 3) ψ_z: MSE (log10) + relL2 (linear)
-# ---------------------------------------------------------
-plot_metric(df, :n_crystals, :mse_psiz_mean,  :mse_psiz_std,
-            "log₁₀(MSE(ψ_z))",
-            "MSE(ψ_z) vs. Kristallanzahl (log₁₀)",
-            "mse_psiz_vs_crystals_log10.png";
-            log10_y = true)
-
-plot_metric(df, :n_crystals, :relL2_psiz_mean, :relL2_psiz_std,
-            "relative L2-Norm(ψ_z)",
-            "rel. L2(ψ_z) vs. Kristallanzahl",
-            "relL2_psiz_vs_crystals.png")
-
-# ---------------------------------------------------------
-# 4) NEU: Pixel-Fehlerraten ε₀₁, ε₀₅, ε₁₀
-# ---------------------------------------------------------
-
-plot_metric(df, :n_crystals, :eps01_psi_mean, :eps01_psi_std,
-            "ε₀₁ (Anteil der Pixel > 1% Fehler)",
-            "Pixel-Fehlerrate ε₀₁ vs. Kristallanzahl",
-            "eps01_vs_crystals.png")
-
-plot_metric(df, :n_crystals, :eps05_psi_mean, :eps05_psi_std,
-            "ε₀₅ (Anteil der Pixel > 5% Fehler)",
-            "Pixel-Fehlerrate ε₀₅ vs. Kristallanzahl",
-            "eps05_vs_crystals.png")
-
-plot_metric(df, :n_crystals, :eps10_psi_mean, :eps10_psi_std,
-            "ε₁₀ (Anteil der Pixel > 10% Fehler)",
-            "Pixel-Fehlerrate ε₁₀ vs. Kristallanzahl",
-            "eps10_vs_crystals.png")
-
-println("Fertig – alle 9 Plots erzeugt.")
