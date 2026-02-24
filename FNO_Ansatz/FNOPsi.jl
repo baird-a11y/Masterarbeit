@@ -14,8 +14,12 @@ include("config.jl")
 include("utils_grids.jl")               # GridFDUtils
 include("streamfunction_possion.jl")     # StreamFunctionPoisson
 
-# ── Physik-Pipeline ──
-include("lamem_interface.jl")            # LaMEMInterface  (→ StreamFunctionPoisson)
+# ── Physik-Pipeline (optional – nur laden wenn LaMEM verfügbar) ──
+try
+    include("lamem_interface.jl")            # LaMEMInterface  (→ StreamFunctionPoisson)
+catch e
+    @warn "LaMEMInterface nicht geladen (LaMEM.jl installiert/kompatibel?): $e"
+end
 include("normalization.jl")              # Normalization
 
 # ── Dataset ──
@@ -40,7 +44,9 @@ end
 # ── Re-Exports ──
 using .GridFDUtils
 using .StreamFunctionPoisson
-using .LaMEMInterface
+if isdefined(@__MODULE__, :LaMEMInterface)
+    using .LaMEMInterface
+end
 using .Normalization
 using .DatasetPsi
 using .FNOLayers
