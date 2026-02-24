@@ -81,9 +81,16 @@ All metrics are aggregated by crystal count to assess how performance scales wit
 % ----------------------------------------------------------------------------
 
 Four experiments are conducted to systematically evaluate and compare both models.
+Für alle Experimente wurden folgenden Standart Konfigurationen ausgewählt für die Architekturen:
+
+Übersicht der Konfigurationen einfügen
+
+
+
 
 \paragraph{Experiment 1 – Single-crystal baseline.}
 Both models are trained and evaluated on configurations with exactly one crystal ($n = 1$). This experiment establishes a baseline for each architecture under the simplest geometric setting and provides a controlled comparison of their accuracy and training behavior.
+Hierbei wurden jeweils vier Unterschiedliche lernraten verwendet (1e-3, 5e-3, 1e-4,5e-4) sowie einmal mit Batchsize 16 und 8 und verglichen.
 
 \paragraph{Experiment 2 – Multi-crystal generalization.}
 Models are trained on samples with $n \in \{1, 2, 3\}$ crystals and evaluated separately on each crystal count, including held-out configurations with $n > 3$. This experiment tests whether learned representations generalize to more complex geometries than seen during training.
