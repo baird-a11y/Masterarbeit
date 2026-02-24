@@ -4,8 +4,6 @@
 \chapter{Implementation}
 \label{ch:implementation}
 
-Hier muss ich einmal durch schauen, ob alles noch aktuell ist, da sich der Code in der Zwischenzeit doch noch etwas geändert hat. Es könnte sein, dass ich hier und da noch Anpassungen vornehmen muss, um die Beschreibung mit der tatsächlichen Implementierung in Einklang zu bringen. Aber grundsätzlich sollte die Struktur und die Inhalte dieses Kapitels so bleiben,da sie die wichtigsten Aspekte der Implementierung abdecken und die Leser:innen einen klaren Überblick über die technische Realisierung des Surrogatmodellierungsframeworks geben.
-
 
 This chapter describes the technical realization of the surrogate modeling framework introduced in Chapter~\ref{ch:methodology}. While the previous chapter motivated the modeling choices (learning targets, input encoding, and
 architecture), the focus here is on the concrete implementation of the full workflow in a reproducible and modular software stack.
@@ -55,15 +53,14 @@ The code base is organized into two parallel module trees that share common infr
           pipelines.
 \end{itemize}
 
-Both trees share the same LaMEM interface module for data generation and the same Poisson solver for stream-function reconstruction. Within each tree, a main execution script dispatches to dedicated modules depending on the
-selected workflow stage: data generation, preprocessing, training, or evaluation. Each stage can be executed independently, enabling flexible experimentation and reducing coupling between components.
+Both trees share the same LaMEM interface module for data generation, the same Poisson solver for stream-function reconstruction, and the same dataset interface (\texttt{PsiDataset}, \texttt{batch\_iterator}), ensuring that U-Net and FNO train and are evaluated on identical data. Within each tree, a main execution script dispatches to dedicated modules depending on the selected workflow stage: data generation, preprocessing, training, or evaluation. Each stage can be executed independently, enabling flexible experimentation and reducing coupling between components.
 
 % ----------------------------------------------------------------------------
 \section{Model Implementations}
 % ----------------------------------------------------------------------------
 
-Both architectures are implemented explicitly using Flux primitives. They share the same input and output interface: a five-channel input tensor of shape $(256,256,5)$—consisting of the crystal mask, a signed distance proxy
-field, the distance to the nearest crystal boundary, and normalized $x$- and $z$-coordinate channels and a single-channel output $\psi_{\mathrm{norm}}$ of shape $(256,256,1)$. This input representation is geometry-agnostic: configurations with varying numbers of crystals are encoded on the same fixed grid without architectural changes.
+Both architectures are implemented explicitly using Flux primitives. They share the same input and output interface: a four-channel input tensor of shape $(256,256,4)$—consisting of the crystal mask, a signed distance field,
+and normalized $x$- and $z$-coordinate channels—and a single-channel output $\psi_{\mathrm{norm}}$ of shape $(256,256,1)$. This input representation is geometry-agnostic: configurations with varying numbers of crystals are encoded on the same fixed grid without architectural changes.
 
 \subsection*{U-Net}
 
@@ -86,7 +83,7 @@ Each FNO block combines the spectral convolution path with a pointwise $1\times1
 allows each block to simultaneously capture global spectral structure and local spatial features.
 
 \paragraph{Model assembly.}
-The complete model chains a pointwise lifting convolution ($5 \to d_v$ channels), a stack of $L$ FNO blocks, and a two-layer pointwise projection ($d_v \to d_v$, GELU, $d_v \to 1$). The default configuration uses $d_v = 64$, $k_{\max} = 16$ modes in each spatial direction, and $L = 4$ Fourier layers.
+The complete model chains a pointwise lifting convolution ($4 \to d_v$ channels), a stack of $L$ FNO blocks, and a two-layer pointwise projection ($d_v \to d_v$, GELU, $d_v \to 1$). The default configuration uses $d_v = 64$, $k_{\max} = 24$ modes in each spatial direction, and $L = 4$ Fourier layers.
 
 % ----------------------------------------------------------------------------
 \section{Data Pipeline and Dataset Interfaces}
@@ -133,8 +130,8 @@ Training is implemented using an explicit loop to retain full control over gradi
 
 \subsection*{Optimizer configuration}
 
-The U-Net uses the Adam optimizer. The FNO uses Adam combined with gradient norm clipping (\texttt{ClipNorm}) to stabilize training in the presence of spectral operations that can produce large gradient magnitudes.
-Typical learning rates lie between $5\times10^{-5}$ and $10^{-4}$, and training runs span between 100 and 300 epochs, depending on batch size and dataset composition.
+Both models use the Adam optimizer from \texttt{Optimisers.jl}. The FNO additionally applies gradient norm clipping (\texttt{ClipNorm}) to stabilize training, as spectral operations can produce large gradient magnitudes.
+The U-Net is trained with a learning rate of $5\times10^{-5}$; the FNO uses $10^{-3}$ with gradient clipping at a maximum norm of 1.0. Training runs span 300 epochs for the U-Net and 100 epochs for the FNO, with a batch size of 8 and 32, respectively.
 
 \subsection*{Loss functions}
 
@@ -149,13 +146,11 @@ where $\mathcal{L}_{\mathrm{grad}}$ penalizes errors in the spatial derivatives 
 homogeneous Dirichlet boundary condition $\psi|_{\partial\Omega} = 0$. The gradient loss coefficient $\alpha_{\mathrm{grad}}$ is ramped from zero over a configurable number of warmup epochs to avoid destabilizing early
 optimization. This composite loss encourages the FNO to produce predictions that are not only accurate in $\psi$ itself but also yield physically consistent velocity fields.
 
-Warum unterschiedliche Losses? Weil die FNO mit einem komplexeren Architektur- und Trainingssetup ausgestattet ist, das speziell auf die Herausforderungen der
-Stokes-Flow-Vorhersage mit variabler Kristallzahl zugeschnitten ist. Die zusätzlichen Verlustkomponenten für Gradienten und Randbedingungen helfen, die FNO zu stabilisieren und die physikalische Konsistenz der Vorhersagen zu verbessern, insbesondere in Bezug auf die Ableitungen, die für die Berechnung der Geschwindigkeitsfelder entscheidend sind. Der U-Net hingegen ist eine bewährte Architektur für Bild-zuBild-Regression und erreicht bereits mit einem einfachen MSE-Loss gute Ergebnisse, weshalb hier auf diekomplexeren Verlustkomponenten verzichtet wird, um die Implementierung übersichtlich zu halten und dieVergleichbarkeit der beiden Ansätze zu gewährleisten.
-
+The composite loss encourages the FNO to produce predictions that are not only accurate in $\psi$ itself but also yield physically consistent velocity fields. The U-Net, by contrast, achieves sufficient accuracy with a simple MSE loss: its convolutional inductive bias already imposes a degree of spatial regularity that makes the additional gradient and boundary penalties unnecessary.
 
 \subsection*{Checkpointing}
 
-Model checkpoints are written at the end of each epoch using BSON. All checkpoints are stored in a CPU-compatible format, ensuring that trained models can be loaded and evaluated on systems without GPU support.
+U-Net checkpoints are written at the end of each epoch in BSON format, which ensures CPU-compatible portability. FNO checkpoints use JLD2 and additionally store the optimizer state and epoch index, enabling training to be resumed from any saved checkpoint. In both cases, model parameters are explicitly transferred to CPU before saving.
 
 % ----------------------------------------------------------------------------
 \section{Evaluation Utilities}

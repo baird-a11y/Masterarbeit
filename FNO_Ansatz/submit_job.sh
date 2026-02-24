@@ -37,10 +37,10 @@
 # Schritt 2: Training
 # =============================================
 
-/opt/julia/bin/julia run_training.jl --epochs 50 --batch 16 --train_dir data_train --val_dir data_val
+/opt/julia/bin/julia run_training.jl --epochs 1 --batch 16 --train_dir /home/pbaselt/Documents/Masterarbeit/data_train --val_dir /home/pbaselt/Documents/Masterarbeit/data_val
 
 # =============================================
 # Schritt 3: Evaluation (separat, nutzt best_model)
 # =============================================
 
-/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints/best_model.jld2 --data_dir data_eval --out eval_output_5
+#/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints/best_model.jld2 --data_dir data_eval --out eval_output_5

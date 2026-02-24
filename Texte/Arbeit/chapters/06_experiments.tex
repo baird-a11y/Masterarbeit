@@ -27,13 +27,101 @@
 \chapter{Experiments}
 \label{ch:experiments}
 
+This chapter describes the experimental setup used to evaluate and compare the U-Net and FNO surrogate models. It specifies the dataset, the learning task, the evaluation metrics, and the set of experiments designed to assess model accuracy and generalization.
 
-Das Kapitel muss umgeschrieben werden. Ich will hier einmal kuz erklären was genau ich untersuche und vergleichen habe etc. Kaptiel 7 wird gestrichen. Die Ergbnisse aus meinen Experiementen werden dann in Kapitel 8 präsentiert und diskutiert. In diesem Kapitel soll es also um die Beschreibung der Experimente gehen, die ich durchgeführt habe, um die Leistung meines Modells zu bewerten. Ich werde erklären, welche Metriken ich verwende, um die Vorhersagen meines Modells mit den Referenzlösungen zu vergleichen, und wie ich die Ergebnisse interpretiere. Es wird auch eine Diskussion darüber geben, welche Aspekte meiner Modellierung gut funktionieren und wo es noch Herausforderungen gibt.
+% ----------------------------------------------------------------------------
+\section{Dataset and Data Split}
+\label{sec:experiments:dataset}
+% ----------------------------------------------------------------------------
 
-Dinge die hier rein sollen:
-- Trainings- und Testdaten: Wie viele Samples, wie wurden sie generiert, welche Aufteilung zwischen Training und Test, etc.
-- Lernaufgabe: Was genau soll das Modell lernen? Welche Eingaben und Ausgaben hat es? Wie wird die physikalische Konsistenz (z.B. Inkompressibilität) gewährleistet?
-- Fehlermaße: Welche Metriken verwende ich, um die Vorhersagen meines Modells mit den Referenzlösungen zu vergleichen? Zum Beispiel MSE, relative Fehler, Exceedance-Fractions, etc. Warum habe ich diese Metriken gewählt und was sagen sie über die Qualität der Vorhersagen aus?
-- Überblick über die Experimente: Welche verschiedenen Konfigurationen habe ich getestet (z.B. verschiedene Hyperparameter, verschiedene Trainingsgrößen, etc.)? 
-Wie habe ich die Experimente strukturiert, um die Leistung meines Modells systematisch zu bewerten?
+All training and evaluation data are generated using LaMEM, a parallel finite-difference Stokes solver. Each simulation produces a steady-state Stokes flow in a $[-1,1]^2$ domain containing one or more circular crystals with fixed viscosity contrast. The stream function $\psi$ is reconstructed from the vorticity output via the Poisson solver described in Chapter~\ref{ch:implementation}, and normalized per sample before storage.
 
+Samples are stored as individual \texttt{.jld2} files, each containing the input tensor, the normalized target field $\psi_{\mathrm{norm}}$, the normalization scale, and grid metadata. Data generation is executed serially to guarantee deterministic behavior.
+
+The dataset is stratified by crystal count. Samples with $n = 1, 2, 3$ crystals are used for training and validation; generalization to higher crystal counts is evaluated on held-out test samples. The train/validation split is 80/20 within each stratum, ensuring balanced representation across geometric complexities.
+
+% ----------------------------------------------------------------------------
+\section{Learning Task and Input Encoding}
+\label{sec:experiments:task}
+% ----------------------------------------------------------------------------
+
+Both models learn the mapping from a geometric encoding of the crystal configuration to the normalized stream function $\psi_{\mathrm{norm}}$. The stream function is chosen as the learning target because it implicitly encodes the incompressibility constraint: the velocity field $\mathbf{u} = (\partial\psi/\partial z,\, -\partial\psi/\partial x)$ is divergence-free by construction.
+
+Each input sample consists of four channels on a $256 \times 256$ Cartesian grid:
+\begin{enumerate}
+    \item \textbf{Crystal mask} — binary indicator of solid crystal regions ($1$ inside, $0$ outside).
+    \item \textbf{Signed distance field (SDF)} — signed distance to the nearest crystal boundary, providing smooth geometric information beyond the binary mask.
+    \item \textbf{Normalized $x$-coordinate} — grid position along the horizontal axis, scaled to $[-1, 1]$.
+    \item \textbf{Normalized $z$-coordinate} — grid position along the vertical axis, scaled to $[-1, 1]$.
+\end{enumerate}
+
+The coordinate channels allow the network to resolve position-dependent flow patterns without relying on positional embeddings. The single output channel is $\psi_{\mathrm{norm}} \in \mathbb{R}^{256 \times 256 \times 1}$; rescaling to physical units is applied in post-processing using the stored per-sample scale factor.
+
+% ----------------------------------------------------------------------------
+\section{Evaluation Metrics}
+\label{sec:experiments:metrics}
+% ----------------------------------------------------------------------------
+
+Predictions are evaluated on the normalized stream function $\psi_{\mathrm{norm}}$ as well as on derived velocity fields $\mathbf{u} = (\partial\psi/\partial z,\, -\partial\psi/\partial x)$, computed via finite differences on the $256 \times 256$ grid. The following metrics are reported:
+
+\begin{description}
+    \item[MSE] Mean squared error on $\psi_{\mathrm{norm}}$, measuring overall pointwise accuracy.
+    \item[Relative $L_2$ error] $\|\hat{\psi} - \psi\|_2 / \|\psi\|_2$, providing a scale-invariant measure of generalization quality.
+    \item[Maximum absolute error] $\|\hat{\psi} - \psi\|_\infty$, quantifying worst-case local deviations.
+    \item[Velocity MSE] MSE on the derived velocity components $u_x$ and $u_z$, assessing the physical consistency of the predicted stream function beyond pointwise $\psi$ accuracy.
+    \item[Gradient MSE] (FNO only) MSE on spatial derivatives $\partial\psi/\partial x$ and $\partial\psi/\partial z$, which directly corresponds to the gradient loss term used during FNO training.
+    \item[Boundary MSE] (FNO only) MSE evaluated only on the domain boundary $\partial\Omega$, measuring compliance with the homogeneous Dirichlet condition $\psi|_{\partial\Omega} = 0$.
+\end{description}
+
+All metrics are aggregated by crystal count to assess how performance scales with geometric complexity. This stratification is essential for distinguishing in-distribution accuracy from out-of-distribution generalization.
+
+% ----------------------------------------------------------------------------
+\section{Experimental Configurations}
+\label{sec:experiments:configs}
+% ----------------------------------------------------------------------------
+
+Four experiments are conducted to systematically evaluate and compare both models.
+
+\paragraph{Experiment 1 – Single-crystal baseline.}
+Both models are trained and evaluated on configurations with exactly one crystal ($n = 1$). This experiment establishes a baseline for each architecture under the simplest geometric setting and provides a controlled comparison of their accuracy and training behavior.
+
+\paragraph{Experiment 2 – Multi-crystal generalization.}
+Models are trained on samples with $n \in \{1, 2, 3\}$ crystals and evaluated separately on each crystal count, including held-out configurations with $n > 3$. This experiment tests whether learned representations generalize to more complex geometries than seen during training.
+
+\paragraph{Experiment 3 – Dataset size ablation.}
+Training set sizes of 500, 1000, and 2000 samples are compared, with fixed validation and test sets. This experiment quantifies the data efficiency of each architecture and identifies the regime in which performance saturates.
+
+\paragraph{Experiment 4 – Architecture ablation (optional).}
+Selected architectural hyperparameters are varied independently: for the FNO, the number of retained Fourier modes ($k_{\max} \in \{16, 24\}$); for the U-Net, the base channel width (\texttt{base\_channels} $\in \{16, 32\}$). This experiment assesses sensitivity to model capacity and informs the choice of default configuration.
+
+% ----------------------------------------------------------------------------
+\section{Training Setup and Hyperparameters}
+\label{sec:experiments:setup}
+% ----------------------------------------------------------------------------
+
+Both models are trained on the same datasets and evaluated with the same metrics. Table~\ref{tab:hyperparams} summarizes the key hyperparameters.
+
+\begin{table}[h]
+\centering
+\caption{Hyperparameter comparison of U-Net and FNO training configurations.}
+\label{tab:hyperparams}
+\begin{tabular}{lll}
+\toprule
+\textbf{Parameter}       & \textbf{U-Net}              & \textbf{FNO}                          \\
+\midrule
+Optimizer                & Adam                        & Adam + ClipNorm                        \\
+Learning rate            & $5 \times 10^{-5}$          & $10^{-3}$                              \\
+Max.\ gradient norm      & ---                         & 1.0                                    \\
+Batch size               & 8                           & 32                                     \\
+Epochs                   & 300                         & 100                                    \\
+Input channels           & 4                           & 4                                      \\
+Output channels          & 1                           & 1                                      \\
+Base channels / width    & 32                          & $d_v = 64$                             \\
+Architecture depth       & 4 encoder levels            & $L = 4$ FNO blocks                     \\
+Fourier modes $k_{\max}$ & ---                         & 24                                     \\
+Checkpoint format        & BSON                        & JLD2                                   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All experiments use a fixed random seed (42) for reproducibility. Training is performed on a single GPU; models are saved in CPU-compatible format to enable evaluation on systems without GPU support.
