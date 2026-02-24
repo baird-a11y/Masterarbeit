@@ -67,8 +67,7 @@ and normalized $x$- and $z$-coordinate channels—and a single-channel output $\
 The encoder--decoder structure follows a classical U-Net design with skip connections. Downsampling uses strided convolutions instead of max pooling to keep the operation learnable and reduce grid-alignment artifacts in smooth flow fields. Each resolution level applies two successive $3\times3$ convolutions, followed by batch normalization and ReLU activation.
 
 Upsampling is implemented via transposed convolutions. Skip connections concatenate encoder feature maps with decoder feature maps at matching resolutions. A final $1\times1$ convolution maps the decoder output to the
-single output channel. No activation is applied in the output layer, as the network performs pure regression. The model is constructed via a \texttt{build\_unet()} factory function with configurable base channel width
-(default: 32).
+single output channel. No activation is applied in the output layer, as the network performs pure regression. The model is constructed via a \texttt{build\_unet()} factory function with configurable base channel width; the concrete value is reported in Chapter~\ref{ch:experiments}.
 
 \subsection*{Fourier Neural Operator}
 
@@ -83,7 +82,7 @@ Each FNO block combines the spectral convolution path with a pointwise $1\times1
 allows each block to simultaneously capture global spectral structure and local spatial features.
 
 \paragraph{Model assembly.}
-The complete model chains a pointwise lifting convolution ($4 \to d_v$ channels), a stack of $L$ FNO blocks, and a two-layer pointwise projection ($d_v \to d_v$, GELU, $d_v \to 1$). The default configuration uses $d_v = 64$, $k_{\max} = 24$ modes in each spatial direction, and $L = 4$ Fourier layers.
+The complete model chains a pointwise lifting convolution ($4 \to d_v$ channels), a stack of $L$ FNO blocks, and a two-layer pointwise projection ($d_v \to d_v$, GELU, $d_v \to 1$). The architecture is parameterized by the channel width $d_v$, the number of retained Fourier modes $k_{\max}$, and the number of Fourier layers $L$; concrete values are reported in Chapter~\ref{ch:experiments}.
 
 % ----------------------------------------------------------------------------
 \section{Data Pipeline and Dataset Interfaces}
@@ -131,7 +130,7 @@ Training is implemented using an explicit loop to retain full control over gradi
 \subsection*{Optimizer configuration}
 
 Both models use the Adam optimizer from \texttt{Optimisers.jl}. The FNO additionally applies gradient norm clipping (\texttt{ClipNorm}) to stabilize training, as spectral operations can produce large gradient magnitudes.
-The U-Net is trained with a learning rate of $5\times10^{-5}$; the FNO uses $10^{-3}$ with gradient clipping at a maximum norm of 1.0. Training runs span 300 epochs for the U-Net and 100 epochs for the FNO, with a batch size of 8 and 32, respectively.
+Concrete hyperparameter choices—learning rates, gradient clipping thresholds, batch sizes, and number of training epochs—are architecture-specific and reported in Chapter~\ref{ch:experiments}.
 
 \subsection*{Loss functions}
 
