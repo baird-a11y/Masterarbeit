@@ -128,9 +128,7 @@ elseif mode == "train"
                             batch_size=batch_size,
                             lr=learning_rate,
                             rng=rng,
-                            save_path=model_path,
-                            use_coords=true,
-                            coord_range=:pm1)
+                            save_path=model_path)
 
     @info "Training abgeschlossen."
 
