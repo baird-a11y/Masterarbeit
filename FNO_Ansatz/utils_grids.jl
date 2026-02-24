@@ -83,11 +83,11 @@ function normalize_coords(x_vec_1D::AbstractVector, z_vec_1D::AbstractVector; ra
     @assert xmax > xmin && zmax > zmin "Degenerate coordinate ranges"
 
     if range == :pm1
-        xnorm(v) = 2*(v - xmin)/(xmax - xmin) - 1
-        znorm(v) = 2*(v - zmin)/(zmax - zmin) - 1
+        xnorm = v -> 2*(v - xmin)/(xmax - xmin) - 1
+        znorm = v -> 2*(v - zmin)/(zmax - zmin) - 1
     elseif range == :unit
-        xnorm(v) = (v - xmin)/(xmax - xmin)
-        znorm(v) = (v - zmin)/(zmax - zmin)
+        xnorm = v -> (v - xmin)/(xmax - xmin)
+        znorm = v -> (v - zmin)/(zmax - zmin)
     else
         error("Unknown range=$range (use :pm1 or :unit)")
     end
