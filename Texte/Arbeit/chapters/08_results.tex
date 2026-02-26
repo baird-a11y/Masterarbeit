@@ -30,11 +30,328 @@
 \chapter{Results}
 \label{ch:results}
 
-Hier sollen die Ergebnisse meiner Experimente präsentiert und diskutiert werden. Ich werde die Leistung meines Modells anhand der Metriken bewerten, die ich in Kapitel 6 beschrieben habe, und die Vorhersagen meines Modells mit den Referenzlösungen vergleichen. Es wird auch eine Diskussion darüber geben, welche Aspekte meiner Modellierung gut funktionieren und wo es noch Herausforderungen gibt. Ich werde die Ergebnisse in Bezug auf die verschiedenen Lernziele und Eingabekodierungen analysieren und versuchen, Muster oder Trends zu identifizieren, die auf die Stärken und Schwächen meines Modells hinweisen. Schließlich werde ich die Ergebnisse in den Kontext der bestehenden Literatur einordnen und möglicheImplikationen für zukünftige Arbeiten diskutieren.
+This chapter presents the results of the experiments described in Chapter~\ref{ch:experiments}.
+All experiments target the prediction of the stream function~$\psi$ for Stokes flow around
+settling crystals. The evaluation covers training convergence, quantitative error metrics on
+a held-out evaluation set, and qualitative inspection of predicted flow fields.
+Results are organized by experiment; within each experiment, FNO and U-Net are presented
+separately and then compared.
+The learning rate values for each configuration will be specified once the final experimental
+setups are confirmed.
 
-Was hier rein soll:
-- Vergleich der Vorhersagen meines Modells mit den Referenzlösungen
-- Diskussion der Leistung meines Modells anhand der Metriken
-- Analyse der Ergebnisse in Bezug auf die verschiedenen Lernziele und Eingabekodierungen
-- Einordnung der Ergebnisse in den Kontext der bestehenden Literatur
-- Diskussion der Implikationen für zukünftige Arbeiten
+% ============================================================================
+\section{Experiment~1: Single-Crystal Baseline}
+\label{sec:results:exp1}
+% ============================================================================
+
+Experiment~1 establishes a per-architecture baseline on the simplest configuration:
+single-crystal flows ($n = 1$). The sole free parameter across the four configurations
+is the learning rate; all other hyperparameters are fixed at the architecture defaults
+(see Section~\ref{sec:experiments:setup}).
+The four configurations are referred to as \emph{Exp-1.1} through \emph{Exp-1.4},
+with learning rates \TODO{lr values werden ergänzt}.
+
+% ----------------------------------------------------------------------------
+\subsection{FNO – Training Behavior}
+\label{ssec:results:exp1:fno:training}
+% ----------------------------------------------------------------------------
+
+Figure~\ref{fig:fno_training_exp1} shows the training and validation loss curves for all four
+FNO configurations over 100~epochs. All runs converge monotonically in training loss; the
+validation curves exhibit mild fluctuations but generally track the training loss, indicating
+no severe overfitting.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/FNO_Ergebnisse/One_Crystal/eval_output_one/plots/training_history.png}
+        \caption{Exp-1.1 (lr $= $ \TODO{lr\_1})}
+        \label{fig:fno_train_one}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/FNO_Ergebnisse/One_Crystal/eval_output_two/plots/training_history.png}
+        \caption{Exp-1.2 (lr $= $ \TODO{lr\_2})}
+        \label{fig:fno_train_two}
+    \end{subfigure}
+    \vspace{0.5em}
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/FNO_Ergebnisse/One_Crystal/eval_output_three/plots/training_history.png}
+        \caption{Exp-1.3 (lr $= $ \TODO{lr\_3})}
+        \label{fig:fno_train_three}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/FNO_Ergebnisse/One_Crystal/eval_output_four/plots/training_history.png}
+        \caption{Exp-1.4 (lr $= $ \TODO{lr\_4})}
+        \label{fig:fno_train_four}
+    \end{subfigure}
+    \caption{FNO training and validation loss curves for the four learning-rate configurations
+             of Experiment~1 (single crystal, 100~epochs).
+             Training MSE (solid) and validation relative $L_2$ error (dashed) per epoch.}
+    \label{fig:fno_training_exp1}
+\end{figure}
+
+% ----------------------------------------------------------------------------
+\subsection{FNO – Evaluation Metrics}
+\label{ssec:results:exp1:fno:metrics}
+% ----------------------------------------------------------------------------
+
+After training, each FNO model is evaluated on a fixed set of ten single-crystal samples
+from the held-out evaluation set. Table~\ref{tab:fno_metrics_exp1} summarizes the aggregated
+metrics. The divergence RMS is included as a physical sanity check; since the stream-function
+formulation guarantees $\nabla \cdot \mathbf{u} = 0$ by construction, its values are
+numerically negligible ($\sim 10^{-26}$) for all configurations.
+
+\begin{table}[htbp]
+\centering
+\caption{FNO evaluation metrics for Experiment~1 (single crystal, $n=1$, 10~samples).
+         $\bar{\varepsilon}_\psi$: mean relative $L_2$ error on $\psi$;
+         $\bar{\varepsilon}_v$: mean relative $L_2$ error on derived velocity;
+         $\bar{e}_{\max}$: mean maximum absolute error on $\psi$;
+         $\overline{\text{MSE}}_\psi$: mean squared error on $\psi$.
+         Standard deviations over the 10 samples in parentheses.}
+\label{tab:fno_metrics_exp1}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Config} & $\bar{\varepsilon}_\psi$ (\%) & $\bar{\varepsilon}_v$ (\%) & $\bar{e}_{\max}$ & $\overline{\text{MSE}}_\psi$ \\
+\midrule
+Exp-1.1 (lr $=$ \TODO{})
+    & $1.85 \pm 0.65$ & $3.84 \pm 0.58$ & $0.360 \pm 0.168$ & $0.0121 \pm 0.0121$ \\
+Exp-1.2 (lr $=$ \TODO{})
+    & $3.23 \pm 1.52$ & $5.34 \pm 1.13$ & $0.672 \pm 0.412$ & $0.0487 \pm 0.0526$ \\
+Exp-1.3 (lr $=$ \TODO{})
+    & $5.72 \pm 2.56$ & $8.48 \pm 1.72$ & $0.934 \pm 0.426$ & $0.131  \pm 0.142$  \\
+Exp-1.4 (lr $=$ \TODO{})
+    & $2.58 \pm 0.91$ & $5.10 \pm 0.59$ & $0.548 \pm 0.239$ & $0.0260 \pm 0.0267$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Exp-1.1 yields the lowest errors across all metrics, achieving a mean relative $L_2$ error
+of $1.85\%$ on~$\psi$ and $3.84\%$ on the derived velocity field.
+Exp-1.4 is the second-best configuration ($2.58\%$ / $5.10\%$), while the higher learning
+rates of Exp-1.2 and Exp-1.3 produce noticeably larger errors.
+This indicates that the FNO benefits from a moderate-to-small learning rate when trained
+with the Adam optimizer and gradient clipping at norm~1.0.
+
+Figure~\ref{fig:fno_metrics_vs_crystals_exp1} shows the per-configuration metric plots
+as generated by the evaluation pipeline.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/FNO_Ergebnisse/One_Crystal/eval_output_one/plots/metrics_vs_crystals.png}
+        \caption{Exp-1.1 (lr $= $ \TODO{lr\_1})}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/FNO_Ergebnisse/One_Crystal/eval_output_two/plots/metrics_vs_crystals.png}
+        \caption{Exp-1.2 (lr $= $ \TODO{lr\_2})}
+    \end{subfigure}
+    \vspace{0.5em}
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/FNO_Ergebnisse/One_Crystal/eval_output_three/plots/metrics_vs_crystals.png}
+        \caption{Exp-1.3 (lr $= $ \TODO{lr\_3})}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/FNO_Ergebnisse/One_Crystal/eval_output_four/plots/metrics_vs_crystals.png}
+        \caption{Exp-1.4 (lr $= $ \TODO{lr\_4})}
+    \end{subfigure}
+    \caption{FNO evaluation metric summaries for Experiment~1. Each panel shows the mean
+             relative $L_2$ errors on $\psi$ and derived velocity, stratified by crystal count
+             (here only $n=1$).}
+    \label{fig:fno_metrics_vs_crystals_exp1}
+\end{figure}
+
+% ----------------------------------------------------------------------------
+\subsection{FNO – Qualitative Results}
+\label{ssec:results:exp1:fno:qualitative}
+% ----------------------------------------------------------------------------
+
+Figure~\ref{fig:fno_gallery_exp1} shows representative predictions from Exp-1.1 (the
+best-performing FNO configuration). The stream function field~$\psi$ and the derived
+velocity magnitude $|\mathbf{u}|$ are displayed alongside the reference solution.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/FNO_Ergebnisse/One_Crystal/eval_output_one/plots/gallery/n01/004_rel0.0172_psi.png}
+        \caption{Stream function $\psi$ (rel.\ error $= 1.72\%$)}
+        \label{fig:fno_gallery_psi}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/FNO_Ergebnisse/One_Crystal/eval_output_one/plots/gallery/n01/004_rel0.0172_vel.png}
+        \caption{Velocity field $|\mathbf{u}|$ (same sample)}
+        \label{fig:fno_gallery_vel}
+    \end{subfigure}
+    \caption{FNO Exp-1.1: predicted vs.\ reference stream function (left) and velocity
+             magnitude (right) for a representative single-crystal sample
+             (relative $L_2$ error $= 1.72\%$ on $\psi$).}
+    \label{fig:fno_gallery_exp1}
+\end{figure}
+
+% ----------------------------------------------------------------------------
+\subsection{U-Net – Training Behavior}
+\label{ssec:results:exp1:unet:training}
+% ----------------------------------------------------------------------------
+
+Figure~\ref{fig:unet_training_exp1} shows the training and validation loss curves for the
+four U-Net configurations. All four runs were recorded over 50~epochs; the full 300-epoch
+training planned in Section~\ref{sec:experiments:setup} was not yet completed at the time
+of writing. The results presented here are therefore preliminary.
+
+The curves of Exp-1.1 and Exp-1.2 exhibit pronounced oscillations in validation loss
+throughout all 50~epochs, suggesting that the respective learning rates are too large for
+stable U-Net convergence. Exp-1.3 shows the smoothest and most rapid descent, reaching the
+lowest validation loss by epoch~50. Exp-1.4 falls between the two regimes with moderate
+oscillation and intermediate final loss. It should be noted that Exp-1.2 was restarted
+after an initial three-epoch run; the continued run is shown in the figure.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/UNET_Ergebnisse/One_Crystal/exp_one/training_history.png}
+        \caption{Exp-1.1 (lr $= $ \TODO{lr\_1})}
+        \label{fig:unet_train_one}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/UNET_Ergebnisse/One_Crystal/exp_two/training_history.png}
+        \caption{Exp-1.2 (lr $= $ \TODO{lr\_2})}
+        \label{fig:unet_train_two}
+    \end{subfigure}
+    \vspace{0.5em}
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/UNET_Ergebnisse/One_Crystal/exp_three/training_history.png}
+        \caption{Exp-1.3 (lr $= $ \TODO{lr\_3})}
+        \label{fig:unet_train_three}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/UNET_Ergebnisse/One_Crystal/exp_four/training_history.png}
+        \caption{Exp-1.4 (lr $= $ \TODO{lr\_4})}
+        \label{fig:unet_train_four}
+    \end{subfigure}
+    \caption{U-Net training and validation loss curves for the four learning-rate
+             configurations of Experiment~1 (single crystal, 50~epochs shown, preliminary).
+             Training MSE (solid) and validation relative $L_2$ error (dashed) per epoch.}
+    \label{fig:unet_training_exp1}
+\end{figure}
+
+% ----------------------------------------------------------------------------
+\subsection{U-Net – Metrics at Epoch~50}
+\label{ssec:results:exp1:unet:metrics}
+% ----------------------------------------------------------------------------
+
+Table~\ref{tab:unet_metrics_exp1} reports the validation MSE and relative $L_2$ error at the
+final recorded epoch~(50) for each U-Net configuration. Because training was halted before
+convergence, these values are preliminary estimates rather than final model quality.
+Updated results will replace these once the full 300-epoch runs are completed.
+
+\begin{table}[htbp]
+\centering
+\caption{U-Net validation metrics at epoch~50 for Experiment~1 (single crystal, $n=1$,
+         preliminary). Values are taken from the last epoch of the training log.}
+\label{tab:unet_metrics_exp1}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Config} & $\varepsilon_\psi^{\mathrm{val}}$ (rel.\ $L_2$, \%) & $\mathrm{MSE}_\psi^{\mathrm{val}}$ \\
+\midrule
+Exp-1.1 (lr $=$ \TODO{}) & $11.2$ & $0.283$ \\
+Exp-1.2 (lr $=$ \TODO{}) & $11.2$ & $0.311$ \\
+Exp-1.3 (lr $=$ \TODO{}) & $\phantom{0}5.0$  & $0.064$ \\
+Exp-1.4 (lr $=$ \TODO{}) & $\phantom{0}6.7$  & $0.117$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Even at this preliminary stage, Exp-1.3 achieves a validation relative $L_2$ error of
+approximately $5\%$. Exp-1.4 reaches $6.7\%$, while Exp-1.1 and Exp-1.2 remain around
+$11\%$, consistent with their noisier convergence behavior.
+
+% ----------------------------------------------------------------------------
+\subsection{U-Net – Qualitative Results}
+\label{ssec:results:exp1:unet:qualitative}
+% ----------------------------------------------------------------------------
+
+Figure~\ref{fig:unet_gallery_exp1} shows representative evaluation plots for a U-Net
+configuration. The overall flow structure is reproduced qualitatively, but local errors
+near the crystal boundary appear more pronounced than in the corresponding FNO predictions.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/UNET_Ergebnisse/One_Crystal/eval_plots_one/n_01/sample_0001_rel0.1274_psi.png}
+        \caption{Exp-1.1: stream function $\psi$ (rel.\ error $= 12.7\%$)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/UNET_Ergebnisse/One_Crystal/eval_plots_one/n_01/sample_0001_rel0.1274_vel.png}
+        \caption{Exp-1.1: velocity $|\mathbf{u}|$ (same sample)}
+    \end{subfigure}
+    \caption{U-Net Exp-1.1: predicted vs.\ reference stream function (left) and velocity
+             magnitude (right) for a representative single-crystal sample
+             (relative $L_2$ error $= 12.7\%$ on $\psi$, preliminary 50-epoch model).}
+    \label{fig:unet_gallery_exp1}
+\end{figure}
+
+% ----------------------------------------------------------------------------
+\subsection{Comparison: FNO vs.\ U-Net}
+\label{ssec:results:exp1:comparison}
+% ----------------------------------------------------------------------------
+
+Table~\ref{tab:comparison_exp1} compares the best result from each architecture in
+Experiment~1. The FNO (Exp-1.1) achieves a mean relative $L_2$ error of $1.85\%$ on~$\psi$,
+more than $2.5\times$ lower than the best U-Net configuration at its current training stage
+(Exp-1.3: $5.0\%$). The velocity field error follows the same pattern ($3.84\%$ vs.\ not
+yet available for U-Net on the evaluation set).
+
+It must be emphasized that the U-Net comparison is based on a 50-epoch training run whereas
+the full schedule foresees 300~epochs; the gap may therefore be smaller once training is
+complete. Nonetheless, the FNO converges to a lower error level in fewer epochs (100 vs.\
+50 already evaluated), suggesting a structural advantage of the spectral architecture for
+this class of smooth, globally-structured flow fields.
+
+Both models benefit from the stream-function output representation: the divergence RMS of
+all FNO predictions is on the order of $10^{-26}$, confirming that incompressibility is
+preserved analytically irrespective of prediction accuracy.
+
+\begin{table}[htbp]
+\centering
+\caption{Best result per architecture in Experiment~1 (single crystal, $n=1$).
+         FNO: metrics on the held-out evaluation set (10~samples).
+         U-Net: validation metrics at epoch~50 (preliminary).}
+\label{tab:comparison_exp1}
+\begin{tabular}{llcc}
+\toprule
+\textbf{Architecture} & \textbf{Config} & $\bar{\varepsilon}_\psi$ (rel.\ $L_2$, \%) & $\bar{\varepsilon}_v$ (rel.\ $L_2$, \%) \\
+\midrule
+FNO   & Exp-1.1 (lr $=$ \TODO{}) & $1.85$ & $3.84$ \\
+U-Net & Exp-1.3 (lr $=$ \TODO{}) & $5.0\phantom{0}$ & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================================
+\section{Experiment~2: Multi-Crystal Generalization}
+\label{sec:results:exp2}
+% ============================================================================
+
+\TODO{Ergebnisse werden nach Abschluss der Experimente ergänzt (vgl.\ Abschnitt~\ref{sec:experiments:configs}).}
+
+% ============================================================================
+\section{Experiment~3: Dataset Size Ablation}
+\label{sec:results:exp3}
+% ============================================================================
+
+\TODO{Ergebnisse werden nach Abschluss der Experimente ergänzt (vgl.\ Abschnitt~\ref{sec:experiments:configs}).}
+
+% ============================================================================
+\section{Experiment~4: Architecture Ablation}
+\label{sec:results:exp4}
+% ============================================================================
+
+\TODO{Ergebnisse werden nach Abschluss der Experimente ergänzt (vgl.\ Abschnitt~\ref{sec:experiments:configs}).}
