@@ -279,13 +279,6 @@ function evaluate_dataset(; data_dir::String,
     move, devsym = _select_mover(use_gpu)
     @info "Evaluierung auf Gerät: $(devsym == :gpu ? "GPU (CUDA)" : "CPU")"
 
-    if devsym == :gpu && _HAS_CUDA
-        try
-            CUDA.allowscalar(false)
-        catch
-        end
-    end
-
     @info "Lade Modell aus $model_path"
     model_bson = BSON.load(model_path)
     model_cpu = model_bson[:model]

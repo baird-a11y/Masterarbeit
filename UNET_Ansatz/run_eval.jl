@@ -15,6 +15,7 @@ model_path  = "unet_psi.bson"
 data_dir    = "/local/home/baselt/src/Daten/data_psi"
 out_prefix  = "eval_psi_dataset"
 plot_dir    = "eval_plots"
+save_plots  = false        # Einzel-Sample-Plots (pro Sample ψ/vel/div) — via --save_plots
 denorm_psi  = false
 use_gpu     = nothing   # nothing = auto, true = GPU, false = CPU
 
@@ -26,7 +27,8 @@ for i in eachindex(ARGS)
     if ARGS[i] == "--model"    && i < length(ARGS); global model_path = ARGS[i+1]; end
     if ARGS[i] == "--data_dir" && i < length(ARGS); global data_dir   = ARGS[i+1]; end
     if ARGS[i] == "--out"      && i < length(ARGS); global out_prefix = ARGS[i+1]; end
-    if ARGS[i] == "--plot_dir" && i < length(ARGS); global plot_dir   = ARGS[i+1]; end
+    if ARGS[i] == "--plot_dir"   && i < length(ARGS); global plot_dir   = ARGS[i+1]; end
+    if ARGS[i] == "--save_plots"                   ; global save_plots = true; end
     if ARGS[i] == "--denorm"                       ; global denorm_psi = true; end
     if ARGS[i] == "--gpu"                          ; global use_gpu    = true; end
     if ARGS[i] == "--no_gpu"                       ; global use_gpu    = false; end
@@ -64,7 +66,7 @@ errors_by_n, all_results = EvaluatePsi.evaluate_dataset(;
     data_dir   = data_dir,
     model_path = model_path,
     out_prefix = out_prefix,
-    save_plots = false,        # Einzel-Sample-Plots: explizit mit --save_plots aktivieren
+    save_plots = save_plots,
     plot_dir   = plot_dir,
     denorm_psi = denorm_psi,
     use_gpu    = use_gpu,

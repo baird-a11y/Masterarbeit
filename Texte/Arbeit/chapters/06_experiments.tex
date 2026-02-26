@@ -27,7 +27,7 @@
 \chapter{Experiments}
 \label{ch:experiments}
 
-This chapter describes the experimental setup used to evaluate and compare the U-Net and FNO surrogate models. It specifies the dataset, the learning task, the evaluation metrics, and the set of experiments designed to assess model accuracy and generalization.
+This chapter describes the experimental setup used to evaluate and compare the U-Net and FNO surrogate models. It covers the dataset and data split, the learning task and input encoding, the evaluation metrics, and the specific experimental configurations designed to assess model accuracy and out-of-distribution generalization.
 
 % ----------------------------------------------------------------------------
 \section{Dataset and Data Split}
@@ -38,7 +38,7 @@ All training and evaluation data are generated using LaMEM, a parallel finite-di
 
 Samples are stored as individual \texttt{.jld2} files, each containing the input tensor, the normalized target field $\psi_{\mathrm{norm}}$, the normalization scale, and grid metadata. Data generation is executed serially to guarantee deterministic behavior.
 
-The dataset is stratified by crystal count. Samples with $n = 1, 2, 3$ crystals are used for training and validation; generalization to higher crystal counts is evaluated on held-out test samples. The train/validation split is 80/20 within each stratum, ensuring balanced representation across geometric complexities.
+The dataset is stratified by crystal count. For each stratum, 1\,000 samples are used for training, 100 for validation, and 10 for final evaluation. Samples with $n = 1, 2, 3$ crystals are used for training and validation; generalization to higher crystal counts is assessed on held-out test samples. The 1\,000\,/\,100 training-to-validation ratio is maintained within each stratum, ensuring balanced representation across all geometric complexity levels.
 
 % ----------------------------------------------------------------------------
 \section{Learning Task and Input Encoding}
@@ -69,8 +69,8 @@ Predictions are evaluated on the normalized stream function $\psi_{\mathrm{norm}
     \item[Relative $L_2$ error] $\|\hat{\psi} - \psi\|_2 / \|\psi\|_2$, providing a scale-invariant measure of generalization quality.
     \item[Maximum absolute error] $\|\hat{\psi} - \psi\|_\infty$, quantifying worst-case local deviations.
     \item[Velocity MSE] MSE on the derived velocity components $u_x$ and $u_z$, assessing the physical consistency of the predicted stream function beyond pointwise $\psi$ accuracy.
-    \item[Gradient MSE] (FNO only) MSE on spatial derivatives $\partial\psi/\partial x$ and $\partial\psi/\partial z$, which directly corresponds to the gradient loss term used during FNO training.
-    \item[Boundary MSE] (FNO only) MSE evaluated only on the domain boundary $\partial\Omega$, measuring compliance with the homogeneous Dirichlet condition $\psi|_{\partial\Omega} = 0$.
+    \item[Gradient MSE] (FNO only) MSE on the spatial derivatives $\partial\psi/\partial x$ and $\partial\psi/\partial z$, directly reflecting the gradient loss term used during FNO training.
+    \item[Boundary MSE] (FNO only) MSE evaluated exclusively on the domain boundary $\partial\Omega$, measuring compliance with the homogeneous Dirichlet condition $\psi|_{\partial\Omega} = 0$.
 \end{description}
 
 All metrics are aggregated by crystal count to assess how performance scales with geometric complexity. This stratification is essential for distinguishing in-distribution accuracy from out-of-distribution generalization.
@@ -81,25 +81,20 @@ All metrics are aggregated by crystal count to assess how performance scales wit
 % ----------------------------------------------------------------------------
 
 Four experiments are conducted to systematically evaluate and compare both models.
-Für alle Experimente wurden folgenden Standart Konfigurationen ausgewählt für die Architekturen:
-
-Übersicht der Konfigurationen einfügen
-
-
-
+The same standard architecture configurations are used across all experiments; key hyperparameters are summarized in Table~\ref{tab:hyperparams} in Section~\ref{sec:experiments:setup}.
 
 \paragraph{Experiment 1 – Single-crystal baseline.}
 Both models are trained and evaluated on configurations with exactly one crystal ($n = 1$). This experiment establishes a baseline for each architecture under the simplest geometric setting and provides a controlled comparison of their accuracy and training behavior.
-Hierbei wurden jeweils vier Unterschiedliche lernraten verwendet (1e-3, 5e-3, 1e-4,5e-4) sowie einmal mit Batchsize 16 und 8 und verglichen.
+Four learning rates are evaluated ($1 \times 10^{-3}$, $5 \times 10^{-3}$, $1 \times 10^{-4}$, $5 \times 10^{-4}$), each combined with batch sizes of 8 and 16, and results are compared systematically.
 
 \paragraph{Experiment 2 – Multi-crystal generalization.}
-Models are trained on samples with $n \in \{1, 2, 10\}$ crystals and evaluated separately on each crystal count and how well they perform on unseen higher crystal counts ($n = 11, ... , 25$). This experiment assesses the ability of each architecture to generalize to more complex geometries than those seen during training, which is critical for practical applications in geodynamics where the number of crystals can vary widely.
+Models are trained on samples with $n \in \{1, \ldots, 10\}$ crystals and evaluated separately for each crystal count, including unseen higher counts ($n = 11, \ldots, 25$). This experiment assesses the ability of each architecture to generalize to geometric configurations more complex than those encountered during training—a capability that is critical for practical applications in geodynamics, where the number of crystals can vary widely.
 
-\paragraph{Experiment 3 – Limitations.}
-Die Modelle werden für höhrere Kirstallkonfigurationen trainiert (n bis zu 25) und anschließend soll auf eine wesentlich höhere Anzahl von Kristallen (n bis zu 100) generalisiert werden. Hierbei soll untersucht werden, ob die Modelle in der Lage sind, die Interaktionen zwischen einer großen Anzahl von Hindernissen zu erfassen, oder ob sie an einem Punkt der Komplexität überfordert sind.
+\paragraph{Experiment 3 – Stress-testing generalization limits.}
+Models are trained on configurations with up to $n = 25$ crystals and subsequently evaluated on substantially more complex scenes with up to $n = 100$ crystals. This experiment probes whether the models can capture the interactions arising from a large number of obstacles or whether their generalization capability breaks down beyond a critical level of geometric complexity.
 
-\paragraph{Experiment 4 – Changing Size (Suche besseren Namen).}
-Die Modelle werden wie in Experiment 2 trainiert, aber zusätzlich werden die Kristalle in den evaluierungs proben anders skaliert (um den Faktor 10 nach ob und unten). Dies testet die Fähigkeit der Modelle, nicht nur auf mehr Kristalle zu generalisieren, sondern auch auf größere Hindernisse, was eine weitere Dimension der Generalisierung darstellt.
+\paragraph{Experiment 4 – Crystal size generalization.}
+Models are trained as in Experiment~2, but the crystals in the evaluation samples are additionally scaled by up to a factor of ten in both directions relative to the training distribution. This experiment tests whether the models can generalize not only to larger numbers of crystals, but also to unseen obstacle sizes, introducing a further axis of out-of-distribution generalization.
 
 % ----------------------------------------------------------------------------
 \section{Training Setup and Hyperparameters}
@@ -107,6 +102,25 @@ Die Modelle werden wie in Experiment 2 trainiert, aber zusätzlich werden die Kr
 % ----------------------------------------------------------------------------
 
 Both models are trained on the same datasets and evaluated with the same metrics. Table~\ref{tab:hyperparams} summarizes the key hyperparameters.
+
+\paragraph{Loss functions.}
+The two architectures use different training objectives. The U-Net is trained with a plain mean squared error loss:
+\begin{equation}
+    \mathcal{L}_{\text{U-Net}} = \mathrm{MSE}(\hat{\psi}, \psi).
+\end{equation}
+The FNO uses a composite loss that additionally penalizes gradient errors and boundary violations:
+\begin{equation}
+    \mathcal{L}_{\text{FNO}} = \mathrm{MSE}(\hat{\psi}, \psi)
+        + \alpha_{\mathrm{grad}}\,\mathcal{L}_{\mathrm{grad}}
+        + \alpha_{\mathrm{bnd}}\,\mathcal{L}_{\mathrm{bnd}},
+\end{equation}
+where $\mathcal{L}_{\mathrm{grad}} = \mathrm{MSE}(\partial_x\hat{\psi},\partial_x\psi) + \mathrm{MSE}(\partial_z\hat{\psi},\partial_z\psi)$ is computed via central differences on interior points, and $\mathcal{L}_{\mathrm{bnd}} = \mathrm{MSE}(\hat{\psi}|_{\partial\Omega}, 0)$ enforces the homogeneous Dirichlet condition. The coefficient $\alpha_{\mathrm{grad}}$ is ramped linearly from $0$ to $0.1$ over the first five epochs to stabilize early training; $\alpha_{\mathrm{bnd}} = 0.01$ is kept fixed. The MSE term is evaluated on interior grid points only (a two-pixel boundary strip is excluded via a mask).
+
+\paragraph{Model selection.}
+Both models are checkpointed after every epoch; the checkpoint with the lowest validation MSE is selected as the final model.
+
+\paragraph{Hardware.}
+All experiments are run on a single NVIDIA A100 GPU. Models are saved in CPU-compatible format to enable evaluation on systems without GPU support.
 
 \begin{table}[h]
 \centering
@@ -117,7 +131,7 @@ Both models are trained on the same datasets and evaluated with the same metrics
 \textbf{Parameter}       & \textbf{U-Net}              & \textbf{FNO}                          \\
 \midrule
 Optimizer                & Adam                        & Adam + ClipNorm                        \\
-Learning rate            & $1 \times 10^{-3}$ to $5 \times 10^{-4}$          & $1 \times 10^{-3}$ to $5 \times 10^{-4}$                              \\
+Learning rate            & \{$10^{-3}$, $5\!\times\!10^{-3}$, $10^{-4}$, $5\!\times\!10^{-4}$\} & \{$10^{-3}$, $5\!\times\!10^{-3}$, $10^{-4}$, $5\!\times\!10^{-4}$\} \\
 Max.\ gradient norm      & ---                         & 1.0                                    \\
 Batch size               & 8/16                           & 8/16                                     \\
 Epochs                   & 50                        & 50                                    \\
@@ -125,10 +139,9 @@ Input channels           & 4                           & 4                      
 Output channels          & 1                           & 1                                      \\
 Base channels / width    & 32                          & $d_v = 64$                             \\
 Architecture depth       & 4 encoder levels            & $L = 4$ FNO blocks                     \\
-Fourier modes $k_{\max}$ & ---                         & 24                                     \\
+Fourier modes $k_{\max}$ & ---                         & 16                                     \\
 Checkpoint format        & BSON                        & JLD2                                   \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Training is performed on a single GPU; models are saved in CPU-compatible format to enable evaluation on systems without GPU support.
