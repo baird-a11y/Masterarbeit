@@ -1,11 +1,11 @@
-# Datei: plot_training_history.jl
+# Datei: plot_metrics_vs_crystals.jl
 # Standalone-Wrapper – Plotting-Logik liegt in plots_eval.jl
 #
 # Nutzung:
-#   julia plot_training_history.jl                              # sucht training_history.csv im aktuellen Ordner
-#   julia plot_training_history.jl --csv path/to/training_history.csv
-#   julia plot_training_history.jl --exp_dir path/to/exp_*     # ein Experiment-Ordner
-#   julia plot_training_history.jl --search_dir Ergebnisse/UNET_Ergebnisse/One_Crystal
+#   julia plot_metrics_vs_crystals.jl                                   # sucht *_by_n.csv im aktuellen Ordner
+#   julia plot_metrics_vs_crystals.jl --csv eval_psi_dataset_by_n.csv
+#   julia plot_metrics_vs_crystals.jl --csv path/to/by_n.csv --out metrics.png
+#   julia plot_metrics_vs_crystals.jl --search_dir Ergebnisse/UNET_Ergebnisse
 
 include(joinpath(@__DIR__, "plots_eval.jl"))
 using .UNetPlotsEval
@@ -15,13 +15,13 @@ using .UNetPlotsEval
 # =============================================================================
 
 csv_path   = nothing
-exp_dir    = nothing
+out_path   = nothing
 search_dir = nothing
 
 let i = 1
     while i ≤ length(ARGS)
         if ARGS[i] == "--csv"        && i < length(ARGS); global csv_path   = ARGS[i+1]; i += 2; continue; end
-        if ARGS[i] == "--exp_dir"    && i < length(ARGS); global exp_dir    = ARGS[i+1]; i += 2; continue; end
+        if ARGS[i] == "--out"        && i < length(ARGS); global out_path   = ARGS[i+1]; i += 2; continue; end
         if ARGS[i] == "--search_dir" && i < length(ARGS); global search_dir = ARGS[i+1]; i += 2; continue; end
         i += 1
     end
@@ -32,24 +32,22 @@ end
 # =============================================================================
 
 if csv_path !== nothing
-    plot_training_history(csv_path)
-
-elseif exp_dir !== nothing
-    csv = joinpath(exp_dir, "training_history.csv")
-    isfile(csv) || error("Keine training_history.csv in $exp_dir")
-    plot_training_history(csv)
-
+    kw = out_path !== nothing ? (; out_path) : NamedTuple()
+    plot_metrics_vs_crystals(csv_path; kw...)
 else
     root = search_dir !== nothing ? search_dir : "."
     csvs = String[]
     for (dirpath, _, files) in walkdir(root)
-        "training_history.csv" in files && push!(csvs, joinpath(dirpath, "training_history.csv"))
+        for f in files
+            endswith(f, "_by_n.csv") && push!(csvs, joinpath(dirpath, f))
+        end
     end
     if isempty(csvs)
-        @warn "Keine training_history.csv gefunden in: $root"
+        @warn "Keine *_by_n.csv gefunden in: $root"
+        @info "Nutzung: julia plot_metrics_vs_crystals.jl --csv eval_psi_dataset_by_n.csv"
     else
         @info "$(length(csvs)) CSV-Datei(en) gefunden:"
         for c in csvs; println("  ", c); end
-        for c in csvs; plot_training_history(c); end
+        for c in csvs; plot_metrics_vs_crystals(c); end
     end
 end

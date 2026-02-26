@@ -10,3 +10,4 @@
 # Pfad des Skriptes. Muss immer im selben Ordner wie das Skript liegen. Am besten das Skript selbst start.jl nennen.
 /opt/julia/bin/julia main.jl
 
+julia run_eval.jl --model unet_psi.bson --data_dir /home/pbaselt/Documents/Masterarbeit/Ergebnisse/UNET_Ergebnisse/One_Crystal/eval_plots_one/n01

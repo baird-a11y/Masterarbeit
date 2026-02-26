@@ -93,13 +93,13 @@ Both models are trained and evaluated on configurations with exactly one crystal
 Hierbei wurden jeweils vier Unterschiedliche lernraten verwendet (1e-3, 5e-3, 1e-4,5e-4) sowie einmal mit Batchsize 16 und 8 und verglichen.
 
 \paragraph{Experiment 2 – Multi-crystal generalization.}
-Models are trained on samples with $n \in \{1, 2, 3\}$ crystals and evaluated separately on each crystal count, including held-out configurations with $n > 3$. This experiment tests whether learned representations generalize to more complex geometries than seen during training.
+Models are trained on samples with $n \in \{1, 2, 10\}$ crystals and evaluated separately on each crystal count and how well they perform on unseen higher crystal counts ($n = 11, ... , 25$). This experiment assesses the ability of each architecture to generalize to more complex geometries than those seen during training, which is critical for practical applications in geodynamics where the number of crystals can vary widely.
 
-\paragraph{Experiment 3 – Dataset size ablation.}
-Training set sizes of 500, 1000, and 2000 samples are compared, with fixed validation and test sets. This experiment quantifies the data efficiency of each architecture and identifies the regime in which performance saturates.
+\paragraph{Experiment 3 – Limitations.}
+Die Modelle werden für höhrere Kirstallkonfigurationen trainiert (n bis zu 25) und anschließend soll auf eine wesentlich höhere Anzahl von Kristallen (n bis zu 100) generalisiert werden. Hierbei soll untersucht werden, ob die Modelle in der Lage sind, die Interaktionen zwischen einer großen Anzahl von Hindernissen zu erfassen, oder ob sie an einem Punkt der Komplexität überfordert sind.
 
-\paragraph{Experiment 4 – Architecture ablation (optional).}
-Selected architectural hyperparameters are varied independently: for the FNO, the number of retained Fourier modes ($k_{\max} \in \{16, 24\}$); for the U-Net, the base channel width (\texttt{base\_channels} $\in \{16, 32\}$). This experiment assesses sensitivity to model capacity and informs the choice of default configuration.
+\paragraph{Experiment 4 – Changing Size (Suche besseren Namen).}
+Die Modelle werden wie in Experiment 2 trainiert, aber zusätzlich werden die Kristalle in den evaluierungs proben anders skaliert (um den Faktor 10 nach ob und unten). Dies testet die Fähigkeit der Modelle, nicht nur auf mehr Kristalle zu generalisieren, sondern auch auf größere Hindernisse, was eine weitere Dimension der Generalisierung darstellt.
 
 % ----------------------------------------------------------------------------
 \section{Training Setup and Hyperparameters}
@@ -117,10 +117,10 @@ Both models are trained on the same datasets and evaluated with the same metrics
 \textbf{Parameter}       & \textbf{U-Net}              & \textbf{FNO}                          \\
 \midrule
 Optimizer                & Adam                        & Adam + ClipNorm                        \\
-Learning rate            & $5 \times 10^{-5}$          & $10^{-3}$                              \\
+Learning rate            & $1 \times 10^{-3}$ to $5 \times 10^{-4}$          & $1 \times 10^{-3}$ to $5 \times 10^{-4}$                              \\
 Max.\ gradient norm      & ---                         & 1.0                                    \\
-Batch size               & 8                           & 32                                     \\
-Epochs                   & 300                         & 100                                    \\
+Batch size               & 8/16                           & 8/16                                     \\
+Epochs                   & 50                        & 50                                    \\
 Input channels           & 4                           & 4                                      \\
 Output channels          & 1                           & 1                                      \\
 Base channels / width    & 32                          & $d_v = 64$                             \\
@@ -131,4 +131,4 @@ Checkpoint format        & BSON                        & JLD2                   
 \end{tabular}
 \end{table}
 
-All experiments use a fixed random seed (42) for reproducibility. Training is performed on a single GPU; models are saved in CPU-compatible format to enable evaluation on systems without GPU support.
+Training is performed on a single GPU; models are saved in CPU-compatible format to enable evaluation on systems without GPU support.
