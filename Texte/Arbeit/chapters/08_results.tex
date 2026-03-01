@@ -371,10 +371,15 @@ U-Net (best val) & Exp-1.3 ($10^{-4}$, bs\,16) & $20.5\phantom{0}$ & --- & $\pha
 \label{sec:results:exp2}
 % ============================================================================
 
-Experiment~2 trains a single U-Net model on samples with $n \in \{1, \ldots, 10\}$ crystals
-(batch size~16, learning rate $10^{-3}$, 50~epochs) and evaluates it on all training crystal
-counts as well as on unseen higher counts up to $n = 25$.
-FNO results for Experiment~2 will be reported once the corresponding training runs are complete.
+Experiment~2 trains both models on samples with $n \in \{1, \ldots, 10\}$ crystals
+(batch size~16, learning rate $10^{-3}$, 50~epochs) and evaluates each on all training
+crystal counts as well as on unseen higher counts up to $n = 25$.
+The hyperparameter choice of lr~$= 10^{-3}$ and bs~$= 16$ is motivated by the Experiment~1
+FNO results, where this configuration achieved the best single-crystal performance ($1.85\%$).
+For the U-Net, Experiment~1 showed that lr~$= 10^{-4}$ yields the lowest validation error
+on the single-crystal task; however, with only 50~epochs available, a lower learning rate
+risks even slower convergence on the harder multi-crystal task. The lr~$= 10^{-3}$ adopted
+here is a practical compromise that prioritizes training speed at the cost of some oscillation.
 
 % ----------------------------------------------------------------------------
 \subsection{U-Net – Training Behavior}
@@ -483,18 +488,141 @@ qualitative prediction quality of the U-Net in the multi-crystal setting.
     \label{fig:unet_gallery_exp2}
 \end{figure}
 
-\TODO{FNO Ergebnisse für Experiment~2 werden ergänzt sobald verfügbar.}
+% ----------------------------------------------------------------------------
+\subsection{FNO – Training Behavior}
+\label{ssec:results:exp2:fno:training}
+% ----------------------------------------------------------------------------
+
+Figure~\ref{fig:fno_training_exp2} shows the FNO training and validation loss curves over
+50~epochs. Unlike the U-Net, both training MSE and validation relative $L_2$ error decrease
+steadily throughout training, indicating that the FNO converges well on the multi-crystal
+task with the chosen hyperparameters.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.6\textwidth]{../../Ergebnisse/FNO_Ergebnisse/Experiment_2/eval_output_exp2/plots/training_history.png}
+    \caption{FNO training and validation loss curves for Experiment~2
+             ($n \in \{1,\ldots,10\}$, batch size~16, lr~$= 10^{-3}$, 50~epochs).}
+    \label{fig:fno_training_exp2}
+\end{figure}
+
+% ----------------------------------------------------------------------------
+\subsection{FNO – Evaluation Metrics}
+\label{ssec:results:exp2:fno:metrics}
+% ----------------------------------------------------------------------------
+
+Table~\ref{tab:fno_metrics_exp2} reports the mean relative $L_2$ errors on $\psi$ and the
+derived velocity field for all evaluated crystal counts.
+
+\begin{table}[htbp]
+\centering
+\caption{FNO evaluation metrics for Experiment~2 (trained on $n \in \{1,\ldots,10\}$,
+         10~samples per stratum). OOD counts marked with~$\dagger$.}
+\label{tab:fno_metrics_exp2}
+\begin{tabular}{cccc}
+\toprule
+$n$ & & $\bar{\varepsilon}_\psi$ (\%) & $\bar{\varepsilon}_v$ (\%) \\
+\midrule
+1  & & $3.98 \pm 1.29$ & $5.01 \pm 1.23$ \\
+2  & & $5.45 \pm 3.04$ & $6.06 \pm 3.00$ \\
+3  & & $4.37 \pm 1.81$ & $5.33 \pm 1.92$ \\
+4  & & $6.38 \pm 3.35$ & $6.81 \pm 2.95$ \\
+5  & & $5.25 \pm 2.47$ & $6.00 \pm 2.02$ \\
+6  & & $5.60 \pm 3.76$ & $6.54 \pm 3.31$ \\
+7  & & $7.98 \pm 4.97$ & $8.74 \pm 4.63$ \\
+8  & & $5.66 \pm 4.96$ & $6.80 \pm 4.42$ \\
+10 & & $8.38 \pm 5.57$ & $8.65 \pm 3.58$ \\
+\midrule
+11 & $\dagger$ & $6.94 \pm 3.26$  & $7.96 \pm 3.29$ \\
+12 & $\dagger$ & $9.17 \pm 3.95$  & $9.88 \pm 3.29$ \\
+15 & $\dagger$ & $9.88 \pm 5.70$  & $11.6 \pm 5.61$ \\
+20 & $\dagger$ & $20.8 \pm 2.62$  & $22.6 \pm 3.52$ \\
+25 & $\dagger$ & $31.8 \pm 6.88$  & $32.5 \pm 7.24$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Within the training distribution ($n \leq 10$), the FNO achieves $\psi$ errors of $4$–$8\%$
+and velocity errors of $5$–$9\%$, substantially lower than the U-Net baseline ($27$–$33\%$).
+The FNO generalizes well to $n = 11$–$12$ (errors only slightly above in-distribution) and
+remains reasonable at $n = 15$ ($9.88\%$).
+However, at $n = 20$ the error increases sharply to $20.8\%$, and at $n = 25$ it reaches
+$31.8\%$, comparable to the U-Net's in-distribution error. This abrupt OOD degradation at
+$n \approx 20$ suggests that the FNO has learned representations tied to the density regime
+of the training distribution ($n \leq 10$) and struggles when that regime is exceeded.
+
+Figure~\ref{fig:fno_metrics_exp2} shows the full metric profile stratified by crystal count.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{../../Ergebnisse/FNO_Ergebnisse/Experiment_2/eval_output_exp2/plots/metrics_vs_crystals.png}
+    \caption{FNO evaluation metrics for Experiment~2, stratified by crystal count.
+             Counts beyond the training range ($n > 10$) are out-of-distribution.}
+    \label{fig:fno_metrics_exp2}
+\end{figure}
+
+% ----------------------------------------------------------------------------
+\subsection{FNO – Qualitative Results}
+\label{ssec:results:exp2:fno:qualitative}
+% ----------------------------------------------------------------------------
+
+Figure~\ref{fig:fno_gallery_exp2} illustrates FNO predictions for an in-distribution
+seven-crystal sample and an OOD twenty-five-crystal sample, highlighting the divergence
+in prediction quality between these regimes.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/FNO_Ergebnisse/Experiment_2/eval_output_exp2/plots/gallery/n07/003_rel0.1172_psi.png}
+        \caption{$n=7$ (in-dist.), rel.\ error $= 11.7\%$}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/FNO_Ergebnisse/Experiment_2/eval_output_exp2/plots/gallery/n25/003_rel0.3597_psi.png}
+        \caption{$n=25$ (OOD), rel.\ error $= 36.0\%$}
+    \end{subfigure}
+    \caption{FNO Experiment~2: predicted vs.\ reference stream function $\psi$ for
+             $n=7$ (left, in-distribution) and $n=25$ (right, OOD).}
+    \label{fig:fno_gallery_exp2}
+\end{figure}
+
+% ----------------------------------------------------------------------------
+\subsection{Comparison: FNO vs.\ U-Net}
+\label{ssec:results:exp2:comparison}
+% ----------------------------------------------------------------------------
+
+Table~\ref{tab:comparison_exp2} compares the mean in-distribution $\psi$ error and the OOD
+error at $n = 25$ for both architectures.
+
+\begin{table}[htbp]
+\centering
+\caption{FNO vs.\ U-Net comparison for Experiment~2 (trained on $n \in \{1,\ldots,10\}$).
+         In-distribution: mean over $n = 1$–$10$; OOD: at $n = 25$.}
+\label{tab:comparison_exp2}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Architecture} & $\bar{\varepsilon}_\psi^{\text{in-dist}}$ (\%) & $\bar{\varepsilon}_v^{\text{in-dist}}$ (\%) & $\bar{\varepsilon}_\psi^{\text{OOD}, n=25}$ (\%) \\
+\midrule
+FNO   & $\sim 6.1$ & $\sim 6.8$ & $31.8$ \\
+U-Net & $\sim 30.0$  & $\sim 77$  & $38.8$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The FNO outperforms the U-Net by a factor of roughly $5\times$ within the training distribution.
+For extreme OOD counts ($n = 25$, $2.5\times$ beyond the training maximum), both architectures
+degrade to similar error levels, underscoring that OOD generalization is a challenge
+independent of architecture for this level of distribution shift.
 
 % ============================================================================
 \section{Experiment~3: Stress-Testing Generalization Limits}
 \label{sec:results:exp3}
 % ============================================================================
 
-Experiment~3 trains a U-Net on configurations with up to $n = 25$ crystals
-(batch size~16, learning rate $10^{-3}$, 50~epochs) and evaluates it on substantially
+Experiment~3 trains both models on configurations with up to $n = 25$ crystals
+(batch size~16, learning rate $10^{-3}$, 50~epochs) and evaluates each on substantially
 more complex scenes with up to $n = 84$ crystals to probe the limits of out-of-distribution
 generalization.
-FNO results for Experiment~3 will be reported once the corresponding training runs are complete.
 
 % ----------------------------------------------------------------------------
 \subsection{U-Net – Training Behavior}
@@ -604,7 +732,135 @@ in-distribution seven-crystal sample and an OOD fifty-crystal sample.
     \label{fig:unet_gallery_exp3}
 \end{figure}
 
-\TODO{FNO Ergebnisse für Experiment~3 werden ergänzt sobald verfügbar.}
+% ----------------------------------------------------------------------------
+\subsection{FNO – Training Behavior}
+\label{ssec:results:exp3:fno:training}
+% ----------------------------------------------------------------------------
+
+Figure~\ref{fig:fno_training_exp3} shows the FNO training and validation loss curves over
+50~epochs. As in Experiment~2, training converges steadily, but the final validation
+relative $L_2$ error is somewhat higher than in the single-crystal baseline, reflecting the
+increased task complexity.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.6\textwidth]{../../Ergebnisse/FNO_Ergebnisse/Experiment_3/eval_output_exp3/plots/training_history.png}
+    \caption{FNO training and validation loss curves for Experiment~3
+             ($n \in \{1,\ldots,25\}$, batch size~16, lr~$= 10^{-3}$, 50~epochs).}
+    \label{fig:fno_training_exp3}
+\end{figure}
+
+% ----------------------------------------------------------------------------
+\subsection{FNO – Evaluation Metrics}
+\label{ssec:results:exp3:fno:metrics}
+% ----------------------------------------------------------------------------
+
+Table~\ref{tab:fno_metrics_exp3} reports the mean relative $L_2$ errors on $\psi$ and the
+derived velocity field. Crystal counts $n \leq 25$ are in-distribution; $n \geq 30$ are OOD.
+
+\begin{table}[htbp]
+\centering
+\caption{FNO evaluation metrics for Experiment~3 (trained on $n \in \{1,\ldots,25\}$).
+         OOD counts ($n > 25$) marked with~$\dagger$; $N$ denotes actual sample count.}
+\label{tab:fno_metrics_exp3}
+\begin{tabular}{ccccc}
+\toprule
+$n$ & $N$ & & $\bar{\varepsilon}_\psi$ (\%) & $\bar{\varepsilon}_v$ (\%) \\
+\midrule
+1  & 10 & & $3.75 \pm 0.91$ & $4.59 \pm 1.08$ \\
+3  & 10 & & $5.50 \pm 2.81$ & $6.09 \pm 2.67$ \\
+5  & 10 & & $4.89 \pm 3.12$ & $5.85 \pm 2.96$ \\
+7  & 10 & & $6.61 \pm 4.44$ & $7.42 \pm 4.24$ \\
+10 & 10 & & $7.21 \pm 5.37$ & $7.67 \pm 3.67$ \\
+15 & 10 & & $6.54 \pm 4.49$ & $7.57 \pm 3.43$ \\
+20 & 10 & & $4.66 \pm 1.60$ & $6.16 \pm 1.51$ \\
+25 & 10 & & $7.58 \pm 4.09$ & $8.61 \pm 3.84$ \\
+\midrule
+30 & 10 & $\dagger$ & $6.48 \pm 2.66$  & $8.33 \pm 2.32$ \\
+35 & 10 & $\dagger$ & $8.23 \pm 4.51$  & $10.1 \pm 3.88$ \\
+50 & 10 & $\dagger$ & $14.2 \pm 4.66$  & $16.1 \pm 4.26$ \\
+55 & 10 & $\dagger$ & $12.7 \pm 3.90$  & $15.1 \pm 3.75$ \\
+60 &  1 & $\dagger$ & $16.1$           & $18.5$          \\
+71 &  1 & $\dagger$ & $20.5$           & $25.0$          \\
+80 &  1 & $\dagger$ & $23.9$           & $28.1$          \\
+84 &  1 & $\dagger$ & $25.4$           & $28.2$          \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Within the training distribution ($n \leq 25$), the FNO achieves $\psi$ errors of $4$–$8\%$,
+consistent with the Experiment~2 in-distribution performance. The OOD behavior is markedly
+improved compared to Experiment~2: at $n = 30$ (just beyond the training boundary) the error
+rises only slightly to $6.5\%$, and at $n = 35$ to $8.2\%$. A more pronounced increase occurs
+around $n = 50$, where the error reaches $14.2\%$, and beyond $n = 55$ the errors grow
+further to $20$–$25\%$ at the highest evaluated counts ($n = 80$, $84$).
+This gradual degradation contrasts sharply with Experiment~2's abrupt failure at $n = 20$,
+demonstrating that training on a wider crystal-count distribution substantially extends the
+FNO's generalization range.
+
+Figure~\ref{fig:fno_metrics_exp3} shows the full metric profile.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{../../Ergebnisse/FNO_Ergebnisse/Experiment_3/eval_output_exp3/plots/metrics_vs_crystals.png}
+    \caption{FNO evaluation metrics for Experiment~3, stratified by crystal count.
+             Counts beyond the training range ($n > 25$) are out-of-distribution.}
+    \label{fig:fno_metrics_exp3}
+\end{figure}
+
+% ----------------------------------------------------------------------------
+\subsection{FNO – Qualitative Results}
+\label{ssec:results:exp3:fno:qualitative}
+% ----------------------------------------------------------------------------
+
+Figure~\ref{fig:fno_gallery_exp3} illustrates FNO predictions for an in-distribution
+seven-crystal sample and an OOD fifty-crystal sample.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/FNO_Ergebnisse/Experiment_3/eval_output_exp3/plots/gallery/n07/003_rel0.0909_psi.png}
+        \caption{$n=7$ (in-dist.), rel.\ error $= 9.1\%$}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/FNO_Ergebnisse/Experiment_3/eval_output_exp3/plots/gallery/n50/003_rel0.1827_psi.png}
+        \caption{$n=50$ (OOD), rel.\ error $= 18.3\%$}
+    \end{subfigure}
+    \caption{FNO Experiment~3: predicted vs.\ reference stream function $\psi$ for
+             $n=7$ (left, in-distribution) and $n=50$ (right, OOD).}
+    \label{fig:fno_gallery_exp3}
+\end{figure}
+
+% ----------------------------------------------------------------------------
+\subsection{Comparison: FNO vs.\ U-Net}
+\label{ssec:results:exp3:comparison}
+% ----------------------------------------------------------------------------
+
+Table~\ref{tab:comparison_exp3} compares FNO and U-Net at representative in-distribution
+and OOD crystal counts.
+
+\begin{table}[htbp]
+\centering
+\caption{FNO vs.\ U-Net comparison for Experiment~3 (trained on $n \in \{1,\ldots,25\}$).
+         In-distribution: mean over $n = 1, 5, 10, 20, 25$; OOD: at $n = 50$.}
+\label{tab:comparison_exp3}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Architecture} & $\bar{\varepsilon}_\psi^{\text{in-dist}}$ (\%) & $\bar{\varepsilon}_v^{\text{in-dist}}$ (\%) & $\bar{\varepsilon}_\psi^{\text{OOD}, n=50}$ (\%) \\
+\midrule
+FNO   & $\sim 5.7$ & $\sim 6.6$  & $14.2$ \\
+U-Net & $\sim 27$  & $\sim 87$   & $31.4$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Across both experiments, the FNO consistently outperforms the U-Net within the training
+distribution by a factor of roughly $5\times$. In the OOD regime, the advantage narrows
+but remains significant: at $n = 50$, the FNO's $14.2\%$ error is about half the U-Net's
+$31.4\%$. The velocity errors tell a similar story: the FNO's ${\sim}16\%$ at $n=50$
+contrasts with the U-Net's ${\sim}105\%$, underscoring the spectral architecture's superior
+ability to capture global flow structure even for unseen crystal configurations.
 
 % ============================================================================
 \section{Experiment~4: Architecture Ablation}

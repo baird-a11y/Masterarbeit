@@ -35,7 +35,8 @@ function down_block(cin::Int, cout::Int)
 end
 
 # ============================================================
-# Upsampling-Block: ConvTranspose + zwei Convs
+# Upsampling-Block: Bilinear Resize + zwei Convs (kein ConvTranspose)
+# Nach: Odena et al. 2016 "Deconvolution and Checkerboard Artifacts"
 # ============================================================
 """
     up_block(cin, cout)
@@ -43,18 +44,18 @@ end
 Upsampling-Baustein für den Decoder des U-Net auf der GPU.
 
 Ablauf:
-1. Transposed Convolution mit Kernelgröße 2×2 und Stride 2
-      (H, W, cin, B) → (2H, 2W, cout, B)
-2. 3×3-Conv  (cout → cout)
+1. Bilineares Upsampling mit Faktor 2
+      (H, W, cin, B) → (2H, 2W, cin, B)
+2. 3×3-Conv  (cin → cout)
 3. BatchNorm + ReLU
 4. 3×3-Conv  (cout → cout)
 5. BatchNorm + ReLU
 
 Hinweis:
-- ConvTranspose kann Checkerboard-/Grid-Artefakte erzeugen.
-- In Kombination mit den neuen Koordinatenkanälen (x, z) werden diese
-  aber typischerweise bereits abgeschwächt, weil das Netz die
-  positionsabhängige Struktur besser modellieren kann.
+- Bilinear Resize + Conv vermeidet die Grid-/Checkerboard-Artefakte,
+  die bei ConvTranspose entstehen können (ungleichmäßiger Overlap
+  durch Zero-Insertion). Die nachfolgende Conv verfeinert das
+  bilinear interpolierte Signal ohne periodische Muster einzuführen.
 
 Parameter:
 - cin  :: Anzahl eingehender Kanäle
@@ -62,8 +63,8 @@ Parameter:
 """
 function up_block(cin::Int, cout::Int)
     return Chain(
-        ConvTranspose((2, 2), cin => cout, stride = 2),
-        Conv((3,3), cout => cout, pad=1),
+        Upsample(:bilinear, scale=(2, 2)),
+        Conv((3,3), cin => cout, pad=1),
         BatchNorm(cout),
         relu,
         Conv((3,3), cout => cout, pad=1),
