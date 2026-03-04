@@ -1,0 +1,682 @@
+\documentclass[aspectratio=169]{beamer}
+
+% ---------- Theme & Farben ----------
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamerfont{frametitle}{size=\large, series=\bfseries}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\usepackage[ngerman]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{colortbl}
+
+\graphicspath{{./}}
+
+\definecolor{bestgreen}{RGB}{0,140,0}
+\definecolor{warnred}{RGB}{200,40,40}
+
+% ---------- Meta-Informationen ----------
+\title[Neuronale Operatoren]{Neuronale Operatoren zur\\
+       Strömungssimulation um Kristalle}
+\subtitle{U-Net vs.\ Fourier Neural Operator -- Aktueller Stand}
+\author{Paul Baselt}
+\date{\today}
+\institute{Betreuer-Meeting -- Masterarbeit}
+
+% =============================================================================
+\begin{document}
+% =============================================================================
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Agenda}
+  \tableofcontents
+\end{frame}
+
+% =============================================================================
+\section{Grundlagen \& Problemstellung}
+% =============================================================================
+
+% --- Folie 1/2: Physikalische Situation ---
+\begin{frame}{Physikalische Situation \& Lernziel}
+  \begin{columns}[T]
+    \column{0.56\textwidth}
+      \textbf{Setup:}
+      \begin{itemize}
+        \item Kristalle eingebettet in viskose Matrix
+        \item Gebiet: $256\times256$-Gitter, $[-1,1]^2$\,km
+        \item Stokes-Gleichungen (niedrige Reynolds-Zahl):
+          \[
+            -\nabla p + \eta\,\Delta\mathbf{v} = 0, \qquad \nabla\cdot\mathbf{v}=0
+          \]
+        \item Numerische Referenz: \textbf{LaMEM} (FEM-Solver) -- korrekt, aber rechenintensiv
+      \end{itemize}
+      \vspace{8pt}
+      \textbf{Ziel:} Neuronales Netz sagt Strömungsfeld vorher -- \emph{ohne} FEM-Simulation.
+
+    \column{0.40\textwidth}
+      \begin{block}{Eingabe $\to$ Ausgabe}
+        \textbf{4 Eingangskanäle:}
+        \begin{itemize}
+          \item Kristallmaske (Typ)
+          \item Viskositätsfeld $\eta$
+          \item Randbedingungen ($v_x$, $v_z$)
+        \end{itemize}
+        \vspace{6pt}
+        \textbf{Ausgabe (Lernziel):}\\[4pt]
+        $\hat\psi \in \mathbb{R}^{256\times256}$
+        \vspace{6pt}
+
+        \textbf{Abgeleitet (Nachschritt):}\\[4pt]
+        $\hat{\mathbf{v}} = \operatorname{curl}(\hat\psi)$
+      \end{block}
+  \end{columns}
+\end{frame}
+
+% --- Folie 2/2: Warum Stromfunktion ---
+\begin{frame}{Warum Stromfunktion $\psi$?}
+  \begin{columns}[T]
+    \column{0.54\textwidth}
+      \textbf{Definition der Stromfunktion:}
+      \[
+        v_x = \frac{\partial\psi}{\partial z}, \qquad v_z = -\frac{\partial\psi}{\partial x}
+      \]
+
+      \vspace{6pt}
+      \textbf{Inkompressibilität automatisch erfüllt:}
+      \begin{align*}
+        \nabla\cdot\mathbf{v}
+          &= \frac{\partial v_x}{\partial x} + \frac{\partial v_z}{\partial z}
+           = \frac{\partial^2\psi}{\partial x\partial z}
+           - \frac{\partial^2\psi}{\partial z\partial x}
+           = 0
+      \end{align*}
+      \small(Satz von Schwarz: gemischte partielle Ableitungen kommutieren)
+      \normalsize
+      \vspace{4pt}
+
+      Das Netz lernt \emph{nur} $\hat\psi$ -- Inkompressibilität
+      ist \textbf{strukturell} garantiert.
+
+    \column{0.42\textwidth}
+      \begin{block}{Vorteile}
+        \begin{itemize}
+          \item Kein Divergenz-Strafterm nötig
+          \item div\,rms~$\approx 10^{-26}$
+          \item Lernproblem: 2 Felder $\to$ 1 Skalar
+          \item Fehleranalyse einfacher
+        \end{itemize}
+      \end{block}
+
+      \vspace{6pt}
+      \begin{alertblock}{Konsequenz}
+        $\varepsilon_v$ ist \emph{immer} größer als
+        $\varepsilon_\psi$: Ableitung (Nachschritt)
+        verstärkt hochfrequente Fehler.
+      \end{alertblock}
+  \end{columns}
+\end{frame}
+
+% --- Folie 3: Verlustfunktionen ---
+\begin{frame}{Verlustfunktionen}
+  \begin{columns}[T]
+    \column{0.56\textwidth}
+      \begin{block}{FNO -- Composite-Loss}
+        \[
+          \mathcal{L} =
+            \underbrace{\|\hat\psi - \psi\|_2^2}_{\text{MSE}}
+          + \alpha\underbrace{\|\nabla\hat\psi - \nabla\psi\|_2^2}_{\text{Gradient-Term}}
+          + \beta\underbrace{\|\hat\psi\big|_{\partial\Omega}\|_2^2}_{\text{Rand-Term}}
+        \]
+        \begin{itemize}
+          \item $\alpha$: Warmup über 5 Epochen, Zielwert~$0.1$
+          \item $\beta = 0.01$\quad (Dirichlet: $\psi = 0$ am Rand)
+          \item Gradient-Term erzwingt korrekte Ableitungen
+          \item Rand-Term stellt $\hat\psi\big|_{\partial\Omega} = 0$ sicher
+        \end{itemize}
+      \end{block}
+
+    \column{0.40\textwidth}
+      \begin{block}{U-Net -- Loss}
+        \[
+          \mathcal{L} = \|\hat\psi - \psi\|_2^2
+        \]
+        Nur MSE -- kein Gradient- oder Rand-Term.\\[6pt]
+        Das Netz lernt implizit die Randwerte aus den Trainingsdaten.
+      \end{block}
+
+      \vspace{8pt}
+      \begin{block}{Optimizer}
+        \begin{tabular}{ll}
+          U-Net: & Adam \\
+          FNO:   & Adam + Grad-Clip\\
+                 & ($\|\nabla\|\leq 1$)
+        \end{tabular}
+      \end{block}
+  \end{columns}
+\end{frame}
+
+% --- Folie 4: Evaluationsmetriken ---
+\begin{frame}{Evaluationsmetriken \& Best-Checkpoint-Strategie}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+      \textbf{Evaluationsmetriken:}
+      \vspace{6pt}
+      \renewcommand{\arraystretch}{1.4}
+      \begin{tabular}{ll}
+        \toprule
+        Metrik & Bedeutung \\
+        \midrule
+        $\varepsilon_\psi^{\text{rel}}$ & Mittl.\ rel.\ L2 in $\psi$ \\
+                                        & \emph{Hauptmetrik} \\[2pt]
+        $\varepsilon_v^{\text{rel}}$    & Mittl.\ rel.\ L2 in $|\mathbf{v}|$ \\[2pt]
+        $\varepsilon_\psi^{\max}$       & Maximaler Fehler in $\psi$ \\[2pt]
+        div\,rms                        & RMS-Divergenz ($\to 0$) \\
+        \bottomrule
+      \end{tabular}
+
+    \column{0.48\textwidth}
+      \begin{block}{Best-Checkpoint-Strategie}
+        Auswertung \textbf{nicht} am letzten Epoch,
+        sondern am Epoch mit dem besten Validierungs-Loss.\\[8pt]
+        \textbf{Warum wichtig?}
+        \begin{itemize}
+          \item Modell kann nach dem besten Punkt wieder schlechter werden
+          \item Ohne LR-Scheduler: Oszillationen um Minimum möglich
+          \item Bei Multi-Kristall (Exp.~2/3): starkes Overfitting (s.\ später)
+        \end{itemize}
+      \end{block}
+  \end{columns}
+\end{frame}
+
+% --- Folie 5a: Datengenerierung ---
+\begin{frame}{Datengenerierung \& Experiment-Übersicht}
+  \begin{columns}[T]
+    \column{0.44\textwidth}
+      \textbf{Datensätze (LaMEM-FEM):}
+      \begin{itemize}
+        \item 1\,000 Samples pro Kristallanzahl $n$
+        \item Drei unabhängige Seeds:\\
+              Training / Validierung / Test
+        \item Gitter: $256\times256$,\\
+              Auflösung $\approx 8\,$m/px
+      \end{itemize}
+
+    \column{0.52\textwidth}
+      \renewcommand{\arraystretch}{1.45}
+      \begin{tabular}{cllll}
+        \toprule
+        Exp & Training & Test & OOD \\
+        \midrule
+        1 & $n=1$          & $n=1$          & --             \\
+        2 & $n=1\ldots10$  & $n=1\ldots10$  & $n=11\ldots25$ \\
+        3 & $n=1\ldots25$  & $n=1\ldots25$  & $n=26\ldots84$ \\
+        \bottomrule
+      \end{tabular}
+  \end{columns}
+
+  \vspace{16pt}
+  \begin{itemize}
+    \item \textbf{Exp.~1}: Hyperparameter-Suche (lr, batch) -- ein Kristall
+    \item \textbf{Exp.~2}: Multi-Kristall-Generalisierung, OOD bis $n=25$
+    \item \textbf{Exp.~3}: Stress-Test mit extremem OOD bis $n=84$
+  \end{itemize}
+\end{frame}
+
+% --- Folie 5b: Trainingssetup ---
+\begin{frame}{Trainingssetup \& Hyperparameter}
+  \begin{columns}[T]
+    \column{0.50\textwidth}
+      \renewcommand{\arraystretch}{1.4}
+      \begin{tabular}{lll}
+        \toprule
+        Parameter & U-Net & FNO \\
+        \midrule
+        Batch-Größe     & 8 / 16  & 8 / 16 \\
+        Epochen (Exp.~1) & 180    & 100 \\
+        Epochen (Exp.~2/3) & 180  & 50\,** \\
+        Optimizer       & Adam    & Adam + Clip \\
+        Loss            & MSE     & Composite* \\
+        \bottomrule
+      \end{tabular}
+      \vspace{6pt}
+
+      \small
+      ${}^*$Composite: MSE + Gradient-Term + Rand-Term\\
+      ${}^{**}$FNO Exp.~2/3 werden auf 100~Ep.\ aktualisiert.
+
+    \column{0.46\textwidth}
+      \textbf{Lernraten} (beide Modelle):
+      \vspace{6pt}
+
+      \renewcommand{\arraystretch}{1.4}
+      \begin{tabular}{cc}
+        \toprule
+        $10^{-4}$ & $5\cdot10^{-4}$ \\
+        $10^{-3}$ & $5\cdot10^{-3}$ \\
+        \bottomrule
+      \end{tabular}
+      \vspace{10pt}
+
+      \textbf{Checkpoint-Strategie:}\\
+      Bestes Modell nach Val-Loss wird gespeichert
+      (nicht zwingend das letzte Epoch).
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+\section{Modellarchitekturen}
+% =============================================================================
+
+\begin{frame}{Modellarchitekturen: U-Net vs.\ FNO}
+  \begin{columns}[T]
+    \column{0.47\textwidth}
+      \begin{block}{U-Net (CNN-basiert)}
+        \begin{itemize}
+          \item Encoder--Decoder mit Skip-Connections
+          \item Faltungen: lokaler $k\times k$-Ausschnitt
+          \item \textcolor{bestgreen}{Stärke:} scharfe Kanten,\\
+                Kristallkontur
+          \item \textcolor{warnred}{Schwäche:} globale\\
+                Strömungsstruktur
+          \item Translationsinvarianz eingebaut
+          \item 32 Basiskanäle, 4 Encoder-Ebenen
+        \end{itemize}
+      \end{block}
+
+    \column{0.47\textwidth}
+      \begin{block}{FNO (Fourier Neural Operator)}
+        \begin{itemize}
+          \item Operiert direkt im Fourier-Raum
+          \item FFT~$\to$ Modengewichtung~$\to$~IFFT\\
+                + lokaler linearer Bypass
+          \item \textcolor{bestgreen}{Stärke:} globale Spektral-Features,\\
+                $\mathcal{O}(N\log N)$
+          \item Gitterunabhängig (theoretisch)
+          \item Natürlich für glatte Stokes-Felder
+          \item Width\,=\,64, Depth\,=\,4, Modes\,=\,16
+        \end{itemize}
+      \end{block}
+  \end{columns}
+
+  \vspace{10pt}
+  \begin{center}
+    Beide Modelle: Eingabe $256\times256\times4$, Ausgabe $256\times256\times1$~($\hat\psi$).\\
+    \small Geschwindigkeitsfeld $\hat{\mathbf{v}} = \operatorname{curl}(\hat\psi)$ als Nachschritt -- kein eigenes Lernziel.
+  \end{center}
+\end{frame}
+
+% =============================================================================
+\section{Experiment~1: Einzelkristall ($n=1$)}
+% =============================================================================
+
+% --- Hyperparameter FNO ---
+\begin{frame}{Exp~1 -- FNO Hyperparameter-Suche (100~Epochen)}
+  \begin{columns}[T]
+    \column{0.50\textwidth}
+      \textbf{Batch-Größe 16:}
+      \vspace{4pt}
+      \renewcommand{\arraystretch}{1.35}
+      \begin{tabular}{crrl}
+        \toprule
+        Lernrate & $\varepsilon_\psi^{\text{rel}}$ & $\varepsilon_v^{\text{rel}}$ & \\
+        \midrule
+        $5\!\times\!10^{-4}$ & \textcolor{bestgreen}{\textbf{2.26\,\%}} & 4.56\,\% & $\leftarrow$ best \\
+        $5\!\times\!10^{-3}$ & 2.39\,\% & 4.03\,\% & \\
+        $10^{-3}$            & 2.75\,\% & 4.05\,\% & \\
+        $10^{-4}$            & \textcolor{warnred}{4.31\,\%} & -- & \\
+        \bottomrule
+      \end{tabular}
+
+    \column{0.46\textwidth}
+      \textbf{Batch-Größe 8 (vorläufig, 2/4):}
+      \vspace{4pt}
+      \renewcommand{\arraystretch}{1.35}
+      \begin{tabular}{crrl}
+        \toprule
+        Lernrate & $\varepsilon_\psi^{\text{rel}}$ & $\varepsilon_v^{\text{rel}}$ & \\
+        \midrule
+        $5\!\times\!10^{-3}$ & \textcolor{bestgreen}{\textbf{1.70\,\%}} & 3.07\,\% & $\leftarrow$ best \\
+        $10^{-3}$            & 3.20\,\% & 3.91\,\% & \\
+        $5\!\times\!10^{-4}$ & \multicolumn{2}{c}{\textit{(ausstehend)}} & \\
+        $10^{-4}$            & \multicolumn{2}{c}{\textit{(ausstehend)}} & \\
+        \bottomrule
+      \end{tabular}
+  \end{columns}
+
+  \vspace{10pt}
+  \textbf{Beobachtungen:}
+  \begin{itemize}
+    \item Optimales Fenster: lr~$\in [5\!\times\!10^{-4},\,5\!\times\!10^{-3}]$
+    \item Kleinere Batch-Größe hilft -- bs\,=\,8 verbessert bs\,=\,16 von 2.26\,\% auf 1.70\,\%
+    \item lr\,=\,$10^{-4}$: kaum Konvergenz in 100 Epochen
+  \end{itemize}
+\end{frame}
+
+% --- Hyperparameter U-Net ---
+\begin{frame}{Exp~1 -- U-Net Hyperparameter-Suche (180~Epochen, Best-Checkpoint)}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+      \textbf{Batch-Größe 8:}
+      \vspace{4pt}
+      \renewcommand{\arraystretch}{1.35}
+      \begin{tabular}{crrl}
+        \toprule
+        Lernrate & $\varepsilon_\psi^{\text{rel}}$ & $\varepsilon_v^{\text{rel}}$ & \\
+        \midrule
+        $10^{-3}$            & \textcolor{bestgreen}{\textbf{5.17\,\%}} & 16.3\,\% & $\leftarrow$ best \\
+        $5\!\times\!10^{-3}$ & 5.31\,\% & 15.1\,\% & \\
+        $5\!\times\!10^{-4}$ & 5.44\,\% & 16.3\,\% & \\
+        $10^{-4}$            & 6.51\,\% & 20.3\,\% & \\
+        \bottomrule
+      \end{tabular}
+
+    \column{0.48\textwidth}
+      \textbf{Batch-Größe 16:}
+      \vspace{4pt}
+      \renewcommand{\arraystretch}{1.35}
+      \begin{tabular}{crrl}
+        \toprule
+        Lernrate & $\varepsilon_\psi^{\text{rel}}$ & $\varepsilon_v^{\text{rel}}$ & \\
+        \midrule
+        $10^{-3}$            & 8.56\,\% & 23.6\,\% & \\
+        $5\!\times\!10^{-4}$ & 9.85\,\% & 21.3\,\% & \\
+        $10^{-4}$            & 10.4\,\%  & 26.4\,\% & \\
+        $5\!\times\!10^{-3}$ & \textcolor{warnred}{11.2\,\%} & 24.4\,\% & \\
+        \bottomrule
+      \end{tabular}
+  \end{columns}
+
+  \vspace{10pt}
+  \textbf{Beobachtungen:}
+  \begin{itemize}
+    \item \textbf{Batch\,8 deutlich besser als Batch\,16} -- $5.17\,\%$ vs.\ $8.56\,\%$
+    \item Velocity-Fehler $\approx 3\times$ größer als $\psi$-Fehler (Ableitung als Nachschritt)
+    \item Lernrate $10^{-3}$ optimal für bs\,=\,8; Variation hat mäßigen Einfluss
+  \end{itemize}
+\end{frame}
+
+% --- Trainingskurven ---
+\begin{frame}{Exp~1 -- Trainingskurven (jeweils bestes Modell)}
+  \begin{columns}[c]
+    \column{0.48\textwidth}
+      \centering
+      \textbf{FNO} \quad (bs\,=\,16, lr\,$=5\!\times\!10^{-4}$, 100~Ep.)\\[4pt]
+      \includegraphics[width=\linewidth]{FNO_Ergebnisse/One_Crystal/eval_output_exp1_16_4/plots/training_history.png}
+      \small\\[2pt]
+      Schnelle Konvergenz ($\sim$20~Ep.).
+      Val-Loss~$\leq$ Train-Loss.
+      Gradient-Term stabilisiert zweite Phase.
+
+    \column{0.48\textwidth}
+      \centering
+      \textbf{U-Net} \quad (bs\,=\,8, lr\,$=10^{-3}$, 180~Ep.)\\[4pt]
+      \includegraphics[width=\linewidth]{UNET_Ergebnisse/One_Crystal/exp1_8/eval_plots_indist/training_history.png}
+      \small\\[2pt]
+      Konvergenz bis Ep.\,$\approx$160, Best-Checkpoint Ep.~160.
+      Val/Train am Ende: $\approx 0.8\times$ -- kein Overfitting.
+  \end{columns}
+\end{frame}
+
+% --- Qualitatives Ergebnis ---
+\begin{frame}{Exp~1 -- Qualitative Ergebnisse: Stromfunktion $\psi$}
+  \begin{columns}[c]
+    \column{0.50\textwidth}
+      \centering
+      \textbf{FNO (bs\,=\,16)} \quad
+      \textcolor{bestgreen}{$\varepsilon_\psi^{\text{rel}} = 1.32\,\%$}\\[4pt]
+      \includegraphics[width=\linewidth]{FNO_Ergebnisse/One_Crystal/eval_output_exp1_16_4/plots/gallery/n01/008_rel0.0132_psi.png}
+
+    \column{0.50\textwidth}
+      \centering
+      \textbf{U-Net (bs\,=\,8)} \quad
+      $\varepsilon_\psi^{\text{rel}} = 3.41\,\%$\\[4pt]
+      \includegraphics[width=\linewidth]{UNET_Ergebnisse/One_Crystal/exp1_8/eval_plots_indist/n_01/sample_0006_rel0.0341_psi.png}
+  \end{columns}
+  \vspace{6pt}
+  \small
+  \textit{Bildlayout: Referenz (LaMEM) \;|\; Vorhersage (NN) \;|\; Absoluter Fehler~$\Delta\psi$}\\
+  FNO-Fehler diffus und klein; U-Net zeigt leicht stärkere Abweichungen am Kristallrand.
+\end{frame}
+
+% =============================================================================
+\section{Experimente~2 \& 3: Multi-Kristall}
+% =============================================================================
+
+% --- Exp-2 Metrics ---
+\begin{frame}{Exp~2 -- Fehler vs.\ Kristallanzahl (Training $n=1$--$10$)}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+      \centering
+      \textbf{U-Net} \quad (180~Ep., Best-Checkpoint Ep.~43)\\[4pt]
+      \includegraphics[width=\linewidth]{UNET_Ergebnisse/Experiment_2/exp2/eval_plots_indist/metrics_vs_crystals.png}
+      \small\\
+      In-dist ($n\!\le\!10$): $\varepsilon_\psi \approx 24$--$30\,\%$\\
+      OOD $n=25$: $\varepsilon_\psi = 34.5\,\%$,\; $\varepsilon_v = 94.7\,\%$
+
+    \column{0.48\textwidth}
+      \centering
+      \textbf{FNO} \quad (50~Ep.\;{\small\textit{*}})\\[4pt]
+      \includegraphics[width=\linewidth]{FNO_Ergebnisse/Experiment_2/eval_output_exp2/plots/metrics_vs_crystals.png}
+      \small\\
+      In-dist ($n\!\le\!10$): $\varepsilon_\psi \approx 4$--$7\,\%$\\
+      OOD $n=25$: $\varepsilon_\psi = 31.8\,\%$,\; $\varepsilon_v = 32.5\,\%$
+  \end{columns}
+  \vspace{4pt}
+  \small
+  FNO in-distribution $\approx 5\times$ besser als U-Net.
+  \quad ${}^*$FNO noch bei 50~Ep. -- wird auf 100~Ep.\ aktualisiert.
+\end{frame}
+
+% --- Exp-2 Beispiele ---
+\begin{frame}{Exp~2 -- FNO: In-Distribution vs.\ Out-of-Distribution}
+  \begin{columns}[c]
+    \column{0.50\textwidth}
+      \centering
+      \textbf{In-Distribution} \quad ($n=8$,\; $\varepsilon_\psi = 3.0\,\%$)\\[4pt]
+      \includegraphics[width=\linewidth]{FNO_Ergebnisse/Experiment_2/eval_output_exp2/plots/gallery/n08/008_rel0.0300_psi.png}
+
+    \column{0.50\textwidth}
+      \centering
+      \textbf{Out-of-Distribution} \quad ($n=25$,\; $\varepsilon_\psi = 26.1\,\%$)\\[4pt]
+      \includegraphics[width=\linewidth]{FNO_Ergebnisse/Experiment_2/eval_output_exp2/plots/gallery/n25/008_rel0.2605_psi.png}
+  \end{columns}
+  \vspace{6pt}
+  \small
+  Bei $n=8$ (Trainingsbereich): FNO generalisiert sehr gut.
+  Bei $n=25$ ($2.5\times$ mehr Kristalle als trainiert): sichtbare Abweichungen,
+  globale Strömungsstruktur aber noch qualitativ korrekt.
+\end{frame}
+
+% --- Exp-3 Metrics ---
+\begin{frame}{Exp~3 -- Fehler vs.\ Kristallanzahl (Training $n=1$--$25$)}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+      \centering
+      \textbf{U-Net} \quad (180~Ep., Best-Checkpoint Ep.~30)\\[4pt]
+      \includegraphics[width=\linewidth]{UNET_Ergebnisse/Experiment_3/exp3/eval_plots_indist/metrics_vs_crystals.png}
+      \small\\
+      In-dist ($n\!\le\!25$): $\varepsilon_\psi \approx 24$--$37\,\%$\\
+      OOD $n=82$: $\varepsilon_\psi \approx 70\,\%$
+
+    \column{0.48\textwidth}
+      \centering
+      \textbf{FNO} \quad (50~Ep.\;{\small\textit{*}})\\[4pt]
+      \includegraphics[width=\linewidth]{FNO_Ergebnisse/Experiment_3/eval_output_exp3/plots/metrics_vs_crystals.png}
+      \small\\
+      In-dist ($n\!\le\!25$): $\varepsilon_\psi \approx 4$--$10\,\%$\\
+      OOD $n=60$: $16.1\,\%$;\quad OOD $n=84$: $25.4\,\%$
+  \end{columns}
+  \vspace{4pt}
+  \small
+  FNO bleibt auch im extremen OOD-Bereich unter 30\,\% -- U-Net divergiert.
+  \quad ${}^*$FNO noch bei 50~Ep.
+\end{frame}
+
+% --- Exp-3 Beispiele ---
+\begin{frame}{Exp~3 -- FNO: Extremes Out-of-Distribution ($n=84$)}
+  \begin{columns}[c]
+    \column{0.50\textwidth}
+      \centering
+      \textbf{In-Distribution} \quad ($n=25$,\; $\varepsilon_\psi = 5.3\,\%$)\\[4pt]
+      \includegraphics[width=\linewidth]{FNO_Ergebnisse/Experiment_3/eval_output_exp3/plots/gallery/n25/008_rel0.0534_psi.png}
+
+    \column{0.50\textwidth}
+      \centering
+      \textbf{Extremes OOD} \quad ($n=84$,\; $\varepsilon_\psi = 25.4\,\%$)\\[4pt]
+      \includegraphics[width=\linewidth]{FNO_Ergebnisse/Experiment_3/eval_output_exp3/plots/gallery/n84/001_rel0.2543_psi.png}
+  \end{columns}
+  \vspace{6pt}
+  \small
+  Bei $n=84$ Kristallen ($3.4\times$ mehr als im Training) bleibt die globale
+  Strömungsstruktur qualitativ erkennbar. Fehler steigt graduell -- keine Divergenz.
+\end{frame}
+
+% =============================================================================
+\section{Analyse \& Diskussion}
+% =============================================================================
+
+% --- Overfitting Folie 1: Daten ---
+\begin{frame}{Overfitting-Analyse: U-Net (alle Experimente)}
+  \begin{center}
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{lrrrr}
+      \toprule
+      Konfiguration & Best-Ep. & Train-MSE$_\text{Ende}$ & Val-MSE$_\text{Ende}$ & Val/Train \\
+      \midrule
+      Exp-1 (bs\,=\,8, lr\,$=10^{-3}$) & 160 & 0.054 & 0.045
+        & \textcolor{bestgreen}{$0.8\times$\;\checkmark} \\
+      \midrule
+      Exp-2 ($n=1$--$10$) & \textcolor{warnred}{\textbf{43}}  & 0.181 & 3.589
+        & \textcolor{warnred}{$\mathbf{20\times}$} \\
+      Exp-3 ($n=1$--$25$) & \textcolor{warnred}{\textbf{30}}  & 0.152 & 3.382
+        & \textcolor{warnred}{$\mathbf{22\times}$} \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+
+  \vspace{12pt}
+  \begin{itemize}
+    \item \textbf{Exp-1}: Val-Loss $\leq$ Train-Loss am Ende -- kein Overfitting
+    \item \textbf{Exp-2/3}: Best-Checkpoint sehr früh (Ep.~30--43 von 180);\\
+          danach sinkt Train-Loss weiter, Val-Loss \emph{steigt}
+    \item Val/Train-Verhältnis von $20\times$--$22\times$ ist ein klares Overfitting-Signal
+    \item Die \textbf{Best-Checkpoint-Strategie} rettet die Evaluation -- finale Gewichte wären deutlich schlechter
+  \end{itemize}
+\end{frame}
+
+% --- Overfitting Folie 2: Ursachen ---
+\begin{frame}{Overfitting-Analyse: Ursachen \& Gegenmaßnahmen}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+      \begin{alertblock}{Warum tritt Overfitting auf?}
+        \begin{itemize}
+          \item \textbf{Kein Regularisierung}: kein Dropout, kein Weight Decay
+          \item \textbf{Kein LR-Scheduler}: konstante Lernrate bis Trainingsende
+          \item \textbf{Komplexere Aufgabe}: Multi-Kristall ist schwieriger als Single-Kristall, gleiche Architektur
+          \item \textbf{Weniger Daten pro Konfiguration}: bei $n=1$--$10$ nur 1\,000 Samples pro $n$
+        \end{itemize}
+      \end{alertblock}
+
+    \column{0.48\textwidth}
+      \begin{block}{Mögliche Gegenmaßnahmen}
+        \begin{enumerate}
+          \item \textbf{LR-Scheduling}\\
+                z.B.\ Cosine Annealing oder ReduceLROnPlateau
+          \item \textbf{Regularisierung}\\
+                L2 Weight Decay oder Dropout in Skip-Connections
+          \item \textbf{Mehr Trainingsdaten}\\
+                insbesondere für $n > 10$
+          \item \textbf{Early Stopping} (explizit)\\
+                derzeit: Best-Checkpoint als Näherung
+        \end{enumerate}
+      \end{block}
+  \end{columns}
+\end{frame}
+
+% --- Gesamtvergleich ---
+\begin{frame}{Gesamtvergleich: FNO vs.\ U-Net}
+  \begin{center}
+    \renewcommand{\arraystretch}{1.45}
+    \begin{tabular}{llcc}
+      \toprule
+      Experiment & Modell & $\varepsilon_\psi^{\text{rel}}$ & $\varepsilon_v^{\text{rel}}$ \\
+      \midrule
+      \multirow{2}{*}{Exp-1 ($n=1$)}
+        & \textbf{FNO} (bs\,=\,8, 100~Ep., vorläufig)
+          & \textcolor{bestgreen}{\textbf{1.70\,\%}} & \textcolor{bestgreen}{\textbf{3.07\,\%}} \\
+        & U-Net (bs\,=\,8, 180~Ep.)
+          & 5.17\,\% & 16.3\,\% \\
+      \midrule
+      \multirow{2}{*}{Exp-2 (in-dist, $n\!\le\!10$)}
+        & \textbf{FNO} (bs\,=\,16, 50~Ep.*)
+          & \textcolor{bestgreen}{\textbf{$\approx$ 4--7\,\%}} & $\approx$ 5--7\,\% \\
+        & U-Net (bs\,=\,16, 180~Ep.)
+          & $\approx$ 24--30\,\% & $\approx$ 67--79\,\% \\
+      \midrule
+      \multirow{2}{*}{Exp-3 (in-dist, $n\!\le\!25$)}
+        & \textbf{FNO} (bs\,=\,16, 50~Ep.*)
+          & \textcolor{bestgreen}{\textbf{$\approx$ 4--10\,\%}} & $\approx$ 5--8\,\% \\
+        & U-Net (bs\,=\,16, 180~Ep.)
+          & $\approx$ 24--37\,\% & $\approx$ 74--92\,\% \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \vspace{4pt}
+  \small
+  ${}^*$FNO Exp.~2/3 noch bei 50~Ep.; Aktualisierung auf 100~Ep.\ ausstehend.\\
+  FNO bs\,=\,8 für Exp.~1 noch unvollständig (2/4 Konfigurationen).
+\end{frame}
+
+% =============================================================================
+\section{Fazit \& Ausblick}
+% =============================================================================
+
+\begin{frame}{Fazit \& Nächste Schritte}
+  \begin{columns}[T]
+    \column{0.54\textwidth}
+      \begin{block}{Was erreicht wurde}
+        \begin{itemize}
+          \item Vollständige Train-/Val-/Eval-Pipeline
+          \item Systematische Hyperparameter-Suche abgeschlossen
+          \item \textbf{FNO}: $\varepsilon_\psi < 2.3\,\%$ bei $n=1$ (bs\,=\,16),\\
+                vorläufig $1.7\,\%$ mit bs\,=\,8
+          \item \textbf{FNO}: $\approx 4$--$10\,\%$ für Multi-Kristall (in-dist)
+          \item \textbf{U-Net}: $5.2\,\%$ bei $n=1$,\\
+                aber Overfitting bei Multi-Kristall
+          \item Inkompressibilität garantiert (div\,rms\,$\approx 0$)
+        \end{itemize}
+      \end{block}
+
+    \column{0.42\textwidth}
+      \begin{alertblock}{Offene Punkte}
+        \begin{enumerate}
+          \item Max-Fehler FNO: 30--90\,\% am Kristallrand
+          \item U-Net: Overfitting Exp.~2/3
+          \item FNO Exp.~2/3 noch 50~Ep.
+          \item FNO bs\,=\,8 unvollständig
+        \end{enumerate}
+      \end{alertblock}
+
+      \vspace{6pt}
+      \begin{block}{Nächste Schritte}
+        \begin{enumerate}
+          \item FNO Exp.~2/3 $\to$ 100~Epochen
+          \item LR-Scheduler + L2-Reg. (U-Net)
+          \item Fehleranalyse Kristallrand
+          \item Experiment~4: Kristallgröße
+        \end{enumerate}
+      \end{block}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+\end{document}
+% =============================================================================
