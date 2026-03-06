@@ -363,10 +363,10 @@
         \toprule
         Lernrate & $\varepsilon_\psi^{\text{rel}}$ & $\varepsilon_v^{\text{rel}}$ & \\
         \midrule
-        $10^{-3}$            & \textcolor{bestgreen}{\textbf{5.17\,\%}} & 16.3\,\% & $\leftarrow$ best \\
-        $5\!\times\!10^{-3}$ & 5.31\,\% & 15.1\,\% & \\
-        $5\!\times\!10^{-4}$ & 5.44\,\% & 16.3\,\% & \\
-        $10^{-4}$            & 6.51\,\% & 20.3\,\% & \\
+        $10^{-3}$            & 6.0\,\% & 9.3\,\% \\
+        $5\!\times\!10^{-3}$ & 5.5\,\% & 8.5\,\% & \\
+        $5\!\times\!10^{-4}$ & 5.9\,\% & 9.6\,\% & \\
+        $10^{-4}$            & 6.5\,\% & 12.7\,\% & \\
         \bottomrule
       \end{tabular}
 
@@ -378,10 +378,10 @@
         \toprule
         Lernrate & $\varepsilon_\psi^{\text{rel}}$ & $\varepsilon_v^{\text{rel}}$ & \\
         \midrule
-        $10^{-3}$            & 8.56\,\% & 23.6\,\% & \\
-        $5\!\times\!10^{-4}$ & 9.85\,\% & 21.3\,\% & \\
-        $10^{-4}$            & 10.4\,\%  & 26.4\,\% & \\
-        $5\!\times\!10^{-3}$ & \textcolor{warnred}{11.2\,\%} & 24.4\,\% & \\
+        $10^{-3}$            & 13.9\,\% & 22.1\,\% & \\
+        $5\!\times\!10^{-4}$ & 15\,\% & 29.9\,\% & \\
+        $10^{-4}$            & 13.5\,\%  & 23.1\,\% & \\
+        $5\!\times\!10^{-3}$ & 24,\% & 53\,\% & \\
         \bottomrule
       \end{tabular}
   \end{columns}
@@ -434,56 +434,27 @@
 % --- Trainingskurven U-Net---
 \begin{frame}{Exp~1 -- Trainingskurven (jeweils bestes Modell)}
       \textbf{U-Net} \quad (bs\,=\,8, lr\,$=5\!\times\!10^{-3}$, 180~Ep.)\\[4pt]
-      \includegraphics[width=\textwidth]{Bilder/UNET_8_Best.png}
+      \centering
+      \includegraphics[width=0.5\textwidth]{Bilder/UNET_8_Best.png}
 \end{frame}
 
 % --- Qualitatives Ergebnis U-Net psi ---
 \begin{frame}{Exp~1 -- Qualitative Ergebnisse: Stromfunktion $\psi$}
       \includegraphics[width=\linewidth]{Bilder/sample_0004_rel0.0436_psi.png}
   \textit{Referenz (LaMEM) \;|\; Vorhersage \;|\; Absoluter Fehler~$\Delta\psi$}\\
-  FNO-Fehler diffus und klein; U-Net zeigt leicht stärkere Abweichungen am Kristallrand.
+  U-Net-Fehler diffus und klein; U-Net zeigt leicht stärkere Abweichungen am Kristallrand.
 \end{frame}
 
 % --- Qualitatives Ergebnis U-Net v ---
 \begin{frame}{Exp~1 -- Qualitative Ergebnisse: Stromfunktion $\psi$}
       \includegraphics[width=\linewidth]{Bilder/sample_0004_rel0.0436_vel.png}
   \textit{Referenz (LaMEM) \;|\; Vorhersage \;|\; Absoluter Fehler~$\Delta v$}\\
-  FNO-Fehler diffus und klein; U-Net zeigt leicht stärkere Abweichungen am Kristallrand.
+  U-Net-Fehler diffus und klein; U-Net zeigt leicht stärkere Abweichungen am Kristallrand.
 \end{frame}
 
 % =============================================================================
 \section{Analyse \& Diskussion}
 % =============================================================================
-
-% --- Overfitting Folie 2: Ursachen ---
-\begin{frame}{Overfitting-Analyse: Ursachen \& Gegenmaßnahmen}
-  \begin{columns}[T]
-    \column{0.48\textwidth}
-      \begin{alertblock}{Warum tritt Overfitting auf?}
-        \begin{itemize}
-          \item \textbf{Kein Regularisierung}: kein Dropout, kein Weight Decay
-          \item \textbf{Kein LR-Scheduler}: konstante Lernrate bis Trainingsende
-          \item \textbf{Komplexere Aufgabe}: Multi-Kristall ist schwieriger als Single-Kristall, gleiche Architektur
-          \item \textbf{Weniger Daten pro Konfiguration}: bei $n=1$--$10$ nur 1\,000 Samples pro $n$
-        \end{itemize}
-      \end{alertblock}
-
-    \column{0.48\textwidth}
-      \begin{block}{Mögliche Gegenmaßnahmen}
-        \begin{enumerate}
-          \item \textbf{LR-Scheduling}\\
-                z.B.\ Cosine Annealing oder ReduceLROnPlateau
-          \item \textbf{Regularisierung}\\
-                L2 Weight Decay oder Dropout in Skip-Connections
-          \item \textbf{Mehr Trainingsdaten}\\
-                insbesondere für $n > 10$
-          \item \textbf{Early Stopping} (explizit)\\
-                derzeit: Best-Checkpoint als Näherung
-        \end{enumerate}
-      \end{block}
-  \end{columns}
-\end{frame}
-
 % --- Gesamtvergleich ---
 \begin{frame}{Gesamtvergleich: FNO vs.\ U-Net}
   \begin{center}
@@ -493,48 +464,12 @@
       Experiment & Modell & $\varepsilon_\psi^{\text{rel}}$ & $\varepsilon_v^{\text{rel}}$ \\
       \midrule
       \multirow{2}{*}{Exp-1 ($n=1$)}
-        & \textbf{FNO} (bs\,=\,8, 100~Ep., vorläufig)
-          & \textcolor{bestgreen}{\textbf{1.70\,\%}} & \textcolor{bestgreen}{\textbf{3.07\,\%}} \\
+        & \textbf{FNO} (bs\,=\,16, 100~Ep.)
+          & \textcolor{bestgreen}{\textbf{1.62\,\%}} & \textcolor{bestgreen}{\textbf{3,44\,\%}} \\
         & U-Net (bs\,=\,8, 180~Ep.)
-          & 5.17\,\% & 16.3\,\% \\
+          & 5.5\,\% & 8.5\,\% \\
     \end{tabular}
   \end{center}
-  \vspace{4pt}
-  \small
-  ${}^*$FNO Exp.~2/3 noch bei 50~Ep.; Aktualisierung auf 100~Ep.\ ausstehend.\\
-  FNO bs\,=\,8 für Exp.~1 noch unvollständig (2/4 Konfigurationen).
-\end{frame}
-
-% =============================================================================
-\section{Fazit \& Ausblick}
-% =============================================================================
-
-\begin{frame}{Fazit \& Nächste Schritte}
-  \begin{columns}[T]
-    \column{0.54\textwidth}
-      \begin{block}{Was erreicht wurde}
-        \begin{itemize}
-          \item Vollständige Train-/Val-/Eval-Pipeline
-          \item Systematische Hyperparameter-Suche abgeschlossen
-          \item \textbf{FNO}: $\varepsilon_\psi < 2.3\,\%$ bei $n=1$ (bs\,=\,16),\\
-                vorläufig $1.7\,\%$ mit bs\,=\,8
-          \item \textbf{FNO}: $\approx 4$--$10\,\%$ für Multi-Kristall (in-dist)
-          \item \textbf{U-Net}: $5.2\,\%$ bei $n=1$,\\
-                aber Overfitting bei Multi-Kristall
-          \item Inkompressibilität garantiert (div\,rms\,$\approx 0$)
-        \end{itemize}
-      \end{block}
-
-    \column{0.42\textwidth}
-      \begin{alertblock}{Offene Punkte}
-        \begin{enumerate}
-          \item Max-Fehler FNO: 30--90\,\% am Kristallrand
-          \item U-Net: Overfitting Exp.~2/3
-          \item FNO Exp.~2/3 noch 50~Ep.
-          \item FNO bs\,=\,8 unvollständig
-        \end{enumerate}
-      \end{alertblock}
-  \end{columns}
 \end{frame}
 
 % =============================================================================
