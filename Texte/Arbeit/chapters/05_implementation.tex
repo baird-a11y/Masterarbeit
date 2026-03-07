@@ -5,10 +5,9 @@
 \label{ch:implementation}
 
 
-This chapter describes the technical realization of the surrogate modeling framework introduced in Chapter~\ref{ch:methodology}. While the previous chapter motivated the modeling choices (learning targets, input encoding, and
-architecture), the focus here is on the concrete implementation of the full workflow in a reproducible and modular software stack.
+This chapter describes the technical realization of the surrogate modeling framework introduced in Chapter~\ref{ch:methodology}. While the previous chapter motivated the modeling choices—learning targets, input encoding, and architecture—the focus here is on the concrete implementation of the full workflow in a reproducible and modular software stack.
 
-All components are implemented in Julia and designed to be hardware-agnostic: the same code paths run on CPU and GPU without modification. Wherever possible, explicit implementations are preferred over high-level abstractions
+All components are implemented in Julia and designed to be hardware-agnostic: the same code paths run on CPU and GPU without modification. Wherever possible, explicit implementations are used instead of high-level abstractions
 to retain full control over numerical behavior, memory usage, and device placement.
 
 % ----------------------------------------------------------------------------
@@ -59,15 +58,13 @@ Both trees share the same LaMEM interface module for data generation, the same P
 \section{Model Implementations}
 % ----------------------------------------------------------------------------
 
-Both architectures are implemented explicitly using Flux primitives. They share the same input and output interface: a four-channel input tensor of shape $(256,256,4)$—consisting of the crystal mask, a signed distance field,
-and normalized $x$- and $z$-coordinate channels—and a single-channel output $\psi_{\mathrm{norm}}$ of shape $(256,256,1)$. This input representation is geometry-agnostic: configurations with varying numbers of crystals are encoded on the same fixed grid without architectural changes.
+Both architectures are implemented explicitly using Flux primitives. They share the same input and output interface: a five-channel input tensor of shape $(256,256,5)$ and a single-channel output $\psi_{\mathrm{norm}}$ of shape $(256,256,1)$. Both models load and process the same pre-generated JLD2 datasets; the number of input channels is determined dynamically at model construction time from the first loaded sample. This makes the representation geometry-agnostic: configurations with varying numbers of crystals are encoded on the same fixed grid without architectural changes.
 
 \subsection*{U-Net}
 
 The encoder--decoder structure follows a classical U-Net design with skip connections. Downsampling uses strided convolutions instead of max pooling to keep the operation learnable and reduce grid-alignment artifacts in smooth flow fields. Each resolution level applies two successive $3\times3$ convolutions, followed by batch normalization and ReLU activation.
 
-Upsampling is implemented via transposed convolutions. Skip connections concatenate encoder feature maps with decoder feature maps at matching resolutions. A final $1\times1$ convolution maps the decoder output to the
-single output channel. No activation is applied in the output layer, as the network performs pure regression. The model is constructed via a \texttt{build\_unet()} factory function with configurable base channel width; the concrete value is reported in Chapter~\ref{ch:experiments}.
+Upsampling is implemented via bilinear interpolation followed by two successive $3\times3$ convolutions, avoiding the checkerboard artifacts that can arise from transposed convolutions. Skip connections concatenate encoder feature maps with decoder feature maps at matching resolutions. A final $1\times1$ convolution maps the decoder output to the single output channel with no activation, as the task is pure regression. The model is constructed via a \texttt{build\_unet()} factory function with configurable base channel width; the concrete value is reported in Chapter~\ref{ch:experiments}.
 
 \subsection*{Fourier Neural Operator}
 
@@ -134,18 +131,13 @@ Concrete hyperparameter choices—learning rates, gradient clipping thresholds, 
 
 \subsection*{Loss functions}
 
-The U-Net is trained with a standard MSE loss on $\psi_{\mathrm{norm}}$.
-The FNO uses a composite loss
+Both U-Net and FNO are trained with the same composite loss
 \[
 \mathcal{L} = \mathcal{L}_{\mathrm{MSE}}
 + \alpha_{\mathrm{grad}} \cdot \mathcal{L}_{\mathrm{grad}}
 + \alpha_{\mathrm{bnd}} \cdot \mathcal{L}_{\mathrm{bnd}},
 \]
-where $\mathcal{L}_{\mathrm{grad}}$ penalizes errors in the spatial derivatives $\partial\psi/\partial x$ and $\partial\psi/\partial z$ (computed via finite differences), and $\mathcal{L}_{\mathrm{bnd}}$ enforces the
-homogeneous Dirichlet boundary condition $\psi|_{\partial\Omega} = 0$. The gradient loss coefficient $\alpha_{\mathrm{grad}}$ is ramped from zero over a configurable number of warmup epochs to avoid destabilizing early
-optimization. This composite loss encourages the FNO to produce predictions that are not only accurate in $\psi$ itself but also yield physically consistent velocity fields.
-
-The composite loss encourages the FNO to produce predictions that are not only accurate in $\psi$ itself but also yield physically consistent velocity fields. The U-Net, by contrast, achieves sufficient accuracy with a simple MSE loss: its convolutional inductive bias already imposes a degree of spatial regularity that makes the additional gradient and boundary penalties unnecessary.
+where $\mathcal{L}_{\mathrm{grad}}$ penalizes errors in the spatial derivatives $\partial\psi/\partial x$ and $\partial\psi/\partial z$ (computed via finite differences), and $\mathcal{L}_{\mathrm{bnd}}$ enforces the homogeneous Dirichlet boundary condition $\psi|_{\partial\Omega} = 0$. The gradient loss coefficient $\alpha_{\mathrm{grad}}$ is ramped from zero over a configurable number of warmup epochs to avoid destabilizing early optimization. This composite loss encourages both models to produce predictions that are not only accurate in $\psi$ itself but also yield physically consistent velocity fields and respect the boundary conditions.
 
 \subsection*{Checkpointing}
 

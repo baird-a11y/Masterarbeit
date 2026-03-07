@@ -24,10 +24,10 @@ where $\mathbf{u}$ denotes the velocity field, $p$ the pressure, $\mu$ the
 dynamic viscosity, $\rho$ the density, and $\mathbf{g}$ the gravitational
 acceleration.
 
-A defining property of Stokes flow is its linearity with respect to the
+A key property of Stokes flow is its linearity with respect to the
 velocity field for fixed material parameters and boundary conditions. This
-implies that hydrodynamic interactions between rigid inclusions are long-ranged
-and additive, such that the disturbance induced by one particle influences the
+means that hydrodynamic interactions between rigid inclusions are long-ranged
+and additive: the disturbance induced by one particle influences the
 flow field throughout the domain. These long-range interactions form the
 physical basis for collective sedimentation phenomena, including wake
 interaction, drafting--kissing--tumbling dynamics, and clustering effects
@@ -40,8 +40,7 @@ Accurately capturing these effects therefore requires resolving the full flow
 field around multiple interacting crystals rather than relying on isolated
 particle approximations.
 
-From a surrogate modeling perspective, the Stokes regime offers two important
-advantages. First, the absence of inertia leads to smooth, steady-state flow
+From a surrogate modeling perspective, the Stokes regime has two useful properties. First, the absence of inertia leads to smooth, steady-state flow
 fields for fixed crystal configurations. Second, incompressibility imposes a
 strong global constraint on admissible velocity fields, which can be exploited
 through appropriate output representations.
@@ -128,7 +127,7 @@ from data rather than enforced analytically.
 Direct velocity prediction treats the learning task as an unconstrained
 regression problem on a vector field. Incompressibility and momentum balance
 are not enforced explicitly but must be inferred from the training data. While
-this approach has been successfully applied in many CNN-based flow surrogates
+this approach works well in many CNN-based flow surrogates
 \parencite{ribeiro_deepcfd_nodate,chen_u-net_nodate,thuerey_deep_2020}, it can lead to
 small but systematic violations of physical constraints.
 
@@ -318,7 +317,7 @@ The FNO's spectral approach, on the other hand, directly reflects the
 elliptic nature of the Stokes equations, where local perturbations propagate
 globally—a property that is inherently encoded in the Fourier representation.
 
-These complementary architectural biases motivate the systematic comparison
+These complementary architectural biases are what motivates the comparison
 pursued in this thesis: by training both architectures on the same data and
 evaluating them under identical conditions, we can disentangle the effects of
 physical output representation (stream function) from those of architectural

@@ -3,15 +3,15 @@
 
 \section{Geoscientific Context}
 
-Crystal sedimentation in viscous magmatic fluids is a fundamental process governing the evolution, differentiation, and internal dynamics of magma reservoirs. During cooling, crystals nucleate and grow within the melt and begin to settle due to density contrasts between the solid and liquid phases. This settling process directly influences the thermal and chemical evolution of the system and contributes to the formation of cumulate layers that are preserved as macroscopic structures in plutonic bodies.
+Crystal sedimentation in viscous magmatic fluids is a fundamental process governing the evolution, differentiation, and internal dynamics of magma reservoirs. During cooling, crystals nucleate and grow within the melt and begin to settle due to density contrasts between the solid and liquid phases. This settling process directly influences the thermal and chemical evolution of the system and contributes to the formation of cumulate layers that are preserved as macroscopic structures in plutonic bodies. Minerals such as olivine and plagioclase are known to settle at rates that permit efficient chemical differentiation: in basaltic chambers, residence times range from days to a few years for mafic minerals and up to several centuries for plagioclase \parencite{martin_crystal_1988,martin_fluid-dynamical_1989}.
 
-Early work by \textcite{martin_crystal_1988} demonstrated that crystal settling can occur even in vigorously convecting magma chambers, provided that the Stokes settling velocity exceeds characteristic convective flow velocities. This result challenged the classical assumption that convection necessarily suppresses sedimentation and emphasized the role of local particle--fluid interactions. A settling crystal perturbs the surrounding flow field by generating viscous boundary layers and wake structures that extend over several crystal diameters. These flow perturbations are not confined to the immediate vicinity of a single particle but can modify the trajectories and settling behavior of neighboring crystals.
+Early work by \textcite{martin_crystal_1988} showed that crystal settling can occur even in vigorously convecting magma chambers, provided that the Stokes settling velocity exceeds characteristic convective flow velocities near the chamber floor. This finding called into question the long-held view that convection necessarily suppresses sedimentation, and emphasized the role of local particle--fluid interactions. A settling crystal perturbs the surrounding flow field by generating viscous boundary layers and wake structures that extend over several crystal diameters. These flow perturbations are not confined to the immediate vicinity of a single particle but can modify the trajectories and settling behavior of neighboring crystals.
 
-Subsequent experimental and numerical investigations \parencite{martin_fluid-dynamical_1989,weinstein_evolution_1988,verhoeven_numerical_2009,patocka_settling_2020,uhlmann_sedimentation_2014,penlou_experimental_2023,nissanka_dynamics_2023} revealed that such interactions may lead to asymmetric flow patterns, recirculation zones, and clustering phenomena. As a consequence, even small variations in crystal geometry, spatial arrangement, or relative positioning can strongly affect collective settling dynamics and the development of mineralogical layering. These findings highlight that multi-crystal sedimentation is inherently a multiscale and interaction-dominated process, which places stringent demands on numerical modeling approaches intended to capture its essential physics.
+Subsequent experimental and numerical investigations \parencite{martin_fluid-dynamical_1989,weinstein_evolution_1988,verhoeven_numerical_2009,patocka_settling_2020,uhlmann_sedimentation_2014,penlou_experimental_2023,nissanka_dynamics_2023} revealed that such interactions may lead to asymmetric flow patterns, recirculation zones, and clustering phenomena. \textcite{weinstein_evolution_1988} further showed that the spatial distribution of deposited crystals is inherently asymmetric with respect to the geometry of the convection cell, offering a physical explanation for the non-uniform mineralogical layering commonly observed in plutonic rocks. As a consequence, even small variations in crystal geometry, spatial arrangement, or relative positioning can strongly affect collective settling dynamics and the development of such layering. Taken together, these results indicate that multi-crystal sedimentation is an inherently multiscale and interaction-dominated process, which places high demands on any numerical approach aimed at capturing the relevant physics.
 
 \section{Computational Challenges}
 
-Accurate numerical simulation of multi-crystal sedimentation remains computationally demanding due to the strongly multiscale nature of crystal fluid interactions. A physically faithful model must simultaneously resolve:
+Accurate numerical simulation of multi-crystal sedimentation remains computationally demanding due to the strongly multiscale nature of crystal--fluid interactions. Any physically meaningful model needs to account for:
 
 \begin{itemize}
     \item \textbf{Microscale crystal boundaries}, where steep velocity gradients and localized shear layers develop,
@@ -21,23 +21,23 @@ Accurate numerical simulation of multi-crystal sedimentation remains computation
 
 The computational cost of resolving hydrodynamic interactions typically scales between $\mathcal{O}(N^2)$ and $\mathcal{O}(N^3)$ with the number of particles $N$ \parencite{ladd_numerical_nodate}. Numerical methods that explicitly couple particle and fluid dynamics—such as lattice Boltzmann discrete element methods (LBM-DEM) or immersed boundary approaches—generally require each particle to be resolved by tens to hundreds of grid cells. Even in two-dimensional configurations, this leads to simulations with $10^5$-$10^6$ fluid nodes per particle \parencite{Li_IBM-LBM-DEM_2022,leonardi_coupled_2014}. For systems containing more than ten crystals, total grid sizes can easily exceed $10^7$--$10^8$ degrees of freedom, resulting in runtimes ranging from several hours to multiple days per simulation \parencite{Li_IBM-LBM-DEM_2022}.
 
-Such computational demands render systematic parameter studies infeasible. Investigating the influence of crystal size, viscosity contrast, particle number, or spatial arrangement would require thousands of high-fidelity simulations and thus exceed practical computational budgets. This limitation motivates the development of surrogate models capable of approximating the underlying flow fields at a substantially reduced computational cost while retaining sufficient physical fidelity.
+Such computational demands make systematic parameter studies effectively infeasible. Investigating the influence of crystal size, viscosity contrast, particle number, or spatial arrangement would require thousands of high-fidelity simulations and thus exceed practical computational budgets. This is the main practical reason why surrogate models—capable of approximating the underlying flow fields at a fraction of the computational cost—have attracted growing interest in recent years.
 
 \section{Machine Learning as a Surrogate Modeling Strategy}
 
-In recent years, machine learning (ML) has emerged as a promising approach for accelerating the prediction of fluid-dynamical systems. Two architectural paradigms are of particular relevance to this work.
+Machine learning has increasingly been applied to accelerate predictions in fluid dynamics, with the goal of replacing expensive numerical solvers with fast, trained approximations. Two architectural paradigms are of particular relevance to this work.
 
-First, U-Net architectures \parencite{ronneberger_u-net_2015} leverage an encoder--decoder structure with skip connections to capture multiscale spatial features. Their ability to encode complex geometric information at multiple resolutions has made them a widely adopted choice for structured flow-field prediction \parencite{guo_convolutional_2016,thuerey_deep_2020,ribeiro_deepcfd_nodate,chen_u-net_nodate}.
+First, U-Net architectures \parencite{ronneberger_u-net_2015} leverage an encoder--decoder structure with skip connections to capture multiscale spatial features. Their ability to encode complex geometric information at multiple resolutions has made them a widely used choice for structured flow-field prediction \parencite{guo_convolutional_2016,thuerey_deep_2020,ribeiro_deepcfd_nodate,chen_u-net_nodate}.
 
 Second, Fourier Neural Operators (FNOs) \parencite{li_fourier_2021} learn mappings between function spaces by performing convolutions in the spectral domain via the Fast Fourier Transform. By operating in frequency space, FNOs can efficiently capture global, long-range dependencies in the solution field—a property that is particularly attractive for problems governed by elliptic operators such as the Stokes equations.
 
-Both architectures have demonstrated speed-ups of several orders of magnitude compared to classical solvers while maintaining acceptable accuracy in the context of computational fluid dynamics. Beyond purely data-driven approaches, physics-informed neural networks (PINNs) \parencite{raissi_physics_2017,raissi_physics-informed_2019,jin_nsfnets_2021} incorporate governing equations directly into the training objective, thereby encouraging physically consistent predictions even in data-scarce regimes.
+Both approaches have been shown to achieve speed-ups of several orders of magnitude over classical solvers, while maintaining acceptable accuracy across a range of flow problems. Beyond purely data-driven approaches, physics-informed neural networks (PINNs) \parencite{raissi_physics_2017,raissi_physics-informed_2019,jin_nsfnets_2021} incorporate governing equations directly into the training objective, encouraging physically consistent predictions even when training data are scarce.
 
-A comprehensive overview of recent developments—including geometry-aware PINNs, neural operators, and scalable U-Net variants for complex flow problems—is provided in Chapter~\ref{ch:related}. These advances motivate the central premise of this thesis: How well can U-Net and FNO architectures, trained on a limited number of crystal configurations, generalize to unseen sedimentation scenarios with varying particle numbers and spatial arrangements? And which architecture is better suited for this task, given their fundamentally different approaches to capturing spatial structure?
+A broader overview of recent developments—including geometry-aware PINNs, neural operators, and scalable U-Net variants for complex flow problems—is given in Chapter~\ref{ch:related}. These advances motivate the central premise of this thesis: How well can U-Net and FNO architectures, trained on a limited number of crystal configurations, generalize to unseen sedimentation scenarios with varying particle numbers and spatial arrangements? And which architecture is better suited for this task, given their fundamentally different approaches to capturing spatial structure?
 
 \section{Research Question and Hypothesis}
 
-The overarching research question guiding this thesis is:
+The central research question of this thesis is:
 
 \begin{quote}
 \emph{To what extent can U-Net and Fourier Neural Operator architectures, trained on configurations containing up to a fixed maximal number of crystals ($N$), generalize to unseen sedimentation scenarios with varying particle numbers and spatial arrangements—and which factors fundamentally limit this generalization capability?}
@@ -58,13 +58,11 @@ The controlled comparison of U-Net and FNO architectures presented in this thesi
 
 \section{Objectives and Scope of the Study}
 
-The objectives of this thesis are structured around three complementary goals.
-
 \subsection*{Primary Objective}
 Quantitatively evaluate the generalization performance of U-Net and FNO based surrogate models across varying crystal numbers (1--100) and spatial arrangements on a fixed $256 \times 256$ computational grid.
 
 \subsection*{Secondary Objective}
-Identify and analyze systematic failure modes encountered when predicting previously unseen geometries, including symmetry-breaking artifacts, nonphysical divergence, and reduced accuracy near crystal boundaries.
+Identify recurring prediction errors and characteristic failure patterns encountered when predicting previously unseen geometries, including symmetry-breaking artifacts, nonphysical divergence, and reduced accuracy near crystal boundaries.
 
 \subsection*{Tertiary Objective}
 Derive practical guidelines for the construction of surrogate models for multiphase Stokes flow in geophysical settings, with a focus on input representations, output variables, normalization strategies, and training methodologies.
@@ -74,7 +72,7 @@ Derive practical guidelines for the construction of surrogate models for multiph
 To maintain computational feasibility while addressing the core research questions, this study is restricted to:
 
 \begin{itemize}
-    \item two-dimensional incompressible Stokes flow formulated in stream-function-vorticity form,
+    \item two-dimensional incompressible Stokes flow formulated in stream-function-vorticity form (a standard starting point for such problems that captures the essential physics of crystal--fluid interactions \parencite{weinstein_evolution_1988,verhoeven_numerical_2009}),
     \item rigid circular crystal geometries without collision or lubrication forces,
     \item steady-state flow fields defined on a fixed $256 \times 256$ grid,
     \item synthetic training data generated using the LaMEM code \parencite{Popov2013LaMEM},
