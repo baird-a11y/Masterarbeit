@@ -31,6 +31,7 @@ checkpoint_path = "checkpoints/best_model.jld2"
 data_dir        = "data_val"
 out_dir         = "eval_output"
 save_preds      = true
+history_csv     = nothing
 
 for i in eachindex(ARGS)
     if (ARGS[i] == "--checkpoint" || ARGS[i] == "--ckpt") && i < length(ARGS)
@@ -41,6 +42,8 @@ for i in eachindex(ARGS)
         global out_dir = ARGS[i+1]
     elseif ARGS[i] == "--no_preds"
         global save_preds = false
+    elseif ARGS[i] == "--history_csv" && i < length(ARGS)
+        global history_csv = ARGS[i+1]
     end
 end
 
@@ -143,9 +146,9 @@ try
     plots_dir = joinpath(out_dir, "plots")
     mkpath(plots_dir)
 
-    # Training History (suche CSV im aktuellen Verzeichnis)
-    if isfile("training_history.csv")
-        plot_training_history("training_history.csv";
+    # Training History
+    if history_csv !== nothing && isfile(history_csv)
+        plot_training_history(history_csv;
                               out_path=joinpath(plots_dir, "training_history.png"))
     end
     # Metriken vs. Kristallanzahl

@@ -42,13 +42,17 @@ batch_size = cfg.batch_size
 lr         = cfg.lr
 train_dir  = cfg.train_dir
 val_dir    = cfg.val_dir
+save_dir   = "checkpoints"
+history_csv = "training_history.csv"
 
 for i in eachindex(ARGS)
-    if ARGS[i] == "--epochs"     && i < length(ARGS); global epochs     = parse(Int, ARGS[i+1]); end
-    if ARGS[i] == "--batch"      && i < length(ARGS); global batch_size = parse(Int, ARGS[i+1]); end
-    if ARGS[i] == "--lr"         && i < length(ARGS); global lr         = parse(Float64, ARGS[i+1]); end
-    if ARGS[i] == "--train_dir"  && i < length(ARGS); global train_dir  = ARGS[i+1]; end
-    if ARGS[i] == "--val_dir"    && i < length(ARGS); global val_dir    = ARGS[i+1]; end
+    if ARGS[i] == "--epochs"      && i < length(ARGS); global epochs      = parse(Int, ARGS[i+1]); end
+    if ARGS[i] == "--batch"       && i < length(ARGS); global batch_size  = parse(Int, ARGS[i+1]); end
+    if ARGS[i] == "--lr"          && i < length(ARGS); global lr          = parse(Float64, ARGS[i+1]); end
+    if ARGS[i] == "--train_dir"   && i < length(ARGS); global train_dir   = ARGS[i+1]; end
+    if ARGS[i] == "--val_dir"     && i < length(ARGS); global val_dir     = ARGS[i+1]; end
+    if ARGS[i] == "--save_dir"    && i < length(ARGS); global save_dir    = ARGS[i+1]; end
+    if ARGS[i] == "--history_csv" && i < length(ARGS); global history_csv = ARGS[i+1]; end
 end
 
 @info """
@@ -128,8 +132,8 @@ model_trained, best_metrics = train!(;
     dx            = dx,
     dz            = dz,
     mask_width    = 2,
-    save_dir      = "checkpoints",
-    history_csv   = "training_history.csv",
+    save_dir      = save_dir,
+    history_csv   = history_csv,
     use_gpu       = cfg.use_gpu,
     model_config  = model_cfg,
 )

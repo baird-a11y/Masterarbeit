@@ -14,162 +14,7 @@
 # Batch size: 8, 16
 # =============================================
 
-/opt/julia/bin/julia run_training.jl \
-    --epochs 180 \
-    --batch 8 \
-    --lr 1e-3 \
-    --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
-    --val_dir   /local/home/baselt/src/Ansatz/data_val/n01 \
-    --save_path exp1_8/unet_psi.bson \
-    --history_csv exp1_8/training_history.csv
-
-# --- Evaluation in-distribution
-
-/opt/julia/bin/julia run_eval.jl \
-    --model    exp1_8/unet_psi_best.bson \
-    --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 \
-    --out      exp1_8/eval_psi_indist \
-    --plot_dir exp1_8/eval_plots_indist \
-    --save_plots \
-    --denorm
-
-
-/opt/julia/bin/julia run_training.jl \
-    --epochs 180 \
-    --batch 16 \
-    --lr 1e-3 \
-    --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
-    --val_dir   /local/home/baselt/src/Ansatz/data_val/n01 \
-    --save_path exp1_16/unet_psi.bson \
-    --history_csv exp1_16/training_history.csv
-
-# --- Evaluation in-distribution
-
-/opt/julia/bin/julia run_eval.jl \
-    --model    exp1_16/unet_psi_best.bson \
-    --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 \
-    --out      exp1_16/eval_psi_indist \
-    --plot_dir exp1_16/eval_plots_indist \
-    --save_plots \
-    --denorm
-
-# =============================================
-/opt/julia/bin/julia run_training.jl \
-    --epochs 180 \
-    --batch 8 \
-    --lr 5e-3 \
-    --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
-    --val_dir   /local/home/baselt/src/Ansatz/data_val/n01 \
-    --save_path exp1_8_2/unet_psi.bson \
-    --history_csv exp1_8_2/training_history.csv
-
-# --- Evaluation in-distribution
-
-/opt/julia/bin/julia run_eval.jl \
-    --model    exp1_8_2/unet_psi_best.bson \
-    --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 \
-    --out      exp1_8_2/eval_psi_indist \
-    --plot_dir exp1_8_2/eval_plots_indist \
-    --save_plots \
-    --denorm
-
-
-/opt/julia/bin/julia run_training.jl \
-    --epochs 180 \
-    --batch 16 \
-    --lr 5e-3 \
-    --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
-    --val_dir   /local/home/baselt/src/Ansatz/data_val/n01 \
-    --save_path exp1_16_2/unet_psi.bson \
-    --history_csv exp1_16_2/training_history.csv
-
-# --- Evaluation in-distribution
-
-/opt/julia/bin/julia run_eval.jl \
-    --model    exp1_16_2/unet_psi_best.bson \
-    --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 \
-    --out      exp1_16_2/eval_psi_indist \
-    --plot_dir exp1_16_2/eval_plots_indist \
-    --save_plots \
-    --denorm
-# =============================================
-/opt/julia/bin/julia run_training.jl \
-    --epochs 180 \
-    --batch 8 \
-    --lr 1e-4 \
-    --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
-    --val_dir   /local/home/baselt/src/Ansatz/data_val/n01 \
-    --save_path exp1_8_3/unet_psi.bson \
-    --history_csv exp1_8_3/training_history.csv
-
-# --- Evaluation in-distribution
-
-/opt/julia/bin/julia run_eval.jl \
-    --model    exp1_8_3/unet_psi_best.bson \
-    --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 \
-    --out      exp1_8_3/eval_psi_indist \
-    --plot_dir exp1_8_3/eval_plots_indist \
-    --save_plots \
-    --denorm
-
-
-/opt/julia/bin/julia run_training.jl \
-    --epochs 180 \
-    --batch 16 \
-    --lr 1e-4 \
-    --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
-    --val_dir   /local/home/baselt/src/Ansatz/data_val/n01 \
-    --save_path exp1_16_3/unet_psi.bson \
-    --history_csv exp1_16_3/training_history.csv
-
-# --- Evaluation in-distribution
-
-/opt/julia/bin/julia run_eval.jl \
-    --model    exp1_16_3/unet_psi_best.bson \
-    --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 \
-    --out      exp1_16_3/eval_psi_indist \
-    --plot_dir exp1_16_3/eval_plots_indist \
-    --save_plots \
-    --denorm
-# =============================================
-/opt/julia/bin/julia run_training.jl \
-    --epochs 180 \
-    --batch 8 \
-    --lr 5e-4 \
-    --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
-    --val_dir   /local/home/baselt/src/Ansatz/data_val/n01 \
-    --save_path exp1_8_4/unet_psi.bson \
-    --history_csv exp1_8_4/training_history.csv
-
-# --- Evaluation in-distribution
-
-/opt/julia/bin/julia run_eval.jl \
-    --model    exp1_8_4/unet_psi_best.bson \
-    --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 \
-    --out      exp1_8_4/eval_psi_indist \
-    --plot_dir exp1_8_4/eval_plots_indist \
-    --save_plots \
-    --denorm
-
-
-/opt/julia/bin/julia run_training.jl \
-    --epochs 180 \
-    --batch 16 \
-    --lr 5e-4 \
-    --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
-    --val_dir   /local/home/baselt/src/Ansatz/data_val/n01 \
-    --save_path exp1_16_4/unet_psi.bson \
-    --history_csv exp1_16_4/training_history.csv
-
-# --- Evaluation in-distribution
-
-/opt/julia/bin/julia run_eval.jl \
-    --model    exp1_16_4/unet_psi_best.bson \
-    --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 \
-    --out      exp1_16_4/eval_psi_indist \
-    --plot_dir exp1_16_4/eval_plots_indist \
-    --save_plots \
-    --denorm
+#
 
 # =============================================
 # Experiment 2 – Multi-crystal generalization
@@ -180,24 +25,24 @@
 # LR: beste aus Experiment 1 eintragen!
 # =============================================
 
-# /opt/julia/bin/julia run_training.jl \
-#     --epochs 180 \
-#     --batch 16 \
-#     --lr 1e-3 \
-#     --train_dir /local/home/baselt/src/Ansatz/data_train_n01_n10 \
-#     --val_dir   /local/home/baselt/src/Ansatz/data_val \
-#     --save_path exp2/unet_psi.bson \
-#     --history_csv exp2/training_history.csv
+/opt/julia/bin/julia run_training.jl \
+     --epochs 180 \
+     --batch 8 \
+     --lr 5e-3 \
+     --train_dir /local/home/baselt/src/Ansatz/data_train_n01_n10 \
+     --val_dir   /local/home/baselt/src/Ansatz/data_val \
+     --save_path exp2_8/unet_psi.bson \
+     --history_csv exp2_8/training_history.csv
 
-# # --- Evaluation in-distribution (n=1..10) ---
+# --- Evaluation in-distribution (n=1..10) ---
 
-# /opt/julia/bin/julia run_eval.jl \
-#     --model    exp2/unet_psi_best.bson \
-#     --data_dir /local/home/baselt/src/Ansatz/data_eval_n01_n25 \
-#     --out      exp2/eval_psi_indist \
-#     --plot_dir exp2/eval_plots_indist \
-#     --save_plots \
-#     --denorm
+ /opt/julia/bin/julia run_eval.jl \
+     --model    exp2_8/unet_psi_best.bson \
+     --data_dir /local/home/baselt/src/Ansatz/data_eval_n01_n25 \
+     --out      exp2_8/eval_psi_indist \
+     --plot_dir exp2_8/eval_plots_indist \
+     --save_plots \
+     --denorm
 
 
 # =============================================

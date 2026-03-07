@@ -15,7 +15,7 @@
 # =============================================
 
 /opt/julia/bin/julia run_training.jl \
-    --epochs 120 \
+    --epochs 180 \
     --batch 8 \
     --lr 1e-3 \
     --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
@@ -35,7 +35,7 @@
 
 
 /opt/julia/bin/julia run_training.jl \
-    --epochs 120 \
+    --epochs 180 \
     --batch 16 \
     --lr 1e-3 \
     --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
@@ -55,7 +55,7 @@
 
 # =============================================
 /opt/julia/bin/julia run_training.jl \
-    --epochs 120 \
+    --epochs 180 \
     --batch 8 \
     --lr 5e-3 \
     --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
@@ -75,7 +75,7 @@
 
 
 /opt/julia/bin/julia run_training.jl \
-    --epochs 120 \
+    --epochs 180 \
     --batch 16 \
     --lr 5e-3 \
     --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
@@ -94,7 +94,7 @@
     --denorm
 # =============================================
 /opt/julia/bin/julia run_training.jl \
-    --epochs 120 \
+    --epochs 180 \
     --batch 8 \
     --lr 1e-4 \
     --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
@@ -114,7 +114,7 @@
 
 
 /opt/julia/bin/julia run_training.jl \
-    --epochs 120 \
+    --epochs 180 \
     --batch 16 \
     --lr 1e-4 \
     --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
@@ -133,7 +133,7 @@
     --denorm
 # =============================================
 /opt/julia/bin/julia run_training.jl \
-    --epochs 120 \
+    --epochs 180 \
     --batch 8 \
     --lr 5e-4 \
     --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
@@ -153,7 +153,7 @@
 
 
 /opt/julia/bin/julia run_training.jl \
-    --epochs 120 \
+    --epochs 180 \
     --batch 16 \
     --lr 5e-4 \
     --train_dir /local/home/baselt/src/Ansatz/data_train/n01 \
@@ -181,7 +181,7 @@
 # =============================================
 
 /opt/julia/bin/julia run_training.jl \
-    --epochs 50 \
+    --epochs 180 \
     --batch 16 \
     --lr 1e-3 \
     --train_dir /local/home/baselt/src/Ansatz/data_train_n01_n10 \
@@ -210,7 +210,7 @@
 # =============================================
 
 /opt/julia/bin/julia run_training.jl \
-    --epochs 50 \
+    --epochs 180 \
     --batch 16 \
     --lr 1e-3 \
     --train_dir /local/home/baselt/src/Ansatz/data_train \
@@ -241,7 +241,7 @@
 # =============================================
 
 #/opt/julia/bin/julia run_training.jl \
-    --epochs 50 \
+    --epochs 180 \
     --batch 16 \
     --lr 1e-3 \
     --train_dir /local/home/baselt/src/Ansatz/data_train/n01_n10 \
