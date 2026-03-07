@@ -69,8 +69,8 @@ Predictions are evaluated on the normalized stream function $\psi_{\mathrm{norm}
     \item[Relative $L_2$ error] $\|\hat{\psi} - \psi\|_2 / \|\psi\|_2$, providing a scale-invariant measure of generalization quality.
     \item[Maximum absolute error] $\|\hat{\psi} - \psi\|_\infty$, quantifying worst-case local deviations.
     \item[Velocity MSE] MSE on the derived velocity components $u_x$ and $u_z$, assessing the physical consistency of the predicted stream function beyond pointwise $\psi$ accuracy.
-    \item[Gradient MSE] (FNO only) MSE on the spatial derivatives $\partial\psi/\partial x$ and $\partial\psi/\partial z$, directly reflecting the gradient loss term used during FNO training.
-    \item[Boundary MSE] (FNO only) MSE evaluated exclusively on the domain boundary $\partial\Omega$, measuring compliance with the homogeneous Dirichlet condition $\psi|_{\partial\Omega} = 0$.
+    \item[Gradient MSE] MSE on the spatial derivatives $\partial\psi/\partial x$ and $\partial\psi/\partial z$, directly reflecting the gradient loss term used during training.
+    \item[Boundary MSE] MSE evaluated exclusively on the domain boundary $\partial\Omega$, measuring compliance with the homogeneous Dirichlet condition $\psi|_{\partial\Omega} = 0$.
 \end{description}
 
 All metrics are aggregated by crystal count to assess how performance scales with geometric complexity. This stratification is essential for distinguishing in-distribution accuracy from out-of-distribution generalization.
@@ -104,17 +104,15 @@ Models are trained as in Experiment~2, but the crystals in the evaluation sample
 Both models are trained on the same datasets and evaluated with the same metrics. Table~\ref{tab:hyperparams} summarizes the key hyperparameters.
 
 \paragraph{Loss functions.}
-The two architectures use different training objectives. The U-Net is trained with a plain mean squared error loss:
+Both architectures are trained with the same composite loss that combines a pointwise MSE term with a gradient-matching term and a boundary term:
 \begin{equation}
-    \mathcal{L}_{\text{U-Net}} = \mathrm{MSE}(\hat{\psi}, \psi).
-\end{equation}
-The FNO uses a composite loss that additionally penalizes gradient errors and boundary violations:
-\begin{equation}
-    \mathcal{L}_{\text{FNO}} = \mathrm{MSE}(\hat{\psi}, \psi)
+    \mathcal{L} = \mathrm{MSE}(\hat{\psi}, \psi)
         + \alpha_{\mathrm{grad}}\,\mathcal{L}_{\mathrm{grad}}
         + \alpha_{\mathrm{bnd}}\,\mathcal{L}_{\mathrm{bnd}},
 \end{equation}
 where $\mathcal{L}_{\mathrm{grad}} = \mathrm{MSE}(\partial_x\hat{\psi},\partial_x\psi) + \mathrm{MSE}(\partial_z\hat{\psi},\partial_z\psi)$ is computed via central differences on interior points, and $\mathcal{L}_{\mathrm{bnd}} = \mathrm{MSE}(\hat{\psi}|_{\partial\Omega}, 0)$ enforces the homogeneous Dirichlet condition. The coefficient $\alpha_{\mathrm{grad}}$ is ramped linearly from $0$ to $0.1$ over the first five epochs to stabilize early training; $\alpha_{\mathrm{bnd}} = 0.01$ is kept fixed. The MSE term is evaluated on interior grid points only (a two-pixel boundary strip is excluded via a mask).
+
+The gradient term serves two purposes: it directly penalizes errors in the spatial derivatives of $\psi$, which propagate into the derived velocity field, and it acts as an implicit regularizer that suppresses high-frequency residuals. Preliminary experiments with a plain MSE loss for the U-Net showed substantially elevated velocity errors relative to the $\psi$ error (a factor of roughly $3\times$); adopting the composite loss reduced velocity errors significantly while leaving $\psi$ accuracy largely unchanged for batch size~8 (see Section~\ref{ssec:results:exp1:unet:metrics}).
 
 \paragraph{Model selection.}
 Both models are checkpointed after every epoch; the checkpoint with the lowest validation MSE is selected as the final model.
@@ -133,6 +131,7 @@ All experiments are run on a single NVIDIA A100 GPU. Models are saved in CPU-com
 Optimizer                & Adam                        & Adam + ClipNorm                        \\
 Learning rate            & \{$10^{-3}$, $5\!\times\!10^{-3}$, $10^{-4}$, $5\!\times\!10^{-4}$\} & \{$10^{-3}$, $5\!\times\!10^{-3}$, $10^{-4}$, $5\!\times\!10^{-4}$\} \\
 Max.\ gradient norm      & ---                         & 1.0                                    \\
+Loss                     & Composite (MSE + grad + bnd) & Composite (MSE + grad + bnd)           \\
 Batch size               & 8/16                           & 8/16                                     \\
 Epochs (Exp.\,1)         & 180                       & 100                                   \\
 Input channels           & 4                           & 4                                      \\

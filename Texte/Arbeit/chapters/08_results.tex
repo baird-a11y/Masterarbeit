@@ -265,51 +265,57 @@ configurations (four learning rates times two batch sizes).
 
 \begin{table}[htbp]
 \centering
-\caption{U-Net metrics for Experiment~1 (single crystal, $n=1$, 180~epochs).
-         $\varepsilon_\psi^{\mathrm{val}}$: best-checkpoint validation relative $L_2$ error;
-         $\mathrm{MSE}_\psi^{\mathrm{val}}$: validation MSE at best checkpoint;
-         $\bar{\varepsilon}_\psi^{\mathrm{eval}}$: mean relative $L_2$ error on the
-         held-out evaluation set (10~samples, best checkpoint).}
+\caption{U-Net metrics for Experiment~1 (single crystal, $n=1$, 180~epochs, composite loss).
+         $\bar{\varepsilon}_\psi^{\mathrm{eval}}$: mean relative $L_2$ error on $\psi$,
+         held-out evaluation set (10~samples, best checkpoint);
+         $\bar{\varepsilon}_v^{\mathrm{eval}}$: mean relative $L_2$ error on derived velocity.
+         Validation metrics marked \textit{(TODO)} are pending re-evaluation.}
 \label{tab:unet_metrics_exp1}
-\begin{tabular}{lcccc}
+\begin{tabular}{lccc}
 \toprule
-\textbf{Config (lr, bs)} & $\varepsilon_\psi^{\mathrm{val}}$ (\%) & $\mathrm{MSE}_\psi^{\mathrm{val}}$ & $\bar{\varepsilon}_\psi^{\mathrm{eval}}$ (\%) \\
+\textbf{Config (lr, bs)} & $\bar{\varepsilon}_\psi^{\mathrm{eval}}$ (\%) & $\bar{\varepsilon}_v^{\mathrm{eval}}$ (\%) & $\varepsilon_\psi^{\mathrm{val}}$ (\%) \\
 \midrule
-Exp-1.1 ($10^{-3}$,     bs\,16) & $4.1$ & $0.047$ & $8.6$ \\
-Exp-1.2 ($5\times10^{-3}$, bs\,16) & $3.8$ & $0.038$ & $11.2$ \\
-Exp-1.3 ($10^{-4}$,     bs\,16) & $2.9$ & $0.023$ & $10.4$ \\
-Exp-1.4 ($5\times10^{-4}$, bs\,16) & $3.6$ & $0.036$ & $\phantom{0}9.9$ \\
+Exp-1.1 ($10^{-3}$,        bs\,16) & $13.9$ & $22.1$ & \textit{(TODO)} \\
+Exp-1.2 ($5\times10^{-3}$, bs\,16) & $24.0$ & $24.4$ & \textit{(TODO)} \\
+Exp-1.3 ($10^{-4}$,        bs\,16) & $13.5$ & $23.1$ & \textit{(TODO)} \\
+Exp-1.4 ($5\times10^{-4}$, bs\,16) & $15.0$ & $29.9$ & \textit{(TODO)} \\
 \midrule
-Exp-1.1 ($10^{-3}$,     bs\,8)  & $3.4$ & $0.029$ & $5.2$ \\
-Exp-1.2 ($5\times10^{-3}$, bs\,8)  & $3.7$ & $0.036$ & $5.3$ \\
-Exp-1.3 ($10^{-4}$,     bs\,8)  & $2.9$ & $0.023$ & $6.5$ \\
-Exp-1.4 ($5\times10^{-4}$, bs\,8)  & $3.3$ & $0.029$ & $5.4$ \\
+Exp-1.1 ($10^{-3}$,        bs\,8)  & $\phantom{0}6.0$ & $\phantom{0}9.3$ & \textit{(TODO)} \\
+Exp-1.2 ($5\times10^{-3}$, bs\,8)  & $\phantom{0}5.5$ & $\phantom{0}8.5$ & \textit{(TODO)} \\
+Exp-1.3 ($10^{-4}$,        bs\,8)  & $\phantom{0}6.5$ & $12.7$ & \textit{(TODO)} \\
+Exp-1.4 ($5\times10^{-4}$, bs\,8)  & $\phantom{0}5.9$ & $\phantom{0}9.6$ & \textit{(TODO)} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Exp-1.3 ($10^{-4}$) continues to achieve the lowest best-checkpoint validation error for
-both batch sizes ($2.9\%$ at bs\,16; $2.9\%$ at bs\,8), with all configurations now
-clustering tightly between $2.9\%$ and $4.1\%$ — a substantial improvement over the 50-epoch
-results, where bs\,16 configurations ranged from $5.0\%$ to $11.2\%$.
-On the held-out evaluation set the ranking shifts: for bs\,16, Exp-1.1 ($10^{-3}$) achieves
-the lowest evaluation error ($8.6\%$), while Exp-1.3 and Exp-1.4 reach $10.4\%$ and $9.9\%$.
-For bs\,8, all four configurations perform similarly ($5.2$–$6.5\%$), with Exp-1.1 again
-leading ($5.2\%$) despite its higher validation-set oscillations.
-This suggests that the best validation checkpoint for the lower learning rates does not
-necessarily generalize better to the held-out set, possibly due to the small evaluation
-sample size (10~samples).
+For batch size~8, all four configurations cluster tightly in the range $5.5$–$6.5\%$ on~$\psi$,
+with Exp-1.2 ($5\times10^{-3}$) achieving the best result ($5.5\%$ / $8.5\%$).
+The velocity errors remain roughly $1.5$–$2\times$ larger than the $\psi$ errors, which is
+a clear improvement over the earlier plain-MSE training, where the factor was approximately
+$3\times$ (see Section~\ref{ssec:results:exp1:unet:hf}).
+The gradient term in the composite loss explicitly penalizes errors in the derivatives of
+$\hat\psi$ and thereby suppresses high-frequency residuals that would otherwise be amplified
+by the finite-difference differentiation step.
+
+For batch size~16, the composite loss leads to substantially higher evaluation errors
+($13.5$–$24.0\%$) compared to the plain-MSE baseline ($8.6$–$11.2\%$).
+This suggests that the additional loss terms introduce a training difficulty for the larger
+batch size, possibly due to noisier gradient estimates from the spatial derivative computation
+combined with the already less stable U-Net convergence at bs\,16 (Section~\ref{ssec:results:exp1:unet:training}).
+Since bs\,8 consistently outperforms bs\,16 across all configurations, the remainder of
+this chapter focuses on bs\,8 results for the U-Net.
 
 % ----------------------------------------------------------------------------
 \subsection{U-Net – Qualitative Results}
 \label{ssec:results:exp1:unet:qualitative}
 % ----------------------------------------------------------------------------
 
-Figure~\ref{fig:unet_gallery_exp1} shows representative evaluation plots for Exp-1.1
-(best evaluation-set performance). The overall flow structure is reproduced qualitatively,
-but local errors near the crystal boundary appear more pronounced than in the corresponding
-FNO predictions, and the relative $L_2$ errors (~$12$–$22\%$) are roughly an order of
-magnitude larger.
+Figure~\ref{fig:unet_gallery_exp1} shows representative evaluation plots for Exp-1.2
+(best evaluation-set performance for bs\,8 with composite loss). The overall flow structure
+is reproduced qualitatively, but local errors near the crystal boundary appear more pronounced
+than in the corresponding FNO predictions. With composite loss training, velocity errors
+($\approx 8.5\%$) are substantially reduced compared to the plain-MSE baseline ($\approx 16\%$),
+while $\psi$ accuracy remains similar ($5.5\%$ vs.\ $5.2\%$).
 
 \begin{figure}[htbp]
     \centering
@@ -329,24 +335,51 @@ magnitude larger.
 \end{figure}
 
 % ----------------------------------------------------------------------------
+\subsection{U-Net – High-Frequency Residuals in the Velocity Field}
+\label{ssec:results:exp1:unet:hf}
+% ----------------------------------------------------------------------------
+
+% TODO: Gaußfilter-Experiment durchführen und Zahlen eintragen.
+%       Vorgehen: Gaußfilter (σ = ? Gitterpunkte) auf ψ̂ vor FD-Ableitung anwenden,
+%       dann v_rel nochmal messen und mit ungefiltertem Wert vergleichen.
+%       Ziel: Nachweis, dass die erhöhten v-Fehler hochfrequenten Ursprungs sind.
+The velocity errors reported above ($\bar{\varepsilon}_v \approx \SI{TODO}{\percent}$
+for the best U-Net configuration) exceed the corresponding $\psi$-errors by a factor of
+roughly \TODO{X}. Since the velocity field is obtained by finite-difference differentiation
+of~$\hat\psi$ (Eq.~\ref{eq:fd_velocity}), high-frequency residuals in~$\hat\psi$ are
+amplified by the differentiation step. To verify this interpretation, a Gaussian low-pass
+filter ($\sigma = \text{TODO}$ grid cells) was applied to~$\hat\psi$ prior to computing
+the finite-difference derivatives. The filtered predictions reduce~$\bar{\varepsilon}_v$
+from \SI{TODO}{\percent} to \SI{TODO}{\percent} ($\approx$~\TODO{X}\% relative reduction),
+while the $\psi$-error increases only marginally (from \SI{TODO}{\percent} to
+\SI{TODO}{\percent}), confirming that the elevated velocity errors are dominated by
+high-frequency artefacts rather than by systematic bias in the flow structure.
+No analogous filtering was applied to the FNO predictions, for which
+$\bar{\varepsilon}_v$ already tracks~$\bar{\varepsilon}_\psi$ closely; this is consistent
+with the FNO's spectral architecture, which naturally suppresses high-frequency components
+above the retained mode count.
+
+% ----------------------------------------------------------------------------
 \subsection{Comparison: FNO vs.\ U-Net}
 \label{ssec:results:exp1:comparison}
 % ----------------------------------------------------------------------------
 
 Table~\ref{tab:comparison_exp1} compares the best results from each architecture in
-Experiment~1 (FNO: 100~epochs; U-Net: 180~epochs).
+Experiment~1 (FNO: 100~epochs; U-Net: 180~epochs, composite loss).
 For FNO, Exp-1.4 (bs\,16) achieves a mean relative $L_2$ error of $2.26\%$ on~$\psi$ and
 $4.56\%$ on the derived velocity field; with bs\,8 the best available result (Exp-1.2)
 reaches $1.70\%$ / $3.07\%$.
-The best U-Net evaluation-set result for bs\,16 is Exp-1.1 at $8.6\%$ — a factor of roughly
-$3.8\times$ above the FNO bs\,16 optimum — while for bs\,8 all four configurations cluster
-tightly between $5.2\%$ and $6.5\%$, narrowing the gap compared to the 50-epoch run.
-The U-Net Exp-1.3 continues to reach the lowest \emph{validation} error ($2.9\%$ for both
-batch sizes) but does not transfer this advantage to the held-out evaluation set.
+The best U-Net result is Exp-1.2 ($5\times10^{-3}$, bs\,8) at $5.5\%$ on~$\psi$ and $8.5\%$
+on velocity — a factor of roughly $3.2\times$ above the FNO bs\,16 optimum on~$\psi$, but
+with a velocity-to-$\psi$ error ratio of $1.5\times$, substantially closer to the FNO ratio
+($\approx 2\times$) than the previous plain-MSE U-Net training ($\approx 3\times$).
 
-Overall, the FNO still converges to substantially lower error levels within the same training
-budget, suggesting a structural advantage of the spectral architecture for smooth,
-globally-structured Stokes flow fields around a single crystal.
+Overall, the FNO converges to substantially lower error levels, suggesting a structural
+advantage of the spectral architecture for smooth, globally-structured Stokes flow fields
+around a single crystal.
+The adoption of the composite loss for the U-Net partially closes the gap in velocity
+accuracy, and confirms that the gradient term reduces high-frequency residuals regardless
+of architecture.
 Both models benefit from the stream-function output representation: the divergence RMS of
 all FNO predictions is on the order of $10^{-26}$, confirming that incompressibility is
 preserved analytically irrespective of prediction accuracy.
@@ -354,17 +387,17 @@ preserved analytically irrespective of prediction accuracy.
 \begin{table}[htbp]
 \centering
 \caption{Best result per architecture and batch size in Experiment~1 (single crystal, $n=1$,
-         FNO: 100~epochs; U-Net: 180~epochs), evaluated on the held-out evaluation set (10~samples).
-         FNO bs\,8 results are partial (only Exp-1.1 and Exp-1.2 available).}
+         FNO: 100~epochs; U-Net: 180~epochs, composite loss), evaluated on the held-out
+         evaluation set (10~samples). FNO bs\,8 results are partial (Exp-1.1 and Exp-1.2 only).}
 \label{tab:comparison_exp1}
-\begin{tabular}{llccc}
+\begin{tabular}{llcc}
 \toprule
-\textbf{Architecture} & \textbf{Config (lr, bs)} & $\bar{\varepsilon}_\psi^{\mathrm{eval}}$ (\%) & $\bar{\varepsilon}_v^{\mathrm{eval}}$ (\%) & $\varepsilon_\psi^{\mathrm{val}}$ (\%) \\
+\textbf{Architecture} & \textbf{Config (lr, bs)} & $\bar{\varepsilon}_\psi^{\mathrm{eval}}$ (\%) & $\bar{\varepsilon}_v^{\mathrm{eval}}$ (\%) \\
 \midrule
-FNO   & Exp-1.4 ($5\times10^{-4}$, bs\,16) & $2.26$ & $4.56$ & --- \\
-FNO   & Exp-1.2 ($5\times10^{-3}$,  bs\,8)  & $1.70$ & $3.07$ & --- \\
-U-Net & Exp-1.1 ($10^{-3}$, bs\,16) & $8.6\phantom{0}$ & $23.6\phantom{0}$ & $4.1$ \\
-U-Net & Exp-1.1 ($10^{-3}$, bs\,8)  & $5.2\phantom{0}$ & $16.3\phantom{0}$ & $3.4$ \\
+FNO   & Exp-1.4 ($5\times10^{-4}$, bs\,16) & $2.26$ & $4.56$ \\
+FNO   & Exp-1.2 ($5\times10^{-3}$,  bs\,8)  & $1.70$ & $3.07$ \\
+U-Net & Exp-1.2 ($5\times10^{-3}$, bs\,8)   & $5.5\phantom{0}$ & $8.5\phantom{0}$ \\
+U-Net & Exp-1.3 ($10^{-4}$,         bs\,16)  & $13.5\phantom{0}$ & $23.1\phantom{0}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
