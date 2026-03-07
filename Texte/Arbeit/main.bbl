@@ -19,6 +19,76 @@
 
 \refsection{0}
   \datalist[entry]{nyt/global//global/global/global}
+    \entry{ashwin_physics_2024}{article}{}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=c2b67f3cf7e2f9ed9a2f3da5a27d8289}{%
+           family={Ashwin},
+           familyi={A\bibinitperiod},
+           given={Neil\bibnamedelima Raj},
+           giveni={N\bibinitperiod\bibinitdelim R\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=825e13f46a2bf9ac381bbab175d848a7}{%
+           family={Tafti},
+           familyi={T\bibinitperiod},
+           given={Danesh},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=755b636b1cbe3a733cfaf76502299f88}{%
+           family={Muralidhar},
+           familyi={M\bibinitperiod},
+           given={Nikhil},
+           giveni={N\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=42b46183e1bfb7f7e83f5a38e1547485}{%
+           family={Cao},
+           familyi={C\bibinitperiod},
+           given={Ze},
+           giveni={Z\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{508329cf4e4c28bd7c82c8c05a937f5b}
+      \strng{fullhash}{335990836b4858d88983c9a6537b43a9}
+      \strng{fullhashraw}{335990836b4858d88983c9a6537b43a9}
+      \strng{bibnamehash}{508329cf4e4c28bd7c82c8c05a937f5b}
+      \strng{authorbibnamehash}{508329cf4e4c28bd7c82c8c05a937f5b}
+      \strng{authornamehash}{508329cf4e4c28bd7c82c8c05a937f5b}
+      \strng{authorfullhash}{335990836b4858d88983c9a6537b43a9}
+      \strng{authorfullhashraw}{335990836b4858d88983c9a6537b43a9}
+      \field{sortinit}{A}
+      \field{sortinithash}{2f401846e2029bad6b3ecc16d50031e2}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Solid-fluid multiphase systems are ubiquitous in many chemical, pharmaceutical, and energy based applications. These flows are challenging to study experimentally, thus several numerical simulation techniques have been developed. In this paper we use Particle Resolved Simulations (PRS) combined with Deep Learning (DL) to predict drag forces on each particle in suspensions of ellipsoidal particles for use in lower fidelity Euler-Lagrange and Euler-Euler simulations. Suspensions with solid fraction of 0.1, 0.2 and 0.3 are investigated at Reynolds numbers of 10, 50, 100 and 200. A UNet architecture is used to predict the velocity and pressure fields and a CNN is used to predict the drag forces. It is shown that drag force predictions using the predicted velocity and pressure fields give more accurate results than predictions that only use geometric information.}
+      \field{issn}{00325910}
+      \field{journaltitle}{Powder Technology}
+      \field{month}{4}
+      \field{title}{Physics informed deep learning for flow and force predictions in dense ellipsoidal particle suspensions}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{439}
+      \field{year}{2024}
+      \field{urldateera}{ce}
+      \field{pages}{119684}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.powtec.2024.119684
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\ACEWVESH\\Ashwin et al. - 2024 - Physics informed deep learning for flow and force predictions in dense ellipsoidal particle suspensi.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://linkinghub.elsevier.com/retrieve/pii/S0032591024003267
+      \endverb
+      \verb{url}
+      \verb https://linkinghub.elsevier.com/retrieve/pii/S0032591024003267
+      \endverb
+    \endentry
     \entry{chen_u-net_nodate}{article}{}{}
       \name{author}{3}{}{%
         {{un=0,uniquepart=base,hash=e5140c62f50f461658961b9ab6d71857}{%
@@ -731,6 +801,70 @@
       \endverb
       \verb{url}
       \verb https://linkinghub.elsevier.com/retrieve/pii/S0045782522001207
+      \endverb
+    \endentry
+    \entry{ma_fast_2022}{article}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=7bd559bfecc35575edcb8badc9a4c864}{%
+           family={Ma},
+           familyi={M\bibinitperiod},
+           given={Zhan},
+           giveni={Z\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=dd35c71893f4e046927cc77dd64630e6}{%
+           family={Ye},
+           familyi={Y\bibinitperiod},
+           given={Zisheng},
+           giveni={Z\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=408f9d091561b0e55ec8658b48bb6985}{%
+           family={Pan},
+           familyi={P\bibinitperiod},
+           given={Wenxiao},
+           giveni={W\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{5bb43a9a2cb73ba246dbacc85706b93a}
+      \strng{fullhash}{5b36ca27982cc76ae8efa6f488a5f005}
+      \strng{fullhashraw}{5b36ca27982cc76ae8efa6f488a5f005}
+      \strng{bibnamehash}{5b36ca27982cc76ae8efa6f488a5f005}
+      \strng{authorbibnamehash}{5b36ca27982cc76ae8efa6f488a5f005}
+      \strng{authornamehash}{5bb43a9a2cb73ba246dbacc85706b93a}
+      \strng{authorfullhash}{5b36ca27982cc76ae8efa6f488a5f005}
+      \strng{authorfullhashraw}{5b36ca27982cc76ae8efa6f488a5f005}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Predicting the dynamic behaviors of particles in suspension subject to hydrodynamic interaction (HI) and external drive can be critical for many applications. By harvesting advanced deep learning techniques, the present work introduces a new framework, hydrodynamic interaction graph neural network (HIGNN), for inferring and predicting the particles’ dynamics in Stokes suspensions. It overcomes the limitations of traditional approaches in computational efficiency, accuracy, and/or transferability. In particular, by uniting the data structure represented by a graph and the neural networks with learnable parameters, the HIGNN constructs surrogate modeling for the mobility tensor of particles which is the key to predicting the dynamics of particles subject to HI and external forces. To account for the many-body nature of HI, we generalize the state-of-the-art GNN by introducing higher-order connectivity into the graph and the corresponding convolutional operation. For training the HIGNN, we only need the data for a small number of particles in the domain of interest, and hence the training cost can be maintained low. Once constructed, the HIGNN permits fast predictions of the particles’ velocities and is transferable to suspensions of different numbers/concentrations of particles in the same domain and to any external forcing. It has the ability to accurately capture both the long-range HI and short-range lubrication effects. We demonstrate the accuracy, efficiency, and transferability of the proposed HIGNN framework in a variety of systems. The requirement on computing resource is minimum: most simulations only require a desktop with one GPU; the simulations for a large suspension of 100,000 particles call for up to 6 GPUs.}
+      \field{issn}{00457825}
+      \field{journaltitle}{Computer Methods in Applied Mechanics and Engineering}
+      \field{month}{10}
+      \field{title}{Fast simulation of particulate suspensions enabled by graph neural network}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{400}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \field{pages}{115496}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.cma.2022.115496
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\MIRK58WT\\Ma et al. - 2022 - Fast simulation of particulate suspensions enabled by graph neural network.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://linkinghub.elsevier.com/retrieve/pii/S0045782522005114
+      \endverb
+      \verb{url}
+      \verb https://linkinghub.elsevier.com/retrieve/pii/S0045782522005114
       \endverb
     \endentry
     \entry{martin_fluid-dynamical_1989}{article}{}{}
