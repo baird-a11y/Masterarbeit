@@ -34,9 +34,7 @@
 # /opt/julia/bin/julia generate_data.jl --n 10 --out data_eval --n_crystals_range 100:100 --seed 1
 # /opt/julia/bin/julia generate_data.jl --n 10 --out data_eval --n_crystals_range 60:100 --seed 1
 
-# =============================================
-# Experiment 2 und 3 
-# =============================================
+
 
 # =============================================
 # Training
@@ -51,8 +49,8 @@
 # /opt/julia/bin/julia run_training.jl --epochs 100 --batch 16 --train_dir /local/home/baselt/src/Ansatz/data_train/n01 --val_dir /local/home/baselt/src/Ansatz/data_val/n01 --lr 1e-4 --save_dir checkpoints_exp1_16_3 --history_csv history_exp1_16_3.csv
 # /opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_3/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_16_3 --history_csv history_exp1_16_3.csv
 
-/opt/julia/bin/julia run_training.jl --epochs 100 --batch 16 --modes 32 --train_dir /local/home/baselt/src/Ansatz/data_train/n01 --val_dir /local/home/baselt/src/Ansatz/data_val/n01 --lr 5e-4 --save_dir checkpoints_exp1_16_5 --history_csv history_exp1_16_5.csv
-/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_5/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_16_5 --history_csv history_exp1_16_5.csv
+# /opt/julia/bin/julia run_training.jl --epochs 100 --batch 16 --modes 32 --train_dir /local/home/baselt/src/Ansatz/data_train/n01 --val_dir /local/home/baselt/src/Ansatz/data_val/n01 --lr 5e-4 --save_dir checkpoints_exp1_16_5 --history_csv history_exp1_16_5.csv
+# /opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_5/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_16_5 --history_csv history_exp1_16_5.csv
 
 
 # /opt/julia/bin/julia run_training.jl --epochs 100 --batch 8 --train_dir /local/home/baselt/src/Ansatz/data_train/n01 --val_dir /local/home/baselt/src/Ansatz/data_val/n01 --lr 1e-3 --save_dir checkpoints_exp1_8_1 --history_csv history_exp1_8_1.csv
@@ -70,7 +68,8 @@
 # =============================================
 # Experiment 2 und 3 
 # =============================================
-
+# FNO bs=16 → lr=5×10⁻⁴ (bestes bs=16 Eval, Exp-1.4)
+# FNO bs=8 → lr=5×10⁻³ (bestes Gesamt-Eval, Exp-1.2)
 # =============================================
 # Training
 # =============================================

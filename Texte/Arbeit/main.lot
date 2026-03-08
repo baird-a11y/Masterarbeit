@@ -1,0 +1,30 @@
+\babel@toc {english}{}\relax 
+\babel@toc {ngerman}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {english}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {3.1}{\ignorespaces Structural comparison of U-Net and FNO architectures.}}{18}{table.caption.5}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {6.1}{\ignorespaces Hyperparameter comparison of U-Net and FNO training configurations.}}{38}{table.caption.24}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {7.1}{\ignorespaces FNO evaluation metrics for Experiment~1 (single crystal, $n=1$, 10~samples) for batch sizes 16 (upper block) and 8 (lower block). $\bar {\varepsilon }_\psi $: mean relative $L_2$ error on $\psi $; $\bar {\varepsilon }_v$: mean relative $L_2$ error on derived velocity; $\bar {e}_{\max }$: mean maximum absolute error on $\psi $; $\overline {\text {MSE}}_\psi $: mean squared error on $\psi $. Standard deviations over the 10 samples in parentheses. Entries marked \textit {(pending)} are not yet available.}}{40}{table.caption.26}%
+\contentsline {table}{\numberline {7.2}{\ignorespaces U-Net metrics for Experiment~1 (single crystal, $n=1$, 180~epochs, composite loss). $\bar {\varepsilon }_\psi ^{\mathrm {eval}}$: mean relative $L_2$ error on $\psi $, held-out evaluation set (10~samples, best checkpoint); $\bar {\varepsilon }_v^{\mathrm {eval}}$: mean relative $L_2$ error on derived velocity; $\varepsilon _\psi ^{\mathrm {val}}$: best validation relative $L_2$ error on $\psi $ over all 180~epochs.}}{42}{table.caption.28}%
+\contentsline {table}{\numberline {7.3}{\ignorespaces Best result per architecture and batch size in Experiment~1 (single crystal, $n=1$, FNO: 100~epochs; U-Net: 180~epochs, composite loss), evaluated on the held-out evaluation set (10~samples).}}{44}{table.caption.30}%
+\contentsline {table}{\numberline {7.4}{\ignorespaces U-Net evaluation metrics for Experiment~2 (trained on $n \in \{1,\ldots ,10\}$, 10~samples per stratum). OOD counts marked with~$\dagger $.}}{46}{table.caption.31}%
+\contentsline {table}{\numberline {7.5}{\ignorespaces FNO evaluation metrics for Experiment~2 (trained on $n \in \{1,\ldots ,10\}$, 10~samples per stratum). OOD counts marked with~$\dagger $.}}{48}{table.caption.33}%
+\contentsline {table}{\numberline {7.6}{\ignorespaces FNO vs.\ U-Net comparison for Experiment~2 (trained on $n \in \{1,\ldots ,10\}$). In-distribution: mean over $n = 1$–$10$; OOD: at $n = 25$.}}{49}{table.caption.35}%
+\contentsline {table}{\numberline {7.7}{\ignorespaces U-Net evaluation metrics for Experiment~3 (trained on $n \in \{1,\ldots ,25\}$). OOD counts ($n > 25$) marked with~$\dagger $; $N$ denotes actual sample count.}}{50}{table.caption.36}%
+\contentsline {table}{\numberline {7.8}{\ignorespaces FNO evaluation metrics for Experiment~3 (trained on $n \in \{1,\ldots ,25\}$). OOD counts ($n > 25$) marked with~$\dagger $; $N$ denotes actual sample count.}}{52}{table.caption.38}%
+\contentsline {table}{\numberline {7.9}{\ignorespaces FNO vs.\ U-Net comparison for Experiment~3 (trained on $n \in \{1,\ldots ,25\}$). In-distribution: mean over $n = 1, 5, 10, 20, 25$; OOD: at $n = 50$.}}{52}{table.caption.39}%
+\addvspace {10\p@ }
+\def \@chapapp {\appendixname }
+\addvspace {10\p@ }
+\providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 
