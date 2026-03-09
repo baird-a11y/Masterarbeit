@@ -241,6 +241,25 @@ U-Net & Exp-1.3 ($10^{-4}$,         bs\,16)  & $13.5\phantom{0}$ & $23.1\phantom
 \end{tabular}
 \end{table}
 
+% ----------------------------------------------------------------------------
+\subsection{Spatial Error Analysis: Crystal Position vs.\ Prediction Error}
+\label{ssec:results:exp1:spatial}
+% ----------------------------------------------------------------------------
+
+To examine whether the prediction accuracy depends on the location of the crystal within the computational domain, Figure~\ref{fig:error_vs_distance_exp1} plots the relative $L_2$ error on~$\psi$ against the Euclidean distance of the crystal centre from the domain centre. Each scatter point corresponds to one held-out evaluation sample. Dashed lines show linear regression fits for each architecture. The figure shows the best-performing configurations for batch size~16: Exp-1.4 ($5\times10^{-4}$) for the FNO and Exp-1.1 ($10^{-3}$) for the U-Net.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/error_vs_center_distance_exp1_bs16.pdf}
+    \caption{Relative $L_2$ error on $\psi$ as a function of the crystal centre's distance
+             from the domain centre for the ten held-out evaluation samples ($n = 1$).
+             FNO~Exp-1.4 (circles, blue) and U-Net~Exp-1.1 (diamonds, orange) at batch
+             size~16. Dashed lines show linear regression fits.}
+    \label{fig:error_vs_distance_exp1}
+\end{figure}
+
+The FNO errors ($1.2$–$2.6\%$) show no systematic positional bias; the regression slope is nearly flat, indicating that the spectral architecture generalizes uniformly across the domain for the single-crystal case. The U-Net errors are substantially higher ($7.5$–$23\%$) with a mildly positive regression slope, suggesting a weak tendency for larger errors when the crystal is located further from the centre. However, with only ten evaluation samples the statistical significance of this trend is limited, and the dominant factor is the overall higher error level of the U-Net rather than a systematic positional effect.
+
 % ============================================================================
 \section{Experiment~2: Multi-Crystal Generalization}
 \label{sec:results:exp2}

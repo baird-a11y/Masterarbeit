@@ -13,7 +13,7 @@
 # Ausgabe: Bilder_Arbeit/error_vs_center_distance_exp1_bs*.pdf/.png
 # ============================================================
 
-using CSV, DataFrames, JLD2, Statistics, CairoMakie
+using CSV, DataFrames, JLD2, Statistics, LinearAlgebra, Printf, CairoMakie
 using Base.Filesystem: mkpath
 
 const SCRIPT_DIR = @__DIR__
@@ -33,58 +33,82 @@ const LR_LABEL = Dict(
 # ─── Pfad-Hilfsfunktionen ────────────────────────────────────────────────────
 function unet_exp1_sample_csv(bs::Int, cfg::Int)
     suffix = cfg == 1 ? "" : "_$cfg"
-    eval_base = (bs == 16 && cfg == 4) ? "One_Crystall" : "One_Crystal"
-    joinpath(RES, "UNET_Ergebnisse", eval_base, "exp1_$(bs)$suffix",
+    joinpath(RES, "UNET_Ergebnisse", "One_Crystal", "exp1_$(bs)$suffix",
              "eval_psi_indist_samples.csv")
 end
 
-fno_exp1_sample_csv(bs::Int, cfg::Int) =
-    joinpath(RES, "FNO_Ergebnisse", "One_Crystal",
-             "eval_output_exp1_$(bs)_$(cfg)", "eval_results.csv")
+fno_exp1_dir(bs::Int, cfg::Int) =
+    joinpath(RES, "FNO_Ergebnisse", "One_Crystal", "eval_output_exp1_$(bs)_$(cfg)")
 
 # ─── Ergebnisse laden + Kristallpositionen aus JLD2 ergänzen ─────────────────
+
 """
-Lädt ein eval-CSV (FNO oder U-Net) und ergänzt die Kristallposition
-(Abstand vom Domänenmittelpunkt) aus den verlinkten JLD2-Dateien.
-
-Gibt einen Vector{NamedTuple} mit Feldern:
-  sample_idx, rel_l2_psi, cx, cz, dist_center
-zurück. Samples deren JLD2-Datei nicht gefunden wird, werden übersprungen.
+FNO: Lädt alle pred_*.jld2 aus dem predictions/-Unterordner.
+Jede Datei enthält metrics (psi_rel_l2) + sample_meta mit Kristallpositionen.
+Funktioniert lokal ohne Zugriff auf die originalen Datendateien.
 """
-function load_results_with_positions(csv_path::String)
-    isfile(csv_path) || (println("  Nicht gefunden: $csv_path"); return NamedTuple[])
-
-    df = CSV.read(csv_path, DataFrame)
-
-    # Spaltenname ist zwischen FNO und U-Net verschieden
-    err_col = hasproperty(df, :psi_rel_l2) ? :psi_rel_l2 : :rel_l2_psi
+function load_fno_predictions(eval_dir::String)
+    pred_dir = joinpath(eval_dir, "predictions")
+    isdir(pred_dir) || (println("  Kein predictions/-Ordner: $pred_dir"); return NamedTuple[])
 
     rows = NamedTuple[]
-    for row in eachrow(df)
-        fp = String(row.filepath)
-        isfile(fp) || continue
+    for f in sort(readdir(pred_dir))
+        endswith(f, ".jld2") || continue
+        d    = JLD2.load(joinpath(pred_dir, f))
+        meta = d["sample_meta"].meta
+        m    = d["metrics"]
 
-        d    = JLD2.load(fp)
-        meta = d["meta"]
+        x_ctr = (meta.x_vec_1D[1] + meta.x_vec_1D[end]) / 2
+        z_ctr = (meta.z_vec_1D[1] + meta.z_vec_1D[end]) / 2
 
-        centers_2D = haskey(meta, :centers_2D) ? meta[:centers_2D] : meta.centers_2D
-        xcoords    = haskey(meta, :x_vec_1D)   ? meta[:x_vec_1D]   : Float64[]
-        zcoords    = haskey(meta, :z_vec_1D)   ? meta[:z_vec_1D]   : Float64[]
-
-        x_ctr = isempty(xcoords) ? 0.0 : (xcoords[1] + xcoords[end]) / 2
-        z_ctr = isempty(zcoords) ? 0.0 : (zcoords[1] + zcoords[end]) / 2
-
-        for c in centers_2D
+        for c in meta.centers_2D
             cx, cz = c
-            dist = sqrt((cx - x_ctr)^2 + (cz - z_ctr)^2)
             push!(rows, (;
-                sample_idx  = Int(row.sample_idx),
-                rel_l2_psi  = Float64(row[err_col]),
+                rel_l2_psi  = Float64(m.psi_rel_l2),
                 cx, cz,
-                dist_center = dist,
+                dist_center = sqrt((cx - x_ctr)^2 + (cz - z_ctr)^2),
             ))
         end
     end
+    println("  FNO: $(length(rows)) Samples aus $pred_dir geladen.")
+    return rows
+end
+
+"""
+U-Net: Kombiniert Fehler aus eval-CSV mit Kristallpositionen aus den lokal
+vorhandenen FNO-Prediction-JLD2s (gleiche Eval-Samples, gleiche Reihenfolge).
+fno_pred_dir: Pfad zum predictions/-Ordner eines FNO-Experiments mit gleichen Samples.
+"""
+function load_unet_predictions(csv_path::String, fno_pred_dir::String)
+    isfile(csv_path) || (println("  Nicht gefunden: $csv_path"); return NamedTuple[])
+    isdir(fno_pred_dir) || (println("  Kein FNO-predictions/-Ordner: $fno_pred_dir"); return NamedTuple[])
+
+    df        = CSV.read(csv_path, DataFrame)
+    pred_files = sort(filter(f -> endswith(f, ".jld2"), readdir(fno_pred_dir)))
+    rows      = NamedTuple[]
+
+    for row in eachrow(df)
+        idx = Int(row.sample_idx)
+        fname = @sprintf("pred_%06d.jld2", idx)
+        fp = joinpath(fno_pred_dir, fname)
+        isfile(fp) || continue
+
+        d    = JLD2.load(fp)
+        meta = d["sample_meta"].meta
+
+        x_ctr = (meta.x_vec_1D[1] + meta.x_vec_1D[end]) / 2
+        z_ctr = (meta.z_vec_1D[1] + meta.z_vec_1D[end]) / 2
+
+        for c in meta.centers_2D
+            cx, cz = c
+            push!(rows, (;
+                rel_l2_psi  = Float64(row.rel_l2_psi),
+                cx, cz,
+                dist_center = sqrt((cx - x_ctr)^2 + (cz - z_ctr)^2),
+            ))
+        end
+    end
+    println("  U-Net: $(length(rows)) Samples aus $csv_path geladen.")
     return rows
 end
 
@@ -107,19 +131,25 @@ function plot_error_vs_distance(fno_entries, unet_entries;
         title  = title,
     )
 
+    any_plotted = false
     for (entries, col, marker, lbl) in [
         (fno_entries,  C[1], :circle,  "FNO"),
         (unet_entries, C[2], :diamond, "U-Net"),
     ]
         isempty(entries) && continue
+        any_plotted = true
         d   = [r.dist_center for r in entries]
         err = [r.rel_l2_psi  for r in entries]
         scatter!(ax, d, err; color=col, marker=marker, markersize=7, label=lbl)
-        ord = sortperm(d)
-        lines!(ax, d[ord], err[ord]; color=col, linewidth=1.5, alpha=0.35)
+        # Regressionsgerade
+        A = hcat(ones(length(d)), d)
+        coef = A \ err
+        x_reg = range(minimum(d), maximum(d); length=100)
+        lines!(ax, collect(x_reg), coef[1] .+ coef[2] .* collect(x_reg);
+               color=col, linewidth=2, linestyle=:dash, label="$lbl (Regression)")
     end
 
-    axislegend(ax; position=:rt, framevisible=true)
+    any_plotted && axislegend(ax; position=:rt, framevisible=true)
 
     base = splitext(outfile)[1]
     save(outfile, fig)
@@ -146,23 +176,29 @@ function plot_error_vs_distance_all_configs(bs::Int)
             title  = "$(LR_LABEL[cfg]), bs = $bs",
         )
 
-        fno_csv  = fno_exp1_sample_csv(bs, cfg)
-        unet_csv = unet_exp1_sample_csv(bs, cfg)
+        fno_entries  = load_fno_predictions(fno_exp1_dir(bs, cfg))
+        unet_entries = load_unet_predictions(unet_exp1_sample_csv(bs, cfg),
+                           joinpath(fno_exp1_dir(bs, cfg), "predictions"))
 
-        for (csv, col, marker, lbl) in [
-            (fno_csv,  C[1], :circle,  "FNO"),
-            (unet_csv, C[2], :diamond, "U-Net"),
+        any_plotted = false
+        for (entries, col, marker, lbl) in [
+            (fno_entries,  C[1], :circle,  "FNO"),
+            (unet_entries, C[2], :diamond, "U-Net"),
         ]
-            entries = load_results_with_positions(csv)
             isempty(entries) && continue
+            any_plotted = true
             d   = [r.dist_center for r in entries]
             err = [r.rel_l2_psi  for r in entries]
             scatter!(ax, d, err; color=col, marker=marker, markersize=6, label=lbl)
-            ord = sortperm(d)
-            lines!(ax, d[ord], err[ord]; color=col, linewidth=1.5, alpha=0.35)
+            # Regressionsgerade
+            A = hcat(ones(length(d)), d)
+            coef = A \ err
+            x_reg = range(minimum(d), maximum(d); length=100)
+            lines!(ax, collect(x_reg), coef[1] .+ coef[2] .* collect(x_reg);
+                   color=col, linewidth=2, linestyle=:dash, label="$lbl (Regression)")
         end
 
-        axislegend(ax; position=:rt, framevisible=true)
+        any_plotted && axislegend(ax; position=:rt, framevisible=true)
     end
 
     fname = "error_vs_center_distance_exp1_bs$(bs)_allconfigs"
@@ -181,16 +217,18 @@ println("Ausgabe: $OUT")
 println("=" ^ 60)
 
 # ── 1) Beste Einzelkonfigs: bs=16 (FNO: cfg=4 / U-Net: cfg=1) ──
-fno_best_16  = load_results_with_positions(fno_exp1_sample_csv(16, 4))
-unet_best_16 = load_results_with_positions(unet_exp1_sample_csv(16, 1))
+fno_best_16  = load_fno_predictions(fno_exp1_dir(16, 4))
+unet_best_16 = load_unet_predictions(unet_exp1_sample_csv(16, 1),
+                   joinpath(fno_exp1_dir(16, 1), "predictions"))
 
 plot_error_vs_distance(fno_best_16, unet_best_16;
     title   = "Fehler vs. Kristallposition – Exp. 1, bs = 16 (beste Konfigs)",
     outfile = joinpath(OUT, "error_vs_center_distance_exp1_bs16.pdf"))
 
 # ── 2) Beste Einzelkonfigs: bs=8 (FNO: cfg=2 / U-Net: cfg=1) ──
-fno_best_8  = load_results_with_positions(fno_exp1_sample_csv(8, 2))
-unet_best_8 = load_results_with_positions(unet_exp1_sample_csv(8, 1))
+fno_best_8  = load_fno_predictions(fno_exp1_dir(8, 2))
+unet_best_8 = load_unet_predictions(unet_exp1_sample_csv(8, 1),
+                  joinpath(fno_exp1_dir(8, 1), "predictions"))
 
 plot_error_vs_distance(fno_best_8, unet_best_8;
     title   = "Fehler vs. Kristallposition – Exp. 1, bs = 8 (beste Konfigs)",

@@ -29,10 +29,8 @@ safe_csv(p) = isfile(p) ? CSV.read(p, DataFrame) : nothing
 function unet_exp1_dirs(bs::Int, cfg::Int)
     suffix = cfg == 1 ? "" : "_$cfg"
     if bs == 16
-        hist_base = "One_Crystal"
-        eval_base = cfg == 4 ? "One_Crystall" : "One_Crystal"
-        hist_dir  = joinpath(RES, "UNET_Ergebnisse", hist_base, "exp1_16$suffix")
-        eval_dir  = joinpath(RES, "UNET_Ergebnisse", eval_base, "exp1_16$suffix")
+        hist_dir = joinpath(RES, "UNET_Ergebnisse", "One_Crystal", "exp1_16$suffix")
+        eval_dir = hist_dir
     else  # bs = 8
         hist_dir = joinpath(RES, "UNET_Ergebnisse", "One_Crystal", "exp1_8$suffix")
         eval_dir = hist_dir
