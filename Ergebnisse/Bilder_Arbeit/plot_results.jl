@@ -44,6 +44,10 @@ end
 fno_exp1_dir(bs::Int, cfg::Int) =
     joinpath(RES, "FNO_Ergebnisse", "One_Crystal", "eval_output_exp1_$(bs)_$(cfg)")
 
+"""Gibt den Pfad für FNO Exp-2 / Exp-3 zurück."""
+fno_exp23_dir(exp::Int, bs::Int) =
+    joinpath(RES, "FNO_Ergebnisse", "Experiment_$exp", "eval_output_exp$(exp)_$(bs)")
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Fig 1 & 2: Trainingskurven (FNO und U-Net)
@@ -154,51 +158,52 @@ end
 # Fig 4: FNO Exp-2 & Exp-3 – Generalisierung über Kristallanzahl
 # ═══════════════════════════════════════════════════════════════════════════════
 function plot_exp23_scaling()
-    df2 = safe_csv(joinpath(RES, "FNO_Ergebnisse", "Experiment_2",
-                             "eval_output_exp2", "eval_aggregated.csv"))
-    df3 = safe_csv(joinpath(RES, "FNO_Ergebnisse", "Experiment_3",
-                             "eval_output_exp3", "eval_aggregated.csv"))
-
     fig = Figure(size=(1150, 470), fontsize=14)
 
-    for (col, (df, title, max_train)) in enumerate([
-        (df2, "FNO – Exp. 2 (Training: n = 1–10)",  10),
-        (df3, "FNO – Exp. 3 (Training: n = 1–25)",  25),
+    for (col, (exp_nr, title, max_train)) in enumerate([
+        (2, "FNO – Exp. 2 (Training: n = 1–10)", 10),
+        (3, "FNO – Exp. 3 (Training: n = 1–25)", 25),
     ])
-        df === nothing && (println("  Warnung: Daten für $(title) nicht gefunden."); continue)
-
         ax = Axis(fig[1, col],
             xlabel = "Anzahl Kristalle n",
             ylabel = col == 1 ? "Relativer L²-Fehler" : "",
             title  = title,
         )
 
-        id  = df.n_crystals .<= max_train
-        ood = .!id
+        any_data = false
+        for (bs_idx, (bs, lstyle)) in enumerate([(16, :solid), (8, :dash)])
+            df = safe_csv(joinpath(fno_exp23_dir(exp_nr, bs), "eval_aggregated.csv"))
+            df === nothing && continue
+            any_data = true
 
-        # In-distribution
-        scatter!(ax, df.n_crystals[id], df.psi_rel_l2_mean[id];
-                 color=C[1], markersize=8)
-        lines!(ax, df.n_crystals[id], df.psi_rel_l2_mean[id];
-               color=C[1], linewidth=2, label="ψ (in-dist)")
-        scatter!(ax, df.n_crystals[id], df.v_rel_l2_mean[id];
-                 color=C[2], markersize=8)
-        lines!(ax, df.n_crystals[id], df.v_rel_l2_mean[id];
-               color=C[2], linewidth=2, label="v (in-dist)")
+            id  = df.n_crystals .<= max_train
+            ood = .!id
+            bs_lbl = "bs=$bs"
 
-        # Out-of-distribution
-        if any(ood)
-            scatter!(ax, df.n_crystals[ood], df.psi_rel_l2_mean[ood];
-                     color=C[1], marker=:diamond, markersize=9)
-            lines!(ax, df.n_crystals[ood], df.psi_rel_l2_mean[ood];
-                   color=C[1], linewidth=2, linestyle=:dash, label="ψ (OOD)")
-            scatter!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
-                     color=C[2], marker=:diamond, markersize=9)
-            lines!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
-                   color=C[2], linewidth=2, linestyle=:dash, label="v (OOD)")
-            vlines!(ax, [max_train + 0.5]; color=:gray60, linestyle=:dot, linewidth=1.5)
+            scatter!(ax, df.n_crystals[id], df.psi_rel_l2_mean[id];
+                     color=C[1], markersize=8)
+            lines!(ax, df.n_crystals[id], df.psi_rel_l2_mean[id];
+                   color=C[1], linewidth=2, linestyle=lstyle, label="ψ ($bs_lbl, in-dist)")
+            scatter!(ax, df.n_crystals[id], df.v_rel_l2_mean[id];
+                     color=C[2], markersize=8)
+            lines!(ax, df.n_crystals[id], df.v_rel_l2_mean[id];
+                   color=C[2], linewidth=2, linestyle=lstyle, label="v ($bs_lbl, in-dist)")
+
+            if any(ood)
+                scatter!(ax, df.n_crystals[ood], df.psi_rel_l2_mean[ood];
+                         color=C[1], marker=:diamond, markersize=9)
+                lines!(ax, df.n_crystals[ood], df.psi_rel_l2_mean[ood];
+                       color=C[1], linewidth=2, linestyle=lstyle, label="ψ ($bs_lbl, OOD)")
+                scatter!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
+                         color=C[2], marker=:diamond, markersize=9)
+                lines!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
+                       color=C[2], linewidth=2, linestyle=lstyle, label="v ($bs_lbl, OOD)")
+                bs_idx == 1 && vlines!(ax, [max_train + 0.5];
+                                       color=:gray60, linestyle=:dot, linewidth=1.5)
+            end
         end
 
+        any_data || println("  Warnung: keine Daten für Exp. $exp_nr gefunden.")
         axislegend(ax, position=:lt, framevisible=true)
     end
 
@@ -259,17 +264,10 @@ end
 # Fig 6 & 7: FNO Exp-2 & Exp-3 – Trainingskurven
 # ═══════════════════════════════════════════════════════════════════════════════
 function plot_fno_exp23_training()
-    paths = [
-        (joinpath(RES, "FNO_Ergebnisse", "Experiment_2", "eval_output_exp2", "history_exp2.csv"),
-         "FNO – Experiment 2 (n = 1–10)", 6),
-        (joinpath(RES, "FNO_Ergebnisse", "Experiment_3", "eval_output_exp3", "history_exp3.csv"),
-         "FNO – Experiment 3 (n = 1–25)", 7),
+    for (exp_nr, fig_nr, exp_str, title) in [
+        (2, 6, "exp2", "FNO – Experiment 2 (n = 1–10)"),
+        (3, 7, "exp3", "FNO – Experiment 3 (n = 1–25)"),
     ]
-
-    for (p, title, fig_nr) in paths
-        df = safe_csv(p)
-        df === nothing && (println("  Warnung: $p nicht gefunden."); continue)
-
         fig = Figure(size=(700, 430), fontsize=14)
         ax  = Axis(fig[1, 1],
             xlabel = "Epoche",
@@ -277,13 +275,21 @@ function plot_fno_exp23_training()
             title  = title,
             yscale = log10,
         )
-        lines!(ax, df.epoch, df.val_rel_l2; color=C[1], linewidth=2, label="val rel. L²")
-        lines!(ax, df.epoch, df.train_mse ./ maximum(df.train_mse);
-               color=C[2], linewidth=1.5, linestyle=:dash, label="train MSE (norm.)")
+
+        any_data = false
+        for (bs, col_idx, lstyle) in [(16, 1, :solid), (8, 2, :dash)]
+            csv_name = "history_$(exp_str)_$(bs).csv"
+            p  = joinpath(fno_exp23_dir(exp_nr, bs), csv_name)
+            df = safe_csv(p)
+            df === nothing && (println("  Warnung: $p nicht gefunden."); continue)
+            any_data = true
+            lines!(ax, df.epoch, df.val_rel_l2;
+                   color=C[col_idx], linewidth=2, linestyle=lstyle, label="val rel. L² (bs=$bs)")
+        end
+        any_data || println("  Warnung: keine History für Exp. $exp_nr gefunden.")
         axislegend(ax, position=:rt, framevisible=true)
 
-        exp_str = fig_nr == 6 ? "exp2" : "exp3"
-        fname   = "fig$(fig_nr)_fno_$(exp_str)_training"
+        fname = "fig$(fig_nr)_fno_$(exp_str)_training"
         save(joinpath(OUT, fname * ".pdf"), fig)
         save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
         println("  Gespeichert: $fname")

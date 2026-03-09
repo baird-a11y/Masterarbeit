@@ -1,334 +1,206 @@
 #!/usr/bin/env julia
 
-# Skript zur Analyse:
-# Zusammenhang zwischen Fehler in ψ und Position der Kristalle.
-# - Beliebig viele Kristalle pro Sample
-# - Abstand der Kristallzentren zum Domänenmittelpunkt
-# - Abstände zu den vier Ecken der Domäne
+# ============================================================
+# error_vs_center_distance.jl
 #
-# CSV + Plots werden im Ordner "Auswertung" gespeichert (unterhalb von data_dir).
+# Analysiert den Zusammenhang zwischen rel. L²-Fehler (ψ) und
+# Kristallposition (Abstand vom Domänenmittelpunkt) für
+# Experiment 1 (n = 1, Ein-Kristall).
+#
+# Nutzt vorberechnete eval_results.csv + JLD2-Metadaten –
+# kein Modell laden notwendig.
+#
+# Ausgabe: Bilder_Arbeit/error_vs_center_distance_exp1_bs*.pdf/.png
+# ============================================================
 
-using JLD2
-using BSON
-using Statistics
-using Printf
-using CairoMakie
-using Functors: fmap
+using CSV, DataFrames, JLD2, Statistics, CairoMakie
 using Base.Filesystem: mkpath
 
-# Eigene Module einbinden (wie in main.jl)
-include("dataset_psi.jl")
-include("unet_psi.jl")
+const SCRIPT_DIR = @__DIR__
+const RES = dirname(SCRIPT_DIR)   # Ergebnisse/
+const OUT = SCRIPT_DIR             # Ergebnisse/Bilder_Arbeit/
 
-using .DatasetPsi: load_dataset, get_sample
-using .UNetPsi: build_unet
+const C = Makie.wong_colors()
 
-# ------------------------------------------------------------
-# Optional: CUDA-Support (an EvaluatePsi angelehnt)
-# ------------------------------------------------------------
-const _HAS_CUDA = try
-    @eval import CUDA
-    true
-catch
-    false
+# ─── LR-Mapping (lt. Memory/Experiment-Struktur) ─────────────────────────────
+const LR_LABEL = Dict(
+    1 => "lr = 1×10⁻³",
+    2 => "lr = 5×10⁻³",
+    3 => "lr = 1×10⁻⁴",
+    4 => "lr = 5×10⁻⁴",
+)
+
+# ─── Pfad-Hilfsfunktionen ────────────────────────────────────────────────────
+function unet_exp1_sample_csv(bs::Int, cfg::Int)
+    suffix = cfg == 1 ? "" : "_$cfg"
+    eval_base = (bs == 16 && cfg == 4) ? "One_Crystall" : "One_Crystal"
+    joinpath(RES, "UNET_Ergebnisse", eval_base, "exp1_$(bs)$suffix",
+             "eval_psi_indist_samples.csv")
 end
 
-function has_gpu()
-    if !_HAS_CUDA
-        return false
-    end
-    try
-        return CUDA.has_cuda()
-    catch
-        return false
-    end
-end
+fno_exp1_sample_csv(bs::Int, cfg::Int) =
+    joinpath(RES, "FNO_Ergebnisse", "One_Crystal",
+             "eval_output_exp1_$(bs)_$(cfg)", "eval_results.csv")
 
-function _to_gpu(x)
-    if !_HAS_CUDA
-        return x
-    end
-    try
-        if isdefined(CUDA, :cuda)
-            return CUDA.cuda(x)
-        elseif isdefined(CUDA, :cu)
-            return CUDA.cu(x)
-        else
-            return x
-        end
-    catch
-        return x
-    end
-end
+# ─── Ergebnisse laden + Kristallpositionen aus JLD2 ergänzen ─────────────────
+"""
+Lädt ein eval-CSV (FNO oder U-Net) und ergänzt die Kristallposition
+(Abstand vom Domänenmittelpunkt) aus den verlinkten JLD2-Dateien.
 
-_to_cpu(x) = cpu(x)
+Gibt einen Vector{NamedTuple} mit Feldern:
+  sample_idx, rel_l2_psi, cx, cz, dist_center
+zurück. Samples deren JLD2-Datei nicht gefunden wird, werden übersprungen.
+"""
+function load_results_with_positions(csv_path::String)
+    isfile(csv_path) || (println("  Nicht gefunden: $csv_path"); return NamedTuple[])
 
-function _select_mover(use_gpu::Union{Nothing,Bool})
-    if use_gpu === false
-        return _to_cpu, :cpu
-    elseif use_gpu === true
-        if has_gpu()
-            return _to_gpu, :gpu
-        else
-            @warn "GPU angefordert, aber CUDA nicht verfügbar – nutze CPU."
-            return _to_cpu, :cpu
-        end
-    else
-        if has_gpu()
-            return _to_gpu, :gpu
-        else
-            return _to_cpu, :cpu
-        end
-    end
-end
+    df = CSV.read(csv_path, DataFrame)
 
-# ------------------------------------------------------------
-# Hauptfunktion: Fehler vs. Abstände (pro Kristall)
-# ------------------------------------------------------------
-function compute_error_vs_center_distance(; 
-        data_dir::String,
-        model_path::String,
-        out_dir::String = joinpath(data_dir, "Auswertung"),
-        out_csv_name::String = "error_vs_center_distance.csv",
-        denorm_psi::Bool = true,
-        use_gpu::Union{Nothing,Bool} = nothing)
+    # Spaltenname ist zwischen FNO und U-Net verschieden
+    err_col = hasproperty(df, :psi_rel_l2) ? :psi_rel_l2 : :rel_l2_psi
 
-    # Auswertung-Ordner anlegen
-    mkpath(out_dir)
-    out_csv = joinpath(out_dir, out_csv_name)
+    rows = NamedTuple[]
+    for row in eachrow(df)
+        fp = String(row.filepath)
+        isfile(fp) || continue
 
-    move, devsym = _select_mover(use_gpu)
-    @info "Gerät für Vorhersage: $(devsym == :gpu ? "GPU (CUDA)" : "CPU")"
-    @info "Auswertung wird geschrieben nach: $out_dir"
+        d    = JLD2.load(fp)
+        meta = d["meta"]
 
-    if devsym == :gpu && _HAS_CUDA
-        try
-            CUDA.allowscalar(false)
-        catch
-        end
-    end
-
-    # Modell laden und ggf. auf GPU verschieben
-    @info "Lade Modell aus $model_path"
-    model_bson = BSON.load(model_path)
-    model_cpu  = model_bson[:model]
-    model      = fmap(move, model_cpu)
-
-    # Datensatz laden
-    ds = load_dataset(data_dir)
-    n_samples = length(ds.files)
-    @info "Dataset mit $n_samples Samples geladen aus $data_dir"
-
-    results = NamedTuple[]
-
-    for (i, filepath) in enumerate(ds.files)
-        # Input/Target laden
-        x, y_true = get_sample(ds, i)
-        nx, nz, ch = size(x)
-
-        # Batch-Dimension hinzufügen
-        x_batch = reshape(x, nx, nz, ch, 1)
-        x_dev   = move(x_batch)
-
-        # Vorhersage im (normalisierten) Raum
-        y_pred_batch_dev = model(x_dev)
-        y_pred_norm = dropdims(Array(y_pred_batch_dev)[:, :, :, 1], dims=3)
-        y_true_norm = dropdims(Array(y_true), dims=3)
-
-        # Metadaten & Skala laden
-        filedata = JLD2.load(filepath)
-        meta  = filedata["meta"]
-        scale = get(filedata, "scale", 1.0)
-
-        # Anzahl Kristalle & Zentren
-        n_crystals = haskey(meta, :n_crystals) ? meta[:n_crystals] : meta.n_crystals
         centers_2D = haskey(meta, :centers_2D) ? meta[:centers_2D] : meta.centers_2D
+        xcoords    = haskey(meta, :x_vec_1D)   ? meta[:x_vec_1D]   : Float64[]
+        zcoords    = haskey(meta, :z_vec_1D)   ? meta[:z_vec_1D]   : Float64[]
 
-        # Physikalische Koordinaten (km)
-        xcoords = haskey(meta, :x_vec_1D) ? meta[:x_vec_1D] : collect(1:nx)
-        zcoords = haskey(meta, :z_vec_1D) ? meta[:z_vec_1D] : collect(1:nz)
+        x_ctr = isempty(xcoords) ? 0.0 : (xcoords[1] + xcoords[end]) / 2
+        z_ctr = isempty(zcoords) ? 0.0 : (zcoords[1] + zcoords[end]) / 2
 
-        # Domänenmittelpunkt
-        x_center = (xcoords[1] + xcoords[end]) / 2
-        z_center = (zcoords[1] + zcoords[end]) / 2
-
-        # Ecken der Domäne
-        x1, xN = xcoords[1], xcoords[end]
-        z1, zN = zcoords[1], zcoords[end]
-
-        # ψ-Raum wählen (normalisiert vs. physikalisch)
-        if denorm_psi
-            y_true_eval = y_true_norm ./ scale
-            y_pred_eval = y_pred_norm ./ scale
-        else
-            y_true_eval = y_true_norm
-            y_pred_eval = y_pred_norm
-        end
-
-        # Fehler ψ (global pro Sample)
-        mse_psi = mean((y_pred_eval .- y_true_eval).^2)
-
-        num_psi   = sqrt(sum((y_pred_eval .- y_true_eval).^2))
-        denom_psi = sqrt(sum(y_true_eval.^2)) + eps()
-        rel_l2_psi = num_psi / denom_psi
-
-        # Für jeden Kristall im Sample einen Eintrag erzeugen
-        for (k, c) in enumerate(centers_2D)
+        for c in centers_2D
             cx, cz = c
-
-            # Abstand zum Domänenmittelpunkt
-            dist_center = sqrt((cx - x_center)^2 + (cz - z_center)^2)
-
-            # Abstände zu den vier Ecken
-            dist_c1 = sqrt((cx - x1)^2 + (cz - z1)^2)  # unten links
-            dist_c2 = sqrt((cx - xN)^2 + (cz - z1)^2)  # unten rechts
-            dist_c3 = sqrt((cx - x1)^2 + (cz - zN)^2)  # oben links
-            dist_c4 = sqrt((cx - xN)^2 + (cz - zN)^2)  # oben rechts
-
-            push!(results, (; 
-                sample_idx    = i,
-                crystal_idx   = k,
-                n_crystals    = n_crystals,
-                cx            = cx,
-                cz            = cz,
-                x_center      = x_center,
-                z_center      = z_center,
-                dist_center   = dist_center,
-                dist_corner_1 = dist_c1,
-                dist_corner_2 = dist_c2,
-                dist_corner_3 = dist_c3,
-                dist_corner_4 = dist_c4,
-                mse_psi       = mse_psi,
-                rel_l2_psi    = rel_l2_psi,
+            dist = sqrt((cx - x_ctr)^2 + (cz - z_ctr)^2)
+            push!(rows, (;
+                sample_idx  = Int(row.sample_idx),
+                rel_l2_psi  = Float64(row[err_col]),
+                cx, cz,
+                dist_center = dist,
             ))
         end
     end
-
-    # CSV schreiben (pro Kristall eine Zeile)
-    open(out_csv, "w") do io
-        println(io,
-            "sample_idx,crystal_idx,n_crystals," *
-            "cx,cz,x_center,z_center," *
-            "dist_center,dist_corner_1,dist_corner_2,dist_corner_3,dist_corner_4," *
-            "mse_psi,relL2_psi"
-        )
-        for r in results
-            println(io, @sprintf(
-                "%d,%d,%d,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e",
-                r.sample_idx, r.crystal_idx, r.n_crystals,
-                r.cx, r.cz,
-                r.x_center, r.z_center,
-                r.dist_center,
-                r.dist_corner_1, r.dist_corner_2, r.dist_corner_3, r.dist_corner_4,
-                r.mse_psi,
-                r.rel_l2_psi,
-            ))
-        end
-    end
-
-    @info "Ergebnisse nach $out_csv geschrieben (n=$(length(results)) Kristalle über alle Samples)."
-    return results, out_dir
+    return rows
 end
 
-# ------------------------------------------------------------
-# Plot: rel. L2-Fehler vs. Abstand (pro Kristall, farblich nach N)
-# ------------------------------------------------------------
-function plot_error_vs_distance_byN(
-        results;
-        out_dir::String,
-        kind::Symbol = :center,
-        outfile_name::Union{Nothing,String} = nothing)
+# ─── Scatter-Plot: Fehler vs. Abstand ────────────────────────────────────────
+"""
+Erzeugt einen Scatter-Plot (Fehler vs. Abstand vom Domänenmittelpunkt)
+für FNO und U-Net gemeinsam.
 
-    mkpath(out_dir)
+fno_entries / unet_entries: Vector{NamedTuple} aus load_results_with_positions
+"""
+function plot_error_vs_distance(fno_entries, unet_entries;
+        title::String,
+        outfile::String)
 
-    # Distanz-Feld und Achsentext je nach Art
-    dist_accessor, x_label, title =
-        if kind == :center
-            (r -> r.dist_center,
-             "Abstand vom Domänenmittelpunkt (km)",
-             "Fehler vs. Abstand vom Zentrum (pro Kristall)")
-        elseif kind == :corner1
-            (r -> r.dist_corner_1,
-             "Abstand zu Ecke 1 (unten links) (km)",
-             "Fehler vs. Abstand zu Ecke 1")
-        elseif kind == :corner2
-            (r -> r.dist_corner_2,
-             "Abstand zu Ecke 2 (unten rechts) (km)",
-             "Fehler vs. Abstand zu Ecke 2")
-        elseif kind == :corner3
-            (r -> r.dist_corner_3,
-             "Abstand zu Ecke 3 (oben links) (km)",
-             "Fehler vs. Abstand zu Ecke 3")
-        elseif kind == :corner4
-            (r -> r.dist_corner_4,
-             "Abstand zu Ecke 4 (oben rechts) (km)",
-             "Fehler vs. Abstand zu Ecke 4")
-        else
-            error("Unbekanntes kind = $kind. Erlaubt: :center, :corner1..:corner4")
-        end
-
-    # Dateiname automatisch wählen, falls nicht gesetzt
-    if outfile_name === nothing
-        suffix = kind == :center ? "center" :
-                 kind == :corner1 ? "corner1" :
-                 kind == :corner2 ? "corner2" :
-                 kind == :corner3 ? "corner3" : "corner4"
-        outfile_name = "error_vs_$(suffix)_distance_byN.png"
-    end
-
-    outfile = joinpath(out_dir, outfile_name)
-
-    # Einzigartige Kristallzahlen
-    all_N = sort(unique([r.n_crystals for r in results]))
-
-    fig = Figure(resolution = (800, 500))
+    mkpath(dirname(outfile))
+    fig = Figure(size=(800, 500), fontsize=14)
     ax  = Axis(fig[1, 1];
-        xlabel = x_label,
-        ylabel = "rel. L2-Fehler ψ",
+        xlabel = "Abstand vom Domänenmittelpunkt (km)",
+        ylabel = "Rel. L²-Fehler ψ",
         title  = title,
     )
 
-    # Pro Kristallzahl eigene Farbe, Label für Legend
-    for N in all_N
-        group = filter(r -> r.n_crystals == N, results)
-        d   = [dist_accessor(r) for r in group]
-        err = [r.rel_l2_psi    for r in group]
-
-        scatter!(ax, d, err; label = "N = $N")
+    for (entries, col, marker, lbl) in [
+        (fno_entries,  C[1], :circle,  "FNO"),
+        (unet_entries, C[2], :diamond, "U-Net"),
+    ]
+        isempty(entries) && continue
+        d   = [r.dist_center for r in entries]
+        err = [r.rel_l2_psi  for r in entries]
+        scatter!(ax, d, err; color=col, marker=marker, markersize=7, label=lbl)
+        ord = sortperm(d)
+        lines!(ax, d[ord], err[ord]; color=col, linewidth=1.5, alpha=0.35)
     end
 
-    axislegend(ax; position = :rb)  # Legende unten rechts
+    axislegend(ax; position=:rt, framevisible=true)
 
+    base = splitext(outfile)[1]
     save(outfile, fig)
-    @info "Plot gespeichert: $outfile"
-
+    save(base * ".png", fig, px_per_unit=2)
+    println("  Gespeichert: $(basename(outfile))")
     return fig
 end
 
-# ------------------------------------------------------------
-# Direkt aufrufbar machen (wie main.jl)
-# ------------------------------------------------------------
-if abspath(PROGRAM_FILE) == @__FILE__
-    @info "Running error_vs_center_distance.jl as script."
-    @info "Working directory: $(pwd())"
+# ─── Subplot-Übersicht: alle Configs einer Batch-Größe ───────────────────────
+"""
+Erzeugt ein 2×2-Gitter (eine Zelle pro lr-Config) mit FNO und U-Net
+überlagert, für eine feste Batch-Größe.
+"""
+function plot_error_vs_distance_all_configs(bs::Int)
+    fig = Figure(size=(1200, 900), fontsize=13)
 
-    # Default-Pfade wie in main.jl anpassen
-    data_dir   = "/local/home/baselt/src/Daten/data_psi_vali"
-    model_path = "unet_psi.bson"
+    for cfg in 1:4
+        row_idx = (cfg - 1) ÷ 2 + 1
+        col_idx = (cfg - 1) % 2 + 1
 
-    results, out_dir = compute_error_vs_center_distance(; 
-        data_dir   = data_dir,
-        model_path = model_path,
-        denorm_psi = true,   # physikalischer ψ-Raum
-        use_gpu    = nothing # auto
-    )
+        ax = Axis(fig[row_idx, col_idx];
+            xlabel = "Abstand vom Domänenmittelpunkt (km)",
+            ylabel = "Rel. L²-Fehler ψ",
+            title  = "$(LR_LABEL[cfg]), bs = $bs",
+        )
 
-    # 1) Fehler vs. Abstand vom Zentrum, farblich nach N
-    plot_error_vs_distance_byN(results; out_dir = out_dir, kind = :center)
+        fno_csv  = fno_exp1_sample_csv(bs, cfg)
+        unet_csv = unet_exp1_sample_csv(bs, cfg)
 
-    # 2) Fehler vs. Abstand zu den vier Ecken, farblich nach N
-    plot_error_vs_distance_byN(results; out_dir = out_dir, kind = :corner1)
-    plot_error_vs_distance_byN(results; out_dir = out_dir, kind = :corner2)
-    plot_error_vs_distance_byN(results; out_dir = out_dir, kind = :corner3)
-    plot_error_vs_distance_byN(results; out_dir = out_dir, kind = :corner4)
+        for (csv, col, marker, lbl) in [
+            (fno_csv,  C[1], :circle,  "FNO"),
+            (unet_csv, C[2], :diamond, "U-Net"),
+        ]
+            entries = load_results_with_positions(csv)
+            isempty(entries) && continue
+            d   = [r.dist_center for r in entries]
+            err = [r.rel_l2_psi  for r in entries]
+            scatter!(ax, d, err; color=col, marker=marker, markersize=6, label=lbl)
+            ord = sortperm(d)
+            lines!(ax, d[ord], err[ord]; color=col, linewidth=1.5, alpha=0.35)
+        end
+
+        axislegend(ax; position=:rt, framevisible=true)
+    end
+
+    fname = "error_vs_center_distance_exp1_bs$(bs)_allconfigs"
+    save(joinpath(OUT, fname * ".pdf"), fig)
+    save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
+    println("  Gespeichert: $fname")
+    return fig
 end
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Main
+# ═══════════════════════════════════════════════════════════════════════════════
+println("=" ^ 60)
+println("Fehler vs. Kristallposition – Experiment 1 (n = 1)")
+println("Ausgabe: $OUT")
+println("=" ^ 60)
+
+# ── 1) Beste Einzelkonfigs: bs=16 (FNO: cfg=4 / U-Net: cfg=1) ──
+fno_best_16  = load_results_with_positions(fno_exp1_sample_csv(16, 4))
+unet_best_16 = load_results_with_positions(unet_exp1_sample_csv(16, 1))
+
+plot_error_vs_distance(fno_best_16, unet_best_16;
+    title   = "Fehler vs. Kristallposition – Exp. 1, bs = 16 (beste Konfigs)",
+    outfile = joinpath(OUT, "error_vs_center_distance_exp1_bs16.pdf"))
+
+# ── 2) Beste Einzelkonfigs: bs=8 (FNO: cfg=2 / U-Net: cfg=1) ──
+fno_best_8  = load_results_with_positions(fno_exp1_sample_csv(8, 2))
+unet_best_8 = load_results_with_positions(unet_exp1_sample_csv(8, 1))
+
+plot_error_vs_distance(fno_best_8, unet_best_8;
+    title   = "Fehler vs. Kristallposition – Exp. 1, bs = 8 (beste Konfigs)",
+    outfile = joinpath(OUT, "error_vs_center_distance_exp1_bs8.pdf"))
+
+# ── 3) Alle Configs als 2×2-Übersicht ──
+plot_error_vs_distance_all_configs(16)
+plot_error_vs_distance_all_configs(8)
+
+println("=" ^ 60)
+println("Fertig! Alle Abbildungen gespeichert in:")
+println("  $OUT")
+println("=" ^ 60)
