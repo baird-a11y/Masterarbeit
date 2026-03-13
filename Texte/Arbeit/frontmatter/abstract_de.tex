@@ -21,8 +21,8 @@ Skip-Connections zur Extraktion räumlich hierarchischer Merkmale, und der
 Fourier Neural Operator (FNO), der im Spektralbereich operiert und pro Schicht
 ein globales rezeptives Feld besitzt. Beide Modelle werden darauf trainiert, die
 Stromfunktion~$\psi$ aus einer fünfkanaligen geometrischen Eingabekodierung
-vorherzusagen, bestehend aus einer Kristallmaske, einem Signed-Distance-Proxy,
-dem Abstand zur nächsten Kristallgrenze sowie normierten Raumkoordinaten. Die
+vorherzusagen, bestehend aus einer Kristallmaske, einem Signed-Distance-Feld,
+dem Radius des nächstgelegenen Kristalls sowie normierten Raumkoordinaten. Die
 Vorhersage von~$\psi$ statt direkter Geschwindigkeitskomponenten erzwingt
 Inkompressibilität per Konstruktion und eliminiert so eine häufige Quelle
 systematischer Verletzungen physikalischer Nebenbedingungen in rein
@@ -31,17 +31,31 @@ datengetriebenen Strömungssurrogaten.
 Trainingsdaten werden mit dem geodynamischen Finite-Elemente-Code
 \textsc{LaMEM} generiert und liefern stationäre inkompressible Stokes-Lösungen
 für Konfigurationen mit $1$ bis $N_{\max}$ zufällig platzierten starren
-kreisförmigen Kristallen auf einem festen $256 \times 256$-Gitter. 
-
-Genaue Zahlen muss ich noch einpflegen sobald ich die Versuche gemacht habe. 
-
+kreisförmigen Kristallen auf einem festen $256 \times 256$-Gitter. Vier
+Experimente werden durchgeführt, um die Architekturleistung und die
+Out-of-Distribution-Generalisierung (OOD) zu vergleichen. Im Einzelkristall-Basisexperiment
+(Experiment~1) erreicht der FNO mittlere relative $L_2$-Fehler von
+$1{,}7$--$2{,}3\%$ auf~$\psi$, verglichen mit $5{,}5$--$6{,}5\%$ für das
+U-Net, bei gleichzeitig stabilerer Trainingsdynamik. In
+Mehrkristall-Konfigurationen (Experimente~2 und~3, trainiert auf bis zu
+$N_{\max} = 10$ bzw.\ $25$ Kristallen) erzielt der FNO Fehler von $4$--$8\%$
+innerhalb der Trainingsverteilung und behält damit einen etwa fünffachen
+Vorteil gegenüber dem U-Net ($24$--$30\%$). Die OOD-Generalisierung verbessert
+sich deutlich, wenn die Trainingsverteilung verbreitert wird, was die Hypothese
+bestätigt, dass die Breite der Trainingsverteilung der entscheidende Faktor für
+den Generalisierungsbereich ist. Experiment~4 zeigt eine Umkehrung der
+Architekturrangfolge bei der Kristallgrößen-Generalisierung: Für Kristalle, die
+größer als die Trainingsverteilung sind, degradiert der FNO stark
+($71{,}3 \pm 4{,}8\%$ auf~$\psi$), während das U-Net wesentlich niedrigere
+Fehler aufweist ($44{,}9 \pm 8{,}2\%$) — zurückzuführen auf die feste
+Spektralabschneidung des FNO bei $k_{\max} = 16$ Fourier-Moden.
 
 Aus~$\psi$ abgeleitete Geschwindigkeitsfelder erweisen sich
-konsistent als schwieriger zu reproduzieren als die Stromfunktion selbst, mit
-relativen Fehlern, die rund eine Größenordnung größer sind und die
-Hochfrequenzverstärkung numerischer Differentiation widerspiegeln.
-Fehlerdiagnostik zeigt zudem, dass die Vorhersageschwierigkeit an
-Kristallrändern und Domänengrenzen erhöht ist.
+konsistent als schwieriger zu reproduzieren als die Stromfunktion selbst, was
+die Hochfrequenzverstärkung numerischer Differentiation widerspiegelt. Die
+Stromfunktions-Repräsentation garantiert exakte Inkompressibilität für alle
+Vorhersagen, bestätigt durch Divergenz-RMS-Werte in der Größenordnung von
+$10^{-26}$.
 
 Der kontrollierte Vergleich der U-Net- und FNO-Architekturen auf diesem Benchmark
 quantifiziert den Zielkonflikt zwischen räumlich lokaler Multiskalenverarbeitung

@@ -240,7 +240,7 @@ The FNO errors ($1.2$–$2.6\%$) show no systematic positional bias; the regress
 \label{sec:results:exp2}
 % ============================================================================
 
-Experiment~2 trains both models on samples with $n \in \{1, \ldots, 10\}$ crystals and evaluates each on all training crystal counts as well as on unseen higher counts up to $n = 25$. The U-Net is trained for 180~epochs; the FNO results are based on a training run of 50~epochs, which represents a preliminary result for this experiment.
+Experiment~2 trains both models on samples with $n \in \{1, \ldots, 10\}$ crystals and evaluates each on all training crystal counts as well as on unseen higher counts up to $n = 25$. The U-Net is trained for 180~epochs; the FNO is trained for 100~epochs.
 
 Rather than fixing a single hyperparameter combination for all architectures, the configurations for Experiment~2 are derived directly from the Experiment~1 evaluation results: for each architecture and batch size, the learning rate that achieved the lowest held-out evaluation error in Experiment~1 is carried over.
 
@@ -329,13 +329,13 @@ Generalization to unseen crystal counts $n = 11$–$12$ is broadly consistent wi
 \label{ssec:results:exp2:fno:training}
 % ----------------------------------------------------------------------------
 
-Figure~\ref{fig:fno_training_exp2} shows the FNO training and validation loss curves over 50~epochs. Unlike the U-Net, both training MSE and validation relative $L_2$ error decrease steadily throughout training, indicating that the FNO converges well on the multi-crystal task with the chosen hyperparameters.
+Figure~\ref{fig:fno_training_exp2} shows the FNO training and validation loss curves over 100~epochs. Unlike the U-Net, both training MSE and validation relative $L_2$ error decrease steadily throughout training, indicating that the FNO converges well on the multi-crystal task with the chosen hyperparameters.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.75\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig6_fno_exp2_training.pdf}
     \caption{FNO Experiment~2: validation relative $L_2$ error and normalized training MSE over
-             50~training epochs. The validation error decreases steadily, in contrast to the
+             100~training epochs. The validation error decreases steadily, in contrast to the
              oscillatory U-Net convergence in the same setting.}
     \label{fig:fno_training_exp2}
 \end{figure}
@@ -428,7 +428,7 @@ The FNO outperforms the U-Net by a factor of roughly $5\times$ within the traini
 \label{sec:results:exp3}
 % ============================================================================
 
-Experiment~3 trains both models on configurations with up to $n = 25$ crystals and evaluates each on substantially more complex scenes with up to $n = 84$ crystals to probe the limits of out-of-distribution generalization. The U-Net is trained for 180~epochs; the FNO results are based on a training run of 50~epochs, which represents a preliminary result for this experiment.
+Experiment~3 trains both models on configurations with up to $n = 25$ crystals and evaluates each on substantially more complex scenes with up to $n = 84$ crystals to probe the limits of out-of-distribution generalization. The U-Net is trained for 180~epochs; the FNO is trained for 100~epochs.
 
 The hyperparameter configurations follow the same rationale as Experiment~2: the learning rates identified as best-performing for each architecture and batch size in Experiment~1 are used without modification. For the FNO, this means lr~$= 5\times10^{-4}$ with batch size~16 and lr~$= 5\times10^{-3}$ with batch size~8. For the U-Net, lr~$= 10^{-3}$ is used with batch size~8 and lr~$= 10^{-4}$ with batch size~16. The extended training distribution ($n \leq 25$ instead of $n \leq 10$) increases the complexity of each training batch but does not change the reasoning behind the choice of learning rate and batch size.
 
@@ -510,13 +510,13 @@ The right panel of Figure~\ref{fig:unet_exp23_scaling} shows the full metric pro
 \label{ssec:results:exp3:fno:training}
 % ----------------------------------------------------------------------------
 
-Figure~\ref{fig:fno_training_exp3} shows the FNO training and validation loss curves over 50~epochs. As in Experiment~2, training converges steadily, but the final validation relative $L_2$ error is somewhat higher than in the single-crystal baseline, reflecting the increased task complexity.
+Figure~\ref{fig:fno_training_exp3} shows the FNO training and validation loss curves over 100~epochs. As in Experiment~2, training converges steadily, but the final validation relative $L_2$ error is somewhat higher than in the single-crystal baseline, reflecting the increased task complexity.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.75\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig7_fno_exp3_training.pdf}
     \caption{FNO Experiment~3: validation relative $L_2$ error and normalized training MSE over
-             50~training epochs (training distribution: $n \leq 25$). Convergence is steady
+             100~training epochs (training distribution: $n \leq 25$). Convergence is steady
              throughout, with a slightly higher final error than in Experiment~2.}
     \label{fig:fno_training_exp3}
 \end{figure}
@@ -616,11 +616,11 @@ Table~\ref{tab:metrics_exp4} reports the mean relative $L_2$ errors on $\psi$ an
 \toprule
 \textbf{Architecture} & \textbf{Crystal size} & $\bar{\varepsilon}_\psi$ (\%) & $\bar{\varepsilon}_v$ (\%) \\
 \midrule
-FNO   & Small  & $12.1 \pm 6.4$ & $20.4 \pm 6.7$ \\
-FNO   & Large  & $71.3 \pm 4.8$ & $67.7 \pm 3.9$ \\
+FNO   & 0.005  & $12.1 \pm 6.4$ & $20.4 \pm 6.7$ \\
+FNO   & 0.5  & $71.3 \pm 4.8$ & $67.7 \pm 3.9$ \\
 \midrule
-U-Net & Small  & $10.8 \pm 6.8$ & $20.1 \pm 6.5$ \\
-U-Net & Large  & $44.9 \pm 8.2$ & $50.7 \pm 4.4$ \\
+U-Net & 0.005  & $10.8 \pm 6.8$ & $20.1 \pm 6.5$ \\
+U-Net & 0.5  & $44.9 \pm 8.2$ & $50.7 \pm 4.4$ \\
 \bottomrule
 \end{tabular}
 \end{table}

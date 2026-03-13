@@ -56,7 +56,7 @@ The three hypotheses stated in Chapter~\ref{ch:introduction} are partially confi
 Several directions for future work emerge from the results of this thesis.
 
 \paragraph{Extended FNO training for Experiments 2 and 3.}
-The FNO results for Experiments~2 and~3 are based on 50-epoch training runs. Re-training to 180~epochs — as already done for Experiment~1 — would provide a fairer basis for the architectural comparison in the multi-crystal regime and potentially improve the reported FNO error levels further.
+The FNO results for Experiments~2 and~3 are based on 100-epoch training runs. Re-training to 200~epochs would provide a fairer basis for the architectural comparison in the multi-crystal regime and potentially improve the reported FNO error levels further.
 
 \paragraph{Adaptive Fourier modes for size generalization.}
 Experiment~4 shows that the FNO's spectral truncation at $k_{\max} = 16$ is the primary factor limiting its performance for large out-of-distribution crystals. Architectures with adaptive or multi-resolution frequency representations — such as the Geo-FNO \parencite{li_fourier_nodate} or convolutional neural operators \parencite{raonic_convolutional_2023} — could potentially overcome this limitation and enable robust generalization across crystal sizes.
@@ -64,8 +64,8 @@ Experiment~4 shows that the FNO's spectral truncation at $k_{\max} = 16$ is the 
 \paragraph{Hybrid architectures.}
 The U-FNO \parencite{wen_u-fnoenhanced_2022} combines the FNO's global spectral processing with U-Net-style local branches, potentially addressing the FNO's known limitation near sharp interfaces while retaining its generalization properties. Applying this architecture to the multi-crystal Stokes flow problem is a natural extension.
 
-\paragraph{Larger evaluation sets.}
-The current evaluation is based on ten samples per crystal count. Increasing the evaluation set size would provide more reliable uncertainty estimates and enable statistically meaningful comparisons between configurations.
+\paragraph{Post-processing spectral filtering for velocity recovery.}
+A practical limitation of the stream-function approach is that finite-difference differentiation of~$\hat\psi$ amplifies high-frequency residuals in the predicted field into proportionally larger velocity errors. The gradient-matching loss term in the composite loss partially mitigates this issue, but at the cost of additional hyperparameter tuning. A complementary and architecturally independent approach is to apply a low-pass spectral filter to $\hat\psi$ before computing velocity derivatives. Since physically meaningful Stokes flow fields are smooth outside crystal boundaries, a filter that attenuates wavenumbers above a threshold $k_\text{cut}$ would suppress numerical noise without distorting the flow structure. The optimal threshold $k_\text{cut}$ and filter shape could be determined from the known spectral content of the training data, potentially as a learned post-processing step.
 
 \paragraph{Three-dimensional and time-dependent settings.}
 Extending the surrogate modeling approach to three-dimensional Stokes flow or to time-dependent settling dynamics would be a major step towards geophysically realistic applications. Graph neural network approaches \parencite{sanchez-gonzalez_learning_nodate} may offer a more natural framework for three-dimensional multi-particle configurations, while autoregressive neural emulators \parencite{koehler_apebench_nodate} could address the temporal dimension.

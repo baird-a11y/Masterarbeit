@@ -241,6 +241,47 @@
       \verb https://dl.acm.org/doi/10.1145/2939672.2939738
       \endverb
     \endentry
+    \entry{happel_low_1983}{book}{}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=34298e9256ad2a3b173a80512721f6c6}{%
+           family={Happel},
+           familyi={H\bibinitperiod},
+           given={John},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=702d7838ff4deb372c0f4f09c4087181}{%
+           family={Brenner},
+           familyi={B\bibinitperiod},
+           given={Howard},
+           giveni={H\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{publisher}{1}{%
+        {Springer Dordrecht}%
+      }
+      \strng{namehash}{f689274f5f3f75bd8f229e155a34687e}
+      \strng{fullhash}{52b1b7c81e6b10067fa995172fef3fe0}
+      \strng{fullhashraw}{52b1b7c81e6b10067fa995172fef3fe0}
+      \strng{bibnamehash}{52b1b7c81e6b10067fa995172fef3fe0}
+      \strng{authorbibnamehash}{52b1b7c81e6b10067fa995172fef3fe0}
+      \strng{authornamehash}{f689274f5f3f75bd8f229e155a34687e}
+      \strng{authorfullhash}{52b1b7c81e6b10067fa995172fef3fe0}
+      \strng{authorfullhashraw}{52b1b7c81e6b10067fa995172fef3fe0}
+      \field{sortinit}{H}
+      \field{sortinithash}{23a3aa7c24e56cfa16945d55545109b5}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{1}
+      \field{isbn}{978-90-247-2877-0}
+      \field{series}{Mechanics of {Fluids} and {Transport} {Processes}}
+      \field{title}{Low {Reynolds} Number {Hydrodynamics}: with Special Applications to Particulate Media}
+      \field{year}{1983}
+      \verb{doi}
+      \verb 10.1007/978-94-009-8352-6
+      \endverb
+    \endentry
     \entry{hu_applying_2023}{article}{}{}
       \name{author}{2}{}{%
         {{un=0,uniquepart=base,hash=d0405df1fad2d3b036115afd2719b469}{%

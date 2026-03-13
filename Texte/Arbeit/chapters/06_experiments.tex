@@ -38,7 +38,9 @@ All training and evaluation data are generated using LaMEM, a parallel finite-di
 
 Samples are stored as individual \texttt{.jld2} files, each containing the input tensor, the normalized target field $\psi_{\mathrm{norm}}$, the normalization scale, and grid metadata. Data generation is executed serially to guarantee deterministic behavior.
 
-The dataset is stratified by crystal count. For each stratum, 1\,000 samples are used for training, 100 for validation, and 10 for final evaluation. Samples with $n = 1, 2, 3$ crystals are used for training and validation; generalization to higher crystal counts is assessed on held-out test samples. The 1\,000\,/\,100 training-to-validation ratio is maintained within each stratum, ensuring balanced representation across all geometric complexity levels.
+The dataset is stratified by crystal count (Experiments~1--3) and crystal radius (Experiment~4). For Experiments~1--3, each crystal-count stratum contains 1\,000 training, 100 validation, and 10 evaluation samples; the 1\,000\,/\,100 training-to-validation ratio is maintained across all strata. All crystals in these experiments share a fixed radius $r = 0.05$.
+
+Experiment~4 uses a different stratification: training and validation samples are generated for two discrete radii ($r = 0.02$ and $r = 0.08$), with 1\,000 training and 100 validation samples per radius. All samples contain exactly one crystal ($n = 1$). Evaluation is performed on six separate sets of 10 samples each, covering in-distribution ($r \in \{0.02, 0.08\}$), interpolation ($r \in \{0.035, 0.065\}$), and extrapolation ($r \in \{0.01, 0.1\}$) conditions. This design ensures that the number of training samples per condition is comparable to Experiment~1 and that performance differences can be attributed to size generalization rather than sample count.
 
 % ----------------------------------------------------------------------------
 \section{Learning Task and Input Encoding}
@@ -95,7 +97,33 @@ Models are trained on samples with $n \in \{1, \ldots, 10\}$ crystals and evalua
 Models are trained on configurations with up to $n = 25$ crystals and subsequently evaluated on substantially more complex scenes with up to $n = 84$ crystals. This experiment probes whether the models can capture the interactions arising from a large number of obstacles or whether their generalization capability breaks down beyond a critical level of geometric complexity.
 
 \paragraph{Experiment 4 – Crystal size generalization.}
-Models are trained as in Experiment~2, but the crystals in the evaluation samples are additionally scaled by up to a factor of ten in both directions relative to the training distribution. This experiment tests whether the models can generalize not only to larger numbers of crystals, but also to unseen obstacle sizes, introducing a further axis of out-of-distribution generalization.
+This experiment investigates whether the surrogate models can generalize to crystal radii not seen during training — an additional axis of out-of-distribution generalization beyond crystal count.
+
+To study this, the experiment is designed around two conditions:
+
+\begin{itemize}
+    \item \textbf{Fixed-radius baseline.} The best models from Experiment~1 (trained exclusively on $r = 0.05$) are evaluated on crystals with unseen radii. This quantifies the generalization error of a model that has no exposure to size variability.
+
+    \item \textbf{Variable-radius training.} New models are trained on single-crystal samples ($n = 1$) with three discrete radii: $r \in \{0.02,\, 0.05,\, 0.08\}$ (1\,000 samples each, i.e., 3\,000 training samples total). The radius channel of the input representation explicitly encodes the crystal size at each grid point, enabling the network to condition its prediction on the crystal geometry.
+\end{itemize}
+
+Both model types are subsequently evaluated on six radius conditions covering in-distribution, interpolation, and extrapolation regimes:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Condition} & \textbf{Radii} & \textbf{Description} \\
+\midrule
+In-distribution     & $r = 0.02$,\ $r = 0.08$  & Training radii \\
+Interpolation OOD   & $r = 0.035$,\ $r = 0.065$ & Within training range \\
+Extrapolation OOD   & $r = 0.01$,\ $r = 0.1$    & Outside training range \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The expected outcome is that the fixed-radius model degrades substantially for any $r \neq 0.05$, while the variable-radius model generalizes well within the training range and degrades gracefully outside it. This two-stage comparison isolates the contribution of size variability in training data from the effect of the radius input channel.
+
+\textit{Note: Results for Experiment~4 are pending at the time of writing; a detailed analysis is provided in Section~\ref{ssec:results:exp4}.}
 
 % ----------------------------------------------------------------------------
 \section{Training Setup and Hyperparameters}

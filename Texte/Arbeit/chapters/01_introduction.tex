@@ -9,6 +9,22 @@ Early work by \textcite{martin_crystal_1988} showed that crystal settling can oc
 
 Subsequent experimental and numerical investigations \parencite{martin_fluid-dynamical_1989,weinstein_evolution_1988,verhoeven_numerical_2009,patocka_settling_2020,uhlmann_sedimentation_2014,penlou_experimental_2023,nissanka_dynamics_2023} revealed that such interactions may lead to asymmetric flow patterns, recirculation zones, and clustering phenomena. \textcite{weinstein_evolution_1988} further showed that the spatial distribution of deposited crystals is inherently asymmetric with respect to the geometry of the convection cell, offering a physical explanation for the non-uniform mineralogical layering commonly observed in plutonic rocks. As a consequence, even small variations in crystal geometry, spatial arrangement, or relative positioning can strongly affect collective settling dynamics and the development of such layering. Taken together, these results indicate that multi-crystal sedimentation is an inherently multiscale and interaction-dominated process, which places high demands on any numerical approach aimed at capturing the relevant physics.
 
+\subsection*{Physical Parameter Regime}
+
+To ground the qualitative picture in concrete physical scales, it is useful to recall the relevant order-of-magnitude estimates. For mafic minerals such as olivine settling in a basaltic melt, typical parameter ranges are:
+
+\begin{itemize}
+    \item \textbf{Crystal radius:} $r \sim 0.1$--$10\,\text{mm}$ in basaltic chambers; larger crystals ($r \sim 1$--$5\,\text{cm}$) occur in slowly cooling plutonic bodies where crystal growth has proceeded over extended periods \parencite{martin_crystal_1988}.
+    \item \textbf{Melt viscosity:} $\mu \sim 1$--$10^3\,\text{Pa\,s}$ for low-silica basaltic melts; significantly higher ($\mu \sim 10^6$--$10^{12}\,\text{Pa\,s}$) for rhyolitic compositions. Crystals are effectively rigid relative to the melt ($\mu_\text{crystal}/\mu_\text{melt} \gtrsim 10^5$).
+    \item \textbf{Density contrast:} olivine ($\rho \approx 3300\,\text{kg/m}^3$) vs.\ basaltic melt ($\rho \approx 2700\,\text{kg/m}^3$), yielding $\Delta\rho \approx 300$--$600\,\text{kg/m}^3$.
+    \item \textbf{Stokes settling velocity:} from $v_s = \frac{2}{9}\frac{\Delta\rho\,g\,r^2}{\mu}$, a 1\,mm olivine crystal in a 10\,Pa\,s melt settles at $v_s \approx 10^{-5}\,\text{m/s}$ ($\approx 1\,\text{m/day}$); a 1\,cm crystal at $v_s \approx 10^{-3}\,\text{m/s}$ ($\approx 100\,\text{m/day}$).
+    \item \textbf{Reynolds number:} $\mathrm{Re} = \rho\,v_s\,r/\mu \ll 1$ in all relevant cases (typically $\mathrm{Re} \sim 10^{-8}$--$10^{-4}$), confirming that the Stokes flow regime — in which inertial effects are negligible — is an appropriate physical approximation throughout the parameter range of interest.
+\end{itemize}
+
+In the normalized $[-1,1]^2$ simulation domain used in this thesis, the non-dimensionalized crystal radius $r = 0.05$ is consistent with a crystal that occupies approximately 5\% of the domain length. Hydrodynamic interaction effects become significant when crystal separation distances are comparable to several crystal radii, which motivates the investigation of multi-crystal configurations.
+
+Since the Stokes equations are linear and inertial effects are negligible ($\mathrm{Re} \ll 1$), the normalized flow field depends only on the geometric ratio $r/L$ and the relative crystal positions, not on the absolute values of $r$, $\mu$, or $\Delta\rho$ individually \parencite{happel_low_1983}. The crystal radius $r = 0.05$ in the normalized domain therefore represents a non-dimensional geometric parameter rather than a specific physical scale, and the surrogate model results are valid for any combination of physical parameters that yields $\mathrm{Re} \ll 1$ and the same geometric configuration. The size generalization study in Experiment~4, which varies $r$ in the range $0.01$--$0.1$, thus probes genuine changes in geometric topology — the ratio of crystal size to domain and inter-crystal spacing — rather than variations in any single dimensional quantity.
+
 \section{Computational Challenges}
 
 Accurate numerical simulation of multi-crystal sedimentation remains computationally demanding due to the strongly multiscale nature of crystal--fluid interactions. Any physically meaningful model needs to account for:

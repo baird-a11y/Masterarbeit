@@ -23,8 +23,8 @@ model with skip connections that extracts spatially hierarchical features, and
 the Fourier Neural Operator (FNO), which operates in the spectral domain and
 provides a global receptive field per layer. Both models are trained to predict
 the stream function $\psi$ from a five-channel geometric input encoding consisting
-of a crystal mask, a signed distance proxy field, the distance to the nearest
-crystal boundary, and normalized spatial coordinates. Predicting $\psi$ rather
+of a crystal mask, a signed distance field, the radius of the nearest crystal,
+and normalized spatial coordinates. Predicting $\psi$ rather
 than velocity components directly enforces incompressibility by construction,
 eliminating a common source of systematic constraint violations in purely
 data-driven velocity surrogates.
@@ -32,16 +32,27 @@ data-driven velocity surrogates.
 Training data are generated using the \textsc{LaMEM} geodynamic finite-element
 code, providing steady-state incompressible Stokes solutions for configurations
 of $1$ to $N_{\max}$ randomly placed rigid circular crystals on a fixed
-$256 \times 256$ grid. 
-
-Siehe Anmerkung in der deutschen Zusammenfassung bezüglich genauer Zahlen, die ich noch einpflegen muss sobald ich die Versuche gemacht habe.
-
+$256 \times 256$ grid. Four experiments are conducted to compare architectural
+performance and out-of-distribution (OOD) generalization. In the single-crystal
+baseline (Experiment~1), the FNO achieves mean relative $L_2$ errors of
+$1.7$--$2.3\%$ on~$\psi$, compared to $5.5$--$6.5\%$ for the U-Net, while
+exhibiting more stable training dynamics. In multi-crystal settings
+(Experiments~2 and~3, trained on up to $N_{\max} = 10$ and $25$ crystals,
+respectively), the FNO achieves in-distribution errors of $4$--$8\%$,
+maintaining a roughly five-fold advantage over the U-Net ($24$--$30\%$). OOD
+generalization improves substantially when the training distribution is widened,
+confirming that training distribution width is the primary factor determining
+the generalization range. Experiment~4 reveals a reversal of the architectural
+ranking for crystal-size generalization: for crystals larger than the training
+distribution, the FNO degrades severely ($71.3 \pm 4.8\%$ on~$\psi$) while the
+U-Net shows substantially lower errors ($44.9 \pm 8.2\%$), attributable to the
+FNO's fixed spectral truncation at $k_{\max} = 16$ Fourier modes.
 
 Gradient-derived velocity quantities prove consistently harder to
-reproduce than $\psi$ itself, with relative errors roughly an order of magnitude
-larger, reflecting the amplification of residuals under numerical differentiation.
-Error diagnostics further show that prediction difficulty increases near crystal
-boundaries and domain edges.
+reproduce than $\psi$ itself, reflecting the amplification of residuals under
+numerical differentiation. The stream-function representation guarantees
+exact incompressibility for all predictions, confirmed by divergence RMS values
+on the order of $10^{-26}$.
 
 The controlled comparison of U-Net and FNO architectures on this benchmark
 quantifies the trade-off between spatially local multiscale processing and global
