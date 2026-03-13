@@ -19,6 +19,44 @@
 
 \refsection{0}
   \datalist[entry]{nyt/global//global/global/global}
+    \entry{alimehmeti-gopel_weight_2024}{inproceedings}{}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=f34c953ea26e50c092a6bfb052237e95}{%
+           family={Ali\bibnamedelima Mehmeti-Göpel},
+           familyi={A\bibinitperiod\bibinitdelim M\bibinithyphendelim G\bibinitperiod},
+           given={Christian\bibnamedelima H.X.},
+           giveni={C\bibinitperiod\bibinitdelim H\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=721d8c1edb6b93bd71e2dc6a1ce1eb44}{%
+           family={Wand},
+           familyi={W\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{publisher}{1}{%
+        {PMLR}%
+      }
+      \strng{namehash}{b84b4eadad7c7aeee51689b17a755d81}
+      \strng{fullhash}{b1abee8a84d0e8f90d63e3c47e11ef0f}
+      \strng{fullhashraw}{b1abee8a84d0e8f90d63e3c47e11ef0f}
+      \strng{bibnamehash}{b1abee8a84d0e8f90d63e3c47e11ef0f}
+      \strng{authorbibnamehash}{b1abee8a84d0e8f90d63e3c47e11ef0f}
+      \strng{authornamehash}{b84b4eadad7c7aeee51689b17a755d81}
+      \strng{authorfullhash}{b1abee8a84d0e8f90d63e3c47e11ef0f}
+      \strng{authorfullhashraw}{b1abee8a84d0e8f90d63e3c47e11ef0f}
+      \field{sortinit}{A}
+      \field{sortinithash}{2f401846e2029bad6b3ecc16d50031e2}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the 41st International Conference on Machine Learning}
+      \field{series}{Proceedings of Machine Learning Research}
+      \field{title}{On the Weight Dynamics of Deep Normalized Networks}
+      \field{volume}{235}
+      \field{year}{2024}
+    \endentry
     \entry{ashwin_physics_2024}{article}{}{}
       \name{author}{4}{}{%
         {{un=0,uniquepart=base,hash=c2b67f3cf7e2f9ed9a2f3da5a27d8289}{%
@@ -332,6 +370,57 @@
       \verb https://linkinghub.elsevier.com/retrieve/pii/S0021999120307257
       \endverb
     \endentry
+    \entry{koehler_apebench_nodate}{article}{}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=f282677d288476b9df9aa1eb7c9065db}{%
+           family={Koehler},
+           familyi={K\bibinitperiod},
+           given={Felix},
+           giveni={F\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=b91c4d1d7a521366e0ab3ab8cb4e8fec}{%
+           family={Niedermayr},
+           familyi={N\bibinitperiod},
+           given={Simon},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c00f68e0027a0118ca2aa59ae43124c6}{%
+           family={Westermann},
+           familyi={W\bibinitperiod},
+           given={Rüdiger},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=2152ffa5edd9076710fb73812c1037b2}{%
+           family={Thuerey},
+           familyi={T\bibinitperiod},
+           given={Nils},
+           giveni={N\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{add9748890171640dbb36a2173c55a0a}
+      \strng{fullhash}{924d62292a406c8cf516fc05d197295a}
+      \strng{fullhashraw}{924d62292a406c8cf516fc05d197295a}
+      \strng{bibnamehash}{add9748890171640dbb36a2173c55a0a}
+      \strng{authorbibnamehash}{add9748890171640dbb36a2173c55a0a}
+      \strng{authornamehash}{add9748890171640dbb36a2173c55a0a}
+      \strng{authorfullhash}{924d62292a406c8cf516fc05d197295a}
+      \strng{authorfullhashraw}{924d62292a406c8cf516fc05d197295a}
+      \field{sortinit}{K}
+      \field{sortinithash}{c02bf6bff1c488450c352b40f5d853ab}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{We introduce the Autoregressive PDE Emulator Benchmark (APEBench), a comprehensive benchmark suite to evaluate autoregressive neural emulators for solving partial differential equations. APEBench is based on JAX and provides a seamlessly integrated differentiable simulation framework employing efficient pseudo-spectral methods, enabling 46 distinct PDEs across 1D, 2D, and 3D. Facilitating systematic analysis and comparison of learned emulators, we propose a novel taxonomy for unrolled training and introduce a unique identifier for PDE dynamics that directly relates to the stability criteria of classical numerical methods. APEBench enables the evaluation of diverse neural architectures, and unlike existing benchmarks, its tight integration of the solver enables support for differentiable physics training and neural-hybrid emulators. Moreover, APEBench emphasizes rollout metrics to understand temporal generalization, providing insights into the long-term behavior of emulating PDE dynamics. In several experiments, we highlight the similarities between neural emulators and numerical simulators. The code is available at https://github.com/tum-pbs/apebench and APEBench can be installed via pip install apebench.}
+      \field{title}{{APEBench}: {A} {Benchmark} for {Autoregressive} {Neural} {Emulators} of {PDEs}}
+      \field{year}{2024}
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\ZGCF94QS\\Koehler et al. - APEBench A Benchmark for Autoregressive Neural Emulators of PDEs.pdf:application/pdf
+      \endverb
+    \endentry
     \entry{kovachki_neural_nodate}{article}{}{}
       \name{author}{6}{}{%
         {{un=0,uniquepart=base,hash=d3715d69863d59245589f244c5866bd4}{%
@@ -627,8 +716,53 @@
       \verb https://www.mdpi.com/1996-1073/15/9/3297
       \endverb
     \endentry
+    \entry{li_fourier_nodate}{article}{}{}
+      \name{author}{3}{ul=2}{%
+        {{un=1,uniquepart=given,hash=009036050bf23abe561429f6eaa0b018}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Zongyi},
+           giveni={Z\bibinitperiod},
+           givenun=1}}%
+        {{un=0,uniquepart=base,hash=6762d769b0ca3dccfcf8b43c49ff1221}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={Daniel\bibnamedelima Zhengyu},
+           giveni={D\bibinitperiod\bibinitdelim Z\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9caea1a7b561311e5146f4c7f740496c}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Burigede},
+           giveni={B\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{47c22adc09c30a952bfca7c1eb6c89d5}
+      \strng{fullhash}{35cc0626c43e7a24bd044d982ae2f9b6}
+      \strng{fullhashraw}{35cc0626c43e7a24bd044d982ae2f9b6}
+      \strng{bibnamehash}{35cc0626c43e7a24bd044d982ae2f9b6}
+      \strng{authorbibnamehash}{35cc0626c43e7a24bd044d982ae2f9b6}
+      \strng{authornamehash}{47c22adc09c30a952bfca7c1eb6c89d5}
+      \strng{authorfullhash}{35cc0626c43e7a24bd044d982ae2f9b6}
+      \strng{authorfullhashraw}{35cc0626c43e7a24bd044d982ae2f9b6}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Deep learning surrogate models have shown promise in solving partial differential equations (PDEs). Among them, the Fourier neural operator (FNO) achieves good accuracy, and is significantly faster compared to numerical solvers, on a variety of PDEs, such as fluid flows. However, the FNO uses the Fast Fourier transform (FFT), which is limited to rectangular domains with uniform grids. In this work, we propose a new framework, viz., Geo-FNO, to solve PDEs on arbitrary geometries. Geo-FNO learns to deform the input (physical) domain, which may be irregular, into a latent space with a uniform grid. The FNO model with the FFT is applied in the latent space. The resulting Geo-FNO model has both the computation efficiency of FFT and the flexibility of handling arbitrary geometries. Our Geo-FNO is also flexible in terms of its input formats, viz., point clouds, meshes, and design parameters are all valid inputs. We consider a variety of PDEs such as the Elasticity, Plasticity, Euler’s, and Navier-Stokes equations, and both forward modeling and inverse design problems. Comprehensive cost-accuracy experiments show that Geo-FNO is 105 times faster than the standard numerical solvers and twice more accurate compared to direct interpolation on existing ML-based PDE solvers such as the standard FNO.}
+      \field{title}{Fourier {Neural} {Operator} with {Learned} {Deformations} for {PDEs} on {General} {Geometries}}
+      \field{year}{2022}
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\GIRELEU3\\Li et al. - Fourier Neural Operator with Learned Deformations for PDEs on General Geometries.pdf:application/pdf
+      \endverb
+    \endentry
     \entry{li_fourier_2021}{misc}{}{}
-      \name{author}{7}{}{%
+      \name{author}{7}{ul=2}{%
         {{un=1,uniquepart=given,hash=009036050bf23abe561429f6eaa0b018}{%
            family={Li},
            familyi={L\bibinitperiod},
@@ -678,12 +812,12 @@
       \list{publisher}{1}{%
         {arXiv}%
       }
-      \strng{namehash}{edf93f47ab09a8c56b86e9ad2e628607}
+      \strng{namehash}{502de4b3473ec7b0ec1eb60736d5b721}
       \strng{fullhash}{3e58006f2c869702116637d04136c3b9}
       \strng{fullhashraw}{3e58006f2c869702116637d04136c3b9}
-      \strng{bibnamehash}{edf93f47ab09a8c56b86e9ad2e628607}
-      \strng{authorbibnamehash}{edf93f47ab09a8c56b86e9ad2e628607}
-      \strng{authornamehash}{edf93f47ab09a8c56b86e9ad2e628607}
+      \strng{bibnamehash}{502de4b3473ec7b0ec1eb60736d5b721}
+      \strng{authorbibnamehash}{502de4b3473ec7b0ec1eb60736d5b721}
+      \strng{authornamehash}{502de4b3473ec7b0ec1eb60736d5b721}
       \strng{authorfullhash}{3e58006f2c869702116637d04136c3b9}
       \strng{authorfullhashraw}{3e58006f2c869702116637d04136c3b9}
       \field{sortinit}{L}
