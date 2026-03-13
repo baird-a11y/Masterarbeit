@@ -86,23 +86,50 @@ components.
 \label{sec:poisson_psi}
 % ==========================================================
 
-In two-dimensional incompressible flow, the scalar vorticity is defined as
+In two-dimensional incompressible flow, the scalar vorticity is defined as the
+$z$-component of the curl of the velocity field,
 \begin{equation}
 \omega = \frac{\partial u_z}{\partial x}
-       - \frac{\partial u_x}{\partial z}.
+       - \frac{\partial u_x}{\partial z},
 \end{equation}
-Taking the curl of the Stokes momentum equation eliminates the pressure term and
-yields a Poisson equation for the stream function,
+and measures the local rate of rotation of a fluid element. To derive the
+governing equation for $\omega$, one applies the curl operator to the Stokes
+momentum equation (neglecting the constant body force $\rho\mathbf{g}$, whose
+curl vanishes):
 \begin{equation}
-\Delta \psi = -\omega.
+\nabla \times \bigl(-\nabla p + \mu\,\nabla^2 \mathbf{u}\bigr) = \mathbf{0}.
+\end{equation}
+Since the curl of any gradient is identically zero, $\nabla \times \nabla p =
+\mathbf{0}$, the pressure term drops out. Using the commutativity of curl and
+the Laplacian for smooth fields, the remaining term gives
+\begin{equation}
+\mu\,\nabla^2 \omega = 0,
+\end{equation}
+showing that the vorticity satisfies a homogeneous Laplace equation in Stokes
+flow.
+
+A direct relation between $\omega$ and the stream function $\psi$ follows from
+substituting the definitions $u_x = \partial\psi/\partial z$ and
+$u_z = -\partial\psi/\partial x$ into the expression for vorticity:
+\begin{equation}
+\omega
+= \frac{\partial u_z}{\partial x} - \frac{\partial u_x}{\partial z}
+= -\frac{\partial^2 \psi}{\partial x^2} - \frac{\partial^2 \psi}{\partial z^2}
+= -\nabla^2 \psi.
+\end{equation}
+Rearranging yields the Poisson equation for the stream function,
+\begin{equation}
+\label{eq:poisson_psi}
+\nabla^2 \psi = -\omega.
 \end{equation}
 
 This relationship provides a natural link between velocity-based numerical
 solutions and the stream-function representation. Given a divergence-free
-velocity field, the corresponding vorticity can be computed, and the stream
-function can be reconstructed by solving a Poisson problem with appropriate
-boundary conditions. In the present work, this procedure is applied to
-high-fidelity LaMEM simulations to construct $\psi$ as a learning target.
+velocity field from a numerical solver, the vorticity can be computed by
+finite differences, and the stream function can be reconstructed by solving
+Equation~\eqref{eq:poisson_psi} with appropriate boundary conditions.
+In the present work, this procedure is applied to high-fidelity LaMEM
+simulations to construct $\psi$ as a learning target.
 
 It is important to emphasize that this Poisson solve does not introduce new
 physics. Instead, it constitutes an auxiliary transformation that maps the
@@ -135,7 +162,7 @@ Predicting the stream function $\psi$ introduces a stronger inductive bias by
 restricting the hypothesis space to divergence-free velocity fields by
 construction. This approach is conceptually related to divergence-free neural
 representations proposed in the context of physics-informed and
-structure-preserving learning \parencite{richter-powell_neural_nodate}, and is
+structure-preserving learning \parencite{richter-powell_neural_2022}, and is
 consistent with the neural operator framework \parencite{kovachki_neural_nodate}
 that views surrogate models as approximations of solution operators on
 function spaces. By reducing
@@ -158,7 +185,101 @@ The U-Net \parencite{ronneberger_u-net_2015} is an encoder--decoder convolutiona
 network originally developed for biomedical image segmentation. Its
 architecture consists of three principal components: a contracting encoder
 path, an expanding decoder path, and skip connections that bridge
-corresponding resolution levels.
+corresponding resolution levels. Figure~\ref{fig:unet_arch} provides a
+schematic overview of the architecture as used in this work.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  >=stealth,
+  enc/.style  = {draw, fill=blue!12, rounded corners=3pt,
+                 minimum width=1.4cm, minimum height=2.6cm,
+                 align=center, font=\normalsize},
+  bot/.style  = {draw, fill=red!12, rounded corners=3pt,
+                 minimum width=1.4cm, minimum height=2.6cm,
+                 align=center, font=\normalsize},
+  dec/.style  = {draw, fill=teal!12, rounded corners=3pt,
+                 minimum width=1.4cm, minimum height=2.6cm,
+                 align=center, font=\normalsize},
+  io/.style   = {align=center, font=\normalsize},
+  skip/.style = {->, dashed, thick, gray!70},
+  flow/.style = {->, thick},
+]
+
+% dx = horizontal step per level, dy = vertical step per level
+% Block height = 2.6cm, dy = 3.2cm  =>  0.6cm gap between adjacent levels
+\def\dx{2.6}
+\def\dy{3.2}
+
+% ---- Encoder (staircase: down-right) ----
+\node[enc] (e1) at (0*\dx,  4*\dy) {Conv\\Block\\[4pt]32\,ch};
+\node[enc] (e2) at (1*\dx,  3*\dy) {Down\\Block\\[4pt]64\,ch};
+\node[enc] (e3) at (2*\dx,  2*\dy) {Down\\Block\\[4pt]128\,ch};
+\node[enc] (e4) at (3*\dx,  1*\dy) {Down\\Block\\[4pt]256\,ch};
+
+% ---- Bottleneck ----
+\node[bot] (bot) at (4*\dx, 0)     {Down\\Block\\[4pt]512\,ch};
+
+% ---- Decoder (staircase: up-right) ----
+\node[dec] (d4) at (5*\dx,  1*\dy) {Conv\\Block\\[4pt]256\,ch};
+\node[dec] (d3) at (6*\dx,  2*\dy) {Conv\\Block\\[4pt]128\,ch};
+\node[dec] (d2) at (7*\dx,  3*\dy) {Conv\\Block\\[4pt]64\,ch};
+\node[dec] (d1) at (8*\dx,  4*\dy) {Conv\\Block\\[4pt]32\,ch};
+
+% ---- Input / Output ----
+\node[io] (inp) at (-2.4, 4*\dy)
+    {Mask, SDF,\\ $x$-Coord, $z$-Coord\\ (4\,channels)};
+\node[io] (out) at (8*\dx + 2.2, 4*\dy)
+    {$\hat{\psi}$\\ (1\,channel)};
+
+% ---- Input → enc1 ----
+\draw[flow] (inp.east) -- (e1.west);
+
+% ---- Encoder diagonal arrows (south-east → north-west of next block) ----
+\draw[flow] (e1.south east) --
+    node[right, font=\small, xshift=2pt] {stride\,2} (e2.north west);
+\draw[flow] (e2.south east) --
+    node[right, font=\small, xshift=2pt] {stride\,2} (e3.north west);
+\draw[flow] (e3.south east) --
+    node[right, font=\small, xshift=2pt] {stride\,2} (e4.north west);
+\draw[flow] (e4.south east) --
+    node[right, font=\small, xshift=2pt] {stride\,2} (bot.north west);
+
+% ---- Bottleneck → first decoder stage ----
+\draw[flow] (bot.north east) --
+    node[right, font=\small, xshift=2pt] {bilinear\,$\times\!2$} (d4.south west);
+
+% ---- Decoder diagonal arrows ----
+\draw[flow] (d4.north east) --
+    node[right, font=\small, xshift=2pt] {bilinear\,$\times\!2$} (d3.south west);
+\draw[flow] (d3.north east) --
+    node[right, font=\small, xshift=2pt] {bilinear\,$\times\!2$} (d2.south west);
+\draw[flow] (d2.north east) --
+    node[right, font=\small, xshift=2pt] {bilinear\,$\times\!2$} (d1.south west);
+
+% ---- dec1 → output ----
+\draw[flow] (d1.east) --
+    node[above, font=\small] {Conv\,$1{\times}1$} (out.west);
+
+% ---- Skip connections (horizontal at each level, clear of all blocks) ----
+\draw[skip] (e1.east) -- node[above, font=\small] {concat} (d1.west);
+\draw[skip] (e2.east) -- node[above, font=\small] {concat} (d2.west);
+\draw[skip] (e3.east) -- node[above, font=\small] {concat} (d3.west);
+\draw[skip] (e4.east) -- node[above, font=\small] {concat} (d4.west);
+
+\end{tikzpicture}%
+}
+\caption{Architecture of the U-Net surrogate model used in this work. The
+encoder path (blue) descends the staircase from left to right, halving the
+spatial resolution at each stage via strided convolutions while doubling the
+channel depth (32 to 512). Skip connections (dashed) copy encoder feature maps
+horizontally to the matching decoder level, where they are concatenated with
+the upsampled signal. The decoder path (teal) ascends symmetrically via
+bilinear upsampling. A final $1{\times}1$ convolution maps the 32-channel
+output to the single-channel stream-function prediction $\hat{\psi}$.}
+\label{fig:unet_arch}
+\end{figure}
 
 \subsection{Encoder Path}
 
@@ -228,7 +349,84 @@ The key operation is the multiplication $R_l \cdot \mathcal{F}(v_l)$ in
 Fourier space, which is equivalent to a global convolution in physical space.
 By retaining only $k_{\max}$ modes, the FNO implicitly applies a low-pass
 filter while keeping the number of learnable parameters independent of the
-spatial discretization.
+spatial discretization. Figure~\ref{fig:fourier_layer} illustrates the
+structure of a single Fourier layer.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  >=stealth,
+  box/.style  = {draw, fill=white, rounded corners=2pt,
+                 minimum width=2.0cm, minimum height=0.75cm,
+                 align=center, font=\small},
+  circ/.style = {draw, circle, minimum size=0.7cm, inner sep=0pt,
+                 align=center, font=\normalsize},
+  io/.style   = {align=center, font=\small},
+  arr/.style  = {->, thick},
+  seg/.style  = {thick},
+]
+
+\def\ytop{1.8}
+\def\ybot{-1.8}
+
+% Outer box (drawn first → behind all nodes)
+\draw[rounded corners=5pt, fill=gray!5, draw=gray!50]
+    (1.3, -2.4) rectangle (15.2, 2.4);
+\node[font=\small\itshape, anchor=south west] at (1.5, -2.3)
+    {Fourier Layer};
+
+% Input
+\node[io] (in) at (0, 0) {$v_l(x)$};
+
+% Spectral path
+\node[box] (fft)  at (3.5,  \ytop) {$\mathcal{F}$};
+\node[box] (rk)   at (6.8,  \ytop)
+    {$R_l\,\cdot$\\[-3pt]\scriptsize($k_{\max}$ modes)};
+\node[box] (ifft) at (10.0, \ytop) {$\mathcal{F}^{-1}$};
+
+% Pointwise path
+\node[box] (wl)   at (6.8,  \ybot) {$W_l$};
+
+% Sum and activation
+\node[circ] (sum) at (12.2, 0) {$+$};
+\node[box]  (sig) at (14.0, 0) {$\sigma$};
+
+% Output
+\node[io] (out) at (15.8, 0) {$v_{l+1}(x)$};
+
+% Path labels
+\node[font=\scriptsize, gray, anchor=south west] at (2.2, 0.15)
+    {spectral};
+\node[font=\scriptsize, gray, anchor=north west] at (2.2, -0.15)
+    {pointwise};
+
+% Branch point
+\coordinate (split) at (2.0, 0);
+\fill (split) circle (1.8pt);
+
+% Connections
+\draw[seg] (in.east) -- (split);
+\draw[arr] (split)   |- (fft.west);    % up → spectral path
+\draw[arr] (split)   |- (wl.west);     % down → pointwise path
+\draw[arr] (fft)     --  (rk);
+\draw[arr] (rk)      --  (ifft);
+\draw[arr] (ifft.east) -| (sum.north); % spectral → sum (right then down)
+\draw[arr] (wl.east)   -| (sum.south); % pointwise → sum (right then up)
+\draw[arr] (sum) -- (sig);
+\draw[arr] (sig) -- (out);
+
+\end{tikzpicture}
+\caption{Structure of a single Fourier layer
+(Equation~\eqref{eq:fourier_layer}). The input $v_l(x)$ is split into two
+parallel paths. The spectral path (top) applies the Fast Fourier Transform
+$\mathcal{F}$, multiplies the lowest $k_{\max}$ Fourier modes by the
+learnable weight tensor $R_l$, and transforms back via $\mathcal{F}^{-1}$,
+performing a global convolution in physical space. The pointwise path
+(bottom) applies the local linear transformation $W_l$ directly in the
+spatial domain. Both outputs are summed and passed through a nonlinear
+activation $\sigma$.}
+\label{fig:fourier_layer}
+\end{figure}
 
 \subsection{Architecture}
 

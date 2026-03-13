@@ -582,6 +582,91 @@
       \verb https://www.worldscientific.com/doi/10.1142/S0219876221410188
       \endverb
     \endentry
+    \entry{LeCun2012}{inbook}{}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=e829b794cb4728092b3968ec87467b88}{%
+           family={LeCun},
+           familyi={L\bibinitperiod},
+           given={Yann\bibnamedelima A.},
+           giveni={Y\bibinitperiod\bibinitdelim A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=ac762f2592005edf6bad58f566967c6c}{%
+           family={Bottou},
+           familyi={B\bibinitperiod},
+           given={Léon},
+           giveni={L\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=ea9de995dd928a60e9f2ec878f176627}{%
+           family={Orr},
+           familyi={O\bibinitperiod},
+           given={Genevieve\bibnamedelima B.},
+           giveni={G\bibinitperiod\bibinitdelim B\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9f1b6144a45b1967e989e74552e37ada}{%
+           family={Müller},
+           familyi={M\bibinitperiod},
+           given={Klaus-Robert},
+           giveni={K\bibinithyphendelim R\bibinitperiod},
+           givenun=0}}%
+      }
+      \name{editor}{3}{}{%
+        {{hash=e0889b25b37f68a2d73747dc5dfcb8a0}{%
+           family={Montavon},
+           familyi={M\bibinitperiod},
+           given={Grégoire},
+           giveni={G\bibinitperiod}}}%
+        {{hash=a37988d2f8817dd50a03b4bb6e16ad66}{%
+           family={Orr},
+           familyi={O\bibinitperiod},
+           given={Geneviève\bibnamedelima B.},
+           giveni={G\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+        {{hash=9f1b6144a45b1967e989e74552e37ada}{%
+           family={Müller},
+           familyi={M\bibinitperiod},
+           given={Klaus-Robert},
+           giveni={K\bibinithyphendelim R\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Berlin, Heidelberg}%
+      }
+      \list{publisher}{1}{%
+        {Springer Berlin Heidelberg}%
+      }
+      \strng{namehash}{0e0ba0e8a05afa7242c56015c27153da}
+      \strng{fullhash}{047dba8bd060cd63eaad6de11e478c90}
+      \strng{fullhashraw}{047dba8bd060cd63eaad6de11e478c90}
+      \strng{bibnamehash}{0e0ba0e8a05afa7242c56015c27153da}
+      \strng{authorbibnamehash}{0e0ba0e8a05afa7242c56015c27153da}
+      \strng{authornamehash}{0e0ba0e8a05afa7242c56015c27153da}
+      \strng{authorfullhash}{047dba8bd060cd63eaad6de11e478c90}
+      \strng{authorfullhashraw}{047dba8bd060cd63eaad6de11e478c90}
+      \strng{editorbibnamehash}{e3cedb7c379887c636fcfdc76a12a82d}
+      \strng{editornamehash}{0e9835294203df396bc6021a5d0308c5}
+      \strng{editorfullhash}{e3cedb7c379887c636fcfdc76a12a82d}
+      \strng{editorfullhashraw}{e3cedb7c379887c636fcfdc76a12a82d}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The convergence of back-propagation learning is analyzed so as to explain common phenomenon observed by practitioners. Many undesirable behaviors of backprop can be avoided with tricks that are rarely exposed in serious technical publications. This paper gives some of those tricks, and offers explanations of why they work.}
+      \field{booktitle}{Neural Networks: Tricks of the Trade: Second Edition}
+      \field{isbn}{978-3-642-35289-8}
+      \field{title}{Efficient BackProp}
+      \field{year}{2012}
+      \field{pages}{9\bibrangedash 48}
+      \range{pages}{40}
+      \verb{doi}
+      \verb 10.1007/978-3-642-35289-8_3
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1007/978-3-642-35289-8_3
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1007/978-3-642-35289-8_3
+      \endverb
+    \endentry
     \entry{leonardi_coupled_2014}{article}{}{}
       \name{author}{4}{}{%
         {{un=0,uniquepart=base,hash=aa30ca4cda3fe79c23b4ac7ffa3644c8}{%
@@ -1948,7 +2033,7 @@
       \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\TKMXS2V6\\Ribeiro et al. - DeepCFD Efficient Steady-State Laminar Flow Approximation with Deep Convolutional Neural Networks.pdf:application/pdf
       \endverb
     \endentry
-    \entry{richter-powell_neural_nodate}{article}{}{}
+    \entry{richter-powell_neural_2022}{article}{}{}
       \name{author}{3}{}{%
         {{un=0,uniquepart=base,hash=8c983ca3f0bb700a5728bb56405e2c36}{%
            family={Richter-Powell},
@@ -1982,11 +2067,13 @@
       \strng{authorfullhashraw}{3d4c01a9f24ed55aa7ac4f823428758a}
       \field{sortinit}{R}
       \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
-      \field{labeldatesource}{nodate}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{abstract}{We investigate the parameterization of deep neural networks that by design satisfy the continuity equation, a fundamental conservation law. This is enabled by the observation that any solution of the continuity equation can be represented as a divergence-free vector field. We hence propose building divergence-free neural networks through the concept of differential forms, and with the aid of automatic differentiation, realize two practical constructions. As a result, we can parameterize pairs of densities and vector fields that always exactly satisfy the continuity equation, foregoing the need for extra penalty methods or expensive numerical simulation. Furthermore, we prove these models are universal and so can be used to represent any divergence-free vector field. Finally, we experimentally validate our approaches by computing neural network-based solutions to fluid equations, solving for the Hodge decomposition, and learning dynamical optimal transport maps.}
       \field{title}{Neural {Conservation} {Laws}: {A} {Divergence}-{Free} {Perspective}}
+      \field{year}{2022}
       \verb{file}
       \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\2EJUHHVU\\Richter-Powell et al. - Neural Conservation Laws A Divergence-Free Perspective.pdf:application/pdf
       \endverb

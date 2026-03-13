@@ -21,7 +21,7 @@ which enforces incompressibility by construction. The theoretical motivation for
 
 From the perspective of surrogate modeling, predicting $\psi$ instead of $\mathbf{u}$ directly offers two key benefits. First, it reduces the learning problem from a vector-valued to a scalar regression task, lowering the
 effective degrees of freedom. Second, incompressibility is guaranteed analytically rather than having to be learned from data, which eliminates a common source of systematic error in purely data-driven velocity surrogates
-\parencite{ribeiro_deepcfd_nodate,thuerey_deep_2020}. This choice injects physical structure into the learning problem through the output representation rather than through penalty terms, consistent with divergence-free parameterizations advocated in related work \parencite{richter-powell_neural_nodate}.
+\parencite{ribeiro_deepcfd_nodate,thuerey_deep_2020}. This choice injects physical structure into the learning problem through the output representation rather than through penalty terms, consistent with divergence-free parameterizations advocated in related work \parencite{richter-powell_neural_2022}.
 
 The central experimental factor in this thesis is therefore not the choice of learning target—which is fixed to $\psi$ for all experiments—but the choice of network architecture. By training both U-Net and FNO on identical data with the same learning target, performance differences can be attributed to the architectural inductive bias: spatial hierarchical processing versus spectral global processing.
 
@@ -83,14 +83,24 @@ on the same $256\times256$ grid. Reconstructing $\psi$ via a Poisson problem is 
 
 \subsection{Discretization and Boundary Conditions}
 
-The Laplace operator is discretized with a second-order five-point stencil on interior grid points. Homogeneous Dirichlet conditions $\psi|_{\partial\Omega}=0$ are imposed on the domain boundary to fix the stream-function gauge and yield a unique discrete solution. Since all evaluation comparisons are ultimately performed against LaMEM-derived quantities on the same grid, the Poisson solve serves as an auxiliary reconstruction step rather than an independent physical model.
+The Laplace operator is discretized with a second-order five-point stencil on interior grid points. Denoting the one-dimensional second-difference matrices in $x$ and $z$ as $T_x \in \mathbb{R}^{n_x \times n_x}$ and $T_z \in \mathbb{R}^{n_z \times n_z}$, respectively, the discrete Laplacian is assembled via Kronecker products,
+\[
+    L = \frac{1}{\Delta x^2}\,(I_z \otimes T_x)
+      + \frac{1}{\Delta z^2}\,(T_z \otimes I_x),
+\]
+where $I_x$ and $I_z$ are identity matrices of matching dimension. This construction yields a sparse $(n_x n_z)\times(n_x n_z)$ system and is standard for uniform-grid Poisson problems.
 
-The resulting sparse linear system is solved iteratively. The specific solver is not critical for the learning setup, provided the reconstruction error is small compared to the surrogate prediction error. 
+Homogeneous Dirichlet conditions $\psi|_{\partial\Omega}=0$ are imposed on all boundary nodes by replacing the corresponding rows in $L$ with unit rows and setting the right-hand side entries to zero. This fixes the stream-function gauge and yields a unique discrete solution.
+
+The resulting sparse linear system $L\,\psi = -\omega$ is solved directly using a sparse LU factorization (Julia's built-in backslash operator, which calls UMFPACK). Since the grid is fixed at $256\times256$, the system has $65\,536$ unknowns and the direct solve completes in well under one second per sample, making an iterative approach unnecessary. After solving, a constant offset equal to the value at the corner node $\psi_{1,1}$ is subtracted to remove any residual floating-point gauge ambiguity.
+
+Since all evaluation comparisons are ultimately performed against LaMEM-derived quantities on the same grid, the Poisson solve serves as an auxiliary reconstruction step rather than an independent physical model.
 
 \subsection{Motivation and Procedure for Normalization}
 
-Raw values of $\psi$ can span several orders of magnitude (typically $10^{-16}$ to $10^{-10}$), depending on velocity magnitude, viscosity, and grid spacing. While such values are well resolved in the numerical solver,
-they are unfavorable for gradient-based learning because they lead to ill-conditioned losses and large sample-to-sample dynamic range. To improve numerical conditioning, each sample is normalized individually. We compute a characteristic order of magnitude
+Raw values of $\psi$ can span several orders of magnitude (typically $10^{-16}$ to $10^{-10}$), depending on velocity magnitude, viscosity, and grid spacing. While such values are well resolved in the numerical solver, they are unfavorable for gradient-based learning. The theoretical reason is rooted in the geometry of the loss landscape: for a gradient-based learner, the condition number $\kappa = \lambda_{\max}/\lambda_{\min}$ of the Hessian of the loss with respect to the network weights determines how well a single learning rate can serve all directions of the weight space simultaneously. For a linear layer with input $x$, the Hessian equals the input covariance matrix $H = P^{-1}\sum_p x^p x^{p\top}$; consequently, inputs of very large magnitude generate a dominant eigenvalue $\lambda_{\max}$, inflating $\kappa$ and forcing the optimizer into inefficient zigzag steps along the ill-conditioned directions \parencite{LeCun2012}. In practice, this manifests as slow convergence and sensitivity to the choice of learning rate. Shifting inputs to zero mean and unit variance reduces $\kappa$ and yields a more isotropic error surface on which standard first-order optimizers such as Adam converge reliably.
+
+To bring $\psi$ into a numerically suitable range without discarding its spatial structure or sign, each sample is normalized individually. We compute a characteristic order of magnitude
 \[
 p_{\mathrm{mean}}=
 \mathrm{round}\!\left(
@@ -102,15 +112,14 @@ and scale the field as
 \[
 \psi_{\mathrm{norm}}=\psi\cdot 10^{-p_{\mathrm{mean}}}.
 \]
-Training is performed on $\psi_{\mathrm{norm}}$, and predictions are rescaled after inference by multiplying with $10^{p_{\mathrm{mean}}}$. This preserves the spatial structure and sign of $\psi$ while shifting values into an
-$\mathcal{O}(1)$ range that yields stable optimization.
+Training is performed on $\psi_{\mathrm{norm}}$, and predictions are rescaled after inference by multiplying with $10^{p_{\mathrm{mean}}}$. This preserves the spatial structure and sign of $\psi$ while shifting values into an $\mathcal{O}(1)$ range that yields stable optimization.
 
 % ==========================================================
 \section{Input Representation: Mask, Distance Field, and Coordinates}
 \label{sec:input_channels}
 % ==========================================================
 
-Both architectures receive the same five-channel input, generated by a shared data pipeline. Training data are generated using the FNO data generation code and stored as JLD2 files; these files are then loaded identically for both U-Net and FNO training. Encoding geometry through masks, distance fields, and coordinate channels is common in structured-grid PDE surrogates and geometry-aware learning frameworks \parencite{thuerey_deep_2020,oldenburg_geometry_2022}.
+Both architectures receive the same five-channel input, generated by a shared data pipeline. Training data are generated using the FNO data generation code (Beide nutzen eigentlich den gleichen Code. Ich hätte die Datengenerierung extern erstellen können und nicht an eine Architecture binden. Ich dachte damals, dass ich ggf. für das FNO die Daten anders erstellen und speichern muss als für das U-Net, dass ist aber nicht so)and stored as JLD2 files; these files are then loaded identically for both U-Net and FNO training. Encoding geometry through masks, distance fields, and coordinate channels is common in structured-grid PDE surrogates and geometry-aware learning frameworks \parencite{thuerey_deep_2020,oldenburg_geometry_2022}.
 
 The five input channels are:
 
@@ -131,6 +140,7 @@ The five input channels are:
 
     \item \textbf{Radius of nearest crystal.}
     For each grid point, the radius of the geometrically closest crystal is stored as an explicit channel. In Experiments~1--3, all crystals share the same fixed radius, so this channel carries no configurational information and has little effect on model behavior. It is included to prepare the input representation for Experiment~4, in which crystal radii vary and this channel becomes a meaningful geometric feature.
+    (Problem hier ist, ich nutze das eigentlich nie. Ich habe zwar meine besten modelle auf kleinere und größere Radi evaluiert aber nie trainiert. Frage ist, wie viele Samples bräuchte ich für eine gegeben radis schwankung von x <= 0 r <= y, um zumindest bei einem Kristall zu sehen/zeigen das es a funktioniert und b sicherstelle, dass es nicht an der Menge der Samples lang das es nicht funktioniert. Ich will ja zeigen ob und wie gut es auch auf unbekannte Radien generalisiert.Könnte man später vielleicht damit einleiten, erst die Ergenisse dafür zu zeigen, was passiert wenn man mit festen radi trainiert und auf unbekannte radi evaluiert, und dann zeigen, dass es mit variablen radi trainiert deutlich besser funktioniert. Dann könnte ich schauen, wie gut es für den Fall klappt wenn der Radi z zwischen den Radi x und y liegt und was passiert, wenn dieser kleinder oder größer als x und y ist. Aktuell werden die Modelle auf Radi größe 0.05 trainiert. Da ich die 1000 Samples schon habe, könnte ich auf 0.02 und auf 0.08 gehen. Dann kann ich für die Evaluation einmal 0.035 und 0.065 nehmen und 0.01 und 0.1. Das würde schonmal zeigen, wie gut die Modelle auf unbekannte Radien generalisieren, wenn sie mit variablen Radien trainiert wurden, und wie schlecht sie generalisieren, wenn sie mit festen Radien trainiert wurden.)
 
     \item \textbf{Normalized $x$-coordinate.}
     The horizontal coordinate is linearly mapped to $x_{\mathrm{norm}}\in[-1,1]$, providing the network with absolute positional information.
