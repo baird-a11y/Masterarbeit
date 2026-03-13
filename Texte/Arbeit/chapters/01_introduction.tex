@@ -19,9 +19,9 @@ Accurate numerical simulation of multi-crystal sedimentation remains computation
     \item \textbf{Domain-scale flow structures} that control the large-scale transport of crystals and melt.
 \end{itemize}
 
-The computational cost of resolving hydrodynamic interactions typically scales between $\mathcal{O}(N^2)$ and $\mathcal{O}(N^3)$ with the number of particles $N$ \parencite{ladd_numerical_nodate}. Numerical methods that explicitly couple particle and fluid dynamics—such as lattice Boltzmann discrete element methods (LBM-DEM) or immersed boundary approaches—generally require each particle to be resolved by tens to hundreds of grid cells. Even in two-dimensional configurations, this leads to simulations with $10^5$-$10^6$ fluid nodes per particle \parencite{Li_IBM-LBM-DEM_2022,leonardi_coupled_2014}. For systems containing more than ten crystals, total grid sizes can easily exceed $10^7$--$10^8$ degrees of freedom, resulting in runtimes ranging from several hours to multiple days per simulation \parencite{Li_IBM-LBM-DEM_2022}.
+The computational cost of resolving hydrodynamic interactions typically scales between $\mathcal{O}(N^2)$ and $\mathcal{O}(N^3)$ with the number of particles $N$ \parencite{ladd_numerical_nodate}. Numerical methods that explicitly couple particle and fluid dynamics such as lattice Boltzmann discrete element methods (LBM-DEM) or immersed boundary approaches generally require each particle to be resolved by tens to hundreds of grid cells. Even in two-dimensional configurations, this leads to simulations with $10^5$-$10^6$ fluid nodes per particle \parencite{Li_IBM-LBM-DEM_2022,leonardi_coupled_2014}. For systems containing more than ten crystals, total grid sizes can easily exceed $10^7$--$10^8$ degrees of freedom, resulting in runtimes ranging from several hours to multiple days per simulation \parencite{Li_IBM-LBM-DEM_2022}.
 
-Such computational demands make systematic parameter studies effectively infeasible. Investigating the influence of crystal size, viscosity contrast, particle number, or spatial arrangement would require thousands of high-fidelity simulations and thus exceed practical computational budgets. This is the main practical reason why surrogate models—capable of approximating the underlying flow fields at a fraction of the computational cost—have attracted growing interest in recent years.
+Such computational demands make systematic parameter studies effectively infeasible. Investigating the influence of crystal size, viscosity contrast, particle number, or spatial arrangement would require thousands of high-fidelity simulations and thus exceed practical computational budgets. This is the main practical reason why surrogate models capable of approximating the underlying flow fields at a fraction of the computational cost—have attracted growing interest in recent years.
 
 \section{Machine Learning as a Surrogate Modeling Strategy}
 
@@ -29,18 +29,18 @@ Machine learning has increasingly been applied to accelerate predictions in flui
 
 First, U-Net architectures \parencite{ronneberger_u-net_2015} leverage an encoder--decoder structure with skip connections to capture multiscale spatial features. Their ability to encode complex geometric information at multiple resolutions has made them a widely used choice for structured flow-field prediction \parencite{guo_convolutional_2016,thuerey_deep_2020,ribeiro_deepcfd_nodate,chen_u-net_nodate}.
 
-Second, Fourier Neural Operators (FNOs) \parencite{li_fourier_2021} learn mappings between function spaces by performing convolutions in the spectral domain via the Fast Fourier Transform. By operating in frequency space, FNOs can efficiently capture global, long-range dependencies in the solution field—a property that is particularly attractive for problems governed by elliptic operators such as the Stokes equations.
+Second, Fourier Neural Operators (FNOs) \parencite{li_fourier_2021} learn mappings between function spaces by performing convolutions in the spectral domain via the Fast Fourier Transform. By operating in frequency space, FNOs can efficiently capture global, long-range dependencies in the solution field a property that is particularly attractive for problems governed by elliptic operators such as the Stokes equations.
 
 Both approaches have been shown to achieve speed-ups of several orders of magnitude over classical solvers, while maintaining acceptable accuracy across a range of flow problems. Beyond purely data-driven approaches, physics-informed neural networks (PINNs) \parencite{raissi_physics_2017,raissi_physics-informed_2019,jin_nsfnets_2021} incorporate governing equations directly into the training objective, encouraging physically consistent predictions even when training data are scarce.
 
-A broader overview of recent developments—including geometry-aware PINNs, neural operators, and scalable U-Net variants for complex flow problems—is given in Chapter~\ref{ch:related}. These advances motivate the central premise of this thesis: How well can U-Net and FNO architectures, trained on a limited number of crystal configurations, generalize to unseen sedimentation scenarios with varying particle numbers and spatial arrangements? And which architecture is better suited for this task, given their fundamentally different approaches to capturing spatial structure?
+A broader overview of recent developments including geometry-aware PINNs, neural operators, and scalable U-Net variants for complex flow problems is given in Chapter~\ref{ch:related}. These advances motivate the central premise of this thesis: How well can U-Net and FNO architectures, trained on a limited number of crystal configurations, generalize to unseen sedimentation scenarios with varying particle numbers and spatial arrangements? And which architecture is better suited for this task, given their fundamentally different approaches to capturing spatial structure?
 
 \section{Research Question and Hypothesis}
 
 The central research question of this thesis is:
 
 \begin{quote}
-\emph{To what extent can U-Net and Fourier Neural Operator architectures, trained on configurations containing up to a fixed maximal number of crystals ($N$), generalize to unseen sedimentation scenarios with varying particle numbers and spatial arrangements—and which factors fundamentally limit this generalization capability?}
+\emph{To what extent can U-Net and Fourier Neural Operator architectures, trained on configurations containing up to a fixed maximal number of crystals ($N$), generalize to unseen sedimentation scenarios with varying particle numbers and spatial arrangements and which factors fundamentally limit this generalization capability?}
 \end{quote}
 
 This question is of direct relevance to geoscientific applications, as natural sedimentation processes rarely involve fixed particle counts or highly regular geometries. A practically useful surrogate model must therefore generalize across a wide 
@@ -50,11 +50,11 @@ We hypothesize that an ML-based surrogate model can achieve such generalization 
 
 \begin{enumerate}
     \item the training data sufficiently sample the space of possible geometric configurations;
-    \item the learning task incorporates a physically meaningful target representation—such as the stream function $\psi$—which enforces incompressibility by construction and reduces the effective degrees of freedom of the problem;
-    \item the network architecture captures the inherently multiscale character of crystal--fluid interactions—whether through spatially hierarchical feature extraction (U-Net) or through global spectral representations (FNO).
+    \item the learning task incorporates a physically meaningful target representation such as the stream function $\psi$—which enforces incompressibility by construction and reduces the effective degrees of freedom of the problem;
+    \item the network architecture captures the inherently multiscale character of crystal--fluid interactions whether through spatially hierarchical feature extraction (U-Net) or through global spectral representations (FNO).
 \end{enumerate}
 
-The controlled comparison of U-Net and FNO architectures presented in this thesis is designed to explicitly test these hypotheses, to quantify the impact of architectural choice on predictive performance, and to identify which paradigm—local spatial convolutions or global spectral operations—is better suited for surrogate modeling of multi-crystal Stokes flow.
+The controlled comparison of U-Net and FNO architectures presented in this thesis is designed to explicitly test these hypotheses, to quantify the impact of architectural choice on predictive performance, and to identify which paradigm—local spatial convolutions or global spectral operations is better suited for surrogate modeling of multi-crystal Stokes flow.
 
 \section{Objectives and Scope of the Study}
 
