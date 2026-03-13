@@ -46,6 +46,18 @@ fno_exp1_dir(bs::Int, cfg::Int) =
 fno_exp23_dir(exp::Int, bs::Int) =
     joinpath(RES, "FNO_Ergebnisse", "Experiment_$exp", "eval_output_exp$(exp)_$(bs)")
 
+"""Gibt den Pfad für U-Net Exp-2 / Exp-3 zurück."""
+unet_exp23_dir(exp::Int, bs::Int) =
+    joinpath(RES, "UNET_Ergebnisse", "Experiment_$exp", "exp$(exp)_$(bs)")
+
+"""Gibt den Pfad für FNO Exp-4 (Kristallgröße) zurück. size ∈ ("big", "small")"""
+fno_exp4_dir(size::String) =
+    joinpath(RES, "FNO_Ergebnisse", "Experiment_4", "eval_output_exp1_16_$size")
+
+"""Gibt den Pfad für U-Net Exp-4 (Kristallgröße) zurück. size ∈ ("big", "small")"""
+unet_exp4_dir(size::String) =
+    joinpath(RES, "UNET_Ergebnisse", "Experiment_4", "exp2_8_$size")
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Fig 1 & 2: Trainingskurven (FNO und U-Net)
@@ -55,9 +67,9 @@ function plot_training_curves(arch::String, fig_nr::Int)
 
     for (col, bs) in enumerate([16, 8])
         ax = Axis(fig[1, col],
-            xlabel = "Epoche",
-            ylabel = col == 1 ? "Validierungsfehler (rel. L²)" : "",
-            title  = "$arch – Experiment 1, Batch-Größe $bs",
+            xlabel = "Epoch",
+            ylabel = col == 1 ? "Validation error (rel. L²)" : "",
+            title  = "$arch – Experiment 1, batch size $bs",
             yscale = log10,
         )
 
@@ -93,9 +105,9 @@ function plot_eval_bar_chart()
 
     for (col, bs) in enumerate([16, 8])
         ax = Axis(fig[1, col],
-            xlabel = "Lernrate",
-            ylabel = col == 1 ? "Relativer L²-Fehler (n = 1)" : "",
-            title  = "Exp. 1 – Evaluation, Batch-Größe $bs",
+            xlabel = "Learning rate",
+            ylabel = col == 1 ? "Relative L² error (n = 1)" : "",
+            title  = "Exp. 1 – Evaluation, batch size $bs",
             xticks = (1:4, [LR_LABEL[i] for i in 1:4]),
             xticklabelrotation = π / 5,
         )
@@ -140,7 +152,7 @@ function plot_eval_bar_chart()
         any(valid(psi_unet)) && barplot!(ax, xs[valid(psi_unet)] .+ 0.5w,
             psi_unet[valid(psi_unet)]; width=w, color=C[3], label="U-Net – ψ")
         any(valid(vel_unet)) && barplot!(ax, xs[valid(vel_unet)] .+ 1.5w,
-            vel_unet[valid(vel_unet)]; width=w, color=C[4], label="U-Net – v")
+            vel_unet[valid(vel_unet)]; width=w, color=C[4], label="U-Net – v")  # labels already English
 
         axislegend(ax, position=:rt, framevisible=true)
     end
@@ -159,12 +171,12 @@ function plot_exp23_scaling()
     fig = Figure(size=(1150, 470), fontsize=14)
 
     for (col, (exp_nr, title, max_train)) in enumerate([
-        (2, "FNO – Exp. 2 (Training: n = 1–10)", 10),
-        (3, "FNO – Exp. 3 (Training: n = 1–25)", 25),
+        (2, "FNO – Exp. 2 (training: n = 1–10)", 10),
+        (3, "FNO – Exp. 3 (training: n = 1–25)", 25),
     ])
         ax = Axis(fig[1, col],
-            xlabel = "Anzahl Kristalle n",
-            ylabel = col == 1 ? "Relativer L²-Fehler" : "",
+            xlabel = "Number of crystals n",
+            ylabel = col == 1 ? "Relative L² error" : "",
             title  = title,
         )
 
@@ -221,8 +233,8 @@ function plot_best_config_comparison()
     fig = Figure(size=(900, 430), fontsize=14)
     ax = Axis(fig[1, 1],
         xlabel = "Epoche",
-        ylabel = "Validierungsfehler (rel. L²)",
-        title  = "Vergleich FNO vs. U-Net – Batch-Größe 16",
+        ylabel = "Validation error (rel. L²)",
+        title  = "FNO vs. U-Net comparison – batch size 16",
         yscale = log10,
     )
 
@@ -268,8 +280,8 @@ function plot_fno_exp23_training()
     ]
         fig = Figure(size=(700, 430), fontsize=14)
         ax  = Axis(fig[1, 1],
-            xlabel = "Epoche",
-            ylabel = "Validierungsfehler (rel. L²)",
+            xlabel = "Epoch",
+            ylabel = "Validation error (rel. L²)",
             title  = title,
             yscale = log10,
         )
@@ -282,7 +294,7 @@ function plot_fno_exp23_training()
             df === nothing && (println("  Warnung: $p nicht gefunden."); continue)
             any_data = true
             lines!(ax, df.epoch, df.val_rel_l2;
-                   color=C[col_idx], linewidth=2, linestyle=lstyle, label="val rel. L² (bs=$bs)")
+                   color=C[col_idx], linewidth=2, linestyle=lstyle, label="val. rel. L² (bs=$bs)")
         end
         any_data || println("  Warnung: keine History für Exp. $exp_nr gefunden.")
         axislegend(ax, position=:rt, framevisible=true)
@@ -292,6 +304,164 @@ function plot_fno_exp23_training()
         save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
         println("  Gespeichert: $fname")
     end
+end
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Fig 8 & 9: U-Net Exp-2 & Exp-3 – Trainingskurven
+# ═══════════════════════════════════════════════════════════════════════════════
+function plot_unet_exp23_training()
+    for (exp_nr, fig_nr, exp_str, title) in [
+        (2, 8, "exp2", "U-Net – Experiment 2 (n = 1–10)"),
+        (3, 9, "exp3", "U-Net – Experiment 3 (n = 1–25)"),
+    ]
+        fig = Figure(size=(700, 430), fontsize=14)
+        ax  = Axis(fig[1, 1],
+            xlabel = "Epoch",
+            ylabel = "Validation error (rel. L²)",
+            title  = title,
+            yscale = log10,
+        )
+
+        any_data = false
+        for (bs, col_idx, lstyle) in [(16, 1, :solid), (8, 2, :dash)]
+            p  = joinpath(unet_exp23_dir(exp_nr, bs), "training_history.csv")
+            df = safe_csv(p)
+            df === nothing && (println("  Warnung: $p nicht gefunden."); continue)
+            any_data = true
+            lines!(ax, df.epoch, df.val_rel_l2;
+                   color=C[col_idx], linewidth=2, linestyle=lstyle, label="val. rel. L² (bs=$bs)")
+        end
+        any_data || println("  Warnung: keine History für U-Net Exp. $exp_nr gefunden.")
+        axislegend(ax, position=:rt, framevisible=true)
+
+        fname = "fig$(fig_nr)_unet_$(exp_str)_training"
+        save(joinpath(OUT, fname * ".pdf"), fig)
+        save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
+        println("  Gespeichert: $fname")
+    end
+end
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Fig 10 & 11: U-Net Exp-2 & Exp-3 – Generalisierung über Kristallanzahl
+# ═══════════════════════════════════════════════════════════════════════════════
+function plot_unet_exp23_scaling()
+    fig = Figure(size=(1150, 470), fontsize=14)
+
+    for (col, (exp_nr, title, max_train)) in enumerate([
+        (2, "U-Net – Exp. 2 (training: n = 1–10)", 10),
+        (3, "U-Net – Exp. 3 (training: n = 1–25)", 25),
+    ])
+        ax = Axis(fig[1, col],
+            xlabel = "Number of crystals n",
+            ylabel = col == 1 ? "Relative L² error" : "",
+            title  = title,
+        )
+
+        any_data = false
+        for (bs_idx, (bs, lstyle)) in enumerate([(16, :solid), (8, :dash)])
+            p  = joinpath(unet_exp23_dir(exp_nr, bs), "eval_psi_indist_by_n.csv")
+            df = safe_csv(p)
+            df === nothing && continue
+            any_data = true
+
+            id  = df.n_crystals .<= max_train
+            ood = .!id
+            bs_lbl = "bs=$bs"
+
+            scatter!(ax, df.n_crystals[id], df.psi_rel_l2_mean[id];
+                     color=C[1], markersize=8)
+            lines!(ax, df.n_crystals[id], df.psi_rel_l2_mean[id];
+                   color=C[1], linewidth=2, linestyle=lstyle, label="ψ ($bs_lbl, in-dist)")
+            scatter!(ax, df.n_crystals[id], df.v_rel_l2_mean[id];
+                     color=C[2], markersize=8)
+            lines!(ax, df.n_crystals[id], df.v_rel_l2_mean[id];
+                   color=C[2], linewidth=2, linestyle=lstyle, label="v ($bs_lbl, in-dist)")
+
+            if any(ood)
+                scatter!(ax, df.n_crystals[ood], df.psi_rel_l2_mean[ood];
+                         color=C[1], marker=:diamond, markersize=9)
+                lines!(ax, df.n_crystals[ood], df.psi_rel_l2_mean[ood];
+                       color=C[1], linewidth=2, linestyle=lstyle, label="ψ ($bs_lbl, OOD)")
+                scatter!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
+                         color=C[2], marker=:diamond, markersize=9)
+                lines!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
+                       color=C[2], linewidth=2, linestyle=lstyle, label="v ($bs_lbl, OOD)")
+                bs_idx == 1 && vlines!(ax, [max_train + 0.5];
+                                       color=:gray60, linestyle=:dot, linewidth=1.5)
+            end
+        end
+
+        any_data || println("  Warnung: keine Daten für U-Net Exp. $exp_nr gefunden.")
+        axislegend(ax, position=:lt, framevisible=true)
+    end
+
+    fname = "fig10_unet_exp23_generalisierung"
+    save(joinpath(OUT, fname * ".pdf"), fig)
+    save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
+    println("  Gespeichert: $fname")
+end
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Fig 11: Exp-4 – Kristallgrößen-Generalisierung (FNO vs. U-Net, big / small)
+# ═══════════════════════════════════════════════════════════════════════════════
+function plot_exp4_size_generalization()
+    fig = Figure(size=(700, 480), fontsize=14)
+    ax  = Axis(fig[1, 1],
+        ylabel = "Relative L² error",
+        title  = "Exp. 4 – Crystal size generalization",
+        xticks = ([1, 2, 3, 4], ["FNO – large", "FNO – small", "U-Net – large", "U-Net – small"]),
+        xticklabelrotation = π / 6,
+    )
+
+    # Werte einlesen: FNO nutzt eval_aggregated.csv, U-Net nutzt eval_psi_indist_by_n.csv
+    vals = Dict{Tuple{String,String,String}, Float64}()  # (arch, size, metric) => value
+
+    for size in ("big", "small")
+        df = safe_csv(joinpath(fno_exp4_dir(size), "eval_aggregated.csv"))
+        if df !== nothing && nrow(df) > 0
+            vals[("fno", size, "psi")] = df.psi_rel_l2_mean[1]
+            vals[("fno", size, "v")]   = df.v_rel_l2_mean[1]
+        end
+
+        df = safe_csv(joinpath(unet_exp4_dir(size), "eval_psi_indist_by_n.csv"))
+        if df !== nothing && nrow(df) > 0
+            vals[("unet", size, "psi")] = df.psi_rel_l2_mean[1]
+            vals[("unet", size, "v")]   = df.v_rel_l2_mean[1]
+        end
+    end
+
+    if isempty(vals)
+        println("  Warnung: keine Daten für Exp. 4 gefunden.")
+        return
+    end
+
+    # Positionen: 1=FNO-big, 2=FNO-small, 3=UNet-big, 4=UNet-small
+    configs = [("fno","big"), ("fno","small"), ("unet","big"), ("unet","small")]
+    w = 0.3
+
+    psi_vals = [get(vals, (a, s, "psi"), NaN) for (a,s) in configs]
+    v_vals   = [get(vals, (a, s, "v"),   NaN) for (a,s) in configs]
+
+    xs = 1:4
+    valid(v) = .!isnan.(v)
+
+    any(valid(psi_vals)) && barplot!(ax, xs[valid(psi_vals)] .- w/2,
+        psi_vals[valid(psi_vals)]; width=w, color=C[1], label="ψ")
+    any(valid(v_vals))   && barplot!(ax, xs[valid(v_vals)]   .+ w/2,
+        v_vals[valid(v_vals)];   width=w, color=C[2], label="v")
+
+    # Trennlinie zwischen FNO und U-Net
+    vlines!(ax, [2.5]; color=:gray60, linestyle=:dot, linewidth=1.5)
+
+    axislegend(ax, position=:rt, framevisible=true)
+
+    fname = "fig11_exp4_kristallgroesse"
+    save(joinpath(OUT, fname * ".pdf"), fig)
+    save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
+    println("  Gespeichert: $fname")
 end
 
 
@@ -309,6 +479,9 @@ plot_eval_bar_chart()
 plot_exp23_scaling()
 plot_best_config_comparison()
 plot_fno_exp23_training()
+plot_unet_exp23_training()
+plot_unet_exp23_scaling()
+plot_exp4_size_generalization()
 
 println("=" ^ 60)
 println("Fertig! Alle Abbildungen gespeichert in:")

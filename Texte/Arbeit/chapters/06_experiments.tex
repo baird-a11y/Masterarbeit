@@ -47,10 +47,11 @@ The dataset is stratified by crystal count. For each stratum, 1\,000 samples are
 
 Both models learn the mapping from a geometric encoding of the crystal configuration to the normalized stream function $\psi_{\mathrm{norm}}$. The stream function is chosen as the learning target because it implicitly encodes the incompressibility constraint: the velocity field $\mathbf{u} = (\partial\psi/\partial z,\, -\partial\psi/\partial x)$ is divergence-free by construction.
 
-Each input sample consists of four channels on a $256 \times 256$ Cartesian grid:
+Each input sample consists of five channels on a $256 \times 256$ Cartesian grid:
 \begin{enumerate}
     \item \textbf{Crystal mask} — binary indicator of solid crystal regions ($1$ inside, $0$ outside).
     \item \textbf{Signed distance field (SDF)} — signed distance to the nearest crystal boundary, providing smooth geometric information beyond the binary mask.
+    \item \textbf{Radius of nearest crystal} — for each grid point, the radius of the geometrically closest crystal. In Experiments~1--3 all crystals share the same fixed radius, so this channel carries no configurational variation; it is included to prepare the input representation for Experiment~4, in which crystal radii vary.
     \item \textbf{Normalized $x$-coordinate} — grid position along the horizontal axis, scaled to $[-1, 1]$.
     \item \textbf{Normalized $z$-coordinate} — grid position along the vertical axis, scaled to $[-1, 1]$.
 \end{enumerate}
@@ -73,7 +74,7 @@ Predictions are evaluated on the normalized stream function $\psi_{\mathrm{norm}
     \item[Boundary MSE] MSE evaluated exclusively on the domain boundary $\partial\Omega$, measuring compliance with the homogeneous Dirichlet condition $\psi|_{\partial\Omega} = 0$.
 \end{description}
 
-All metrics are aggregated by crystal count to assess how performance scales with geometric complexity. This stratification is essential for distinguishing in-distribution accuracy from out-of-distribution generalization.
+All metrics are aggregated by crystal count to assess how performance scales with geometric complexity. This stratification is essential for distinguishing in-distribution accuracy from out-of-distribution (OOD) generalization.
 
 % ----------------------------------------------------------------------------
 \section{Experimental Configurations}
@@ -91,7 +92,7 @@ Four learning rates are evaluated ($1 \times 10^{-3}$, $5 \times 10^{-3}$, $1 \t
 Models are trained on samples with $n \in \{1, \ldots, 10\}$ crystals and evaluated separately for each crystal count, including unseen higher counts ($n = 11, \ldots, 25$). This experiment assesses the ability of each architecture to generalize to geometric configurations more complex than those encountered during training—a capability that is critical for practical applications in geodynamics, where the number of crystals can vary widely.
 
 \paragraph{Experiment 3 – Stress-testing generalization limits.}
-Models are trained on configurations with up to $n = 25$ crystals and subsequently evaluated on substantially more complex scenes with up to $n = 100$ crystals. This experiment probes whether the models can capture the interactions arising from a large number of obstacles or whether their generalization capability breaks down beyond a critical level of geometric complexity.
+Models are trained on configurations with up to $n = 25$ crystals and subsequently evaluated on substantially more complex scenes with up to $n = 84$ crystals. This experiment probes whether the models can capture the interactions arising from a large number of obstacles or whether their generalization capability breaks down beyond a critical level of geometric complexity.
 
 \paragraph{Experiment 4 – Crystal size generalization.}
 Models are trained as in Experiment~2, but the crystals in the evaluation samples are additionally scaled by up to a factor of ten in both directions relative to the training distribution. This experiment tests whether the models can generalize not only to larger numbers of crystals, but also to unseen obstacle sizes, introducing a further axis of out-of-distribution generalization.
@@ -134,7 +135,7 @@ Max.\ gradient norm      & ---                         & 1.0                    
 Loss                     & Composite (MSE + grad + bnd) & Composite (MSE + grad + bnd)           \\
 Batch size               & 8/16                           & 8/16                                     \\
 Epochs (Exp.\,1)         & 180                       & 100                                   \\
-Input channels           & 4                           & 4                                      \\
+Input channels           & 5                           & 5                                      \\
 Output channels          & 1                           & 1                                      \\
 Base channels / width    & 32                          & $d_v = 64$                             \\
 Architecture depth       & 4 encoder levels            & $L = 4$ FNO blocks                     \\

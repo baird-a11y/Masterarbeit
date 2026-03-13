@@ -70,8 +70,7 @@ After training, each FNO model is evaluated on a fixed set of ten single-crystal
          $\bar{\varepsilon}_v$: mean relative $L_2$ error on derived velocity;
          $\bar{e}_{\max}$: mean maximum absolute error on $\psi$;
          $\overline{\text{MSE}}_\psi$: mean squared error on $\psi$.
-         Standard deviations over the 10 samples in parentheses.
-         Entries marked \textit{(pending)} are not yet available.}
+         Standard deviations over the 10 samples in parentheses.}
 \label{tab:fno_metrics_exp1}
 \begin{tabular}{lccccc}
 \toprule
@@ -110,7 +109,7 @@ Figure~\ref{fig:exp1_eval_bars} (left panel) gives an overview of all bs\,16 eva
 \label{ssec:results:exp1:fno:qualitative}
 % ----------------------------------------------------------------------------
 
-Figure~\ref{fig:fno_gallery_exp1} shows representative predictions from Exp-1.4 (the best-performing FNO configuration for bs\,16). The stream function field~$\psi$ and the derived velocity magnitude $|\mathbf{u}|$ are displayed alongside the reference solution.
+\TODO{Repräsentative Vorhersageplots (Exp-1.4, bs\,16): $\psi$, $|\mathbf{u}|$ und Referenz nebeneinander einfügen.}
 
 
 
@@ -119,7 +118,7 @@ Figure~\ref{fig:fno_gallery_exp1} shows representative predictions from Exp-1.4 
 \label{ssec:results:exp1:unet:training}
 % ----------------------------------------------------------------------------
 
-Figure~\ref{fig:unet_training_exp1} shows the training and validation loss curves for the four U-Net configurations (batch size~16, 180~epochs each). The curves of Exp-1.1 ($\mathrm{lr}=10^{-3}$) and Exp-1.2 ($5\times10^{-3}$) exhibit pronounced oscillations in validation loss, particularly in the early epochs, suggesting that the respective learning rates are too large for stable U-Net convergence without gradient clipping. Despite this, Exp-1.1 still reaches a best validation relative $L_2$ error of $3.5\%$ at epoch~173. Exp-1.3 ($10^{-4}$) shows the smoothest convergence and achieves the lowest best-checkpoint validation error ($3.0\%$ at epoch~179). Exp-1.4 ($5\times10^{-4}$) reaches $3.4\%$ at epoch~163, closely following Exp-1.3. Exp-1.2 ($5\times10^{-3}$) is the weakest configuration at $4.8\%$, likely due to the large learning rate causing it to overshoot the optimum early on.
+Figure~\ref{fig:unet_training_exp1} shows the training and validation loss curves for the four U-Net configurations (batch size~16, 180~epochs each). The curves of Exp-1.1 ($\mathrm{lr}=10^{-3}$) and Exp-1.2 ($5\times10^{-3}$) exhibit pronounced oscillations in validation loss, particularly in the early epochs, suggesting that the respective learning rates are too large for stable U-Net convergence without gradient clipping. This instability is consistent with the effective-learning-rate (ELR) theory of \textcite{alimehmeti-gopel_weight_2024}: above a critical learning rate, ELR ratios between BatchNorm-normalized layers can temporarily diverge, destabilizing convergence. Despite this, Exp-1.1 still reaches a best validation relative $L_2$ error of $3.5\%$ at epoch~173. Exp-1.3 ($10^{-4}$) shows the smoothest convergence and achieves the lowest best-checkpoint validation error ($3.0\%$ at epoch~179). Exp-1.4 ($5\times10^{-4}$) reaches $3.4\%$ at epoch~163, closely following Exp-1.3. Exp-1.2 ($5\times10^{-3}$) is the weakest configuration at $4.8\%$, likely due to the large learning rate causing it to overshoot the optimum early on.
 
 \begin{figure}[htbp]
     \centering
@@ -132,7 +131,7 @@ Figure~\ref{fig:unet_training_exp1} shows the training and validation loss curve
 
 
 % ----------------------------------------------------------------------------
-\subsection{U-Net – Metrics at Epoch~50}
+\subsection{U-Net – Evaluation Metrics}
 \label{ssec:results:exp1:unet:metrics}
 % ----------------------------------------------------------------------------
 
@@ -164,7 +163,7 @@ Exp-1.4 ($5\times10^{-4}$, bs\,8)  & $\phantom{0}5.9$ & $\phantom{0}9.6$ & $2.99
 \end{tabular}
 \end{table}
 
-For batch size~8, all four configurations cluster tightly in the range $5.5$–$6.5\%$ on~$\psi$, with Exp-1.2 ($5\times10^{-3}$) achieving the best result ($5.5\%$ / $8.5\%$). The velocity errors remain roughly $1.5$–$2\times$ larger than the $\psi$ errors, which is a clear improvement over the earlier plain-MSE training, where the factor was approximately $3\times$ (see Section~\ref{ssec:results:exp1:unet:hf}). The gradient term in the composite loss explicitly penalizes errors in the derivatives of $\hat\psi$ and thereby suppresses high-frequency residuals that would otherwise be amplified by the finite-difference differentiation step.
+For batch size~8, all four configurations cluster tightly in the range $5.5$–$6.5\%$ on~$\psi$, with Exp-1.2 ($5\times10^{-3}$) achieving the best result ($5.5\%$ / $8.5\%$). The velocity errors remain roughly $1.5$–$2\times$ larger than the $\psi$ errors, which is a clear improvement over a plain-MSE training baseline, where the ratio was approximately $3\times$ (see Section~\ref{ssec:results:exp1:unet:hf}). The gradient term in the composite loss explicitly penalizes errors in the derivatives of $\hat\psi$ and thereby suppresses high-frequency residuals that would otherwise be amplified by the finite-difference differentiation step.
 
 For batch size~16, the composite loss leads to substantially higher evaluation errors ($13.5$–$24.0\%$) compared to the plain-MSE baseline ($8.6$–$11.2\%$). This suggests that the additional loss terms introduce a training difficulty for the larger batch size, possibly due to noisier gradient estimates from the spatial derivative computation combined with the already less stable U-Net convergence at bs\,16 (Section~\ref{ssec:results:exp1:unet:training}). Since bs\,8 consistently outperforms bs\,16 across all configurations, the remainder of this chapter focuses on bs\,8 results for the U-Net.
 
@@ -173,7 +172,9 @@ For batch size~16, the composite loss leads to substantially higher evaluation e
 \label{ssec:results:exp1:unet:qualitative}
 % ----------------------------------------------------------------------------
 
-Figure~\ref{fig:unet_gallery_exp1} shows representative evaluation plots for Exp-1.2 (best evaluation-set performance for bs\,8 with composite loss). The overall flow structure is reproduced qualitatively, but local errors near the crystal boundary appear more pronounced than in the corresponding FNO predictions. With composite loss training, velocity errors ($\approx 8.5\%$) are substantially reduced compared to the plain-MSE baseline ($\approx 16\%$), while $\psi$ accuracy remains similar ($5.5\%$ vs.\ $5.2\%$).
+Representative evaluation plots for Exp-1.2 (best evaluation-set performance for bs\,8 with composite loss) show that the overall flow structure is reproduced qualitatively, but local errors near the crystal boundary appear more pronounced than in the corresponding FNO predictions. With composite loss training, velocity errors ($\approx 8.5\%$) are substantially reduced compared to the plain-MSE baseline ($\approx 16\%$), while $\psi$ accuracy remains similar ($5.5\%$ vs.\ $5.2\%$).
+
+\TODO{Qualitative Vorhersageplots für U-Net Exp-1.2 (bs\,8) einfügen: $\psi$, Fehlerfeld und Referenz.}
 
 
 
@@ -182,32 +183,16 @@ Figure~\ref{fig:unet_gallery_exp1} shows representative evaluation plots for Exp
 \label{ssec:results:exp1:unet:hf}
 % ----------------------------------------------------------------------------
 
-% TODO: Gaußfilter-Experiment durchführen und Zahlen eintragen.
-%       Vorgehen: Gaußfilter (σ = ? Gitterpunkte) auf ψ̂ vor FD-Ableitung anwenden,
-%       dann v_rel nochmal messen und mit ungefiltertem Wert vergleichen.
-%       Ziel: Nachweis, dass die erhöhten v-Fehler hochfrequenten Ursprungs sind.
-% The velocity errors reported above ($\bar{\varepsilon}_v \approx \SI{TODO}{\percent}$
-% for the best U-Net configuration) exceed the corresponding $\psi$-errors by a factor of
-% roughly \TODO{X}. Since the velocity field is obtained by finite-difference differentiation
-% of~$\hat\psi$ (Eq.~\ref{eq:fd_velocity}), high-frequency residuals in~$\hat\psi$ are
-% amplified by the differentiation step. To verify this interpretation, a Gaussian low-pass
-% filter ($\sigma = \text{TODO}$ grid cells) was applied to~$\hat\psi$ prior to computing
-% the finite-difference derivatives. The filtered predictions reduce~$\bar{\varepsilon}_v$
-% from \SI{TODO}{\percent} to \SI{TODO}{\percent} ($\approx$~\TODO{X}\% relative reduction),
-% while the $\psi$-error increases only marginally (from \SI{TODO}{\percent} to
-% \SI{TODO}{\percent}), confirming that the elevated velocity errors are dominated by
-% high-frequency artefacts rather than by systematic bias in the flow structure.
-% No analogous filtering was applied to the FNO predictions, for which
-% $\bar{\varepsilon}_v$ already tracks~$\bar{\varepsilon}_\psi$ closely; this is consistent
-% with the FNO's spectral architecture, which naturally suppresses high-frequency components
-% above the retained mode count.
+When trained with plain MSE loss (without the gradient penalty term), the U-Net yields evaluation errors of approximately $5.2\%$ on~$\psi$ and $\approx 16\%$ on the derived velocity field for the best bs\,8 configuration — a velocity-to-$\psi$ error ratio of roughly $3\times$. Since the velocity field is obtained by finite-difference differentiation of~$\hat\psi$, high-frequency residuals in the predicted stream function are amplified by the differentiation step, disproportionately increasing the velocity error. This explains why the plain-MSE ratio exceeds the corresponding FNO ratio ($\approx 2\times$) even when the $\psi$ errors are similar: the FNO's spectral architecture naturally suppresses high-frequency components above the retained mode count ($k_{\max} = 16$), whereas the U-Net places no such constraint on the spatial frequency content of its output.
+
+The adoption of the composite loss reduces the velocity-to-$\psi$ ratio to $1.5$–$2\times$, as shown in Table~\ref{tab:unet_metrics_exp1}, confirming that the gradient penalty term effectively suppresses the high-frequency artefacts responsible for the inflated velocity errors. For the best bs\,16 configuration ($8.6\%$ $\psi$, $\approx 26\%$ velocity under plain MSE), the ratio likewise improves with composite loss, although the absolute error level remains substantially higher than for bs\,8.
 
 % ----------------------------------------------------------------------------
 \subsection{Comparison: FNO vs.\ U-Net}
 \label{ssec:results:exp1:comparison}
 % ----------------------------------------------------------------------------
 
-Table~\ref{tab:comparison_exp1} compares the best results from each architecture in Experiment~1 (FNO: 100~epochs; U-Net: 180~epochs, composite loss). For FNO, Exp-1.4 (bs\,16) achieves a mean relative $L_2$ error of $2.26\%$ on~$\psi$ and $4.56\%$ on the derived velocity field; with bs\,8 the best result is Exp-1.2 ($5\times10^{-3}$) at $1.70\%$ / $3.07\%$. The best U-Net result is Exp-1.2 ($5\times10^{-3}$, bs\,8) at $5.5\%$ on~$\psi$ and $8.5\%$ on velocity — a factor of roughly $3.2\times$ above the FNO bs\,16 optimum on~$\psi$, but with a velocity-to-$\psi$ error ratio of $1.5\times$, substantially closer to the FNO ratio ($\approx 2\times$) than the previous plain-MSE U-Net training ($\approx 3\times$).
+Table~\ref{tab:comparison_exp1} compares the best results from each architecture in Experiment~1 (FNO: 100~epochs; U-Net: 180~epochs, composite loss). For FNO, Exp-1.4 (bs\,16) achieves a mean relative $L_2$ error of $2.26\%$ on~$\psi$ and $4.56\%$ on the derived velocity field after only 100~epochs; with bs\,8 the best result is Exp-1.2 ($5\times10^{-3}$) at $1.70\%$ / $3.07\%$. The best U-Net result is Exp-1.2 ($5\times10^{-3}$, bs\,8) at $5.5\%$ on~$\psi$ and $8.5\%$ on velocity after 180~epochs — a factor of roughly $3.2\times$ above the FNO bs\,16 optimum on~$\psi$. This highlights a structural advantage of the FNO: it reaches substantially lower error levels in fewer training epochs, suggesting that the spectral architecture is better suited for this class of problems both in terms of accuracy and training efficiency.
 
 Overall, the FNO converges to substantially lower error levels, suggesting a structural advantage of the spectral architecture for smooth, globally-structured Stokes flow fields around a single crystal. The adoption of the composite loss for the U-Net partially closes the gap in velocity accuracy, and confirms that the gradient term reduces high-frequency residuals regardless of architecture. Both models benefit from the stream-function output representation: the divergence RMS of all FNO predictions is on the order of $10^{-26}$, confirming that incompressibility is preserved analytically irrespective of prediction accuracy.
 
@@ -246,17 +231,7 @@ U-Net & Exp-1.3 ($10^{-4}$,         bs\,16)  & $13.5\phantom{0}$ & $23.1\phantom
 \label{ssec:results:exp1:spatial}
 % ----------------------------------------------------------------------------
 
-To examine whether the prediction accuracy depends on the location of the crystal within the computational domain, Figure~\ref{fig:error_vs_distance_exp1} plots the relative $L_2$ error on~$\psi$ against the Euclidean distance of the crystal centre from the domain centre. Each scatter point corresponds to one held-out evaluation sample. Dashed lines show linear regression fits for each architecture. The figure shows the best-performing configurations for batch size~16: Exp-1.4 ($5\times10^{-4}$) for the FNO and Exp-1.1 ($10^{-3}$) for the U-Net.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/error_vs_center_distance_exp1_bs16.pdf}
-    \caption{Relative $L_2$ error on $\psi$ as a function of the crystal centre's distance
-             from the domain centre for the ten held-out evaluation samples ($n = 1$).
-             FNO~Exp-1.4 (circles, blue) and U-Net~Exp-1.1 (diamonds, orange) at batch
-             size~16. Dashed lines show linear regression fits.}
-    \label{fig:error_vs_distance_exp1}
-\end{figure}
+To examine whether the prediction accuracy depends on the location of the crystal within the computational domain, the relative $L_2$ error on~$\psi$ was compared against the Euclidean distance of the crystal centre from the domain centre across all held-out evaluation samples. The analysis used the best-performing configurations for batch size~16: Exp-1.4 ($5\times10^{-4}$) for the FNO and Exp-1.3 ($10^{-4}$) for the U-Net.
 
 The FNO errors ($1.2$–$2.6\%$) show no systematic positional bias; the regression slope is nearly flat, indicating that the spectral architecture generalizes uniformly across the domain for the single-crystal case. The U-Net errors are substantially higher ($7.5$–$23\%$) with a mildly positive regression slope, suggesting a weak tendency for larger errors when the crystal is located further from the centre. However, with only ten evaluation samples the statistical significance of this trend is limited, and the dominant factor is the overall higher error level of the U-Net rather than a systematic positional effect.
 
@@ -265,7 +240,7 @@ The FNO errors ($1.2$–$2.6\%$) show no systematic positional bias; the regress
 \label{sec:results:exp2}
 % ============================================================================
 
-Experiment~2 trains both models on samples with $n \in \{1, \ldots, 10\}$ crystals and evaluates each on all training crystal counts as well as on unseen higher counts up to $n = 25$. The U-Net is trained for 180~epochs; the FNO results presented here are from an earlier run at 50~epochs and will be updated once the extended run is complete.
+Experiment~2 trains both models on samples with $n \in \{1, \ldots, 10\}$ crystals and evaluates each on all training crystal counts as well as on unseen higher counts up to $n = 25$. The U-Net is trained for 180~epochs; the FNO results are based on a training run of 50~epochs, which represents a preliminary result for this experiment.
 
 Rather than fixing a single hyperparameter combination for all architectures, the configurations for Experiment~2 are derived directly from the Experiment~1 evaluation results: for each architecture and batch size, the learning rate that achieved the lowest held-out evaluation error in Experiment~1 is carried over.
 
@@ -279,6 +254,16 @@ For the \textbf{U-Net}, all batch-size\,8 configurations cluster within a narrow
 % ----------------------------------------------------------------------------
 
 Figure~\ref{fig:unet_training_exp2} shows the training and validation loss curves over 180~epochs. The training MSE decreases monotonically, but the validation relative $L_2$ error fluctuates without reaching stable convergence; the best checkpoint is reached already at epoch~43 with a validation relative $L_2$ error of $28.5\%$. This suggests that the U-Net's best representable solution for the multi-crystal task is largely found in the early phase of training, with little further improvement thereafter.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig8_unet_exp2_training.pdf}
+    \caption{U-Net Experiment~2: validation relative $L_2$ error and normalized training MSE over
+             180~training epochs (training distribution: $n \leq 10$). The validation error
+             fluctuates without reaching stable convergence; the best checkpoint is reached at
+             epoch~43 with a validation error of $28.5\%$.}
+    \label{fig:unet_training_exp2}
+\end{figure}
 
 
 % ----------------------------------------------------------------------------
@@ -316,9 +301,19 @@ $n$ & & $\bar{\varepsilon}_\psi$ (\%) & $\bar{\varepsilon}_v$ (\%) \\
 \end{tabular}
 \end{table}
 
-The in-distribution relative $L_2$ error on $\psi$ clusters between $24\%$ and $30\%$ across all training crystal counts, a substantial improvement compared to the 50-epoch results ($27$–$33\%$) and compared to the single-crystal baseline in Experiment~1 ($8.6\%$ for the best U-Net checkpoint at 180~epochs). The velocity errors are correspondingly high ($67$–$79\%$), reflecting that the U-Net struggles to capture the complex superposition of wakes from multiple crystals.
+The in-distribution relative $L_2$ error on $\psi$ clusters between $24\%$ and $30\%$ across all training crystal counts, substantially above the single-crystal baseline in Experiment~1 ($5.5\%$ for the best U-Net configuration at 180~epochs), reflecting the increased difficulty of the multi-crystal prediction task. The velocity errors are correspondingly high ($67$–$79\%$), reflecting that the U-Net struggles to capture the complex superposition of wakes from multiple crystals.
 
-Generalization to unseen crystal counts $n = 11$–$12$ is broadly consistent with in-distribution performance, suggesting that the model extrapolates smoothly to slightly higher crystal numbers. At $n = 20$–$25$, the velocity error rises to $93$–$95\%$, indicating a degradation in the accuracy of the derived flow field even though the $\psi$ error remains comparable ($\sim 26$–$35\%$). Figure~\ref{fig:unet_metrics_exp2} shows the full evaluation metric profile stratified by crystal count.
+Generalization to unseen crystal counts $n = 11$–$12$ is broadly consistent with in-distribution performance, suggesting that the model extrapolates smoothly to slightly higher crystal numbers. At $n = 20$–$25$, the velocity error rises to $93$–$95\%$, indicating a degradation in the accuracy of the derived flow field even though the $\psi$ error remains comparable ($\sim 26$–$35\%$). Figure~\ref{fig:unet_exp23_scaling} (left panel) shows the full evaluation metric profile stratified by crystal count.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig10_unet_exp23_generalisierung.pdf}
+    \caption{U-Net generalization across crystal counts for Experiment~2 (left, trained on $n \leq 10$)
+             and Experiment~3 (right, trained on $n \leq 25$). Solid lines indicate in-distribution
+             counts; dashed lines with diamond markers indicate out-of-distribution counts. The
+             dotted vertical line marks the boundary of the training distribution.}
+    \label{fig:unet_exp23_scaling}
+\end{figure}
 
 
 % ----------------------------------------------------------------------------
@@ -326,7 +321,7 @@ Generalization to unseen crystal counts $n = 11$–$12$ is broadly consistent wi
 \label{ssec:results:exp2:unet:qualitative}
 % ----------------------------------------------------------------------------
 
-Figure~\ref{fig:unet_gallery_exp2} shows representative stream-function predictions for an in-distribution single-crystal sample and a seven-crystal sample, illustrating the qualitative prediction quality of the U-Net in the multi-crystal setting.
+\TODO{Qualitative Vorhersageplots für U-Net Exp-2 einfügen: Einkristall- und Sieben-Kristall-Probe nebeneinander.}
 
 
 % ----------------------------------------------------------------------------
@@ -400,9 +395,7 @@ Figure~\ref{fig:fno_exp23_scaling} (left panel) shows the full metric profile st
 \label{ssec:results:exp2:fno:qualitative}
 % ----------------------------------------------------------------------------
 
-Figure~\ref{fig:fno_gallery_exp2} illustrates FNO predictions for an in-distribution
-seven-crystal sample and an OOD twenty-five-crystal sample, highlighting the divergence
-in prediction quality between these regimes.
+\TODO{Qualitative Vorhersageplots für FNO Exp-2 einfügen: in-distribution (7 Kristalle) und OOD (25 Kristalle) nebeneinander.}
 
 
 % ----------------------------------------------------------------------------
@@ -435,7 +428,7 @@ The FNO outperforms the U-Net by a factor of roughly $5\times$ within the traini
 \label{sec:results:exp3}
 % ============================================================================
 
-Experiment~3 trains both models on configurations with up to $n = 25$ crystals and evaluates each on substantially more complex scenes with up to $n = 84$ crystals to probe the limits of out-of-distribution generalization. The U-Net is trained for 180~epochs; the FNO results presented here are from an earlier run at 50~epochs and will be updated once the extended run is complete.
+Experiment~3 trains both models on configurations with up to $n = 25$ crystals and evaluates each on substantially more complex scenes with up to $n = 84$ crystals to probe the limits of out-of-distribution generalization. The U-Net is trained for 180~epochs; the FNO results are based on a training run of 50~epochs, which represents a preliminary result for this experiment.
 
 The hyperparameter configurations follow the same rationale as Experiment~2: the learning rates identified as best-performing for each architecture and batch size in Experiment~1 are used without modification. For the FNO, this means lr~$= 5\times10^{-4}$ with batch size~16 and lr~$= 5\times10^{-3}$ with batch size~8. For the U-Net, lr~$= 10^{-3}$ is used with batch size~8 and lr~$= 10^{-4}$ with batch size~16. The extended training distribution ($n \leq 25$ instead of $n \leq 10$) increases the complexity of each training batch but does not change the reasoning behind the choice of learning rate and batch size.
 
@@ -445,6 +438,16 @@ The hyperparameter configurations follow the same rationale as Experiment~2: the
 % ----------------------------------------------------------------------------
 
 Figure~\ref{fig:unet_training_exp3} shows the training and validation loss curves over 180~epochs. The behavior is qualitatively similar to Experiment~2: training MSE decreases steadily while validation relative $L_2$ error oscillates without reaching stable convergence. The best checkpoint is reached at epoch~49 with a validation relative $L_2$ error of $28.6\%$, comparable to Experiment~2 ($28.5\%$ at epoch~43), suggesting that the wider training distribution provides no significant benefit for U-Net convergence behavior.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig9_unet_exp3_training.pdf}
+    \caption{U-Net Experiment~3: validation relative $L_2$ error and normalized training MSE over
+             180~training epochs (training distribution: $n \leq 25$). Convergence behavior is
+             qualitatively similar to Experiment~2; the best checkpoint is reached at epoch~49
+             with a validation error of $28.6\%$.}
+    \label{fig:unet_training_exp3}
+\end{figure}
 
 
 % ----------------------------------------------------------------------------
@@ -491,7 +494,7 @@ Within the training distribution ($n \leq 25$), the $\psi$ errors range from $24
 
 For OOD crystal counts $n = 30$–$55$, the model degrades gradually: $\psi$ errors remain in the $28$–$34\%$ range, while velocity errors exceed $100\%$ throughout. At $n = 55$, the velocity error rises to $122\%$. For very high counts ($n = 67$–$84$), individual $\psi$ errors vary widely from $27\%$ to $70\%$, reflecting high sensitivity to the specific crystal arrangement at such extreme densities. The anomalously high errors at $n = 82$ and $n = 84$ suggest that the flow field is qualitatively misrepresented for those particular configurations.
 
-Figure~\ref{fig:unet_metrics_exp3} shows the full metric profile.
+The right panel of Figure~\ref{fig:unet_exp23_scaling} shows the full metric profile.
 
 
 % ----------------------------------------------------------------------------
@@ -499,7 +502,7 @@ Figure~\ref{fig:unet_metrics_exp3} shows the full metric profile.
 \label{ssec:results:exp3:unet:qualitative}
 % ----------------------------------------------------------------------------
 
-Figure~\ref{fig:unet_gallery_exp3} illustrates stream-function predictions for an in-distribution seven-crystal sample and an OOD fifty-crystal sample.
+\TODO{Qualitative Vorhersageplots für U-Net Exp-3 einfügen: in-distribution (7 Kristalle) und OOD (50 Kristalle).}
 
 
 % ----------------------------------------------------------------------------
@@ -563,7 +566,7 @@ Within the training distribution ($n \leq 25$), the FNO achieves $\psi$ errors o
 \label{ssec:results:exp3:fno:qualitative}
 % ----------------------------------------------------------------------------
 
-Figure~\ref{fig:fno_gallery_exp3} illustrates FNO predictions for an in-distribution seven-crystal sample and an OOD fifty-crystal sample.
+\TODO{Qualitative Vorhersageplots für FNO Exp-3 einfügen: in-distribution (7 Kristalle) und OOD (50 Kristalle).}
 
 % ----------------------------------------------------------------------------
 \subsection{Comparison: FNO vs.\ U-Net}
@@ -587,11 +590,60 @@ U-Net & $\sim 28$  & $\sim 85$   & $28.1$ \\
 \end{tabular}
 \end{table}
 
-Across both experiments, the FNO consistently outperforms the U-Net within the training distribution by a factor of roughly $5\times$. In the OOD regime the advantage narrows: at $n = 50$, the FNO's $14.2\%$ error and the U-Net's $28.1\%$ differ by a factor of $2\times$ — a smaller gap than in the 50-epoch run, where the U-Net reached $31.4\%$ at $n=50$. The velocity errors tell a similar story: the FNO's ${\sim}16\%$ at $n=50$ contrasts with the U-Net's ${\sim}105\%$, underscoring the spectral architecture's superior ability to capture global flow structure even for unseen crystal configurations.
+Across both experiments, the FNO consistently outperforms the U-Net within the training distribution by a factor of roughly $5\times$. In the OOD regime the advantage narrows: at $n = 50$, the FNO's $14.2\%$ error and the U-Net's $28.1\%$ differ by a factor of $2\times$. The velocity errors tell a similar story: the FNO's ${\sim}16\%$ at $n=50$ contrasts with the U-Net's ${\sim}105\%$, underscoring the spectral architecture's superior ability to capture global flow structure even for unseen crystal configurations.
 
 % ============================================================================
 \section{Experiment~4: Architecture Ablation}
 \label{sec:results:exp4}
 % ============================================================================
 
-\TODO{Ergebnisse werden nach Abschluss der Experimente ergänzt (vgl.\ Abschnitt~\ref{sec:experiments:configs}).}
+Experiment~4 evaluates the crystal-size generalization of both models by testing them on crystals whose radii lie outside the training distribution. The FNO model used is the best-performing Exp-1 configuration (Exp-1.4, bs\,16, lr~$=5\times10^{-4}$), trained on the standard single-crystal distribution. The U-Net model is the best-performing Exp-2 configuration (bs\,8, lr~$=10^{-3}$), trained on multi-crystal configurations with $n \leq 10$. Each evaluation set contains ten single-crystal samples ($n = 1$). Two size regimes are evaluated: \emph{small crystals}, whose radius is substantially below the training distribution, and \emph{large crystals}, whose radius is substantially above the training distribution.
+
+% ----------------------------------------------------------------------------
+\subsection{Evaluation Metrics}
+\label{ssec:results:exp4:metrics}
+% ----------------------------------------------------------------------------
+
+Table~\ref{tab:metrics_exp4} reports the mean relative $L_2$ errors on $\psi$ and the derived velocity field for both size variants and both architectures.
+
+\begin{table}[htbp]
+\centering
+\caption{Evaluation metrics for Experiment~4 (crystal-size generalization, $n=1$, 10~samples each).
+         \emph{Small}: crystal radius below training range; \emph{Large}: crystal radius above training range.
+         Both size variants are out-of-distribution with respect to the training crystal size.}
+\label{tab:metrics_exp4}
+\begin{tabular}{llcc}
+\toprule
+\textbf{Architecture} & \textbf{Crystal size} & $\bar{\varepsilon}_\psi$ (\%) & $\bar{\varepsilon}_v$ (\%) \\
+\midrule
+FNO   & Small  & $12.1 \pm 6.4$ & $20.4 \pm 6.7$ \\
+FNO   & Large  & $71.3 \pm 4.8$ & $67.7 \pm 3.9$ \\
+\midrule
+U-Net & Small  & $10.8 \pm 6.8$ & $20.1 \pm 6.5$ \\
+U-Net & Large  & $44.9 \pm 8.2$ & $50.7 \pm 4.4$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For small crystals, both architectures degrade moderately: the FNO reaches $12.1\%$ on~$\psi$ and the U-Net $10.8\%$, compared to their respective in-distribution errors of $2.3\%$ (FNO, Exp-1) and $\sim 28\%$ (U-Net, Exp-2, $n=1$). The standard deviations are relatively large for both architectures, suggesting that accuracy varies considerably across individual samples.
+
+For large crystals, both models degrade severely. The FNO reaches $71.3\%$ on~$\psi$ and $67.7\%$ on velocity — a near-complete failure of the prediction. The U-Net performs markedly better at $44.9\%$ on~$\psi$ and $50.7\%$ on velocity, though absolute errors remain large. Notably, this is one of the few scenarios in this thesis where the U-Net outperforms the FNO.
+
+% ----------------------------------------------------------------------------
+\subsection{Discussion of Size Generalization}
+\label{ssec:results:exp4:discussion}
+% ----------------------------------------------------------------------------
+
+The asymmetry between small- and large-crystal degradation is consistent with the spectral properties of both architectures. A larger crystal occupies a greater fraction of the computational domain and induces steeper velocity gradients near its boundary. For the FNO, these boundary-layer features require high-frequency Fourier content that exceeds the retained mode count ($k_{\max} = 16$), leading to the observed catastrophic failure. The U-Net, with its spatially local convolution kernels and skip connections, is somewhat better equipped to represent sharp spatial gradients at new scales, explaining its more moderate degradation.
+
+For small crystals, the flow field is dominated by an extended, globally smooth region far from the crystal boundary, which both architectures can approximate reasonably well regardless of the specific crystal radius.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig11_exp4_kristallgroesse.pdf}
+    \caption{Experiment~4: mean relative $L_2$ error on~$\psi$ and on the derived velocity field
+             for FNO (Exp-1.4, bs\,16) and U-Net (Exp-2, bs\,8), evaluated on single-crystal
+             configurations with crystal radii below (small) and above (large) the training
+             distribution.}
+    \label{fig:exp4_kristallgroesse}
+\end{figure}

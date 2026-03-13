@@ -10,6 +10,7 @@
 %   \parencite{qin_toward_2024}              -- Spektralbias FNO: warum Fehler nahe Kristallrand
 %   \parencite{wen_u-fnoenhanced_2022}       -- U-FNO als mögliche Verbesserung (Ausblick)
 %   \parencite{raonic_convolutional_2023}    -- Convolutional Neural Operators als Alternative
+%   \parencite{alimehmeti-gopel_weight_2024} -- ELR-Theorie: erklärt U-Net-Instabilität bei hohen lr via BatchNorm-Dynamik
 %
 % Generalisierungsgrenzen:
 %   \parencite{morimoto_generalization_2022} -- Faktoren, die Out-of-Distribution-Performance begrenzen
@@ -36,6 +37,88 @@
 \chapter{Discussion}
 \label{ch:discussion}
 
+This chapter interprets the experimental results presented in Chapter~\ref{ch:results} in the context of the research questions and hypotheses formulated in Chapter~\ref{ch:introduction}. Rather than repeating the numerical findings, the aim is to explain \emph{why} the observed patterns occur and what they imply for the surrogate modeling of multi-crystal Stokes flow.
 
-Hier soll eine Diskussion der Ergebnisse meiner Experimente stattfinden. Ich werde die Leistung meines Modells anhand der Metriken bewerten, die ich in Kapitel 6 beschrieben habe, und die Vorhersagen meines Modells mit den Referenzlösungen vergleichen. Es wird auch eine Diskussion darüber geben, welche Aspekte meiner Modellierung gut funktionieren und wo es noch Herausforderungen gibt. Ich werde die Ergebnisse in Bezug auf die verschiedenen Lernziele und Eingabekodierungen analysieren und versuchen, Muster oder Trends zu identifizieren, die auf die Stärken und Schwächen meines Modells hinweisen. Schließlich werde ich die Ergebnisse in den Kontext der bestehenden Literatur einordnen und mögliche Implikationen für zukünftige Arbeiten diskutieren.
-Wobei ich sicherstellen muss, dass ich hier nicht einfach die Ergebnisse aus Kapitel 8 wiederhole, sondern wirklich eine tiefere Analyse und Interpretation der Ergebnisse durchführe. Es soll nicht nur darum gehen, was die Ergebnisse sind, sondern auch warum sie so sind und was sie für die Praxis und die Forschung bedeuten. Es könnte auch eine Diskussion darüber geben, welche Einschränkungen oder Unsicherheiten es bei meinen Ergebnissen gibt und wie diese berücksichtigt werden sollten. Insgesamt soll dieses Kapitel dazu beitragen, die Bedeutung meiner Ergebnisse zu verstehen und ihre Auswirkungen auf die Praxis und die Forschung zu diskutieren.
+% ============================================================================
+\section{Training Behavior: FNO Stability vs.\ U-Net Oscillations}
+% ============================================================================
+
+One of the most consistent findings across all experiments is the difference in training stability between the two architectures. The FNO converges smoothly and monotonically throughout training in all configurations and experiments, while the U-Net exhibits pronounced oscillations in the validation loss, particularly at higher learning rates and with the larger batch size.
+
+This contrast can be understood in terms of the architectural differences between the two models. The U-Net employs Batch Normalization after each convolutional layer, a design choice that introduces a normalization-scale invariance: the gradient magnitude with respect to any weight is inversely proportional to the current weight norm \parencite{alimehmeti-gopel_weight_2024}. This so-called effective learning rate (ELR) can vary substantially between layers, and at high learning rates the ELR ratios between different layers can temporarily diverge — a phenomenon that is particularly pronounced at the start of training, when weight norms are small and gradients are correspondingly large. The observed oscillations at $\mathrm{lr} = 10^{-3}$ and $5 \times 10^{-3}$ are consistent with this explanation.
+
+By contrast, the FNO does not rely on Batch Normalization in its spectral layers. The gradient clipping applied during FNO training (ClipNorm with threshold $1.0$, see Table~\ref{tab:hyperparams}) provides a direct and architecture-independent mechanism to prevent unstable gradient updates, which largely eliminates the oscillatory behavior seen in the U-Net.
+
+The effect of batch size provides further evidence for this interpretation. For the U-Net, batch size~8 consistently yields lower evaluation errors and smoother training curves than batch size~16. Smaller batches introduce more stochastic noise into the gradient estimates, which effectively reduces the step size in parameter space and can help the optimizer to avoid overshooting. In the language of ELR theory, this corresponds to a reduction of the effective learning rate that keeps the training dynamics in a more stable, subcritical regime. For the FNO, batch size has a smaller effect, consistent with the absence of the BatchNorm-induced ELR dynamics.
+
+% ============================================================================
+\section{In-Distribution Accuracy: FNO Advantage in the Single-Crystal Regime}
+% ============================================================================
+
+For single-crystal flows (Experiment~1), the FNO achieves mean relative $L_2$ errors of $1.7$--$2.3\%$ on~$\psi$ and $3.1$--$4.6\%$ on the derived velocity field after only 100~training epochs, substantially outperforming the U-Net, whose best configurations reach $5.5$--$6.5\%$ on~$\psi$ and $8.5$--$12.7\%$ on velocity after 180~epochs. This difference in training efficiency is as notable as the accuracy gap itself: the FNO converges to a better solution in fewer epochs, suggesting that the spectral architecture learns the structure of Stokes flow more efficiently than the U-Net's local convolutional processing.
+
+This performance gap is plausible given the physical and mathematical structure of the problem. Stokes flow around a single crystal is a globally smooth, elliptic field: the crystal perturbation decays algebraically over distances of several crystal diameters, and there are no sharp shocks or discontinuities in the velocity field outside the crystal boundary itself. The FNO's spectral architecture is structurally well suited for such problems: by operating on globally defined Fourier modes, it can capture long-range correlations in a single layer. The U-Net, in contrast, builds global context through a hierarchy of local convolutions and pooling operations, which may require more parameters and training data to accurately represent smooth global fields.
+
+The spectral bias of the FNO — its tendency to represent low-frequency components more accurately than high-frequency ones — is generally a limitation near sharp crystal boundaries \parencite{qin_toward_2024}. However, in the single-crystal regime this limitation appears to have only a moderate effect, since the boundary-layer contribution to the global $L_2$ error is relatively small compared to the domain-wide flow structure. This trade-off is likely to become more important for denser crystal configurations, where the fraction of the domain influenced by boundary layers increases.
+
+% ============================================================================
+\section{Effect of the Composite Loss on U-Net Accuracy}
+% ============================================================================
+
+The composite loss function, which augments the standard MSE with gradient-matching and boundary terms, has a clear positive effect on velocity accuracy for batch size~8: the velocity-to-$\psi$ error ratio drops from approximately $3\times$ (plain MSE) to $1.5$--$2\times$ (composite loss). This confirms the hypothesis that the elevated velocity errors under plain MSE training originate from high-frequency residuals in~$\hat\psi$ that are amplified by the finite-difference differentiation step, as discussed in Section~\ref{ssec:results:exp1:unet:hf}.
+
+For batch size~16, however, the composite loss leads to substantially \emph{higher} evaluation errors than plain MSE training ($13.5$--$24.0\%$ vs.\ $8.6$--$11.2\%$). This is a somewhat unexpected finding. One possible explanation is that the additional gradient and boundary terms modify the effective gradient magnitudes differently across layers, increasing the ELR spread — an effect that would be particularly detrimental for the already less stable bs\,16 training regime. Another contributing factor may be that the gradient loss computed via finite differences over the predicted field introduces numerical noise that acts as an additional source of instability when combined with the less regularized gradient estimates of larger batches.
+
+Whatever the precise mechanism, the results indicate that the benefits of the composite loss depend critically on the batch size, and that a simple uniform adoption of additional loss terms does not guarantee improved accuracy. This is a practically relevant observation for future training designs.
+
+% ============================================================================
+\section{Multi-Crystal Generalization and Its Limits}
+% ============================================================================
+
+Both architectures show substantially higher errors in the multi-crystal regime compared to the single-crystal baseline, even within the training distribution. The FNO reaches $4$--$8\%$ on~$\psi$ for $n \leq 10$ (Experiment~2), while the U-Net reaches $24$--$30\%$. The degradation relative to the single-crystal baseline is more pronounced for the U-Net (roughly $5$--$6\times$ increase) than for the FNO (roughly $2$--$4\times$ increase), suggesting that the spectral architecture generalizes more efficiently across geometric complexity.
+
+A physically motivated explanation for the U-Net's relative weakness in the multi-crystal regime is related to the superposition principle of Stokes flow. For multiple crystals, the flow field is approximately the sum of the individual crystal contributions (modulated by hydrodynamic interactions). Representing such superpositions accurately requires the network to capture long-range correlations between distant crystal positions — a task for which the FNO's global spectral convolutions are better suited than the hierarchical local operations of the U-Net.
+
+The OOD behavior of the two architectures differs qualitatively. In Experiment~2, the FNO shows an abrupt performance degradation around $n = 20$ ($20.8\%$ vs.\ $\leq 8.4\%$ for $n \leq 10$), while the U-Net maintains a roughly constant error level regardless of crystal count. This pattern is consistent with a distribution shift interpretation: the FNO has learned representations that are tightly coupled to the density regime of the training distribution, while the U-Net, being already at a high error level within the distribution, does not degrade further in the OOD regime — a case of graceful degradation that is less a sign of robustness than of uniformly poor performance.
+
+Experiment~3 confirms that the FNO's OOD degradation is primarily driven by distribution shift rather than architectural limitations: training on a wider distribution ($n \leq 25$) substantially extends the generalization range, allowing the FNO to maintain errors below $10\%$ up to $n = 35$ (compared to the abrupt failure at $n = 20$ in Experiment~2). This finding is in line with \textcite{morimoto_generalization_2022}, who showed that the generalization range of neural surrogates for multi-obstacle flows scales approximately with the training distribution width.
+
+% ============================================================================
+\section{Physical Consistency: The Stream-Function Representation}
+% ============================================================================
+
+Predicting the stream function $\psi$ rather than the velocity components directly ensures that incompressibility is satisfied analytically by construction: since $\mathbf{u} = (\partial\psi/\partial z, -\partial\psi/\partial x)$ is divergence-free for any differentiable $\psi$, no penalty term for mass conservation is required during training. The divergence RMS values of all FNO predictions are on the order of $10^{-26}$, confirming that this analytical guarantee holds exactly in practice.
+
+This is a significant advantage over direct velocity prediction, where small but systematic divergence errors can accumulate and lead to non-physical flow structures. It is also more efficient than enforcing incompressibility through a soft constraint term in the loss function \parencite{zhu_physics-constrained_2019}, as no additional hyperparameter tuning is required.
+
+The one downside of the stream-function representation is that the velocity field must be recovered through finite differences, which amplifies high-frequency residuals in $\hat\psi$ into larger relative errors in~$\mathbf{u}$. This effect is more pronounced for the U-Net than for the FNO, as discussed in Sections~\ref{ssec:results:exp1:unet:hf} and~\ref{ssec:results:exp1:comparison}. The composite loss partially mitigates this issue, but a more direct solution would be to train on the velocity field directly — at the cost of losing the incompressibility guarantee.
+
+% ============================================================================
+\section{Crystal-Size Generalization: A Reversal of the Architectural Ranking}
+% ============================================================================
+
+Experiment~4 introduces an additional axis of out-of-distribution generalization: both models are evaluated on single-crystal configurations with crystal radii outside the range used during training — either smaller (``small'' crystals) or larger (``large'' crystals) than any training example.
+
+For small crystals, the two architectures perform comparably, both achieving relative $L_2$ errors of approximately $11$--$12\%$ on~$\psi$ and $20\%$ on the derived velocity field (see Table~\ref{tab:metrics_exp4}). This is somewhat elevated relative to the in-distribution errors of Experiment~1, but not dramatically so: small crystals produce weaker, more diffuse flow perturbations, which the trained models can partially represent by drawing on the general structure of Stokes flow they have internalized.
+
+For large crystals, the picture changes substantially. The FNO error reaches $71.3 \pm 4.8\%$ on~$\psi$ and $67.7 \pm 3.9\%$ on velocity — a severe degradation that renders the predictions essentially unreliable. The U-Net, by contrast, achieves $44.9 \pm 8.2\%$ on~$\psi$ and $50.7 \pm 4.4\%$ on velocity. While these numbers are still far from the in-distribution performance, the U-Net's relative advantage over the FNO is reversed compared to Experiments~1--3.
+
+A physically motivated explanation for this reversal is the spectral bias of the FNO. The FNO's Fourier layers are truncated at $k_{\max} = 16$ modes, which fixes the spatial frequencies that can be represented by the spectral convolution. For in-distribution crystal sizes, this truncation is sufficient to capture the boundary-layer structure near the crystal surface. For larger crystals, the boundary layer and the wake region occupy a proportionally larger fraction of the domain, and the sharp transition between the solid and fluid regions introduces higher effective spatial frequencies relative to the domain size. The fixed mode truncation at $k_{\max} = 16$ is insufficient to represent these features accurately, leading to the large errors observed.
+
+The U-Net, whose local convolutional filters operate at fixed spatial scales on the grid, is less sensitive to this type of geometric scaling: the local neighborhood structure around the crystal boundary remains geometrically similar regardless of crystal size, and the U-Net can partially exploit this self-similarity. This structural advantage over the spectrally-truncated FNO is consistent with the findings of \textcite{qin_toward_2024}, who showed that FNOs underperform near sharp interfaces precisely because of the spectral truncation.
+
+These results suggest that, while the FNO is the superior architecture for in-distribution and moderate OOD generalization across crystal counts, the U-Net may be better suited for scenarios that require robustness to geometric scaling. A promising direction for future work is the use of adaptive Fourier modes or multi-resolution spectral architectures that can adjust the frequency representation to the geometric scale of the input.
+
+% ============================================================================
+\section{Limitations}
+% ============================================================================
+
+Several limitations of this study should be noted when interpreting the results.
+
+\paragraph{Small evaluation sets.} All quantitative metrics are computed on sets of only ten held-out samples per crystal count. While this is sufficient to identify broad trends, it provides limited statistical power for fine-grained comparisons. The standard deviations reported in the tables reflect genuine sample-to-sample variability and indicate that some differences between configurations are within the noise range. A more thorough evaluation would require substantially larger evaluation sets.
+
+\paragraph{Preliminary FNO results for Experiments 2 and 3.} The FNO results for Experiments~2 and~3 are based on training runs of only 50~epochs, compared to 180~epochs for the U-Net. While the FNO training curves suggest that convergence is well underway at 50~epochs, the reported numbers are likely to improve further with extended training. Direct architectural comparisons in Experiments~2 and~3 should therefore be interpreted with this asymmetry in mind.
+
+\paragraph{Two-dimensional and steady-state assumption.} All simulations and predictions are restricted to steady-state, two-dimensional Stokes flow with circular crystals. Real magmatic sedimentation is inherently three-dimensional and time-dependent. The relevance of the current results for three-dimensional transient flows remains to be demonstrated.
+
+\paragraph{Crystal size generalization.} Experiment~4 demonstrates that both architectures degrade significantly for crystals larger than the training distribution, with the FNO more severely affected than the U-Net. The evaluation is based on only ten samples per size category, and the models used were not specifically trained for size robustness. A dedicated training strategy incorporating variable crystal sizes would be needed to achieve reliable size generalization.

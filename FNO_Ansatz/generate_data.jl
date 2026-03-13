@@ -177,10 +177,11 @@ Returns: `(; input, ψ_norm, scale, meta)` – fertig zum Speichern als JLD2.
 function generate_one_sample(n_crystals::Int;
                              nx::Int = 256, nz::Int = 256,
                              η::Real = 1e20, Δρ::Real = 200,
+                             r_range::Tuple{Float64,Float64} = (0.05, 0.05),
                              gauge_mode::Symbol = :global_mean,
                              scale_strategy::Symbol = :powmean)
     # 1. Zufällige Kristalle
-    centers, radii = random_crystal_config(n_crystals)
+    centers, radii = random_crystal_config(n_crystals; r_range=r_range)
 
     # 2. LaMEM-Simulation
     res = run_sinking_crystals(; nx=nx, nz=nz, η=η, Δρ=Δρ,
@@ -234,6 +235,7 @@ function generate_all(; n_samples::Int = 500,
                         n_crystals_range::AbstractVector{Int} = collect(1:1),
                         nx::Int = 256, nz::Int = 256,
                         η::Real = 1e20, Δρ::Real = 200,
+                        r_range::Tuple{Float64,Float64} = (0.05, 0.05),
                         seed::Int = 42)
     Random.seed!(seed)
     mkpath(out_dir)
@@ -256,14 +258,14 @@ function generate_all(; n_samples::Int = 500,
     n_fail = 0
 
     @info "Starte Generierung: $n_samples Samples → $out_dir"
-    @info "Kristallanzahlen: $n_crystals_range, Grid: $(nx)×$(nz)"
+    @info "Kristallanzahlen: $n_crystals_range, Radien: $(r_range), Grid: $(nx)×$(nz)"
 
     for i in 1:n_samples
         # Zufällige Kristallanzahl
         nc = rand(n_crystals_range)
 
         try
-            sample = generate_one_sample(nc; nx=nx, nz=nz, η=η, Δρ=Δρ)
+            sample = generate_one_sample(nc; nx=nx, nz=nz, η=η, Δρ=Δρ, r_range=r_range)
 
             # Dateiname
             counters[nc] += 1
@@ -321,6 +323,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
     local out = "data_train"
     local nc_range = collect(1:4)
     local seed = 42
+    local r_range = (0.05, 0.05)
 
     # Argument-Parsing
     for i in eachindex(ARGS)
@@ -334,8 +337,12 @@ if abspath(PROGRAM_FILE) == @__FILE__
             nc_range = collect(parse(Int, parts[1]):parse(Int, parts[end]))
         elseif ARGS[i] == "--seed" && i < length(ARGS)
             seed = parse(Int, ARGS[i+1])
+        elseif ARGS[i] == "--r_range" && i < length(ARGS)
+            # z.B. "0.05:0.15" oder "0.1:0.1"
+            parts = split(ARGS[i+1], ":")
+            r_range = (parse(Float64, parts[1]), parse(Float64, parts[end]))
         end
     end
 
-    generate_all(; n_samples=n, out_dir=out, n_crystals_range=nc_range, seed=seed)
+    generate_all(; n_samples=n, out_dir=out, n_crystals_range=nc_range, seed=seed, r_range=r_range)
 end
