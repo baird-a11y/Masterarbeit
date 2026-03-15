@@ -109,7 +109,33 @@ Figure~\ref{fig:exp1_eval_bars} (left panel) gives an overview of all bs\,16 eva
 \label{ssec:results:exp1:fno:qualitative}
 % ----------------------------------------------------------------------------
 
-\TODO{Repräsentative Vorhersageplots (Exp-1.4, bs\,16): $\psi$, $|\mathbf{u}|$ und Referenz nebeneinander einfügen.}
+Figure~\ref{fig:fno_exp1_qual_bs16} shows representative evaluation plots for the best batch-size\,16 configuration (Exp-1.4, lr~$=5\times10^{-4}$), and Figure~\ref{fig:fno_exp1_qual_bs8} shows the corresponding plots for the best batch-size\,8 configuration (Exp-1.2, lr~$=5\times10^{-3}$). Both figures display the predicted stream function $\psi$ and the derived velocity magnitude $|\mathbf{u}|$ alongside the numerical reference solution.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_1_16_5e-4_psi_vel.png}
+    \caption{FNO Experiment~1, Exp-1.4 (bs\,16, lr~$=5\times10^{-4}$): representative evaluation sample
+             showing the predicted stream function $\psi$ and derived velocity magnitude $|\mathbf{u}|$
+             against the numerical reference.}
+    \label{fig:fno_exp1_qual_bs16}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_1_8_5e-3_psi.png}
+        \caption{Stream function $\psi$}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_1_8_5e-3_vel.png}
+        \caption{Velocity magnitude $|\mathbf{u}|$}
+    \end{subfigure}
+    \caption{FNO Experiment~1, Exp-1.2 (bs\,8, lr~$=5\times10^{-3}$): representative evaluation sample
+             showing the predicted stream function $\psi$ (left) and derived velocity magnitude
+             $|\mathbf{u}|$ (right) against the numerical reference.}
+    \label{fig:fno_exp1_qual_bs8}
+\end{figure}
 
 
 
@@ -395,7 +421,41 @@ Figure~\ref{fig:fno_exp23_scaling} (left panel) shows the full metric profile st
 \label{ssec:results:exp2:fno:qualitative}
 % ----------------------------------------------------------------------------
 
-\TODO{Qualitative Vorhersageplots für FNO Exp-2 einfügen: in-distribution (7 Kristalle) und OOD (25 Kristalle) nebeneinander.}
+Figures~\ref{fig:fno_exp2_qual_bs16} and~\ref{fig:fno_exp2_qual_bs8} show representative evaluation plots for the two FNO configurations in Experiment~2. Both show results within the training distribution.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_2_16_5e-4_psi.png}
+        \caption{Stream function $\psi$}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_2_16_5e-4_vel.png}
+        \caption{Velocity magnitude $|\mathbf{u}|$}
+    \end{subfigure}
+    \caption{FNO Experiment~2 (bs\,16, lr~$=5\times10^{-4}$): representative in-distribution evaluation
+             sample showing the predicted stream function $\psi$ (left) and derived velocity magnitude
+             $|\mathbf{u}|$ (right) against the numerical reference.}
+    \label{fig:fno_exp2_qual_bs16}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_2_8_5e-3_psi.png}
+        \caption{Stream function $\psi$}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_2_8_5e-3_vel.png}
+        \caption{Velocity magnitude $|\mathbf{u}|$}
+    \end{subfigure}
+    \caption{FNO Experiment~2 (bs\,8, lr~$=5\times10^{-3}$): representative in-distribution evaluation
+             sample showing the predicted stream function $\psi$ (left) and derived velocity magnitude
+             $|\mathbf{u}|$ (right) against the numerical reference.}
+    \label{fig:fno_exp2_qual_bs8}
+\end{figure}
 
 
 % ----------------------------------------------------------------------------
@@ -628,6 +688,68 @@ U-Net & 0.5  & $44.9 \pm 8.2$ & $50.7 \pm 4.4$ \\
 For small crystals, both architectures degrade moderately: the FNO reaches $12.1\%$ on~$\psi$ and the U-Net $10.8\%$, compared to their respective in-distribution errors of $2.3\%$ (FNO, Exp-1) and $\sim 28\%$ (U-Net, Exp-2, $n=1$). The standard deviations are relatively large for both architectures, suggesting that accuracy varies considerably across individual samples.
 
 For large crystals, both models degrade severely. The FNO reaches $71.3\%$ on~$\psi$ and $67.7\%$ on velocity — a near-complete failure of the prediction. The U-Net performs markedly better at $44.9\%$ on~$\psi$ and $50.7\%$ on velocity, though absolute errors remain large. Notably, this is one of the few scenarios in this thesis where the U-Net outperforms the FNO.
+
+% ----------------------------------------------------------------------------
+\subsection{Qualitative Results}
+\label{ssec:results:exp4:qualitative}
+% ----------------------------------------------------------------------------
+
+Figures~\ref{fig:fno_exp4_small} and~\ref{fig:fno_exp4_big} compare the FNO predictions for a trained model (Exp-1.4, bs\,16) against an untrained baseline for small ($r = 0.005$) and large ($r = 0.5$) crystals, respectively. The untrained baseline provides a visual reference for the task difficulty: without any learned weights, the predicted flow field is essentially featureless, confirming that all structure in the trained predictions is genuinely learned.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_small_train_psi.png}
+        \caption{Trained — $\psi$}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_small_train_vel.png}
+        \caption{Trained — $|\mathbf{u}|$}
+    \end{subfigure}
+    \\[1ex]
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_small_untrain_psi.png}
+        \caption{Untrained — $\psi$}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_small_untrain_vel.png}
+        \caption{Untrained — $|\mathbf{u}|$}
+    \end{subfigure}
+    \caption{Experiment~4 – small crystal ($r = 0.005$): FNO predictions for a trained model
+             (top row) and an untrained baseline (bottom row). Stream function $\psi$ is shown
+             on the left, velocity magnitude $|\mathbf{u}|$ on the right.}
+    \label{fig:fno_exp4_small}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_big_train_psi.png}
+        \caption{Trained — $\psi$}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_big_train_vel.png}
+        \caption{Trained — $|\mathbf{u}|$}
+    \end{subfigure}
+    \\[1ex]
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_big_untrain_psi.png}
+        \caption{Untrained — $\psi$}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_big_untrain_vel.png}
+        \caption{Untrained — $|\mathbf{u}|$}
+    \end{subfigure}
+    \caption{Experiment~4 – large crystal ($r = 0.5$): FNO predictions for a trained model
+             (top row) and an untrained baseline (bottom row). Stream function $\psi$ is shown
+             on the left, velocity magnitude $|\mathbf{u}|$ on the right. The trained model's
+             high error ($71.3\%$ on~$\psi$) is visible in the qualitative comparison.}
+    \label{fig:fno_exp4_big}
+\end{figure}
 
 % ----------------------------------------------------------------------------
 \subsection{Discussion of Size Generalization}
