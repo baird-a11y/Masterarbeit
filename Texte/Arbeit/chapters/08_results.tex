@@ -122,18 +122,18 @@ Figure~\ref{fig:fno_exp1_qual_bs16} shows representative evaluation plots for th
 
 \begin{figure}[htbp]
     \centering
-    \begin{subfigure}[b]{0.49\textwidth}
+    \begin{subfigure}[b]{\textwidth}
         \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_1_8_5e-3_psi.png}
         \caption{Stream function $\psi$}
     \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.49\textwidth}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
         \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_1_8_5e-3_vel.png}
         \caption{Velocity magnitude $|\mathbf{u}|$}
     \end{subfigure}
     \caption{FNO Experiment~1, Exp-1.2 (bs\,8, lr~$=5\times10^{-3}$): representative evaluation sample
-             showing the predicted stream function $\psi$ (left) and derived velocity magnitude
-             $|\mathbf{u}|$ (right) against the numerical reference.}
+             showing the predicted stream function $\psi$ (top) and derived velocity magnitude
+             $|\mathbf{u}|$ (bottom) against the numerical reference.}
     \label{fig:fno_exp1_qual_bs8}
 \end{figure}
 
@@ -198,9 +198,41 @@ For batch size~16, the composite loss leads to substantially higher evaluation e
 \label{ssec:results:exp1:unet:qualitative}
 % ----------------------------------------------------------------------------
 
-Representative evaluation plots for Exp-1.2 (best evaluation-set performance for bs\,8 with composite loss) show that the overall flow structure is reproduced qualitatively, but local errors near the crystal boundary appear more pronounced than in the corresponding FNO predictions. With composite loss training, velocity errors ($\approx 8.5\%$) are substantially reduced compared to the plain-MSE baseline ($\approx 16\%$), while $\psi$ accuracy remains similar ($5.5\%$ vs.\ $5.2\%$).
+Figures~\ref{fig:unet_exp1_qual_bs16} and~\ref{fig:unet_exp1_qual_bs8} show representative evaluation plots for the best batch-size\,16 configuration (Exp-1.1, lr~$=10^{-3}$) and the best batch-size\,8 configuration (Exp-1.2, lr~$=5\times10^{-3}$). Both figures display the predicted stream function $\psi$ and the derived velocity magnitude $|\mathbf{u}|$ alongside the numerical reference solution. The overall flow structure is reproduced qualitatively, but local errors near the crystal boundary appear more pronounced than in the corresponding FNO predictions. With composite loss training, velocity errors ($\approx 8.5\%$) are substantially reduced compared to the plain-MSE baseline ($\approx 16\%$), while $\psi$ accuracy remains similar ($5.5\%$ vs.\ $5.2\%$).
 
-\TODO{Qualitative Vorhersageplots für U-Net Exp-1.2 (bs\,8) einfügen: $\psi$, Fehlerfeld und Referenz.}
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/UNET_Bilder/Exp_1_16_1e-3_psi.png}
+        \caption{Stream function $\psi$}
+    \end{subfigure}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/UNET_Bilder/Exp_1_16_1e-3_vel.png}
+        \caption{Velocity magnitude $|\mathbf{u}|$}
+    \end{subfigure}
+    \caption{U-Net Experiment~1, Exp-1.1 (bs\,16, lr~$=10^{-3}$): representative evaluation sample
+             showing the predicted stream function $\psi$ (top) and derived velocity magnitude
+             $|\mathbf{u}|$ (bottom) against the numerical reference.}
+    \label{fig:unet_exp1_qual_bs16}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/UNET_Bilder/Exp_1_8_5e-3_psi.png}
+        \caption{Stream function $\psi$}
+    \end{subfigure}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/UNET_Bilder/Exp_1_8_5e-3_vel.png}
+        \caption{Velocity magnitude $|\mathbf{u}|$}
+    \end{subfigure}
+    \caption{U-Net Experiment~1, Exp-1.2 (bs\,8, lr~$=5\times10^{-3}$): representative evaluation sample
+             showing the predicted stream function $\psi$ (top) and derived velocity magnitude
+             $|\mathbf{u}|$ (bottom) against the numerical reference.}
+    \label{fig:unet_exp1_qual_bs8}
+\end{figure}
 
 
 
@@ -347,7 +379,42 @@ Generalization to unseen crystal counts $n = 11$–$12$ is broadly consistent wi
 \label{ssec:results:exp2:unet:qualitative}
 % ----------------------------------------------------------------------------
 
-\TODO{Qualitative Vorhersageplots für U-Net Exp-2 einfügen: Einkristall- und Sieben-Kristall-Probe nebeneinander.}
+Figures~\ref{fig:unet_exp2_qual_indist} and~\ref{fig:unet_exp2_qual_ood} show representative evaluation plots for the best U-Net configuration in Experiment~2 (bs\,8, lr~$=10^{-3}$). Figure~\ref{fig:unet_exp2_qual_indist} shows an in-distribution sample with $n = 8$ crystals, and Figure~\ref{fig:unet_exp2_qual_ood} shows an out-of-distribution sample with $n = 25$ crystals ($2.5\times$ the training maximum).
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/UNET_Bilder/Exp_2_8_5e-3_8_psi.png}
+        \caption{Stream function $\psi$}
+    \end{subfigure}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/UNET_Bilder/Exp_2_8_5e-3_8_vel.png}
+        \caption{Velocity magnitude $|\mathbf{u}|$}
+    \end{subfigure}
+    \caption{U-Net Experiment~2 (bs\,8, lr~$=10^{-3}$): representative in-distribution evaluation
+             sample with $n = 8$ crystals, showing the predicted stream function $\psi$ (top)
+             and derived velocity magnitude $|\mathbf{u}|$ (bottom) against the numerical reference.}
+    \label{fig:unet_exp2_qual_indist}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/UNET_Bilder/Exp_2_8_5e-3_25_psi.png}
+        \caption{Stream function $\psi$}
+    \end{subfigure}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/UNET_Bilder/Exp_2_8_5e-3_25_vel.png}
+        \caption{Velocity magnitude $|\mathbf{u}|$}
+    \end{subfigure}
+    \caption{U-Net Experiment~2 (bs\,8, lr~$=10^{-3}$): representative out-of-distribution evaluation
+             sample with $n = 25$ crystals ($2.5\times$ the training maximum of $n = 10$), showing
+             the predicted stream function $\psi$ (top) and derived velocity magnitude $|\mathbf{u}|$
+             (bottom) against the numerical reference.}
+    \label{fig:unet_exp2_qual_ood}
+\end{figure}
 
 
 % ----------------------------------------------------------------------------
@@ -421,39 +488,39 @@ Figure~\ref{fig:fno_exp23_scaling} (left panel) shows the full metric profile st
 \label{ssec:results:exp2:fno:qualitative}
 % ----------------------------------------------------------------------------
 
-Figures~\ref{fig:fno_exp2_qual_bs16} and~\ref{fig:fno_exp2_qual_bs8} show representative evaluation plots for the two FNO configurations in Experiment~2. Both show results within the training distribution.
+Figures~\ref{fig:fno_exp2_qual_bs16} and~\ref{fig:fno_exp2_qual_bs8} show representative evaluation plots for the two FNO configurations in Experiment~2, both for an in-distribution sample with $n = 5$ crystals.
 
 \begin{figure}[htbp]
     \centering
-    \begin{subfigure}[b]{0.49\textwidth}
+    \begin{subfigure}[b]{\textwidth}
         \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_2_16_5e-4_psi.png}
         \caption{Stream function $\psi$}
     \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.49\textwidth}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
         \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_2_16_5e-4_vel.png}
         \caption{Velocity magnitude $|\mathbf{u}|$}
     \end{subfigure}
     \caption{FNO Experiment~2 (bs\,16, lr~$=5\times10^{-4}$): representative in-distribution evaluation
-             sample showing the predicted stream function $\psi$ (left) and derived velocity magnitude
-             $|\mathbf{u}|$ (right) against the numerical reference.}
+             sample with $n = 5$ crystals, showing the predicted stream function $\psi$ (top) and
+             derived velocity magnitude $|\mathbf{u}|$ (bottom) against the numerical reference.}
     \label{fig:fno_exp2_qual_bs16}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
-    \begin{subfigure}[b]{0.49\textwidth}
+    \begin{subfigure}[b]{\textwidth}
         \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_2_8_5e-3_psi.png}
         \caption{Stream function $\psi$}
     \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.49\textwidth}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
         \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_2_8_5e-3_vel.png}
         \caption{Velocity magnitude $|\mathbf{u}|$}
     \end{subfigure}
     \caption{FNO Experiment~2 (bs\,8, lr~$=5\times10^{-3}$): representative in-distribution evaluation
-             sample showing the predicted stream function $\psi$ (left) and derived velocity magnitude
-             $|\mathbf{u}|$ (right) against the numerical reference.}
+             sample with $n = 5$ crystals, showing the predicted stream function $\psi$ (top) and
+             derived velocity magnitude $|\mathbf{u}|$ (bottom) against the numerical reference.}
     \label{fig:fno_exp2_qual_bs8}
 \end{figure}
 
@@ -562,7 +629,24 @@ The right panel of Figure~\ref{fig:unet_exp23_scaling} shows the full metric pro
 \label{ssec:results:exp3:unet:qualitative}
 % ----------------------------------------------------------------------------
 
-\TODO{Qualitative Vorhersageplots für U-Net Exp-3 einfügen: in-distribution (7 Kristalle) und OOD (50 Kristalle).}
+Figure~\ref{fig:unet_exp3_qual_indist} shows a representative in-distribution evaluation sample for the best U-Net configuration in Experiment~3 (bs\,8, lr~$=10^{-3}$) with $n = 20$ crystals.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/UNET_Bilder/Exp_3_8_5e-3_20_psi.png}
+        \caption{Stream function $\psi$}
+    \end{subfigure}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/UNET_Bilder/Exp_3_8_5e-3_20_vel.png}
+        \caption{Velocity magnitude $|\mathbf{u}|$}
+    \end{subfigure}
+    \caption{U-Net Experiment~3 (bs\,8, lr~$=10^{-3}$): representative in-distribution evaluation
+             sample with $n = 20$ crystals, showing the predicted stream function $\psi$ (top)
+             and derived velocity magnitude $|\mathbf{u}|$ (bottom) against the numerical reference.}
+    \label{fig:unet_exp3_qual_indist}
+\end{figure}
 
 
 % ----------------------------------------------------------------------------
@@ -626,7 +710,24 @@ Within the training distribution ($n \leq 25$), the FNO achieves $\psi$ errors o
 \label{ssec:results:exp3:fno:qualitative}
 % ----------------------------------------------------------------------------
 
-\TODO{Qualitative Vorhersageplots für FNO Exp-3 einfügen: in-distribution (7 Kristalle) und OOD (50 Kristalle).}
+Figure~\ref{fig:fno_exp3_qual_indist} shows a representative in-distribution evaluation sample for the best FNO configuration in Experiment~3 (bs\,16, lr~$=5\times10^{-4}$) with $n = 20$ crystals.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_3_16_5e-4_20_psi.png}
+        \caption{Stream function $\psi$}
+    \end{subfigure}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
+        \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_3_16_5e-4_20_vel.png}
+        \caption{Velocity magnitude $|\mathbf{u}|$}
+    \end{subfigure}
+    \caption{FNO Experiment~3 (bs\,16, lr~$=5\times10^{-4}$): representative in-distribution evaluation
+             sample with $n = 20$ crystals, showing the predicted stream function $\psi$ (top) and
+             derived velocity magnitude $|\mathbf{u}|$ (bottom) against the numerical reference.}
+    \label{fig:fno_exp3_qual_indist}
+\end{figure}
 
 % ----------------------------------------------------------------------------
 \subsection{Comparison: FNO vs.\ U-Net}
@@ -698,55 +799,55 @@ Figures~\ref{fig:fno_exp4_small} and~\ref{fig:fno_exp4_big} compare the FNO pred
 
 \begin{figure}[htbp]
     \centering
-    \begin{subfigure}[b]{0.49\textwidth}
+    \begin{subfigure}[b]{\textwidth}
         \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_small_train_psi.png}
         \caption{Trained — $\psi$}
     \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.49\textwidth}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
         \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_small_train_vel.png}
         \caption{Trained — $|\mathbf{u}|$}
     \end{subfigure}
-    \\[1ex]
-    \begin{subfigure}[b]{0.49\textwidth}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
         \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_small_untrain_psi.png}
         \caption{Untrained — $\psi$}
     \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.49\textwidth}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
         \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_small_untrain_vel.png}
         \caption{Untrained — $|\mathbf{u}|$}
     \end{subfigure}
     \caption{Experiment~4 – small crystal ($r = 0.005$): FNO predictions for a trained model
-             (top row) and an untrained baseline (bottom row). Stream function $\psi$ is shown
-             on the left, velocity magnitude $|\mathbf{u}|$ on the right.}
+             (top two) and an untrained baseline (bottom two). Stream function $\psi$ and
+             velocity magnitude $|\mathbf{u}|$ are shown separately for each.}
     \label{fig:fno_exp4_small}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
-    \begin{subfigure}[b]{0.49\textwidth}
+    \begin{subfigure}[b]{\textwidth}
         \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_big_train_psi.png}
         \caption{Trained — $\psi$}
     \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.49\textwidth}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
         \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_big_train_vel.png}
         \caption{Trained — $|\mathbf{u}|$}
     \end{subfigure}
-    \\[1ex]
-    \begin{subfigure}[b]{0.49\textwidth}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
         \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_big_untrain_psi.png}
         \caption{Untrained — $\psi$}
     \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.49\textwidth}
+    \par\medskip
+    \begin{subfigure}[b]{\textwidth}
         \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/FNO_Bilder/Exp_4_big_untrain_vel.png}
         \caption{Untrained — $|\mathbf{u}|$}
     \end{subfigure}
     \caption{Experiment~4 – large crystal ($r = 0.5$): FNO predictions for a trained model
-             (top row) and an untrained baseline (bottom row). Stream function $\psi$ is shown
-             on the left, velocity magnitude $|\mathbf{u}|$ on the right. The trained model's
+             (top two) and an untrained baseline (bottom two). Stream function $\psi$ and
+             velocity magnitude $|\mathbf{u}|$ are shown separately for each. The trained model's
              high error ($71.3\%$ on~$\psi$) is visible in the qualitative comparison.}
     \label{fig:fno_exp4_big}
 \end{figure}
