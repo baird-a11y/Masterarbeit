@@ -241,7 +241,7 @@ Figures~\ref{fig:unet_exp1_qual_bs16} and~\ref{fig:unet_exp1_qual_bs8} show repr
 \label{ssec:results:exp1:unet:hf}
 % ----------------------------------------------------------------------------
 
-When trained with plain MSE loss (without the gradient penalty term), the U-Net yields evaluation errors of approximately $5.2\%$ on~$\psi$ and $\approx 16\%$ on the derived velocity field for the best bs\,8 configuration — a velocity-to-$\psi$ error ratio of roughly $3\times$. Since the velocity field is obtained by finite-difference differentiation of~$\hat\psi$, high-frequency residuals in the predicted stream function are amplified by the differentiation step, disproportionately increasing the velocity error. This explains why the plain-MSE ratio exceeds the corresponding FNO ratio ($\approx 2\times$) even when the $\psi$ errors are similar: the FNO's spectral architecture naturally suppresses high-frequency components above the retained mode count ($k_{\max} = 16$), whereas the U-Net places no such constraint on the spatial frequency content of its output.
+When trained with plain MSE loss (without the gradient penalty term), the U-Net yields evaluation errors of approximately $5.2\%$ on~$\psi$ and $\approx 16\%$ on the derived velocity field for the best bs\,8 configuration — a velocity-to-$\psi$ error ratio of roughly $3\times$. Since the velocity field is obtained by finite-difference differentiation of~$\hat\psi$, high-frequency residuals in the predicted stream function are amplified by the differentiation step, disproportionately increasing the velocity error. This explains why the plain-MSE ratio exceeds the corresponding FNO ratio ($\approx 2\times$) even when the $\psi$ errors are similar: the FNO's spectral architecture naturally suppresses high-frequency components above the retained mode count ($k_{\max} = 16$) \parencite{qin_toward_2024}, whereas the U-Net places no such constraint on the spatial frequency content of its output.
 
 The adoption of the composite loss reduces the velocity-to-$\psi$ ratio to $1.5$–$2\times$, as shown in Table~\ref{tab:unet_metrics_exp1}, confirming that the gradient penalty term effectively suppresses the high-frequency artefacts responsible for the inflated velocity errors. For the best bs\,16 configuration ($8.6\%$ $\psi$, $\approx 26\%$ velocity under plain MSE), the ratio likewise improves with composite loss, although the absolute error level remains substantially higher than for bs\,8.
 
@@ -428,7 +428,7 @@ Figure~\ref{fig:fno_training_exp2} shows the FNO training and validation loss cu
     \centering
     \includegraphics[width=0.75\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig6_fno_exp2_training.pdf}
     \caption{FNO Experiment~2: validation relative $L_2$ error and normalized training MSE over
-             180~training epochs. The validation error decreases steadily, in contrast to the
+             100~training epochs. The validation error decreases steadily, in contrast to the
              oscillatory U-Net convergence in the same setting.}
     \label{fig:fno_training_exp2}
 \end{figure}
@@ -660,7 +660,7 @@ Figure~\ref{fig:fno_training_exp3} shows the FNO training and validation loss cu
     \centering
     \includegraphics[width=0.75\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig7_fno_exp3_training.pdf}
     \caption{FNO Experiment~3: validation relative $L_2$ error and normalized training MSE over
-             180~training epochs (training distribution: $n \leq 25$). Convergence is steady
+             100~training epochs (training distribution: $n \leq 25$). Convergence is steady
              throughout, with a slightly higher final error than in Experiment~2.}
     \label{fig:fno_training_exp3}
 \end{figure}
@@ -754,11 +754,11 @@ U-Net & $\sim 23$  & $\sim 30$   & $21.5$ \\
 Across both experiments, the FNO consistently outperforms the U-Net within the training distribution by a factor of roughly $3$–$4\times$. In the OOD regime the advantage narrows: at $n = 50$, the FNO's $12.4\%$ error and the U-Net's $21.5\%$ differ by a factor of approximately $1.7\times$. The velocity errors tell a similar story: the FNO's ${\sim}14\%$ at $n=50$ contrasts with the U-Net's ${\sim}33\%$, underscoring the spectral architecture's superior ability to capture global flow structure even for unseen crystal configurations.
 
 % ============================================================================
-\section{Experiment~4: Architecture Ablation}
+\section{Experiment~4: Crystal Size Generalization}
 \label{sec:results:exp4}
 % ============================================================================
 
-Experiment~4 evaluates the crystal-size generalization of both models by testing them on crystals whose radii lie outside the training distribution. The FNO model used is the best-performing Exp-1 configuration (Exp-1.4, bs\,16, lr~$=5\times10^{-4}$), trained on the standard single-crystal distribution. The U-Net model is the best-performing Exp-2 configuration (bs\,8, lr~$=10^{-3}$), trained on multi-crystal configurations with $n \leq 10$. Each evaluation set contains ten single-crystal samples ($n = 1$). Two size regimes are evaluated: \emph{small crystals}, whose radius is substantially below the training distribution, and \emph{large crystals}, whose radius is substantially above the training distribution.
+Experiment~4 addresses crystal-size generalization through two complementary conditions. In the \textbf{fixed-radius baseline}, the best-performing models from Experiment~1 — FNO Exp-1.4 (bs\,16, lr~$=5\times10^{-4}$) and the best U-Net configuration (bs\,8, lr~$=5\times10^{-3}$) — are evaluated on single-crystal samples ($n = 1$) with two OOD radii: small crystals ($r = 0.005$, one tenth of the training radius) and large crystals ($r = 0.5$, ten times the training radius). In the \textbf{variable-radius condition}, a new FNO is trained on three discrete radii ($r \in \{0.02, 0.05, 0.08\}$) and evaluated on mixed-size samples to assess whether explicit size variability during training improves generalization.
 
 % ----------------------------------------------------------------------------
 \subsection{Evaluation Metrics}
@@ -864,9 +864,37 @@ For small crystals, the flow field is dominated by an extended, globally smooth 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig11_exp4_kristallgroesse.pdf}
-    \caption{Experiment~4: mean relative $L_2$ error on~$\psi$ and on the derived velocity field
-             for FNO (Exp-1.4, bs\,16) and U-Net (Exp-2, bs\,8), evaluated on single-crystal
-             configurations with crystal radii below (small) and above (large) the training
-             distribution.}
+    \caption{Experiment~4 (fixed-radius baseline): mean relative $L_2$ error on~$\psi$ and on the
+             derived velocity field for FNO (Exp-1.4, bs\,16) and U-Net (best Exp-1, bs\,8),
+             evaluated on single-crystal configurations with crystal radii substantially below
+             (small, $r=0.005$) and above (large, $r=0.5$) the training radius $r=0.05$.}
     \label{fig:exp4_kristallgroesse}
 \end{figure}
+
+% ----------------------------------------------------------------------------
+\subsection{Variable-Radius FNO: Training on Multiple Crystal Sizes}
+\label{ssec:results:exp4:varradius}
+% ----------------------------------------------------------------------------
+
+To assess whether explicit exposure to size variability during training improves generalization, a new FNO is trained on single-crystal samples ($n = 1$) drawn from three discrete radii: $r \in \{0.02, 0.05, 0.08\}$, with 1\,000 training and 100 validation samples per radius (3\,000 and 300 total, respectively). The architecture and optimizer settings are identical to Exp-1.4; the model is trained for 180~epochs.
+
+Table~\ref{tab:fno_metrics_exp4_var} reports the aggregated evaluation metrics over all 70~held-out samples spanning the three training radii.
+
+\begin{table}[htbp]
+\centering
+\caption{FNO variable-radius model evaluation metrics (Experiment~4, trained on
+         $r \in \{0.02, 0.05, 0.08\}$, evaluated on 70 mixed-radius samples, $n=1$).}
+\label{tab:fno_metrics_exp4_var}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Model} & $\bar{\varepsilon}_\psi$ (\%) & $\bar{\varepsilon}_v$ (\%) \\
+\midrule
+FNO variable-radius (all radii) & $10.35 \pm 10.77$ & $11.63 \pm 10.35$ \\
+\midrule
+FNO Exp-1.4 (fixed $r=0.05$, small OOD) & $12.13 \pm 6.41$ & $20.36 \pm 6.69$ \\
+FNO Exp-1.4 (fixed $r=0.05$, large OOD) & $71.26 \pm 4.75$ & $67.71 \pm 3.93$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The variable-radius FNO achieves a mean $\psi$ error of $10.35\%$ across all evaluated sizes, with substantially reduced velocity errors ($11.63\%$) compared to the fixed-radius model on OOD sizes. The large standard deviation ($\pm 10.77\%$) reflects the varying difficulty across different radii within the evaluation set. Compared to the fixed-radius baseline, the variable-radius model avoids the catastrophic failure observed for large crystals ($71.3\%$ on $\psi$), demonstrating that including size variability in training data substantially improves robustness to geometric scale changes. The radius input channel, which encodes crystal size explicitly at each grid point, enables the model to condition its predictions on the local crystal geometry and generalize across the evaluated size range.

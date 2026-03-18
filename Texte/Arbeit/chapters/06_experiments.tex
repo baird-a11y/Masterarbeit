@@ -34,13 +34,13 @@ This chapter describes the experimental setup used to evaluate and compare the U
 \label{sec:experiments:dataset}
 % ----------------------------------------------------------------------------
 
-All training and evaluation data are generated using LaMEM, a parallel finite-difference Stokes solver. Each simulation produces a steady-state Stokes flow in a $[-1,1]^2$ domain containing one or more circular crystals with fixed viscosity contrast. The stream function $\psi$ is reconstructed from the vorticity output via the Poisson solver described in Chapter~\ref{ch:implementation}, and normalized per sample before storage.
+All training and evaluation data are generated using LaMEM \parencite{Popov2013LaMEM}, a parallel finite-difference Stokes solver. Each simulation produces a steady-state Stokes flow in a $[-1,1]^2$ domain containing one or more circular crystals with fixed viscosity contrast. The stream function $\psi$ is reconstructed from the vorticity output via the Poisson solver described in Chapter~\ref{ch:implementation}, and normalized per sample before storage.
 
 Samples are stored as individual \texttt{.jld2} files, each containing the input tensor, the normalized target field $\psi_{\mathrm{norm}}$, the normalization scale, and grid metadata. Data generation is executed serially to guarantee deterministic behavior.
 
 The dataset is stratified by crystal count (Experiments~1--3) and crystal radius (Experiment~4). For Experiments~1--3, each crystal-count stratum contains 1\,000 training, 100 validation, and 10 evaluation samples; the 1\,000\,/\,100 training-to-validation ratio is maintained across all strata. All crystals in these experiments share a fixed radius $r = 0.05$.
 
-Experiment~4 uses a different stratification: training and validation samples are generated for two discrete radii ($r = 0.02$ and $r = 0.08$), with 1\,000 training and 100 validation samples per radius. All samples contain exactly one crystal ($n = 1$). Evaluation is performed on six separate sets of 10 samples each, covering in-distribution ($r \in \{0.02, 0.08\}$), interpolation ($r \in \{0.035, 0.065\}$), and extrapolation ($r \in \{0.01, 0.1\}$) conditions. This design ensures that the number of training samples per condition is comparable to Experiment~1 and that performance differences can be attributed to size generalization rather than sample count.
+Experiment~4 uses a different stratification: training and validation samples are generated for three discrete radii ($r \in \{0.02, 0.05, 0.08\}$), with 1\,000 training and 100 validation samples per radius. All samples contain exactly one crystal ($n = 1$). Evaluation is performed on six separate sets of 10 samples each, covering in-distribution ($r \in \{0.02, 0.08\}$), interpolation ($r \in \{0.035, 0.065\}$), and extrapolation ($r \in \{0.01, 0.1\}$) conditions. This design ensures that the number of training samples per condition is comparable to Experiment~1 and that performance differences can be attributed to size generalization rather than sample count.
 
 % ----------------------------------------------------------------------------
 \section{Learning Task and Input Encoding}
@@ -58,7 +58,7 @@ Each input sample consists of five channels on a $256 \times 256$ Cartesian grid
     \item \textbf{Normalized $z$-coordinate} — grid position along the vertical axis, scaled to $[-1, 1]$.
 \end{enumerate}
 
-The coordinate channels allow the network to resolve position-dependent flow patterns without relying on positional embeddings. The single output channel is $\psi_{\mathrm{norm}} \in \mathbb{R}^{256 \times 256 \times 1}$; rescaling to physical units is applied in post-processing using the stored per-sample scale factor.
+The coordinate channels allow the network to resolve position-dependent flow patterns without requiring architectural modifications for different crystal positions. The single output channel is $\psi_{\mathrm{norm}} \in \mathbb{R}^{256 \times 256 \times 1}$; rescaling to physical units is applied in post-processing using the stored per-sample scale factor.
 
 % ----------------------------------------------------------------------------
 \section{Evaluation Metrics}
@@ -76,7 +76,7 @@ Predictions are evaluated on the normalized stream function $\psi_{\mathrm{norm}
     \item[Boundary MSE] MSE evaluated exclusively on the domain boundary $\partial\Omega$, measuring compliance with the homogeneous Dirichlet condition $\psi|_{\partial\Omega} = 0$.
 \end{description}
 
-All metrics are aggregated by crystal count to assess how performance scales with geometric complexity. This stratification is essential for distinguishing in-distribution accuracy from out-of-distribution (OOD) generalization.
+All metrics are aggregated by crystal count to assess how performance scales with geometric complexity \parencite{morimoto_generalization_2022}. This stratification is essential for distinguishing in-distribution accuracy from out-of-distribution (OOD) generalization and follows evaluation protocols established in benchmark studies of data-driven PDE surrogates \parencite{takamoto_pdebench_nodate,lu_comprehensive_2022}.
 
 % ----------------------------------------------------------------------------
 \section{Experimental Configurations}
@@ -97,17 +97,15 @@ Models are trained on samples with $n \in \{1, \ldots, 10\}$ crystals and evalua
 Models are trained on configurations with up to $n = 25$ crystals and subsequently evaluated on substantially more complex scenes with up to $n = 84$ crystals. This experiment probes whether the models can capture the interactions arising from a large number of obstacles or whether their generalization capability breaks down beyond a critical level of geometric complexity.
 
 \paragraph{Experiment 4 – Crystal size generalization.}
-This experiment investigates whether the surrogate models can generalize to crystal radii not seen during training — an additional axis of out-of-distribution generalization beyond crystal count.
-
-To study this, the experiment is designed around two conditions:
+This experiment investigates whether surrogate models can generalize to crystal radii not seen during training — an additional axis of out-of-distribution generalization beyond crystal count. The experiment is designed around two conditions:
 
 \begin{itemize}
-    \item \textbf{Fixed-radius baseline.} The best models from Experiment~1 (trained exclusively on $r = 0.05$) are evaluated on crystals with unseen radii. This quantifies the generalization error of a model that has no exposure to size variability.
+    \item \textbf{Fixed-radius baseline.} The best-performing models from Experiment~1 — FNO Exp-1.4 (bs\,16, lr~$=5\times10^{-4}$) and the best U-Net configuration — are evaluated on single-crystal samples ($n=1$) with unseen radii, both substantially smaller ($r = 0.005$) and substantially larger ($r = 0.5$) than the training radius $r = 0.05$. This quantifies the size-generalization error for models that have had no exposure to size variability, and assesses whether either architecture is inherently more robust to geometric scale changes.
 
-    \item \textbf{Variable-radius training.} New models are trained on single-crystal samples ($n = 1$) with three discrete radii: $r \in \{0.02,\, 0.05,\, 0.08\}$ (1\,000 samples each, i.e., 3\,000 training samples total). The radius channel of the input representation explicitly encodes the crystal size at each grid point, enabling the network to condition its prediction on the crystal geometry.
+    \item \textbf{Variable-radius training.} A new FNO is trained on single-crystal samples ($n = 1$) with three discrete radii: $r \in \{0.02,\, 0.05,\, 0.08\}$ (1\,000 samples each, i.e., 3\,000 training samples total). This condition is evaluated for the FNO only: since the U-Net showed substantially larger prediction errors in Experiments~2 and~3, the more informative question is whether the stronger FNO architecture can leverage explicit size variability in training to improve generalization across the size axis. The radius channel of the input representation explicitly encodes the crystal size at each grid point, enabling the network to condition its prediction on the local crystal geometry.
 \end{itemize}
 
-Both model types are subsequently evaluated on six radius conditions covering in-distribution, interpolation, and extrapolation regimes:
+Both architectures are evaluated in the fixed-radius baseline; only the FNO is evaluated in the variable-radius condition. Results are reported for the two OOD size regimes:
 
 \begin{center}
 \begin{tabular}{lll}
@@ -123,7 +121,7 @@ Extrapolation OOD   & $r = 0.01$,\ $r = 0.1$    & Outside training range \\
 
 The expected outcome is that the fixed-radius model degrades substantially for any $r \neq 0.05$, while the variable-radius model generalizes well within the training range and degrades gracefully outside it. This two-stage comparison isolates the contribution of size variability in training data from the effect of the radius input channel.
 
-\textit{Note: Results for Experiment~4 are pending at the time of writing; a detailed analysis is provided in Section~\ref{ssec:results:exp4}.}
+A detailed analysis of the results is provided in Section~\ref{ssec:results:exp4}.
 
 % ----------------------------------------------------------------------------
 \section{Training Setup and Hyperparameters}

@@ -27,7 +27,7 @@ acceleration.
 A key property of Stokes flow is its linearity with respect to the
 velocity field for fixed material parameters and boundary conditions. This
 means that hydrodynamic interactions between rigid inclusions are long-ranged
-and additive: the disturbance induced by one particle influences the
+and additive \parencite{happel_low_1983}: the disturbance induced by one particle influences the
 flow field throughout the domain. These long-range interactions form the
 physical basis for collective sedimentation phenomena, including wake
 interaction, drafting--kissing--tumbling dynamics, and clustering effects
@@ -59,13 +59,11 @@ u_x = \frac{\partial \psi}{\partial z},
 u_z = -\frac{\partial \psi}{\partial x}.
 \end{equation}
 This transformation reduces the vector-valued velocity field to a single
-scalar potential and guarantees incompressibility by construction.
-% TODO: Klassische Fluid-Mechanik-Referenz ergänzen, z.\,B. Batchelor (1967) ``An Introduction to Fluid Dynamics'' oder Kim \& Karrila (1991) ``Microhydrodynamics'' -- noch nicht in references.bib
+scalar potential and guarantees incompressibility by construction \parencite{happel_low_1983}.
 
 The stream-function formulation has a long tradition in classical
 hydrodynamics, particularly for planar Stokes flow problems involving rigid
-inclusions and sedimentation \parencite{ladd_numerical_nodate,uhlmann_sedimentation_2014}.
-% TODO: Lehrbuch-Referenz ergänzen, z.\,B. Kim \& Karrila (1991) ``Microhydrodynamics'' -- noch nicht in references.bib
+inclusions and sedimentation \parencite{happel_low_1983,ladd_numerical_nodate,uhlmann_sedimentation_2014}.
 Streamlines
 coincide with level sets of $\psi$, allowing qualitative flow features such as
 recirculation zones, wakes, and stagnation points to be identified directly.
@@ -128,15 +126,18 @@ solutions and the stream-function representation. Given a divergence-free
 velocity field from a numerical solver, the vorticity can be computed by
 finite differences, and the stream function can be reconstructed by solving
 Equation~\eqref{eq:poisson_psi} with appropriate boundary conditions.
-In the present work, this procedure is applied to high-fidelity LaMEM
-simulations to construct $\psi$ as a learning target.
+In the present work, homogeneous Dirichlet conditions $\psi|_{\partial\Omega} = 0$
+are imposed on all domain boundaries, which fixes the stream-function gauge
+and ensures that the domain walls coincide with a single streamline —
+consistent with the free-slip wall conditions used in the LaMEM simulations.
+The resulting Poisson problem is discretized on the same $256 \times 256$
+grid and solved to construct $\psi$ as a learning target for each simulation.
 
 It is important to emphasize that this Poisson solve does not introduce new
 physics. Instead, it constitutes an auxiliary transformation that maps the
 numerical reference solution into a representation that is more amenable to
 learning. Similar transformations are commonly used in classical fluid
-mechanics to analyze Stokes flow around particles and inclusions \parencite{ladd_numerical_nodate}.
-% TODO: Ggf. Lehrbuch-Referenz ergänzen (Pozrikidis 1992 ``A Practical Guide to Boundary Element Methods'' o.\,ä.) -- noch nicht in references.bib
+mechanics to analyze Stokes flow around particles and inclusions \parencite{happel_low_1983,ladd_numerical_nodate}.
 
 
 % ==========================================================
@@ -156,7 +157,7 @@ regression problem on a vector field. Incompressibility and momentum balance
 are not enforced explicitly but must be inferred from the training data. While
 this approach works well in many CNN-based flow surrogates
 \parencite{ribeiro_deepcfd_nodate,chen_u-net_nodate,thuerey_deep_2020}, it can lead to
-small but systematic violations of physical constraints.
+small but systematic violations of physical constraints such as non-zero divergence \parencite{richter-powell_neural_2022}.
 
 Predicting the stream function $\psi$ introduces a stronger inductive bias by
 restricting the hypothesis space to divergence-free velocity fields by
@@ -169,12 +170,7 @@ function spaces. By reducing
 the effective degrees of freedom of the output, the learning problem is
 simplified and numerical conditioning can be improved.
 
-Residual learning further modifies the inductive bias by decomposing the
-solution into a physically motivated baseline and a learned correction. If the
-baseline captures the dominant large-scale behavior of the flow, the residual
-field is typically smoother and of lower amplitude. Such strategies have been
-shown to improve learning efficiency and generalization in physics-based
-surrogate models \parencite{sun_surrogate_2020}.
+A further strategy for introducing physical inductive bias is residual learning, which decomposes the solution into a physically motivated baseline and a learned correction. If the baseline captures the dominant large-scale behavior of the flow — for example, the analytical Stokes solution for a single isolated cylinder — the residual field $\Delta\psi = \psi - \psi_{\text{baseline}}$ is typically smoother and of lower amplitude than the full field, potentially simplifying the learning task. Such strategies have been shown to improve learning efficiency and generalization in physics-based surrogate models \parencite{sun_surrogate_2020}. While this approach is not pursued in the present thesis, which learns the full stream function $\psi$ directly, residual decomposition represents a natural extension that could improve accuracy in the dense multi-crystal regime; it is discussed as a future research direction in Chapter~\ref{ch:discussion}.
 
 % ==========================================================
 \section{U-Net Architecture}
@@ -229,7 +225,7 @@ schematic overview of the architecture as used in this work.
 
 % ---- Input / Output ----
 \node[io] (inp) at (-2.4, 4*\dy)
-    {Mask, SDF,\\ $x$-Coord, $z$-Coord\\ (4\,channels)};
+    {Mask, SDF, Radius,\\ $x$-Coord, $z$-Coord\\ (5\,channels)};
 \node[io] (out) at (8*\dx + 2.2, 4*\dy)
     {$\hat{\psi}$\\ (1\,channel)};
 
