@@ -533,6 +533,49 @@
       \verb https://linkinghub.elsevier.com/retrieve/pii/S0021999120307257
       \endverb
     \endentry
+    \entry{kingma2017adammethodstochasticoptimization}{misc}{}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=b6fbd171848aad4edf3925543f1f1522}{%
+           family={Kingma},
+           familyi={K\bibinitperiod},
+           given={Diederik\bibnamedelima P.},
+           giveni={D\bibinitperiod\bibinitdelim P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=8aa66e8231cc2fdbe67aa4f18ca970c6}{%
+           family={Ba},
+           familyi={B\bibinitperiod},
+           given={Jimmy},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{0018e09b9f142d15c9693e18a17bdf3f}
+      \strng{fullhash}{a09df9f123146b8e2c7f1134c9496932}
+      \strng{fullhashraw}{a09df9f123146b8e2c7f1134c9496932}
+      \strng{bibnamehash}{a09df9f123146b8e2c7f1134c9496932}
+      \strng{authorbibnamehash}{a09df9f123146b8e2c7f1134c9496932}
+      \strng{authornamehash}{0018e09b9f142d15c9693e18a17bdf3f}
+      \strng{authorfullhash}{a09df9f123146b8e2c7f1134c9496932}
+      \strng{authorfullhashraw}{a09df9f123146b8e2c7f1134c9496932}
+      \field{sortinit}{K}
+      \field{sortinithash}{c02bf6bff1c488450c352b40f5d853ab}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.LG}
+      \field{eprinttype}{arXiv}
+      \field{title}{Adam: A Method for Stochastic Optimization}
+      \field{year}{2017}
+      \verb{eprint}
+      \verb 1412.6980
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/1412.6980
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/1412.6980
+      \endverb
+    \endentry
     \entry{koehler_apebench_nodate}{article}{}{}
       \name{author}{4}{}{%
         {{un=0,uniquepart=base,hash=f282677d288476b9df9aa1eb7c9065db}{%
@@ -1646,6 +1689,54 @@
       \verb http://arxiv.org/abs/2206.09505
       \endverb
       \keyw{Condensed Matter - Soft Condensed Matter}
+    \endentry
+    \entry{odena_deconvolution_2016}{article}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=a04932af4057bbbbad95d73521f2d22b}{%
+           family={Odena},
+           familyi={O\bibinitperiod},
+           given={Augustus},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=1328d3ceef6add8461994fc364c664df}{%
+           family={Dumoulin},
+           familyi={D\bibinitperiod},
+           given={Vincent},
+           giveni={V\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=78be47e08348476a254b1217fd9041ca}{%
+           family={Olah},
+           familyi={O\bibinitperiod},
+           given={Chris},
+           giveni={C\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{cc5070deee87c12632dc009ee0d438dd}
+      \strng{fullhash}{f7f9b14bf38891984f22c4f684969d16}
+      \strng{fullhashraw}{f7f9b14bf38891984f22c4f684969d16}
+      \strng{bibnamehash}{f7f9b14bf38891984f22c4f684969d16}
+      \strng{authorbibnamehash}{f7f9b14bf38891984f22c4f684969d16}
+      \strng{authornamehash}{cc5070deee87c12632dc009ee0d438dd}
+      \strng{authorfullhash}{f7f9b14bf38891984f22c4f684969d16}
+      \strng{authorfullhashraw}{f7f9b14bf38891984f22c4f684969d16}
+      \field{sortinit}{O}
+      \field{sortinithash}{2cd7140a07aea5341f9e2771efe90aae}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Distill}
+      \field{title}{Deconvolution and {Checkerboard} {Artifacts}}
+      \field{year}{2016}
+      \verb{doi}
+      \verb 10.23915/distill.00003
+      \endverb
+      \verb{urlraw}
+      \verb https://distill.pub/2016/deconv-checkerboard/
+      \endverb
+      \verb{url}
+      \verb https://distill.pub/2016/deconv-checkerboard/
+      \endverb
     \endentry
     \entry{oldenburg_geometry_2022}{article}{}{}
       \name{author}{5}{}{%
