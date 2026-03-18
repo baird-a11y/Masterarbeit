@@ -28,7 +28,7 @@ Inkompressibilität per Konstruktion und eliminiert so eine häufige Quelle
 systematischer Verletzungen physikalischer Nebenbedingungen in rein
 datengetriebenen Strömungssurrogaten.
 
-Trainingsdaten werden mit dem geodynamischen Finite-Elemente-Code
+Trainingsdaten werden mit dem geodynamischen Finite-Differenzen-Code
 \textsc{LaMEM} generiert und liefern stationäre inkompressible Stokes-Lösungen
 für Konfigurationen mit $1$ bis $N_{\max}$ zufällig platzierten starren
 kreisförmigen Kristallen auf einem festen $256 \times 256$-Gitter. Vier
@@ -48,7 +48,11 @@ Architekturrangfolge bei der Kristallgrößen-Generalisierung: Für Kristalle, d
 größer als die Trainingsverteilung sind, degradiert der FNO stark
 ($71{,}3 \pm 4{,}8\%$ auf~$\psi$), während das U-Net wesentlich niedrigere
 Fehler aufweist ($44{,}9 \pm 8{,}2\%$) — zurückzuführen auf die feste
-Spektralabschneidung des FNO bei $k_{\max} = 16$ Fourier-Moden.
+Spektralabschneidung des FNO bei $k_{\max} = 16$ Fourier-Moden. Ein
+auf drei diskrete Kristallgrößen trainierter FNO reduziert diese Degradation
+durch explizite Größenkonditionierung über den Radiuseingangskanal auf
+$10{,}4\%$ und zeigt damit, dass die spektrale Einschränkung ohne
+Architekturänderungen überwunden werden kann.
 
 Aus~$\psi$ abgeleitete Geschwindigkeitsfelder erweisen sich
 konsistent als schwieriger zu reproduzieren als die Stromfunktion selbst, was

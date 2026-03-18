@@ -29,7 +29,7 @@ than velocity components directly enforces incompressibility by construction,
 eliminating a common source of systematic constraint violations in purely
 data-driven velocity surrogates.
 
-Training data are generated using the \textsc{LaMEM} geodynamic finite-element
+Training data are generated using the \textsc{LaMEM} geodynamic finite-difference
 code, providing steady-state incompressible Stokes solutions for configurations
 of $1$ to $N_{\max}$ randomly placed rigid circular crystals on a fixed
 $256 \times 256$ grid. Four experiments are conducted to compare architectural
@@ -46,7 +46,11 @@ the generalization range. Experiment~4 reveals a reversal of the architectural
 ranking for crystal-size generalization: for crystals larger than the training
 distribution, the FNO degrades severely ($71.3 \pm 4.8\%$ on~$\psi$) while the
 U-Net shows substantially lower errors ($44.9 \pm 8.2\%$), attributable to the
-FNO's fixed spectral truncation at $k_{\max} = 16$ Fourier modes.
+FNO's fixed spectral truncation at $k_{\max} = 16$ Fourier modes. A
+variable-radius FNO trained on three discrete crystal sizes reduces this
+degradation to $10.4\%$ through explicit size conditioning via the radius input
+channel, demonstrating that the spectral limitation can be overcome without
+architectural modifications.
 
 Gradient-derived velocity quantities prove consistently harder to
 reproduce than $\psi$ itself, reflecting the amplification of residuals under

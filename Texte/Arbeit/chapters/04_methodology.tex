@@ -30,7 +30,7 @@ The central experimental factor in this thesis is therefore not the choice of le
 \label{sec:lamem_generation}
 % ==========================================================
 
-Training data are generated using the geodynamic finite-element code \textsc{LaMEM}, which solves the incompressible Stokes equations on a regular Cartesian grid. The simulation setup follows established geodynamic Stokes
+Training data are generated using the geodynamic finite-difference code \textsc{LaMEM}, which solves the incompressible Stokes equations on a regular Cartesian grid. The simulation setup follows established geodynamic Stokes
 discretization practices, where robustness under viscosity and density contrasts is essential \parencite{thieulot_choice_2022}.  
 
 Each simulation represents a steady (quasi-static) configuration of $1\ldots N_{\max}$ rigid crystals settling in a viscous matrix. Since the incompressible Stokes equations are quasi-static, each simulation directly yields a steady-state velocity field for a fixed crystal arrangement. Transient crystal dynamics are not modeled; the surrogate is trained on individual steady-state flow snapshots.
