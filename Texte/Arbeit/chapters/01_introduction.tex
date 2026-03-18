@@ -9,7 +9,7 @@ Early work by \textcite{martin_crystal_1988} showed that crystal settling can oc
 
 Subsequent experimental and numerical investigations \parencite{martin_fluid-dynamical_1989,weinstein_evolution_1988,verhoeven_numerical_2009,patocka_settling_2020,uhlmann_sedimentation_2014,penlou_experimental_2023,nissanka_dynamics_2023} revealed that such interactions may lead to asymmetric flow patterns, recirculation zones, and clustering phenomena. \textcite{weinstein_evolution_1988} further showed that the spatial distribution of deposited crystals is inherently asymmetric with respect to the geometry of the convection cell, offering a physical explanation for the non-uniform mineralogical layering commonly observed in plutonic rocks. As a consequence, even small variations in crystal geometry, spatial arrangement, or relative positioning can strongly affect collective settling dynamics and the development of such layering. Taken together, these results indicate that multi-crystal sedimentation is an inherently multiscale and interaction-dominated process, which places high demands on any numerical approach aimed at capturing the relevant physics.
 
-\subsection*{Physical Parameter Regime}
+\subsection{Physical Parameter Regime}
 
 To ground the qualitative picture in concrete physical scales, it is useful to recall the relevant order-of-magnitude estimates. For mafic minerals such as olivine settling in a basaltic melt, typical parameter ranges are:
 
@@ -49,7 +49,7 @@ Second, Fourier Neural Operators (FNOs) \parencite{li_fourier_2021} learn mappin
 
 Both approaches have been shown to achieve speed-ups of several orders of magnitude over classical solvers, while maintaining acceptable accuracy across a range of flow problems. Beyond purely data-driven approaches, physics-informed neural networks (PINNs) \parencite{raissi_physics_2017,raissi_physics-informed_2019,jin_nsfnets_2021} incorporate governing equations directly into the training objective, encouraging physically consistent predictions even when training data are scarce.
 
-A broader overview of recent developments including geometry-aware PINNs, neural operators, and scalable U-Net variants for complex flow problems is given in Chapter~\ref{ch:related}. These advances motivate the central premise of this thesis: How well can U-Net and FNO architectures, trained on a limited number of crystal configurations, generalize to unseen sedimentation scenarios with varying particle numbers and spatial arrangements? And which architecture is better suited for this task, given their fundamentally different approaches to capturing spatial structure?
+Taken together, these three families of methods — convolutional surrogates, neural operators, and physics-informed networks — span the design space from which the present thesis draws its central comparison. While systematic architecture comparisons \parencite{lu_comprehensive_2022} and generalization analyses \parencite{morimoto_generalization_2022} exist for standard benchmark problems, they have rarely been applied to physically structured, interaction-dominated problems such as multi-crystal Stokes flow with varying particle numbers. A comprehensive review of the relevant literature is provided in Chapter~\ref{ch:related}, and the resulting methodological landscape motivates the central research question addressed in this thesis.
 
 \section{Research Question and Hypothesis}
 
@@ -74,16 +74,16 @@ The controlled comparison of U-Net and FNO architectures presented in this thesi
 
 \section{Objectives and Scope of the Study}
 
-\subsection*{Primary Objective}
-Quantitatively evaluate the generalization performance of U-Net- and FNO-based surrogate models across varying crystal numbers (1--100) and spatial arrangements on a fixed $256 \times 256$ computational grid.
+\subsection{Primary Objective}
+Quantitatively evaluate the generalization performance of U-Net- and FNO-based surrogate models across a range of crystal numbers and spatial arrangements on a fixed $256 \times 256$ computational grid, with a particular focus on identifying the conditions under which generalization breaks down and how the two architectural paradigms compare in this respect.
 
-\subsection*{Secondary Objective}
+\subsection{Secondary Objective}
 Identify recurring prediction errors and characteristic failure patterns encountered when predicting previously unseen geometries, including symmetry-breaking artifacts, nonphysical divergence, and reduced accuracy near crystal boundaries.
 
-\subsection*{Tertiary Objective}
+\subsection{Tertiary Objective}
 Derive practical guidelines for the construction of surrogate models for multiphase Stokes flow in geophysical settings, with a focus on input representations, output variables, normalization strategies, and training methodologies.
 
-\subsection*{Scope Limitations}
+\subsection{Scope Limitations}
 
 To maintain computational feasibility while addressing the core research questions, this study is restricted to:
 
@@ -97,7 +97,7 @@ To maintain computational feasibility while addressing the core research questio
 
 These assumptions allow for a focused investigation of surrogate modeling strategies while preserving the essential physical characteristics of multi-crystal sedimentation dynamics.
 
-\subsection*{Structure of the Thesis}
+\section{Structure of the Thesis}
 
 The remainder of this thesis is organized as follows.
 Chapter~\ref{ch:related} reviews recent machine-learning-based surrogate models for fluid dynamics and situates the present work within the existing literature.
@@ -107,5 +107,6 @@ Chapter~\ref{ch:implementation} details the technical realization of the surroga
 Chapter~\ref{ch:experiments} presents the experimental setup, including the choice of hyperparameters, training configurations, and evaluation metrics used throughout the study.
 Chapter~\ref{ch:results} reports the numerical results obtained from the U-Net and FNO surrogate models across varying crystal numbers and spatial arrangements.
 Chapter~\ref{ch:discussion} interprets the results in the context of the research questions and hypotheses, identifies key insights and limitations, and discusses implications for future surrogate modeling efforts in geophysical fluid dynamics.
+Chapter~\ref{ch:conclusion} summarizes the main findings of the study, draws conclusions with respect to the research hypotheses, and outlines directions for future work.
 
 
