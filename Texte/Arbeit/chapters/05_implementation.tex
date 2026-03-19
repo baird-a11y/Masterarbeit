@@ -126,7 +126,7 @@ Training is implemented using an explicit loop to retain full control over gradi
 
 \subsection*{Optimizer configuration}
 
-Both models use the Adam optimizer from \texttt{Optimisers.jl}. The FNO additionally applies gradient norm clipping (\texttt{ClipNorm}) to stabilize training, as spectral operations can produce large gradient magnitudes.
+Both models use the Adam optimizer from \texttt{Optimisers.jl}. The FNO additionally applies gradient norm clipping (\texttt{ClipNorm(1.0)}) to stabilize training, as spectral operations can produce large gradient magnitudes.
 Concrete hyperparameter choices—learning rates, gradient clipping thresholds, batch sizes, and number of training epochs—are architecture-specific and reported in Chapter~\ref{ch:experiments}.
 
 \subsection*{Loss functions}

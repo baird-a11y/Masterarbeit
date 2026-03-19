@@ -102,7 +102,7 @@ Raw values of $\psi$ can span several orders of magnitude (typically $10^{-16}$ 
 To bring $\psi$ into a numerically suitable range without discarding its spatial structure or sign, each sample is normalized individually. We compute a characteristic order of magnitude
 \[
 p_{\mathrm{mean}}=
-\mathrm{round}\!\left(
+\mathrm{floor}\!\left(
 \mathrm{mean}\left(\log_{10}(|\psi|+\epsilon)\right)
 \right),
 \qquad \epsilon=10^{-30},
@@ -163,7 +163,7 @@ of both architectures were introduced in Chapter~\ref{ch:theory}; this section d
 The U-Net follows the encoder--decoder principle of the original architecture \parencite{ronneberger_u-net_2015} and common adaptations for laminar flow-field prediction on Cartesian grids \parencite{thuerey_deep_2020,chen_u-net_nodate}.
 
 \paragraph{Encoder.}
-The encoder consists of four resolution levels. Spatial resolution is reduced by a factor of two at each level, while feature widths increase as $32 \rightarrow 64 \rightarrow 128 \rightarrow 256$. Each level contains two
+The encoder consists of five resolution levels. Spatial resolution is reduced by a factor of two at each level, while feature widths increase as $32 \rightarrow 64 \rightarrow 128 \rightarrow 256 \rightarrow 512$. Each level contains two
 $3\times3$ convolutions with batch normalization and ReLU activations, followed by downsampling via a strided convolution (stride~2). Strided downsampling is used instead of max pooling to keep the operation learnable and to reduce grid-aligned artifacts in smooth Stokes-flow targets.
 
 \paragraph{Bottleneck.}
@@ -184,7 +184,7 @@ The FNO follows the architecture proposed by \textcite{li_fourier_2021}, consist
 A pointwise linear layer maps the five input channels into a higher-dimensional feature space of width $d_v$.
 
 \paragraph{Fourier layers.}
-Each Fourier layer applies the operation defined in Equation~\eqref{eq:fourier_layer}: the input is transformed into Fourier space via a two-dimensional FFT, multiplied with a learnable complex weight tensor $R_l$ for the lowest $k_{\max}$ modes, and transformed back. This spectral path is combined with a pointwise linear transformation (bias path) and a nonlinear activation. A stack of $L$ such layers forms the core of the model.
+Each Fourier layer applies the operation defined in Equation~\eqref{eq:fourier_layer}: the input is transformed into Fourier space via a two-dimensional FFT, multiplied with a learnable complex weight tensor $R_l$ for the lowest $k_{\max}$ modes, and transformed back. This spectral path is combined with a pointwise linear transformation (bias path) and a GELU activation. A stack of $L$ such layers forms the core of the model.
 
 \paragraph{Projection.}
 A pointwise linear layer maps the learned feature representation to the single output channel $\psi_{\mathrm{norm}}$.
@@ -215,12 +215,13 @@ constraints. Data tensors and model parameters are explicitly moved to CPU or GP
 
 \subsection{Loss Function}
 
-The primary loss is the mean-squared error
+The primary loss is the mean-squared error computed over interior grid points, excluding a two-pixel boundary region to avoid contamination from boundary-condition enforcement:
 \[
 \mathcal{L}_{\mathrm{MSE}}=
-\frac{1}{N_{\mathrm{pix}}}\sum_i
-\left(y^{\mathrm{pred}}_i-y^{\mathrm{true}}_i\right)^2.
+\frac{1}{N_{\mathrm{int}}}\sum_{i\,\in\,\Omega_{\mathrm{int}}}
+\left(y^{\mathrm{pred}}_i-y^{\mathrm{true}}_i\right)^2,
 \]
+where $\Omega_{\mathrm{int}}$ denotes the set of interior grid points and $N_{\mathrm{int}}$ their count.
 Both architectures are trained with an extended composite loss that combines the MSE with gradient-matching and boundary terms, increasing robustness near sharp crystal boundaries and encouraging physically consistent velocity fields. The specific loss weights and warmup schedule are detailed in Chapter~\ref{ch:experiments}.
 
 \subsection{Optimization and Checkpointing}
@@ -239,9 +240,6 @@ Primary evaluation metrics include:
     \item mean-squared error (MSE) of the predicted target field,
     \item relative $L_2$ errors for $\psi$, $\partial_x\psi$, and $\partial_z\psi$,
           which quantify errors in both amplitude and derived velocity gradients,
-    \item pixelwise error thresholds $\epsilon_{0.01}$, $\epsilon_{0.05}$, and
-          $\epsilon_{0.10}$, defined as the fraction of grid points exceeding
-          relative error levels of $1\%$, $5\%$, and $10\%$.
 \end{itemize}
 
 Errors are grouped by the number of crystals in the test sample ($1\ldots N_{\max}$), enabling direct assessment of how prediction quality changes as hydrodynamic interactions become more complex—an approach motivated
