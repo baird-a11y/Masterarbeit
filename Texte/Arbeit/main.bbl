@@ -209,6 +209,91 @@
       \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\WM2CL78Q\\Chen et al. - U-net architectures for fast prediction in fluid mechanics.pdf:application/pdf
       \endverb
     \endentry
+    \entry{goyal2018accuratelargeminibatchsgd}{misc}{}{}
+      \name{author}{9}{}{%
+        {{un=0,uniquepart=base,hash=d87be7c19fa16049347907c9820816c6}{%
+           family={Goyal},
+           familyi={G\bibinitperiod},
+           given={Priya},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=ecd149fdcb3e0503881d49e545744c3d}{%
+           family={Dollár},
+           familyi={D\bibinitperiod},
+           given={Piotr},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=bd5dadbe57bedc5957c19a3154c4d424}{%
+           family={Girshick},
+           familyi={G\bibinitperiod},
+           given={Ross},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c3ca2ee41cf25a9ed55b70a29aca9c9a}{%
+           family={Noordhuis},
+           familyi={N\bibinitperiod},
+           given={Pieter},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=fe2c91d7f7f1eb9fba5b4b2349a02fbb}{%
+           family={Wesolowski},
+           familyi={W\bibinitperiod},
+           given={Lukasz},
+           giveni={L\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=fb0c5ef5bd0623316e6c5b00f3202e24}{%
+           family={Kyrola},
+           familyi={K\bibinitperiod},
+           given={Aapo},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=ead37c072da8d4bf054810a1c3011177}{%
+           family={Tulloch},
+           familyi={T\bibinitperiod},
+           given={Andrew},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9fce03efe6b3331a1b93ed2e7c0da9d5}{%
+           family={Jia},
+           familyi={J\bibinitperiod},
+           given={Yangqing},
+           giveni={Y\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=6b4b60e909e78633945f3f9c9dc83e01}{%
+           family={He},
+           familyi={H\bibinitperiod},
+           given={Kaiming},
+           giveni={K\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{cf278d9271bb4e6539a9e3cdc5225acb}
+      \strng{fullhash}{ffe8205ee34aca8734032bf6b02a24f1}
+      \strng{fullhashraw}{ffe8205ee34aca8734032bf6b02a24f1}
+      \strng{bibnamehash}{cf278d9271bb4e6539a9e3cdc5225acb}
+      \strng{authorbibnamehash}{cf278d9271bb4e6539a9e3cdc5225acb}
+      \strng{authornamehash}{cf278d9271bb4e6539a9e3cdc5225acb}
+      \strng{authorfullhash}{ffe8205ee34aca8734032bf6b02a24f1}
+      \strng{authorfullhashraw}{ffe8205ee34aca8734032bf6b02a24f1}
+      \field{sortinit}{G}
+      \field{sortinithash}{32d67eca0634bf53703493fb1090a2e8}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.CV}
+      \field{eprinttype}{arXiv}
+      \field{title}{Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour}
+      \field{year}{2018}
+      \verb{eprint}
+      \verb 1706.02677
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/1706.02677
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/1706.02677
+      \endverb
+    \endentry
     \entry{guo_convolutional_2016}{inproceedings}{}{}
       \name{author}{3}{}{%
         {{un=0,uniquepart=base,hash=755a7561cf689c79634b3b170450d6b1}{%
@@ -2602,6 +2687,61 @@
       \field{year}{2020}
       \verb{file}
       \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\BHDL2LZZ\\Sanchez-Gonzalez et al. - Learning to Simulate Complex Physics with Graph Networks.pdf:application/pdf
+      \endverb
+    \endentry
+    \entry{smith2018dontdecaylearningrate}{misc}{}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=3449a804ca9f4fb32b4fe7117113c206}{%
+           family={Smith},
+           familyi={S\bibinitperiod},
+           given={Samuel\bibnamedelima L.},
+           giveni={S\bibinitperiod\bibinitdelim L\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=7f7e0a5910ade4b14a74f3a61e46f917}{%
+           family={Kindermans},
+           familyi={K\bibinitperiod},
+           given={Pieter-Jan},
+           giveni={P\bibinithyphendelim J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=bb20b012b81f3c59032ea62783d2d442}{%
+           family={Ying},
+           familyi={Y\bibinitperiod},
+           given={Chris},
+           giveni={C\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c636f146591d51579a8119b777394878}{%
+           family={Le},
+           familyi={L\bibinitperiod},
+           given={Quoc\bibnamedelima V.},
+           giveni={Q\bibinitperiod\bibinitdelim V\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{96a30a3cae5bcbfe8452b157ba58eaf0}
+      \strng{fullhash}{b84912deccf3e08add46f3360386ddf4}
+      \strng{fullhashraw}{b84912deccf3e08add46f3360386ddf4}
+      \strng{bibnamehash}{96a30a3cae5bcbfe8452b157ba58eaf0}
+      \strng{authorbibnamehash}{96a30a3cae5bcbfe8452b157ba58eaf0}
+      \strng{authornamehash}{96a30a3cae5bcbfe8452b157ba58eaf0}
+      \strng{authorfullhash}{b84912deccf3e08add46f3360386ddf4}
+      \strng{authorfullhashraw}{b84912deccf3e08add46f3360386ddf4}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.LG}
+      \field{eprinttype}{arXiv}
+      \field{title}{Don't Decay the Learning Rate, Increase the Batch Size}
+      \field{year}{2018}
+      \verb{eprint}
+      \verb 1711.00489
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/1711.00489
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/1711.00489
       \endverb
     \endentry
     \entry{sun_surrogate_2020}{article}{}{}

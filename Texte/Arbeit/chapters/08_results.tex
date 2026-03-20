@@ -101,6 +101,8 @@ For batch size~16, Exp-1.4 ($\mathrm{lr}=5\times10^{-4}$) yields the lowest erro
 Exp-1.1 ($10^{-3}$) and Exp-1.2 ($5\times10^{-3}$) follow at $2.06\%$ and $2.31\%$ respectively, while Exp-1.3 ($10^{-4}$) remains the worst at $5.10\%$, as the lower learning rate benefits less from the available training time.
 For batch size~8, Exp-1.2 ($5\times10^{-3}$) achieves the best bs\,8 result with $2.07\%$ / $4.13\%$, but does not surpass the best bs\,16 result (Exp-1.4: $1.62\%$ / $3.44\%$). Exp-1.4 ($5\times10^{-4}$) follows at $2.61\%$ / $3.82\%$, Exp-1.1 ($10^{-3}$) reaches $4.18\%$ / $4.89\%$, and Exp-1.3 ($10^{-4}$) again lags behind at $5.85\%$ / $10.56\%$, consistent with the pattern observed for bs\,16.
 
+A notable pattern is that the optimal learning rate shifts when the batch size changes: while lr~$= 5\times10^{-4}$ is best for bs\,16, lr~$= 5\times10^{-3}$ is best for bs\,8. This is consistent with the linear scaling rule of \textcite{goyal2018accuratelargeminibatchsgd}, which prescribes scaling the learning rate proportionally to the batch size: halving the batch size should be accompanied by halving the learning rate to keep the effective step size constant. \textcite{smith2018dontdecaylearningrate} provide a complementary perspective, showing that the ratio of learning rate to batch size governs the noise scale of stochastic gradient descent; keeping this ratio constant is equivalent to interchanging batch-size reduction and learning-rate decay. In our setting, the factor-of-two difference in batch size is reflected approximately by a factor-of-two difference in optimal learning rate ($5\times10^{-4}$ vs.\ $5\times10^{-3}$ would exceed the linear prediction, but the FNO's gradient clipping and the non-convex loss landscape introduce additional confounders that can shift the optimal operating point).
+
 Figure~\ref{fig:exp1_eval_bars} (left panel) gives an overview of all bs\,16 evaluation metrics across configurations.
 
 
@@ -550,6 +552,8 @@ U-Net & $\sim 22$  & $\sim 27$  & $26.8$ \\
 
 The FNO outperforms the U-Net by a factor of roughly $4\times$ within the training distribution. For OOD counts ($n = 25$, $2.5\times$ beyond the training maximum), the FNO ($13.8\%$) still outperforms the U-Net ($26.8\%$) by a factor of approximately $2\times$, underscoring that the FNO retains a generalization advantage even at this level of distribution shift.
 
+Figure~\ref{fig:fno_unet_exp23_comparison} (left panel) shows both architectures' error profiles side by side as a function of crystal count for Experiment~2.
+
 % ============================================================================
 \section{Experiment~3: Stress-Testing Generalization Limits}
 \label{sec:results:exp3}
@@ -752,6 +756,34 @@ U-Net & $\sim 23$  & $\sim 30$   & $21.5$ \\
 \end{table}
 
 Across both experiments, the FNO consistently outperforms the U-Net within the training distribution by a factor of roughly $3$–$4\times$. In the OOD regime the advantage narrows: at $n = 50$, the FNO's $12.4\%$ error and the U-Net's $21.5\%$ differ by a factor of approximately $1.7\times$. The velocity errors tell a similar story: the FNO's ${\sim}14\%$ at $n=50$ contrasts with the U-Net's ${\sim}33\%$, underscoring the spectral architecture's superior ability to capture global flow structure even for unseen crystal configurations.
+
+Figure~\ref{fig:fno_unet_exp23_comparison} (right panel) shows the direct comparison for Experiment~3. Figure~\ref{fig:fno_unet_exp23_comparison} as a whole visualizes how the performance gap evolves with increasing crystal count across both training distributions.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig12_fno_unet_exp23_vergleich.pdf}
+    \caption{FNO vs.\ U-Net generalization comparison across crystal counts for Experiment~2
+             (left, trained on $n \leq 10$) and Experiment~3 (right, trained on $n \leq 25$).
+             Solid lines indicate in-distribution counts; dashed lines with diamond markers
+             indicate out-of-distribution counts. The dotted vertical line marks the boundary
+             of the training distribution. FNO uses batch size~16; U-Net uses the best available
+             batch size for each experiment.}
+    \label{fig:fno_unet_exp23_comparison}
+\end{figure}
+
+Figure~\ref{fig:fno_unet_overview} provides a compact summary of the mean in-distribution error for FNO and U-Net across all three experiments. The consistent gap between the two architectures — particularly pronounced in Experiments~2 and~3 — highlights that the FNO's advantage scales with problem complexity.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig13_fno_unet_uebersicht_balken.pdf}
+    \caption{FNO vs.\ U-Net experiment overview: mean relative $L_2$ error on $\psi$ and on the
+             derived velocity field, aggregated over all in-distribution crystal counts.
+             Experiment~1 reports the single-crystal ($n = 1$) evaluation error for the best
+             configuration per architecture; Experiments~2 and~3 report the mean over all
+             in-distribution strata. The FNO achieves substantially lower errors across all
+             experiments.}
+    \label{fig:fno_unet_overview}
+\end{figure}
 
 % ============================================================================
 \section{Experiment~4: Crystal Size Generalization}

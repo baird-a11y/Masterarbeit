@@ -5,7 +5,7 @@
 # Verwendung: julia plot_results.jl
 # Pakete:     CSV, DataFrames, CairoMakie
 # ============================================================
-using CSV, DataFrames, CairoMakie
+using CSV, DataFrames, CairoMakie, Statistics
 
 const SCRIPT_DIR = @__DIR__
 const RES = dirname(SCRIPT_DIR)   # Ergebnisse/
@@ -466,6 +466,187 @@ end
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# Fig 12: FNO vs. U-Net – Generalisierung über Kristallanzahl (Exp-2 & Exp-3)
+# ═══════════════════════════════════════════════════════════════════════════════
+function plot_fno_unet_exp23_comparison()
+    fig = Figure(size=(1200, 500), fontsize=14)
+
+    for (col, (exp_nr, title, max_train)) in enumerate([
+        (2, "Exp. 2 – FNO vs. U-Net (training: n = 1–10)", 10),
+        (3, "Exp. 3 – FNO vs. U-Net (training: n = 1–25)", 25),
+    ])
+        ax = Axis(fig[1, col],
+            xlabel = "Number of crystals n",
+            ylabel = col == 1 ? "Relative L² error" : "",
+            title  = title,
+        )
+
+        any_data   = false
+        vline_done = false
+
+        # ── FNO (bs=16 als beste Konfiguration) ──────────────────────────────
+        df = safe_csv(joinpath(fno_exp23_dir(exp_nr, 16), "eval_aggregated.csv"))
+        if df !== nothing
+            any_data = true
+            id  = df.n_crystals .<= max_train
+            ood = .!id
+
+            scatter!(ax, df.n_crystals[id], df.psi_rel_l2_mean[id]; color=C[1], markersize=7)
+            lines!(ax, df.n_crystals[id], df.psi_rel_l2_mean[id];
+                   color=C[1], linewidth=2, linestyle=:solid, label="FNO – ψ (in-dist)")
+            scatter!(ax, df.n_crystals[id], df.v_rel_l2_mean[id]; color=C[2], markersize=7)
+            lines!(ax, df.n_crystals[id], df.v_rel_l2_mean[id];
+                   color=C[2], linewidth=2, linestyle=:solid, label="FNO – v (in-dist)")
+
+            if any(ood)
+                scatter!(ax, df.n_crystals[ood], df.psi_rel_l2_mean[ood];
+                         color=C[1], marker=:diamond, markersize=8)
+                lines!(ax, df.n_crystals[ood], df.psi_rel_l2_mean[ood];
+                       color=C[1], linewidth=2, linestyle=:dash, label="FNO – ψ (OOD)")
+                scatter!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
+                         color=C[2], marker=:diamond, markersize=8)
+                lines!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
+                       color=C[2], linewidth=2, linestyle=:dash, label="FNO – v (OOD)")
+                vlines!(ax, [max_train + 0.5]; color=:gray60, linestyle=:dot, linewidth=1.5)
+                vline_done = true
+            end
+        end
+
+        # ── U-Net (versuche bs=16, dann bs=8) ────────────────────────────────
+        for bs in [16, 8]
+            df = safe_csv(joinpath(unet_exp23_dir(exp_nr, bs), "eval_psi_indist_by_n.csv"))
+            df === nothing && continue
+            any_data = true
+            id  = df.n_crystals .<= max_train
+            ood = .!id
+
+            scatter!(ax, df.n_crystals[id], df.psi_rel_l2_mean[id]; color=C[3], markersize=7)
+            lines!(ax, df.n_crystals[id], df.psi_rel_l2_mean[id];
+                   color=C[3], linewidth=2, linestyle=:solid, label="U-Net – ψ (in-dist)")
+            scatter!(ax, df.n_crystals[id], df.v_rel_l2_mean[id]; color=C[4], markersize=7)
+            lines!(ax, df.n_crystals[id], df.v_rel_l2_mean[id];
+                   color=C[4], linewidth=2, linestyle=:solid, label="U-Net – v (in-dist)")
+
+            if any(ood)
+                scatter!(ax, df.n_crystals[ood], df.psi_rel_l2_mean[ood];
+                         color=C[3], marker=:diamond, markersize=8)
+                lines!(ax, df.n_crystals[ood], df.psi_rel_l2_mean[ood];
+                       color=C[3], linewidth=2, linestyle=:dash, label="U-Net – ψ (OOD)")
+                scatter!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
+                         color=C[4], marker=:diamond, markersize=8)
+                lines!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
+                       color=C[4], linewidth=2, linestyle=:dash, label="U-Net – v (OOD)")
+                !vline_done && vlines!(ax, [max_train + 0.5];
+                                       color=:gray60, linestyle=:dot, linewidth=1.5)
+            end
+            break  # nur eine batch-size verwenden
+        end
+
+        any_data || println("  Warnung: keine Daten für Exp. $exp_nr Vergleich gefunden.")
+        axislegend(ax, position=:lt, framevisible=true)
+    end
+
+    fname = "fig12_fno_unet_exp23_vergleich"
+    save(joinpath(OUT, fname * ".pdf"), fig)
+    save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
+    println("  Gespeichert: $fname")
+end
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Fig 13: FNO vs. U-Net – Übersicht über alle Experimente (Balkendiagramm)
+# Exp-1: n=1 Wert (beste Config); Exp-2/3: Mittelwert über in-dist n-Werte
+# ═══════════════════════════════════════════════════════════════════════════════
+function plot_fno_unet_overview_bar()
+    # Hilfsfunktion: Mittelwert über in-dist Zeilen
+    indist_mean(df, max_n, col) = mean(df[df.n_crystals .<= max_n, col])
+
+    # Sammle (exp_nr, arch, psi, v)
+    rows = NamedTuple{(:exp, :arch, :psi, :v), Tuple{Int, String, Float64, Float64}}[]
+
+    # Exp-1: FNO bs=16 cfg=4 (beste Eval-Konfiguration), n=1
+    df = safe_csv(joinpath(fno_exp1_dir(16, 4), "eval_aggregated.csv"))
+    if df !== nothing
+        r = df[df.n_crystals .== 1, :]
+        nrow(r) > 0 && push!(rows, (exp=1, arch="FNO",
+            psi=r.psi_rel_l2_mean[1], v=r.v_rel_l2_mean[1]))
+    end
+
+    # Exp-1: U-Net bs=8 cfg=1 (beste Eval-Konfiguration), n=1
+    _, eval_dir = unet_exp1_dirs(8, 1)
+    df = safe_csv(joinpath(eval_dir, "eval_psi_indist_by_n.csv"))
+    if df !== nothing
+        r = df[df.n_crystals .== 1, :]
+        nrow(r) > 0 && push!(rows, (exp=1, arch="U-Net",
+            psi=r.psi_rel_l2_mean[1], v=r.v_rel_l2_mean[1]))
+    end
+
+    # Exp-2 & Exp-3: Mittelwert über alle in-dist n
+    for (exp_nr, max_n) in [(2, 10), (3, 25)]
+        df = safe_csv(joinpath(fno_exp23_dir(exp_nr, 16), "eval_aggregated.csv"))
+        if df !== nothing
+            sub = df[df.n_crystals .<= max_n, :]
+            nrow(sub) > 0 && push!(rows, (exp=exp_nr, arch="FNO",
+                psi=indist_mean(df, max_n, :psi_rel_l2_mean),
+                v  =indist_mean(df, max_n, :v_rel_l2_mean)))
+        end
+
+        for bs in [16, 8]
+            df = safe_csv(joinpath(unet_exp23_dir(exp_nr, bs), "eval_psi_indist_by_n.csv"))
+            df === nothing && continue
+            sub = df[df.n_crystals .<= max_n, :]
+            nrow(sub) > 0 && push!(rows, (exp=exp_nr, arch="U-Net",
+                psi=indist_mean(df, max_n, :psi_rel_l2_mean),
+                v  =indist_mean(df, max_n, :v_rel_l2_mean)))
+            break
+        end
+    end
+
+    if isempty(rows)
+        println("  Warnung: keine Daten für Übersichtsbalken gefunden.")
+        return
+    end
+
+    exp_labels = ["Exp. 1\n(n = 1)", "Exp. 2\n(n = 1–10)", "Exp. 3\n(n = 1–25)"]
+    fig = Figure(size=(900, 500), fontsize=14)
+    ax  = Axis(fig[1, 1],
+        xlabel = "Experiment",
+        ylabel = "Relative L² error (mean, in-dist)",
+        title  = "FNO vs. U-Net – Experiment comparison",
+        xticks = (1:3, exp_labels),
+    )
+
+    w = 0.18
+    # Offsets: FNO-ψ, FNO-v, U-Net-ψ, U-Net-v
+    off = [-1.5w, -0.5w, 0.5w, 1.5w]
+
+    for r in rows
+        fno = r.arch == "FNO"
+        x   = Float64(r.exp)
+        psi_off = fno ? off[1] : off[3]
+        v_off   = fno ? off[2] : off[4]
+        col_psi = fno ? C[1]   : C[3]
+        col_v   = fno ? C[2]   : C[4]
+        lbl_psi = fno ? "FNO – ψ" : "U-Net – ψ"
+        lbl_v   = fno ? "FNO – v"  : "U-Net – v"
+
+        isnan(r.psi) || barplot!(ax, [x + psi_off], [r.psi]; width=w, color=col_psi, label=lbl_psi)
+        isnan(r.v)   || barplot!(ax, [x + v_off],   [r.v];   width=w, color=col_v,   label=lbl_v)
+    end
+
+    # Trennlinien zwischen Experimenten
+    vlines!(ax, [1.5, 2.5]; color=:gray70, linestyle=:dot, linewidth=1.5)
+
+    axislegend(ax, position=:lt, framevisible=true, merge=true)
+
+    fname = "fig13_fno_unet_uebersicht_balken"
+    save(joinpath(OUT, fname * ".pdf"), fig)
+    save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
+    println("  Gespeichert: $fname")
+end
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # Main
 # ═══════════════════════════════════════════════════════════════════════════════
 println("=" ^ 60)
@@ -482,6 +663,8 @@ plot_fno_exp23_training()
 plot_unet_exp23_training()
 plot_unet_exp23_scaling()
 plot_exp4_size_generalization()
+plot_fno_unet_exp23_comparison()
+plot_fno_unet_overview_bar()
 
 println("=" ^ 60)
 println("Fertig! Alle Abbildungen gespeichert in:")
