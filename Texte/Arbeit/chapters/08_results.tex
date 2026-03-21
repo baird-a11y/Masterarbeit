@@ -930,3 +930,62 @@ FNO Exp-1.4 (fixed $r=0.05$, large OOD) & $71.26 \pm 4.75$ & $67.71 \pm 3.93$ \\
 \end{table}
 
 The variable-radius FNO achieves a mean $\psi$ error of $10.35\%$ across all evaluated sizes, with substantially reduced velocity errors ($11.63\%$) compared to the fixed-radius model on OOD sizes. The large standard deviation ($\pm 10.77\%$) reflects the varying difficulty across different radii within the evaluation set. Compared to the fixed-radius baseline, the variable-radius model avoids the catastrophic failure observed for large crystals ($71.3\%$ on $\psi$), demonstrating that including size variability in training data substantially improves robustness to geometric scale changes. The radius input channel, which encodes crystal size explicitly at each grid point, enables the model to condition its predictions on the local crystal geometry and generalize across the evaluated size range.
+
+% ----------------------------------------------------------------------------
+\section{Spectral Analysis of FNO Prediction Errors}
+\label{sec:results:spectral}
+% ----------------------------------------------------------------------------
+
+Since the FNO operates by parameterizing the integral kernel in the Fourier domain and explicitly retaining only the lowest $k_{\max} = 16$ modes in each spatial direction \parencite{li_fourier_2021}, a natural question is whether the prediction errors are concentrated at wavenumbers beyond the truncation boundary. To investigate this, the 2D power spectrum of the residual $\hat\psi - \psi$ is computed for all held-out evaluation samples across all four experiments and compared to the ground-truth power spectrum.
+
+\subsection{Method}
+\label{ssec:results:spectral:method}
+
+For each evaluation sample, the normalized two-dimensional power spectrum is obtained via
+\begin{equation}
+    P(\mathbf{k}) = \frac{1}{N^2}\left|\mathcal{F}\{\hat\psi - \psi\}(\mathbf{k})\right|^2,
+\end{equation}
+where $\mathcal{F}$ denotes the discrete Fourier transform and $N = 256$ is the grid size. The spectra are averaged across all samples within each experiment. To obtain a scalar summary as a function of wavenumber magnitude, a radial average is computed:
+\begin{equation}
+    \bar{P}(k) = \frac{1}{|\mathcal{A}_k|} \sum_{(k_x, k_z)\,:\,\lfloor\sqrt{k_x^2+k_z^2}\rceil = k} P(k_x, k_z),
+\end{equation}
+where $\mathcal{A}_k$ is the set of grid points at radial distance $k$. The relative error fraction per frequency is then defined as
+\begin{equation}
+    r(k) = \frac{\bar{P}_{\mathrm{residual}}(k)}{\bar{P}_{\mathrm{truth}}(k)},
+\end{equation}
+which quantifies which fraction of the signal power at each wavenumber is explained by the prediction error.
+
+\subsection{Results}
+\label{ssec:results:spectral:results}
+
+Figure~\ref{fig:freq_spectrum_2d} shows the mean 2D power spectra of the ground truth and the residual for all four experiments, zoomed to $k \in [-64, 64]$ to make the FNO truncation boundary (cyan dashed box, $k = \pm 16$) visible. The ground truth spectra are dominated by low-frequency content: virtually all energy is concentrated near the origin, consistent with the smooth, globally structured nature of Stokes flow. The cross-shaped pattern along the $k_x = 0$ and $k_z = 0$ axes reflects the periodic boundary conditions of the simulation domain. The residual spectra share the same qualitative structure, confirming that the prediction errors are distributed similarly to the signal itself rather than being concentrated at high wavenumbers.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig_freq_spectrum_2d.pdf}
+    \caption{Mean 2D power spectra (log\textsubscript{10} scale) of the ground truth $\psi$ (top row)
+             and the residual $\hat\psi - \psi$ (bottom row) for all four experiments (bs\,=\,16).
+             The cyan dashed box marks the FNO truncation boundary at $k = \pm 16$.
+             Spectra are averaged over all held-out evaluation samples per experiment and
+             zoomed to $k \in [-64,\,64]$.}
+    \label{fig:freq_spectrum_2d}
+\end{figure}
+
+Figure~\ref{fig:freq_error_ratio} quantifies this observation through the relative error fraction $r(k)$. Across all four experiments, $r(k)$ is approximately constant over the full displayed wavenumber range and remains well below $10^{-2}$ at every frequency — both inside and outside the FNO truncation boundary. No systematic increase is observed for $k > 16$, which would be the expected signature of truncation-induced error.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig_freq_error_ratio.pdf}
+    \caption{Relative error fraction $r(k) = \bar{P}_{\mathrm{residual}}(k) / \bar{P}_{\mathrm{truth}}(k)$
+             as a function of wavenumber $k$ for all four experiments (bs\,=\,16, log\textsubscript{10} scale).
+             The vertical dashed line marks the FNO truncation boundary at $k = 16$; the shaded
+             region indicates the high-frequency range not retained by the model.}
+    \label{fig:freq_error_ratio}
+\end{figure}
+
+The same analysis applied to Experiment~3 samples grouped by crystal count ($n \leq 5$, $6$–$10$, $11$–$15$, $16$–$25$) yields indistinguishable curves, indicating that the spectral error distribution is not sensitive to the number of crystals present in the scene.
+
+\subsection{Discussion}
+\label{ssec:results:spectral:discussion}
+
+Contrary to the expectation that FNO errors are concentrated beyond the truncation boundary, the relative error fraction $r(k)$ remains approximately constant and low across all frequencies. This finding suggests that the primary source of prediction error is not the spectral truncation mechanism itself, but rather the overall model capacity and the difficulty of the regression task in the low-to-medium frequency regime where nearly all signal energy resides. The result is consistent with the observation of \textcite{qin_toward_2024} that FNO errors near sharp interfaces manifest as smooth, low-frequency residuals rather than high-frequency artefacts. In practical terms, increasing $k_{\max}$ beyond $16$ is unlikely to yield substantial accuracy gains for the smooth Stokes flow fields considered here; accuracy improvements are more likely to come from increased model width, depth, or training data.
