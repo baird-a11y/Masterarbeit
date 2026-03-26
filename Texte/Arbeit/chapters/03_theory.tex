@@ -43,7 +43,9 @@ particle approximations.
 From a surrogate modeling perspective, the Stokes regime has two useful properties. First, the absence of inertia leads to smooth, steady-state flow
 fields for fixed crystal configurations. Second, incompressibility imposes a
 strong global constraint on admissible velocity fields, which can be exploited
-through appropriate output representations.
+through appropriate output representations—most notably by predicting the
+stream function $\psi$ instead of the velocity components directly, since any
+field derived from $\psi$ is divergence-free by construction (Section~\ref{sec:stream_function}).
 
 % ==========================================================
 \section{Stream-Function Formulation in Two Dimensions}
@@ -91,7 +93,7 @@ $z$-component of the curl of the velocity field,
        - \frac{\partial u_x}{\partial z},
 \end{equation}
 and measures the local rate of rotation of a fluid element. To derive the
-governing equation for $\omega$, one applies the curl operator to the Stokes
+governing equation for $\omega$, the curl operator is applied to the Stokes
 momentum equation (neglecting the constant body force $\rho\mathbf{g}$, whose
 curl vanishes):
 \begin{equation}
@@ -128,6 +130,7 @@ finite differences, and the stream function can be reconstructed by solving
 Equation~\eqref{eq:poisson_psi} with appropriate boundary conditions.
 In the present work, homogeneous Dirichlet conditions $\psi|_{\partial\Omega} = 0$
 are imposed on all domain boundaries, which fixes the stream-function gauge
+(i.e., removes the inherent freedom to add an arbitrary constant to $\psi$)
 and ensures that the domain walls coincide with a single streamline —
 consistent with the free-slip wall conditions used in the LaMEM simulations.
 The resulting Poisson problem is discretized on the same $256 \times 256$
@@ -163,14 +166,14 @@ Predicting the stream function $\psi$ introduces a stronger inductive bias by
 restricting the hypothesis space to divergence-free velocity fields by
 construction. This approach is conceptually related to divergence-free neural
 representations proposed in the context of physics-informed and
-structure-preserving learning \parencite{richter-powell_neural_2022}, and is
-consistent with the neural operator framework \parencite{kovachki_neural_nodate}
-that views surrogate models as approximations of solution operators on
-function spaces. By reducing
+structure-preserving learning \parencite{richter-powell_neural_2022}.
+It is furthermore consistent with the neural operator framework
+\parencite{kovachki_neural_nodate}, which views surrogate models as
+approximations of solution operators on function spaces. By reducing
 the effective degrees of freedom of the output, the learning problem is
 simplified and numerical conditioning can be improved.
 
-A further strategy for introducing physical inductive bias is residual learning, which decomposes the solution into a physically motivated baseline and a learned correction. If the baseline captures the dominant large-scale behavior of the flow — for example, the analytical Stokes solution for a single isolated cylinder — the residual field $\Delta\psi = \psi - \psi_{\text{baseline}}$ is typically smoother and of lower amplitude than the full field, potentially simplifying the learning task. Such strategies have been shown to improve learning efficiency and generalization in physics-based surrogate models \parencite{sun_surrogate_2020}. While this approach is not pursued in the present thesis, which learns the full stream function $\psi$ directly, residual decomposition represents a natural extension that could improve accuracy in the dense multi-crystal regime; it is discussed as a future research direction in Chapter~\ref{ch:discussion}.
+A further strategy for introducing physical inductive bias is residual learning, which decomposes the solution into a physically motivated baseline and a learned correction. If the baseline captures the dominant large-scale behavior of the flow—for example, the analytical Stokes solution for a single isolated cylinder—the residual field $\Delta\psi = \psi - \psi_{\text{baseline}}$ is typically smoother and of lower amplitude than the full field, potentially simplifying the learning task. Such strategies have been shown to improve learning efficiency and generalization in physics-based surrogate models \parencite{sun_surrogate_2020}. While this approach is not pursued in the present thesis, which learns the full stream function $\psi$ directly, residual decomposition represents a natural extension that could improve accuracy in the dense multi-crystal regime; it is discussed as a future research direction in Chapter~\ref{ch:discussion}.
 
 % ==========================================================
 \section{U-Net Architecture}
@@ -266,8 +269,8 @@ schematic overview of the architecture as used in this work.
 
 \end{tikzpicture}%
 }
-\caption{Architecture of the U-Net surrogate model used in this work. The
-encoder path (blue) descends the staircase from left to right, halving the
+\caption{\textbf{Architecture of the U-Net surrogate model used in this work.}
+The encoder path (blue) descends the staircase from left to right, halving the
 spatial resolution at each stage via strided convolutions while doubling the
 channel depth (32 to 512). Skip connections (dashed) copy encoder feature maps
 horizontally to the matching decoder level, where they are concatenated with
@@ -412,8 +415,8 @@ structure of a single Fourier layer.
 \draw[arr] (sig) -- (out);
 
 \end{tikzpicture}
-\caption{Structure of a single Fourier layer
-(Equation~\eqref{eq:fourier_layer}). The input $v_l(x)$ is split into two
+\caption{\textbf{Structure of a single Fourier layer
+(Equation~\eqref{eq:fourier_layer}).} The input $v_l(x)$ is split into two
 parallel paths. The spectral path (top) applies the Fast Fourier Transform
 $\mathcal{F}$, multiplies the lowest $k_{\max}$ Fourier modes by the
 learnable weight tensor $R_l$, and transforms back via $\mathcal{F}^{-1}$,
@@ -442,8 +445,9 @@ surrogate modeling task considered in this work:
     \item \textbf{Global receptive field.} Each Fourier layer captures
     dependencies across the entire spatial domain in a single operation. For
     Stokes flow, where the elliptic character of the governing equations
-    implies that local perturbations propagate globally, this is a structurally
-    natural property.
+    implies that local perturbations propagate globally throughout the domain
+    (i.e., moving a single crystal affects the entire flow field), this is a
+    structurally natural property.
     \item \textbf{Spectral bias.} The truncation to $k_{\max}$ Fourier modes
     introduces an implicit smoothness prior. While this favors the
     representation of large-scale flow structures, it may limit accuracy near
@@ -466,7 +470,7 @@ key distinctions.
 
 \begin{table}[htbp]
 \centering
-\caption{Structural comparison of U-Net and FNO architectures.}
+\caption{\textbf{Structural comparison of U-Net and FNO architectures.}}
 \label{tab:arch_comparison}
 \begin{tabular}{lll}
 \toprule
@@ -502,8 +506,8 @@ components. Predicting the stream function $\psi$ provides a principled way to
 reduce the complexity of the learning task by enforcing incompressibility
 analytically.
 
-The choice of network architecture interacts with this physical structure in
-complementary ways. The U-Net's hierarchical encoder--decoder processing
+The choice of network architecture interacts with this multiscale, globally
+coupled structure in complementary ways. The U-Net's hierarchical encoder--decoder processing
 naturally mirrors the multiscale character of the flow: sharp boundary layers
 near crystal surfaces are captured at fine resolution levels, while
 domain-scale circulation patterns are represented in the deep, coarse layers.

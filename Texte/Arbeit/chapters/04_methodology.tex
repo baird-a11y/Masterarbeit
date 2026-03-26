@@ -17,13 +17,11 @@ Both surrogate architectures predict the scalar stream function $\psi(x,z)$ on t
     \mathbf{u}=\left(\frac{\partial \psi}{\partial z},\;
     -\frac{\partial \psi}{\partial x}\right),
 \]
-which enforces incompressibility by construction. The theoretical motivation for this formulation and its advantages over direct velocity prediction were discussed in Chapter~\ref{ch:theory}.
-
-From the perspective of surrogate modeling, predicting $\psi$ instead of $\mathbf{u}$ directly offers two key benefits. First, it reduces the learning problem from a vector-valued to a scalar regression task, lowering the
+which enforces incompressibility by construction. From the perspective of surrogate modeling, predicting $\psi$ instead of $\mathbf{u}$ directly offers two key benefits. First, it reduces the learning problem from a vector-valued to a scalar regression task, lowering the
 effective degrees of freedom. Second, incompressibility is guaranteed analytically rather than having to be learned from data, which eliminates a common source of systematic error in purely data-driven velocity surrogates
 \parencite{ribeiro_deepcfd_nodate,thuerey_deep_2020}. This choice injects physical structure into the learning problem through the output representation rather than through penalty terms, consistent with divergence-free parameterizations advocated in related work \parencite{richter-powell_neural_2022}.
 
-The central experimental factor in this thesis is therefore not the choice of learning target—which is fixed to $\psi$ for all experiments—but the choice of network architecture. By training both U-Net and FNO on identical data with the same learning target, performance differences can be attributed to the architectural inductive bias: spatial hierarchical processing versus spectral global processing.
+The central experimental factor in this thesis is therefore not the choice of learning target—which is fixed to $\psi$ for all experiments—but the choice of network architecture.
 
 % ==========================================================
 \section{LaMEM Simulations for Data Generation}
@@ -89,15 +87,15 @@ The Laplace operator is discretized with a second-order five-point stencil on in
 \]
 where $I_x$ and $I_z$ are identity matrices of matching dimension. This construction yields a sparse $(n_x n_z)\times(n_x n_z)$ system and is standard for uniform-grid Poisson problems.
 
-Homogeneous Dirichlet conditions $\psi|_{\partial\Omega}=0$ are imposed on all boundary nodes by replacing the corresponding rows in $L$ with unit rows and setting the right-hand side entries to zero. This fixes the stream-function gauge and yields a unique discrete solution.
+Homogeneous Dirichlet conditions $\psi|_{\partial\Omega}=0$ are imposed on all boundary nodes by replacing the corresponding rows in $L$ with unit rows and setting the right-hand side entries to zero. This fixes the stream-function gauge (i.e., removes the inherent freedom to add an arbitrary constant to $\psi$) and yields a unique discrete solution.
 
-The resulting sparse linear system $L\,\psi = -\omega$ is solved directly using a sparse LU factorization (Julia's built-in backslash operator, which calls UMFPACK). Since the grid is fixed at $256\times256$, the system has $65\,536$ unknowns and the direct solve completes in well under one second per sample, making an iterative approach unnecessary. After solving, a constant offset equal to the value at the corner node $\psi_{1,1}$ is subtracted to remove any residual floating-point gauge ambiguity.
+The resulting sparse linear system $L\,\psi = -\omega$ is solved directly using a sparse LU factorization (Julia's built-in backslash operator, which calls UMFPACK; Julia is the scientific programming language used throughout this thesis, described in detail in Chapter~\ref{ch:implementation}). Since the grid is fixed at $256\times256$, the system has $65\,536$ unknowns and the direct solve completes in well under one second per sample, making an iterative approach unnecessary. After solving, a constant offset equal to the value at the corner node $\psi_{1,1}$ is subtracted to remove any residual floating-point gauge ambiguity.
 
 Since all evaluation comparisons are ultimately performed against LaMEM-derived quantities on the same grid, the Poisson solve serves as an auxiliary reconstruction step rather than an independent physical model.
 
 \subsection{Motivation and Procedure for Normalization}
 
-Raw values of $\psi$ can span several orders of magnitude (typically $10^{-16}$ to $10^{-10}$), depending on velocity magnitude, viscosity, and grid spacing. While such values are well resolved in the numerical solver, they are unfavorable for gradient-based learning. The theoretical reason is rooted in the geometry of the loss landscape: for a gradient-based learner, the condition number $\kappa = \lambda_{\max}/\lambda_{\min}$ of the Hessian of the loss with respect to the network weights determines how well a single learning rate can serve all directions of the weight space simultaneously. For a linear layer with input $x$, the Hessian equals the input covariance matrix $H = P^{-1}\sum_p x^p x^{p\top}$; consequently, inputs of very large magnitude generate a dominant eigenvalue $\lambda_{\max}$, inflating $\kappa$ and forcing the optimizer into inefficient zigzag steps along the ill-conditioned directions \parencite{LeCun2012}. In practice, this manifests as slow convergence and sensitivity to the choice of learning rate. Shifting inputs to zero mean and unit variance reduces $\kappa$ and yields a more isotropic error surface on which standard first-order optimizers such as Adam converge reliably.
+Raw values of $\psi$ can span several orders of magnitude (typically $10^{-16}$ to $10^{-10}$), depending on velocity magnitude, viscosity, and grid spacing. While such values are well resolved in the numerical solver, they are unfavorable for gradient-based learning. The theoretical reason is rooted in the geometry of the loss landscape: for a gradient-based learner, the condition number $\kappa = \lambda_{\max}/\lambda_{\min}$ of the Hessian matrix of the loss with respect to the network weights determines how well a single learning rate can serve all directions of the weight space simultaneously. For a linear layer with input $x$, the Hessian matrix equals the input covariance matrix $H = P^{-1}\sum_p x^p x^{p\top}$; consequently, inputs of very large magnitude generate a dominant eigenvalue (i.e., a direction of very high curvature) $\lambda_{\max}$, inflating $\kappa$ and forcing the optimizer into inefficient zigzag steps along the ill-conditioned directions \parencite{LeCun2012}. In practice, this manifests as slow convergence and sensitivity to the choice of learning rate. Shifting inputs to zero mean and unit variance reduces $\kappa$ and yields a more isotropic error surface on which standard first-order optimizers such as Adam (an adaptive gradient method described in Section~\ref{sec:training}) converge reliably.
 
 To bring $\psi$ into a numerically suitable range without discarding its spatial structure or sign, each sample is normalized individually. We compute a characteristic order of magnitude
 \[
@@ -144,7 +142,7 @@ The five input channels are:
     The horizontal coordinate is linearly mapped to $x_{\mathrm{norm}}\in[-1,1]$, providing the network with absolute positional information.
 
     \item \textbf{Normalized $z$-coordinate.}
-    Analogously, the vertical coordinate is mapped to $z_{\mathrm{norm}}\in[-1,1]$. Together, the coordinate channels reduce symmetry-induced and position-dependent artifacts.
+    Analogously, the vertical coordinate is mapped to $z_{\mathrm{norm}}\in[-1,1]$. Together, the coordinate channels provide the network with absolute positional context and help suppress symmetry-induced and position-dependent prediction artifacts.
 \end{enumerate}
 
 Each sample is represented by an input tensor of shape $(256,256,5)$. The input encodes inclusion geometry, proximity to crystal boundaries, and domain position, and is identical for both architectures.
@@ -164,7 +162,7 @@ The U-Net follows the encoder--decoder principle of the original architecture \p
 
 \paragraph{Encoder.}
 The encoder consists of five resolution levels. Spatial resolution is reduced by a factor of two at each level, while feature widths increase as $32 \rightarrow 64 \rightarrow 128 \rightarrow 256 \rightarrow 512$. Each level contains two
-$3\times3$ convolutions with batch normalization and ReLU activations, followed by downsampling via a strided convolution (stride~2). Strided downsampling is used instead of max pooling to keep the operation learnable and to reduce grid-aligned artifacts in smooth Stokes-flow targets.
+$3\times3$ convolutions with batch normalization and Rectified Linear Unit (ReLU) activations, followed by downsampling via a strided convolution (stride~2, meaning the kernel advances two pixels at a time, halving the spatial resolution). Strided downsampling is used instead of max pooling to keep the operation learnable and to reduce grid-aligned artifacts in smooth Stokes-flow targets.
 
 \paragraph{Bottleneck.}
 At the coarsest resolution, a bottleneck block with two $3\times3$ convolutions encodes global flow structure conditioned on the entire crystal configuration. This compressed representation provides the long-range context required to model hydrodynamic interactions between distant inclusions.
@@ -181,10 +179,10 @@ A final $1\times1$ convolution projects the decoder features onto a single outpu
 The FNO follows the architecture proposed by \textcite{li_fourier_2021}, consisting of a pointwise lifting layer, a sequence of Fourier layers, and a pointwise projection layer.
 
 \paragraph{Lifting.}
-A pointwise linear layer maps the five input channels into a higher-dimensional feature space of width $d_v$.
+A pointwise linear layer maps the five input channels into a higher-dimensional feature space of width $d_v$, where $d_v$ is a hyperparameter controlling the channel dimension of the internal feature representation.
 
 \paragraph{Fourier layers.}
-Each Fourier layer applies the operation defined in Equation~\eqref{eq:fourier_layer}: the input is transformed into Fourier space via a two-dimensional FFT, multiplied with a learnable complex weight tensor $R_l$ for the lowest $k_{\max}$ modes, and transformed back. This spectral path is combined with a pointwise linear transformation (bias path) and a GELU activation. A stack of $L$ such layers forms the core of the model.
+Each Fourier layer applies the operation defined in Equation~\eqref{eq:fourier_layer}: the input is transformed into Fourier space via a two-dimensional Fast Fourier Transform (FFT), multiplied with a learnable complex weight tensor $R_l$ for the lowest $k_{\max}$ modes, and transformed back. This spectral path is combined with a pointwise linear transformation (bias path) and a Gaussian Error Linear Unit (GELU) activation. A stack of $L$ such layers forms the core of the model.
 
 \paragraph{Projection.}
 A pointwise linear layer maps the learned feature representation to the single output channel $\psi_{\mathrm{norm}}$.
@@ -226,7 +224,7 @@ Both architectures are trained with an extended composite loss that combines the
 
 \subsection{Optimization and Checkpointing}
 
-Model parameters are optimized using the Adam optimizer \parencite{kingma2017adammethodstochasticoptimization} with adaptive learning rates. Adam maintains exponential moving averages of both the gradient (first moment) and its element-wise square (second moment), and applies bias correction to both estimates. This yields per-parameter adaptive step sizes that are approximately bounded by the chosen learning rate $\alpha$, making optimization robust to varying gradient magnitudes across network layers and reducing sensitivity to the initial learning rate choice. A fixed learning rate is used within each run, without learning rate scheduling, to keep experiments comparable. After each epoch, model checkpoints are stored in a CPU-compatible format to enable reproducible evaluation on systems without GPU support. For each run, training configuration metadata (hyperparameters, data paths, and random seeds) are archived alongside the checkpoint.
+Model parameters are optimized using the Adam optimizer \parencite{kingma2017adammethodstochasticoptimization} with adaptive learning rates. Adam maintains exponential moving averages of both the gradient (first moment) and its element-wise square (second moment), and applies bias correction to both estimates. This yields per-parameter adaptive step sizes that are approximately bounded by the chosen learning rate $\alpha$, making optimization robust to varying gradient magnitudes across network layers and reducing sensitivity to the initial learning rate choice. No learning rate scheduling is applied; the learning rate remains constant throughout each run so that differences in final performance can be attributed to architecture and hyperparameter choice rather than to scheduling strategy. After each epoch, model checkpoints are stored in a CPU-compatible format to enable reproducible evaluation on systems without GPU support. For each run, training configuration metadata (hyperparameters, data paths, and random seeds) are archived alongside the checkpoint.
 
 % ==========================================================
 \section{Evaluation Pipeline}
@@ -244,11 +242,5 @@ Primary evaluation metrics include:
 
 Errors are grouped by the number of crystals in the test sample ($1\ldots N_{\max}$), enabling direct assessment of how prediction quality changes as hydrodynamic interactions become more complex—an approach motivated
 by generalization studies that stratify performance across geometric complexity \parencite{morimoto_generalization_2022}. The use of MSE and relative norms follows common practice in benchmarking data-driven CFD surrogates
-\parencite{takamoto_pdebench_nodate,lu_comprehensive_2022}. The same evaluation framework is applied identically to both U-Net and FNO predictions, ensuring that all reported differences reflect architectural properties rather than evaluation artifacts.
-
+\parencite{takamoto_pdebench_nodate,lu_comprehensive_2022}. 
 % ==========================================================
-\section{Summary}
-\label{sec:method_summary}
-% ==========================================================
-
-This chapter described the full surrogate modeling workflow: LaMEM-based data generation, reconstruction and normalization of the stream function, input encoding, U-Net and FNO architecture configurations, training procedure, and evaluation protocol. The modular design ensures that all pipeline components except the network architecture are kept identical for both models, so that performance differences can be attributed to the architectural inductive bias rather than to differences in data or training. The next chapter describes the technical implementation of this pipeline.

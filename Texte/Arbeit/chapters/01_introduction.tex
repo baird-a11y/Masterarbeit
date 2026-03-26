@@ -18,12 +18,12 @@ To ground the qualitative picture in concrete physical scales, it is useful to r
     \item \textbf{Melt viscosity:} $\mu \sim 1$--$10^3\,\text{Pa\,s}$ for low-silica basaltic melts; significantly higher ($\mu \sim 10^6$--$10^{12}\,\text{Pa\,s}$) for rhyolitic compositions \parencite{martin_crystal_1988}. Crystals are effectively rigid relative to the melt ($\mu_\text{crystal}/\mu_\text{melt} \gtrsim 10^5$).
     \item \textbf{Density contrast:} olivine ($\rho \approx 3300\,\text{kg/m}^3$) vs.\ basaltic melt ($\rho \approx 2700\,\text{kg/m}^3$), yielding $\Delta\rho \approx 300$--$600\,\text{kg/m}^3$ \parencite{martin_crystal_1988}.
     \item \textbf{Stokes settling velocity:} from $v_s = \frac{2}{9}\frac{\Delta\rho\,g\,r^2}{\mu}$, a 1\,mm olivine crystal in a 10\,Pa\,s melt settles at $v_s \approx 10^{-5}\,\text{m/s}$ ($\approx 1\,\text{m/day}$); a 1\,cm crystal at $v_s \approx 10^{-3}\,\text{m/s}$ ($\approx 100\,\text{m/day}$).
-    \item \textbf{Reynolds number:} $\mathrm{Re} = \rho\,v_s\,r/\mu \ll 1$ in all relevant cases (typically $\mathrm{Re} \sim 10^{-8}$--$10^{-4}$), confirming that the Stokes flow regime — in which inertial effects are negligible — is an appropriate physical approximation throughout the parameter range of interest.
+    \item \textbf{Reynolds number:} $\mathrm{Re} = \rho\,v_s\,r/\mu \ll 1$ in all relevant cases (typically $\mathrm{Re} \sim 10^{-8}$--$10^{-4}$), confirming that the Stokes flow regime—in which inertial effects are negligible—is an appropriate physical approximation throughout the parameter range of interest.
 \end{itemize}
 
 In the normalized $[-1,1]^2$ simulation domain used in this thesis, the non-dimensionalized crystal radius $r = 0.05$ is consistent with a crystal that occupies approximately 5\% of the domain length. Hydrodynamic interaction effects become significant when crystal separation distances are comparable to several crystal radii \parencite{happel_low_1983}, which motivates the investigation of multi-crystal configurations.
 
-Since the Stokes equations are linear and inertial effects are negligible ($\mathrm{Re} \ll 1$), the normalized flow field depends only on the geometric ratio $r/L$ and the relative crystal positions, not on the absolute values of $r$, $\mu$, or $\Delta\rho$ individually \parencite{happel_low_1983}. The crystal radius $r = 0.05$ in the normalized domain therefore represents a non-dimensional geometric parameter rather than a specific physical scale, and the surrogate model results are valid for any combination of physical parameters that yields $\mathrm{Re} \ll 1$ and the same geometric configuration. The size generalization study in Experiment~4, which varies $r$ in the range $0.01$--$0.1$, thus probes genuine changes in geometric topology — the ratio of crystal size to domain and inter-crystal spacing — rather than variations in any single dimensional quantity.
+Since the Stokes equations are linear and inertial effects are negligible ($\mathrm{Re} \ll 1$), the normalized flow field depends only on the geometric ratio $r/L$ and the relative crystal positions, not on the absolute values of $r$, $\mu$, or $\Delta\rho$ individually \parencite{happel_low_1983}. The crystal radius $r = 0.05$ in the normalized domain therefore represents a non-dimensional geometric parameter rather than a specific physical scale, and the surrogate model results are valid for any combination of physical parameters that yields $\mathrm{Re} \ll 1$ and the same geometric configuration. The size generalization study in Experiment~4, which varies $r$ in the range $0.01$--$0.1$, thus probes genuine changes in geometric topology—the ratio of crystal size to domain and inter-crystal spacing—rather than variations in any single dimensional quantity.
 
 \section{Computational Challenges}
 
@@ -35,7 +35,7 @@ Accurate numerical simulation of multi-crystal sedimentation remains computation
     \item \textbf{Domain-scale flow structures} that control the large-scale transport of crystals and melt.
 \end{itemize}
 
-The computational cost of resolving hydrodynamic interactions typically scales between $\mathcal{O}(N^2)$ and $\mathcal{O}(N^3)$ with the number of particles $N$ \parencite{ladd_numerical_nodate}. Numerical methods that explicitly couple particle and fluid dynamics such as lattice Boltzmann discrete element methods (LBM-DEM) or immersed boundary approaches generally require each particle to be resolved by tens to hundreds of grid cells. Even in two-dimensional configurations, this leads to simulations with $10^5$-$10^6$ fluid nodes per particle \parencite{Li_IBM-LBM-DEM_2022,leonardi_coupled_2014}. For systems containing more than ten crystals, total grid sizes can easily exceed $10^7$--$10^8$ degrees of freedom, resulting in runtimes ranging from several hours to multiple days per simulation \parencite{Li_IBM-LBM-DEM_2022}.
+The computational cost of resolving hydrodynamic interactions typically scales between $\mathcal{O}(N^2)$ and $\mathcal{O}(N^3)$ with the number of particles $N$ \parencite{ladd_numerical_nodate}. Numerical methods that explicitly couple particle and fluid dynamics such as Lattice Boltzmann discrete element methods (LBM-DEM) or immersed boundary approaches generally require each particle to be resolved by tens to hundreds of grid cells. Even in two-dimensional configurations, this leads to simulations with $10^5$-$10^6$ fluid nodes per particle \parencite{Li_IBM-LBM-DEM_2022,leonardi_coupled_2014}. For systems containing more than ten crystals, total grid sizes can easily exceed $10^7$--$10^8$ degrees of freedom, resulting in runtimes ranging from several hours to multiple days per simulation \parencite{Li_IBM-LBM-DEM_2022}.
 
 Such computational demands make systematic parameter studies effectively infeasible. Investigating the influence of crystal size, viscosity contrast, particle number, or spatial arrangement would require thousands of high-fidelity simulations and thus exceed practical computational budgets. This is the main practical reason why surrogate models capable of approximating the underlying flow fields at a fraction of the computational cost, have attracted growing interest in recent years.
 
@@ -45,11 +45,11 @@ Machine learning has increasingly been applied to accelerate predictions in flui
 
 First, U-Net architectures \parencite{ronneberger_u-net_2015} leverage an encoder--decoder structure with skip connections to capture multiscale spatial features. Their ability to encode complex geometric information at multiple resolutions has made them a widely used choice for structured flow-field prediction \parencite{guo_convolutional_2016,thuerey_deep_2020,ribeiro_deepcfd_nodate,chen_u-net_nodate}.
 
-Second, Fourier Neural Operators (FNOs) \parencite{li_fourier_2021} learn mappings between function spaces by performing convolutions in the spectral domain via the Fast Fourier Transform. By operating in frequency space, FNOs can efficiently capture global, long-range dependencies in the solution field — a property that is particularly attractive for problems governed by elliptic operators such as the Stokes equations.
+Second, Fourier Neural Operators (FNOs) \parencite{li_fourier_2021} learn mappings between function spaces by performing convolutions in the spectral domain via the Fast Fourier Transform. By operating in frequency space, FNOs can efficiently capture global, long-range dependencies in the solution field—a property that is particularly attractive for problems governed by elliptic operators such as the Stokes equations.
 
 Both approaches have been shown to achieve speed-ups of several orders of magnitude over classical solvers, while maintaining acceptable accuracy across a range of flow problems \parencite{guo_convolutional_2016,thuerey_deep_2020,li_fourier_2021}. Beyond purely data-driven approaches, physics-informed neural networks (PINNs) \parencite{raissi_physics_2017,raissi_physics-informed_2019,jin_nsfnets_2021} incorporate governing equations directly into the training objective, encouraging physically consistent predictions even when training data are scarce.
 
-Taken together, these three families of methods — convolutional surrogates, neural operators, and physics-informed networks — span the design space from which the present thesis draws its central comparison. While systematic architecture comparisons \parencite{lu_comprehensive_2022} and generalization analyses \parencite{morimoto_generalization_2022} exist for standard benchmark problems, they have rarely been applied to physically structured, interaction-dominated problems such as multi-crystal Stokes flow with varying particle numbers. A comprehensive review of the relevant literature is provided in Chapter~\ref{ch:related}, and the resulting methodological landscape motivates the central research question addressed in this thesis.
+Taken together, these three families of methods—convolutional surrogates, neural operators, and physics-informed networks—span the design space from which the present thesis draws its central comparison. While systematic architecture comparisons \parencite{lu_comprehensive_2022} and generalization analyses \parencite{morimoto_generalization_2022} exist for standard benchmark problems, they have rarely been applied to physically structured, interaction-dominated problems such as multi-crystal Stokes flow with varying particle numbers. A comprehensive review of the relevant literature is provided in Chapter~\ref{ch:related}, and the resulting methodological landscape motivates the central research question addressed in this thesis.
 
 \section{Research Question and Hypothesis}
 
@@ -70,18 +70,18 @@ We hypothesize that an ML-based surrogate model can achieve such generalization 
     \item the network architecture captures the inherently multiscale character of crystal--fluid interactions, whether through spatially hierarchical feature extraction (U-Net) or through global spectral representations (FNO).
 \end{enumerate}
 
-The controlled comparison of U-Net and FNO architectures presented in this thesis is designed to explicitly test these hypotheses, to quantify the impact of architectural choice on predictive performance, and to identify which paradigm — local spatial convolutions or global spectral operations — is better suited for surrogate modeling of multi-crystal Stokes flow.
+The controlled comparison of U-Net and FNO architectures presented in this thesis is designed to explicitly test these hypotheses, to quantify the impact of architectural choice on predictive performance, and to identify which paradigm—local spatial convolutions or global spectral operations—is better suited for surrogate modeling of multi-crystal Stokes flow.
 
 \section{Objectives and Scope of the Study}
 
 \subsection{Primary Objective}
-Quantitatively evaluate the generalization performance of U-Net- and FNO-based surrogate models across a range of crystal numbers and spatial arrangements on a fixed $256 \times 256$ computational grid, with a particular focus on identifying the conditions under which generalization breaks down and how the two architectural paradigms compare in this respect.
+This study aims to quantitatively evaluate the generalization performance of U-Net- and FNO-based surrogate models across a range of crystal numbers and spatial arrangements on a fixed $256 \times 256$ computational grid, with a particular focus on identifying the conditions under which generalization breaks down and how the two architectural paradigms compare in this respect.
 
 \subsection{Secondary Objective}
-Identify recurring prediction errors and characteristic failure patterns encountered when predicting previously unseen geometries, including symmetry-breaking artifacts, nonphysical divergence, and reduced accuracy near crystal boundaries.
+A further objective is to identify recurring prediction errors and characteristic failure patterns encountered when predicting previously unseen geometries, including symmetry-breaking artifacts, nonphysical divergence, and reduced accuracy near crystal boundaries.
 
 \subsection{Tertiary Objective}
-Derive practical guidelines for the construction of surrogate models for multiphase Stokes flow in geophysical settings, with a focus on input representations, output variables, normalization strategies, and training methodologies.
+Finally, this work seeks to derive practical guidelines for the construction of surrogate models for multiphase Stokes flow in geophysical settings, with a focus on input representations, output variables, normalization strategies, and training methodologies.
 
 \subsection{Scope Limitations}
 
@@ -107,6 +107,6 @@ Chapter~\ref{ch:implementation} details the technical realization of the surroga
 Chapter~\ref{ch:experiments} presents the experimental setup, including the choice of hyperparameters, training configurations, and evaluation metrics used throughout the study.
 Chapter~\ref{ch:results} reports the numerical results obtained from the U-Net and FNO surrogate models across varying crystal numbers and spatial arrangements.
 Chapter~\ref{ch:discussion} interprets the results in the context of the research questions and hypotheses, identifies key insights and limitations, and discusses implications for future surrogate modeling efforts in geophysical fluid dynamics.
-Chapter~\ref{ch:conclusion} summarizes the main findings of the study, draws conclusions with respect to the research hypotheses, and outlines directions for future work.
+Chapter~\ref{ch:conclusions} summarizes the main findings of the study, draws conclusions with respect to the research hypotheses, and outlines directions for future work.
 
 

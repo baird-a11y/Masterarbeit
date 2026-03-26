@@ -51,11 +51,11 @@ Both models learn the mapping from a geometric encoding of the crystal configura
 
 Each input sample consists of five channels on a $256 \times 256$ Cartesian grid:
 \begin{enumerate}
-    \item \textbf{Crystal mask} — binary indicator of solid crystal regions ($1$ inside, $0$ outside).
-    \item \textbf{Signed distance field (SDF)} — signed distance to the nearest crystal boundary, providing smooth geometric information beyond the binary mask.
-    \item \textbf{Radius of nearest crystal} — for each grid point, the radius of the geometrically closest crystal. In Experiments~1--3 all crystals share the same fixed radius, so this channel carries no configurational variation; it is included to prepare the input representation for Experiment~4, in which crystal radii vary.
-    \item \textbf{Normalized $x$-coordinate} — grid position along the horizontal axis, scaled to $[-1, 1]$.
-    \item \textbf{Normalized $z$-coordinate} — grid position along the vertical axis, scaled to $[-1, 1]$.
+    \item \textbf{Crystal mask}—binary indicator of solid crystal regions ($1$ inside, $0$ outside).
+    \item \textbf{Signed distance field (SDF)}—signed distance to the nearest crystal boundary, providing smooth geometric information beyond the binary mask.
+    \item \textbf{Radius of nearest crystal}—for each grid point, the radius of the geometrically closest crystal. In Experiments~1--3 all crystals share the same fixed radius, so this channel carries no configurational variation; it is included to prepare the input representation for Experiment~4, in which crystal radii vary.
+    \item \textbf{Normalized $x$-coordinate}—grid position along the horizontal axis, scaled to $[-1, 1]$.
+    \item \textbf{Normalized $z$-coordinate}—grid position along the vertical axis, scaled to $[-1, 1]$.
 \end{enumerate}
 
 The coordinate channels allow the network to resolve position-dependent flow patterns without requiring architectural modifications for different crystal positions. The single output channel is $\psi_{\mathrm{norm}} \in \mathbb{R}^{256 \times 256 \times 1}$; rescaling to physical units is applied in post-processing using the stored per-sample scale factor.
@@ -97,12 +97,12 @@ Models are trained on samples with $n \in \{1, \ldots, 10\}$ crystals and evalua
 Models are trained on configurations with up to $n = 25$ crystals and subsequently evaluated on substantially more complex scenes with up to $n = 84$ crystals. This experiment probes whether the models can capture the interactions arising from a large number of obstacles or whether their generalization capability breaks down beyond a critical level of geometric complexity.
 
 \paragraph{Experiment 4 – Crystal size generalization.}
-This experiment investigates whether surrogate models can generalize to crystal radii not seen during training — an additional axis of out-of-distribution generalization beyond crystal count. The experiment is designed around two conditions:
+This experiment investigates whether surrogate models can generalize to crystal radii not seen during training—an additional axis of out-of-distribution generalization beyond crystal count. The experiment is designed around two conditions:
 
 \begin{itemize}
-    \item \textbf{Fixed-radius baseline.} The best-performing models from Experiment~1 — FNO Exp-1.4 (bs\,16, lr~$=5\times10^{-4}$) and the best U-Net configuration — are evaluated on single-crystal samples ($n=1$) with unseen radii, both substantially smaller ($r = 0.005$) and substantially larger ($r = 0.5$) than the training radius $r = 0.05$. This quantifies the size-generalization error for models that have had no exposure to size variability, and assesses whether either architecture is inherently more robust to geometric scale changes.
+    \item \textbf{Fixed-radius baseline.} The best-performing models from Experiment~1—FNO Exp-1.4 (bs\,16, lr~$=5\times10^{-4}$) and U-Net Exp-1.1 (bs\,8, lr~$=10^{-3}$)—are evaluated on single-crystal samples ($n=1$) with unseen radii, both substantially smaller ($r = 0.005$) and substantially larger ($r = 0.5$) than the training radius $r = 0.05$. This quantifies the size-generalization error for models that have had no exposure to size variability, and assesses whether either architecture is inherently more robust to geometric scale changes.
 
-    \item \textbf{Variable-radius training.} A new FNO is trained on single-crystal samples ($n = 1$) with three discrete radii: $r \in \{0.02,\, 0.05,\, 0.08\}$ (1\,000 samples each, i.e., 3\,000 training samples total). This condition is evaluated for the FNO only: since the U-Net showed substantially larger prediction errors in Experiments~2 and~3, the more informative question is whether the stronger FNO architecture can leverage explicit size variability in training to improve generalization across the size axis. The radius channel of the input representation explicitly encodes the crystal size at each grid point, enabling the network to condition its prediction on the local crystal geometry.
+    \item \textbf{Variable-radius training.} A new FNO is trained on single-crystal samples ($n = 1$) with three discrete radii: $r \in \{0.02,\, 0.05,\, 0.08\}$ (1\,000 samples each, i.e., 3\,000 training samples total). This condition is evaluated for the FNO only. The design of Experiment~4 was adapted in response to the results of Experiments~2 and~3, where the FNO consistently outperformed the U-Net by a substantial margin: given this performance gap, extending the variable-radius training to the U-Net would yield limited additional insight. The more informative question is therefore whether the stronger FNO architecture can leverage explicit size variability in training to improve generalization across the size axis. The radius channel of the input representation explicitly encodes the crystal size at each grid point, enabling the network to condition its prediction on the local crystal geometry.
 \end{itemize}
 
 Both architectures are evaluated in the fixed-radius baseline; only the FNO is evaluated in the variable-radius condition. Results are reported for the two OOD size regimes:
@@ -121,14 +121,13 @@ Extrapolation OOD   & $r = 0.01$,\ $r = 0.1$    & Outside training range \\
 
 The expected outcome is that the fixed-radius model degrades substantially for any $r \neq 0.05$, while the variable-radius model generalizes well within the training range and degrades gracefully outside it. This two-stage comparison isolates the contribution of size variability in training data from the effect of the radius input channel.
 
-A detailed analysis of the results is provided in Section~\ref{ssec:results:exp4}.
 
 % ----------------------------------------------------------------------------
 \section{Training Setup and Hyperparameters}
 \label{sec:experiments:setup}
 % ----------------------------------------------------------------------------
 
-Both models are trained on the same datasets and evaluated with the same metrics. Table~\ref{tab:hyperparams} summarizes the key hyperparameters.
+Table~\ref{tab:hyperparams} summarizes the key hyperparameters shared across all experiments.
 
 \paragraph{Loss functions.}
 Both architectures are trained with the same composite loss that combines a pointwise MSE term with a gradient-matching term and a boundary term:
@@ -149,7 +148,7 @@ All experiments are run on a single NVIDIA A100 GPU. Models are saved in CPU-com
 
 \begin{table}[h]
 \centering
-\caption{Hyperparameter comparison of U-Net and FNO training configurations.}
+\caption{\textbf{Hyperparameter comparison of U-Net and FNO training configurations.}}
 \label{tab:hyperparams}
 \begin{tabular}{lll}
 \toprule
