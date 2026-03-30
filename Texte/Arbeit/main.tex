@@ -39,9 +39,9 @@
 
 \input{frontmatter/titlepage}
 
-% ab hier wieder normaler Seitenstil
+% Frontmatter ohne Seitenzahlen
 \cleardoublepage
-\pagestyle{scrheadings}
+\pagestyle{empty}
 
 % -----------------------------
 % Frontmatter
@@ -67,9 +67,10 @@
 %\lstlistoflistings
 
 % -----------------------------
-% Hauptteil (arabische Nummern)
+% Hauptteil (arabische Nummern, Seitenzahlen ab hier)
 % -----------------------------
 \cleardoublepage
+\pagestyle{scrheadings}
 \pagenumbering{arabic}
 \setcounter{chapter}{0}                 % Kapitelzählung für den Hauptteil neu starten
 \renewcommand{\thechapter}{\arabic{chapter}}  % Kapitelnummern wieder 1, 2, 3, ...

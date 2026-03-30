@@ -1521,32 +1521,92 @@
       \verb https://linkinghub.elsevier.com/retrieve/pii/S0045782522005114
       \endverb
     \endentry
-    \entry{martin_fluid-dynamical_1989}{article}{}{}
+    \entry{martin_crystal_1988}{article}{}{}
       \name{author}{2}{}{%
-        {{un=2,uniquepart=given,hash=83d7dbb317584aa5d4d2f70c6f7564fc}{%
+        {{un=0,uniquepart=base,hash=32aa716a830496e546876cf7f52e4012}{%
            family={Martin},
            familyi={M\bibinitperiod},
-           given={D.},
+           given={Daniel},
            giveni={D\bibinitperiod},
-           givenun=2}}%
-        {{un=0,uniquepart=base,hash=96d794a0dbe122e864a2b7a67dd8b040}{%
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=b5e945f9088794491154a3b23cce1855}{%
            family={Nokes},
            familyi={N\bibinitperiod},
-           given={R.},
+           given={Roger},
            giveni={R\bibinitperiod},
            givenun=0}}%
       }
       \list{language}{1}{%
         {en}%
       }
-      \strng{namehash}{55a206a30a1a1f995f7c939a1ea7518e}
-      \strng{fullhash}{5bacc52991c15a8ac1ffb8bc5da315cb}
-      \strng{fullhashraw}{5bacc52991c15a8ac1ffb8bc5da315cb}
-      \strng{bibnamehash}{5bacc52991c15a8ac1ffb8bc5da315cb}
-      \strng{authorbibnamehash}{5bacc52991c15a8ac1ffb8bc5da315cb}
-      \strng{authornamehash}{55a206a30a1a1f995f7c939a1ea7518e}
-      \strng{authorfullhash}{5bacc52991c15a8ac1ffb8bc5da315cb}
-      \strng{authorfullhashraw}{5bacc52991c15a8ac1ffb8bc5da315cb}
+      \strng{namehash}{a9c942c321c95dadd45f159c463cb26c}
+      \strng{fullhash}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{fullhashraw}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{bibnamehash}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{authorbibnamehash}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{authornamehash}{a9c942c321c95dadd45f159c463cb26c}
+      \strng{authorfullhash}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{authorfullhashraw}{de8a74e56e8559b4219b6fb10f2f647f}
+      \field{extraname}{1}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{issn}{0028-0836, 1476-4687}
+      \field{journaltitle}{Nature}
+      \field{month}{4}
+      \field{number}{6164}
+      \field{title}{Crystal settling in a vigorously convecting magma chamber}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{332}
+      \field{year}{1988}
+      \field{urldateera}{ce}
+      \field{pages}{534\bibrangedash 536}
+      \range{pages}{3}
+      \verb{doi}
+      \verb 10.1038/332534a0
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\9DVJMMUA\\Martin und Nokes - 1988 - Crystal settling in a vigorously convecting magma chamber.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://www.nature.com/articles/332534a0
+      \endverb
+      \verb{url}
+      \verb https://www.nature.com/articles/332534a0
+      \endverb
+    \endentry
+    \entry{martin_fluid-dynamical_1989}{article}{}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=32aa716a830496e546876cf7f52e4012}{%
+           family={Martin},
+           familyi={M\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=b5e945f9088794491154a3b23cce1855}{%
+           family={Nokes},
+           familyi={N\bibinitperiod},
+           given={Roger},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{a9c942c321c95dadd45f159c463cb26c}
+      \strng{fullhash}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{fullhashraw}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{bibnamehash}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{authorbibnamehash}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{authornamehash}{a9c942c321c95dadd45f159c463cb26c}
+      \strng{authorfullhash}{de8a74e56e8559b4219b6fb10f2f647f}
+      \strng{authorfullhashraw}{de8a74e56e8559b4219b6fb10f2f647f}
+      \field{extraname}{2}
       \field{sortinit}{M}
       \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
       \field{extradatescope}{labelyear}
@@ -1578,64 +1638,6 @@
       \endverb
       \verb{url}
       \verb https://academic.oup.com/petrology/article-lookup/doi/10.1093/petrology/30.6.1471
-      \endverb
-    \endentry
-    \entry{martin_crystal_1988}{article}{}{}
-      \name{author}{2}{}{%
-        {{un=2,uniquepart=given,hash=32aa716a830496e546876cf7f52e4012}{%
-           family={Martin},
-           familyi={M\bibinitperiod},
-           given={Daniel},
-           giveni={D\bibinitperiod},
-           givenun=2}}%
-        {{un=0,uniquepart=base,hash=b5e945f9088794491154a3b23cce1855}{%
-           family={Nokes},
-           familyi={N\bibinitperiod},
-           given={Roger},
-           giveni={R\bibinitperiod},
-           givenun=0}}%
-      }
-      \list{language}{1}{%
-        {en}%
-      }
-      \strng{namehash}{a9c942c321c95dadd45f159c463cb26c}
-      \strng{fullhash}{de8a74e56e8559b4219b6fb10f2f647f}
-      \strng{fullhashraw}{de8a74e56e8559b4219b6fb10f2f647f}
-      \strng{bibnamehash}{de8a74e56e8559b4219b6fb10f2f647f}
-      \strng{authorbibnamehash}{de8a74e56e8559b4219b6fb10f2f647f}
-      \strng{authornamehash}{a9c942c321c95dadd45f159c463cb26c}
-      \strng{authorfullhash}{de8a74e56e8559b4219b6fb10f2f647f}
-      \strng{authorfullhashraw}{de8a74e56e8559b4219b6fb10f2f647f}
-      \field{sortinit}{M}
-      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{issn}{0028-0836, 1476-4687}
-      \field{journaltitle}{Nature}
-      \field{month}{4}
-      \field{number}{6164}
-      \field{title}{Crystal settling in a vigorously convecting magma chamber}
-      \field{urlday}{15}
-      \field{urlmonth}{2}
-      \field{urlyear}{2026}
-      \field{volume}{332}
-      \field{year}{1988}
-      \field{urldateera}{ce}
-      \field{pages}{534\bibrangedash 536}
-      \range{pages}{3}
-      \verb{doi}
-      \verb 10.1038/332534a0
-      \endverb
-      \verb{file}
-      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\9DVJMMUA\\Martin und Nokes - 1988 - Crystal settling in a vigorously convecting magma chamber.pdf:application/pdf
-      \endverb
-      \verb{urlraw}
-      \verb https://www.nature.com/articles/332534a0
-      \endverb
-      \verb{url}
-      \verb https://www.nature.com/articles/332534a0
       \endverb
     \endentry
     \entry{morimoto_generalization_2022}{article}{}{}

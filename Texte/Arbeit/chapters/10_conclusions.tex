@@ -61,6 +61,9 @@ The FNO results for Experiments~2 and~3 are based on 100-epoch training runs. Re
 \paragraph{Adaptive Fourier modes for size generalization.}
 Experiment~4 shows that the FNO's spectral truncation at $k_{\max} = 16$ is the primary factor limiting its performance for large out-of-distribution crystals. Architectures with adaptive or multi-resolution frequency representations—such as the Geo-FNO \parencite{li_fourier_nodate} or convolutional neural operators \parencite{raonic_convolutional_2023}—could potentially overcome this limitation and enable robust generalization across crystal sizes.
 
+\paragraph{Addressing U-Net capacity limitations in dense multi-crystal settings.}
+The high-frequency artifacts in U-Net predictions for dense crystal configurations reflect an architectural capacity constraint rather than a training issue. Potential remedies include increasing the base channel width or adding an additional encoder level to expand the model's representational capacity, incorporating attention mechanisms to provide explicit long-range context without relying solely on the pooling hierarchy, or replacing the fixed convolutional architecture with a hybrid that combines local U-Net processing with global spectral layers as in U-FNO \parencite{wen_u-fnoenhanced_2022}.
+
 \paragraph{Hybrid architectures.}
 The U-FNO \parencite{wen_u-fnoenhanced_2022} combines the FNO's global spectral processing with U-Net-style local branches, potentially addressing the FNO's known limitation near sharp interfaces while retaining its generalization properties. Applying this architecture to the multi-crystal Stokes flow problem is a natural extension.
 

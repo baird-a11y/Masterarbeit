@@ -7,7 +7,7 @@ geodynamischer Prozess, der die chemische Differentiation und innere Struktur
 von Magmakammern steuert. Die numerisch exakte Simulation von
 Mehrkristall-Sedimentation erfordert die gleichzeitige Auflösung mikroskopischer
 Grenzschichten um einzelne Kristalle und weitreichender hydrodynamischer
-Wechselwirkungen über das gesamte Strömungsgebiet. Dieser ausgeprägt multiskalige
+Wechselwirkungen über das gesamte Strömungsgebiet. Dieser ausgeprägte multiskalige
 Charakter, kombiniert mit dem nahezu quadratischen Skalierungsverhalten der
 Interaktionskosten mit der Partikelzahl, macht systematische Parameterstudien
 mit klassischen Solvern rechnerisch kaum durchführbar.
@@ -38,7 +38,7 @@ Out-of-Distribution-Generalisierung (OOD) zu vergleichen. Im Einzelkristall-Basi
 $1{,}7$--$2{,}3\%$ auf~$\psi$, verglichen mit $5{,}5$--$6{,}5\%$ für das
 U-Net, bei gleichzeitig stabilerer Trainingsdynamik. In
 Mehrkristall-Konfigurationen (Experimente~2 und~3, trainiert auf bis zu
-$N_{\max} = 10$ bzw.\ $25$ Kristallen) erzielt der FNO Fehler von $4$--$8\%$
+$N_{\max} = 10$ bzw.\ $25$ Kristalle) erzielt der FNO Fehler von $4$--$8\%$
 innerhalb der Trainingsverteilung und behält damit einen etwa fünffachen
 Vorteil gegenüber dem U-Net ($24$--$30\%$). Die OOD-Generalisierung verbessert
 sich deutlich, wenn die Trainingsverteilung verbreitert wird, was die Hypothese
@@ -55,8 +55,9 @@ $10{,}4\%$ und zeigt damit, dass die spektrale Einschränkung ohne
 Architekturänderungen überwunden werden kann.
 
 Aus~$\psi$ abgeleitete Geschwindigkeitsfelder erweisen sich
-konsistent als schwieriger zu reproduzieren als die Stromfunktion selbst, was
-die Hochfrequenzverstärkung numerischer Differentiation widerspiegelt. Die
+konsistent als schwieriger zu reproduzieren als die Stromfunktion selbst, da
+numerische Differentiation hochfrequente Residuen im vorhergesagten~$\psi$
+verstärkt und so den Geschwindigkeitsfehler überproportional erhöht. Die
 Stromfunktions-Repräsentation garantiert exakte Inkompressibilität für alle
 Vorhersagen, bestätigt durch Divergenz-RMS-Werte in der Größenordnung von
 $10^{-26}$.

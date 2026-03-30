@@ -1,14 +1,6 @@
 \chapter{Theory and Physical Background}
 \label{ch:theory}
 
-This chapter summarizes the physical, mathematical, and architectural
-foundations underlying the surrogate modeling approaches developed in this
-thesis. The first part covers low-Reynolds-number fluid mechanics and the
-stream-function formulation, which motivate the choice of learning target. The
-second part introduces the two neural network architectures compared in this
-work—the U-Net and the Fourier Neural Operator (FNO)—and discusses their
-structural properties in the context of flow-field prediction.
-
 % ==========================================================
 \section{Incompressible Stokes Flow at Low Reynolds Number}
 \label{sec:stokes_flow}
@@ -16,6 +8,7 @@ structural properties in the context of flow-field prediction.
 
 Crystal settling in magmatic systems typically occurs at very low Reynolds numbers, where viscous forces dominate over inertial effects \parencite{martin_crystal_1988,ladd_numerical_nodate}. In this creeping-flow regime, the governing equations reduce to the incompressible Stokes equations
 \begin{equation}
+\label{eq:stokes}
 \mathbf{0} = -\nabla p + \mu \nabla^2 \mathbf{u} + \rho \mathbf{g},
 \qquad
 \nabla \cdot \mathbf{u} = 0,
@@ -56,6 +49,7 @@ In two-dimensional incompressible flow, the divergence-free condition
 $\nabla \cdot \mathbf{u} = 0$ can be satisfied identically by introducing a
 scalar stream function $\psi(x,z)$ such that
 \begin{equation}
+\label{eq:stream_function_def}
 u_x = \frac{\partial \psi}{\partial z},
 \qquad
 u_z = -\frac{\partial \psi}{\partial x}.
@@ -442,18 +436,18 @@ The FNO architecture has several properties that are relevant for the
 surrogate modeling task considered in this work:
 
 \begin{itemize}
-    \item \textbf{Global receptive field.} Each Fourier layer captures
+    \item \textbf{Global receptive field:} Each Fourier layer captures
     dependencies across the entire spatial domain in a single operation. For
     Stokes flow, where the elliptic character of the governing equations
     implies that local perturbations propagate globally throughout the domain
     (i.e., moving a single crystal affects the entire flow field), this is a
     structurally natural property.
-    \item \textbf{Spectral bias.} The truncation to $k_{\max}$ Fourier modes
+    \item \textbf{Spectral bias:} The truncation to $k_{\max}$ Fourier modes
     introduces an implicit smoothness prior. While this favors the
     representation of large-scale flow structures, it may limit accuracy near
     sharp interfaces such as crystal boundaries, where high-frequency content
     is physically significant \parencite{qin_toward_2024}.
-    \item \textbf{Discretization invariance.} Because the FNO operates on
+    \item \textbf{Discretization invariance:} Because the FNO operates on
     continuous function representations via their Fourier coefficients, a model
     trained on one grid resolution can, in principle, be evaluated on a
     different resolution without retraining.
@@ -515,12 +509,8 @@ The FNO's spectral approach, on the other hand, directly reflects the
 elliptic nature of the Stokes equations, where local perturbations propagate
 globally—a property that is inherently encoded in the Fourier representation.
 
-These complementary architectural biases are what motivates the comparison
-pursued in this thesis: by training both architectures on the same data and
-evaluating them under identical conditions, we can disentangle the effects of
-physical output representation (stream function) from those of architectural
-design (spatial vs.\ spectral processing).
-
-The next chapter builds on this theoretical foundation by translating these
-considerations into a concrete computational methodology for data generation,
-network design, training, and evaluation.
+These complementary architectural biases determine how each model responds to
+the multiscale, globally coupled structure of multi-crystal Stokes flow: whether
+local spatial hierarchies or global spectral representations are better suited
+to capture the simultaneous presence of sharp boundary layers and long-range
+hydrodynamic interactions.
