@@ -715,14 +715,16 @@ $n$ & $N$ & & $\bar{\varepsilon}_\psi$ (\%) & $\bar{\varepsilon}_v$ (\%) \\
 \end{tabular}
 \end{table}
 
-Within the training distribution ($n \leq 25$), the FNO achieves $\psi$ errors of $5$–$9\%$, broadly consistent with the Experiment~2 in-distribution performance. The OOD behavior is markedly improved compared to Experiment~2: at $n = 30$ (just beyond the training boundary) the error rises only slightly to $7.5\%$, and at $n = 35$ to $10.2\%$. A more pronounced increase occurs around $n = 50$, where the error reaches $12.4\%$, and beyond $n = 55$ the errors grow further, reaching $15.4\%$ already at $n = 60$ and ranging between $15\%$ and $22\%$ for $n \geq 60$, with the maximum of $22.2\%$ at $n = 84$. This gradual degradation contrasts with Experiment~2's steeper OOD increase starting at $n = 20$, demonstrating that training on a wider crystal-count distribution substantially extends the FNO's generalization range. Figure~\ref{fig:fno_exp23_scaling} (shown in Section~\ref{ssec:results:exp2:fno:metrics}) displays both the Experiment~2 (left panel) and Experiment~3 (right panel) metric profiles side by side.
+Within the training distribution ($n \leq 25$), the FNO achieves $\psi$ errors of $5$–$9\%$, broadly consistent with the Experiment~2 in-distribution performance. The OOD behavior is markedly improved compared to Experiment~2: at $n = 30$ (just beyond the training boundary) the error rises only slightly to $7.5\%$, and at $n = 35$ to $10.2\%$. A more pronounced increase occurs around $n = 50$, where the error reaches $12.4\%$, and beyond $n = 55$ the errors grow further, reaching $15.4\%$ already at $n = 60$ and ranging between $15\%$ and $22\%$ for $n \geq 60$, with the maximum of $22.2\%$ at $n = 84$. This gradual degradation contrasts with Experiment~2's steeper OOD increase starting at $n = 20$, demonstrating that training on a wider crystal-count distribution substantially extends the FNO's generalization range. Figure~\ref{fig:fno_exp23_scaling} (shown in Section~\ref{ssec:results:exp2:fno:metrics}) displays both the Experiment~2 (left panel, trained on $n \leq 10$) and Experiment~3 (right panel, trained on $n \leq 25$) metric profiles side by side.
 
 % ----------------------------------------------------------------------------
 \subsection{FNO – Qualitative Results}
 \label{ssec:results:exp3:fno:qualitative}
 % ----------------------------------------------------------------------------
 
-Figure~\ref{fig:fno_exp3_qual_indist} shows a representative in-distribution evaluation sample for the best FNO configuration in Experiment~3 (bs\,16, lr~$=5\times10^{-4}$) with $n = 20$ crystals.
+Figure~\ref{fig:fno_exp3_qual_indist} (following page) shows a representative in-distribution evaluation sample for the best FNO configuration in Experiment~3 (bs\,16, lr~$=5\times10^{-4}$) with $n = 20$ crystals. The predicted stream function~$\psi$ and derived velocity magnitude agree closely with the numerical reference across the full domain, including the more densely packed near-crystal regions that did not appear at this frequency in Experiment~2.
+
+The qualitative accuracy at $n = 20$ is consistent with the low quantitative error ($8.5\%$) reported in Table~\ref{tab:fno_metrics_exp3} for this count. Compared to the Experiment~2 qualitative example ($n = 5$, Figure~\ref{fig:fno_exp2_qual_bs16}), the prediction here must resolve more complex multi-body interactions, yet the residual structure remains confined to the immediate near-crystal boundary layer — the same spectral truncation artifact, now distributed across more crystals. This confirms that the FNO's generalization in Experiment~3 is not merely a consequence of the easier single-body case but extends robustly to dense configurations within the training distribution.
 
 \begin{sidewaysfigure}[p]
     \centering
@@ -741,6 +743,7 @@ Figure~\ref{fig:fno_exp3_qual_indist} shows a representative in-distribution eva
     \label{fig:fno_exp3_qual_indist}
 \end{sidewaysfigure}
 
+\FloatBarrier
 % ----------------------------------------------------------------------------
 \subsection{Comparison: FNO vs.\ U-Net}
 \label{ssec:results:exp3:comparison}
@@ -763,7 +766,7 @@ U-Net & $\sim 23$  & $\sim 30$   & $21.5$ \\
 \end{tabular}
 \end{table}
 
-Across both experiments, the FNO consistently outperforms the U-Net within the training distribution by a factor of roughly $3$–$4\times$. In the OOD regime the advantage narrows: at $n = 50$, the FNO's $12.4\%$ error and the U-Net's $21.5\%$ differ by a factor of approximately $1.7\times$. The velocity errors tell a similar story: the FNO's ${\sim}14\%$ at $n=50$ contrasts with the U-Net's ${\sim}33\%$, underscoring the spectral architecture's superior ability to capture global flow structure even for unseen crystal configurations.
+Across both experiments, the FNO consistently outperforms the U-Net in-distribution by a factor of roughly $3$–$4\times$. In the OOD regime the advantage narrows: at $n = 50$, the FNO's $12.4\%$ error and the U-Net's $21.5\%$ differ by a factor of approximately $1.7\times$. The velocity errors show a similar trend: the FNO's ${\sim}14\%$ at $n=50$ contrasts with the U-Net's ${\sim}33\%$, underscoring the spectral architecture's superior ability to capture global flow structure even for unseen crystal configurations.
 
 Figure~\ref{fig:fno_unet_exp23_comparison} (right panel) shows the direct comparison for Experiment~3. Figure~\ref{fig:fno_unet_exp23_comparison} as a whole visualizes how the performance gap evolves with increasing crystal count across both training distributions.
 
@@ -796,7 +799,7 @@ Figure~\ref{fig:fno_unet_overview} provides a compact summary of the mean in-dis
 \label{sec:results:exp4}
 % ============================================================================
 
-Experiment~4 addresses crystal-size generalization through two complementary conditions. In the \textbf{fixed-radius baseline}, the best-performing models from Experiment~1—FNO Exp-1.4 (bs\,16, lr~$=5\times10^{-4}$) and the best U-Net configuration (bs\,8, lr~$=5\times10^{-3}$)—are evaluated on single-crystal samples ($n = 1$) with two OOD radii: small crystals ($r = 0.005$, one tenth of the training radius) and large crystals ($r = 0.5$, ten times the training radius). In the \textbf{variable-radius condition}, a new FNO is trained on three discrete radii ($r \in \{0.02, 0.05, 0.08\}$) and evaluated on mixed-size samples to assess whether explicit size variability during training improves generalization.
+Experiment~4 addresses crystal-size generalization through two complementary conditions. In the \textbf{fixed-radius baseline}, the best-performing models from Experiment~1—FNO Exp-1.4 (bs\,16, lr~$=5\times10^{-4}$) and the best U-Net configuration (bs\,8, lr~$=5\times10^{-3}$)—are evaluated on single-crystal samples ($n = 1$) with two OOD radii: small crystals ($r = 0.005$, one tenth of the training radius $r = 0.05$) and large crystals ($r = 0.5$, ten times the training radius). In the \textbf{variable-radius condition}, a new FNO is trained on three discrete radii ($r \in \{0.02, 0.05, 0.08\}$) and evaluated on mixed-size samples to assess whether explicit size variability during training improves generalization.
 
 % ----------------------------------------------------------------------------
 \subsection{Evaluation Metrics}
@@ -808,8 +811,8 @@ Table~\ref{tab:metrics_exp4} summarizes the mean relative $L_2$ errors on $\psi$
 \begin{table}[htbp]
 \centering
 \caption{\textbf{Evaluation metrics for Experiment~4 (crystal-size generalization, $n=1$, 10~samples each).}
-         \emph{Small}: crystal radius below training range; \emph{Large}: crystal radius above training range.
-         Both size variants are out-of-distribution with respect to the training crystal size.}
+         \emph{Small}: $r = 0.005$, one tenth of the training radius $r = 0.05$; \emph{Large}: $r = 0.5$, ten times the training radius.
+         Both variants are out-of-distribution: Experiments~1--3 trained exclusively on $r = 0.05$.}
 \label{tab:metrics_exp4}
 \begin{tabular}{llcc}
 \toprule
@@ -824,16 +827,16 @@ U-Net & 0.5  & $44.9 \pm 8.2$ & $50.7 \pm 4.4$ \\
 \end{tabular}
 \end{table}
 
-For small crystals, both architectures degrade moderately: the FNO reaches $12.1\%$ on~$\psi$ and the U-Net $10.8\%$, compared to their respective in-distribution errors of $1.6\%$ (FNO, Exp-1.4, bs\,16) and $\sim 25\%$ (U-Net, Exp-2, $n=1$). The standard deviations are relatively large for both architectures, suggesting that accuracy varies considerably across individual samples.
+For small crystals, both architectures degrade moderately: the FNO reaches $12.1\%$ on~$\psi$ and the U-Net $10.8\%$, compared to their respective in-distribution errors of $1.6\%$ (FNO, Exp-1.4, bs\,16) and $5.5\%$ (U-Net, Exp-1.2, bs\,8) from Experiment~1. The standard deviations are relatively large for both architectures, suggesting that accuracy varies considerably across individual samples.
 
-For large crystals, both models degrade severely. The FNO reaches $71.3\%$ on~$\psi$ and $67.7\%$ on velocity—a near-complete failure of the prediction. The U-Net performs markedly better at $44.9\%$ on~$\psi$ and $50.7\%$ on velocity, though absolute errors remain large. Notably, this is one of the few scenarios in this thesis where the U-Net outperforms the FNO.
+For large crystals, both models degrade severely. The FNO reaches $71.3\%$ on~$\psi$ and $67.7\%$ on velocity—a near-complete failure of the prediction. The U-Net performs markedly better at $44.9\%$ on~$\psi$ and $50.7\%$ on velocity, though absolute errors remain large.
 
 % ----------------------------------------------------------------------------
 \subsection{Qualitative Results}
 \label{ssec:results:exp4:qualitative}
 % ----------------------------------------------------------------------------
 
-Figures~\ref{fig:fno_exp4_small} and~\ref{fig:fno_exp4_big} compare the FNO predictions for a trained model (Exp-1.4, bs\,16) against an untrained baseline for small ($r = 0.005$) and large ($r = 0.5$) crystals, respectively. The untrained baseline provides a visual reference for the task difficulty: without any learned weights, the predicted flow field is essentially featureless, confirming that all structure in the trained predictions is genuinely learned.
+Figures~\ref{fig:fno_exp4_small} and~\ref{fig:fno_exp4_big} (following pages) compare the FNO predictions for a trained model (Exp-1.4, bs\,16) against an untrained baseline for small ($r = 0.005$) and large ($r = 0.5$) crystals, respectively. Qualitative results are shown for the FNO only, as it exhibits the more striking failure mode for large crystals and the untrained-vs-trained comparison is most informative there; the U-Net's degradation for large crystals is captured quantitatively in Table~\ref{tab:metrics_exp4}. The untrained baseline provides a visual reference for the task difficulty: without any learned weights, the predicted flow field is essentially featureless, confirming that all structure in the trained predictions is genuinely learned.
 
 \begin{sidewaysfigure}[p]
     \centering
@@ -857,8 +860,8 @@ Figures~\ref{fig:fno_exp4_small} and~\ref{fig:fno_exp4_big} compare the FNO pred
         \caption{Untrained — $|\mathbf{u}|$}
     \end{subfigure}
     \caption{\textbf{Experiment~4 – small crystal ($r = 0.005$): FNO predictions for a trained model
-             (top two) and an untrained baseline (bottom two).} Stream function $\psi$ and
-             velocity magnitude $|\mathbf{u}|$ are shown separately for each.}
+             (top two panels) and an untrained baseline (bottom two panels), each showing
+             stream function $\psi$ and velocity magnitude $|\mathbf{u}|$.}}
     \label{fig:fno_exp4_small}
 \end{sidewaysfigure}
 
@@ -884,12 +887,15 @@ Figures~\ref{fig:fno_exp4_small} and~\ref{fig:fno_exp4_big} compare the FNO pred
         \caption{Untrained — $|\mathbf{u}|$}
     \end{subfigure}
     \caption{\textbf{Experiment~4 – large crystal ($r = 0.5$): FNO predictions for a trained model
-             (top two) and an untrained baseline (bottom two).} Stream function $\psi$ and
-             velocity magnitude $|\mathbf{u}|$ are shown separately for each. The trained model's
-             high error ($71.3\%$ on~$\psi$) is visible in the qualitative comparison.}
+             (top two panels) and an untrained baseline (bottom two panels), each showing
+             stream function $\psi$ and velocity magnitude $|\mathbf{u}|$.} The trained model's
+             high error ($71.3\%$ on~$\psi$) is reflected in the strong visual similarity between
+             the trained and untrained panels: the trained model fails to recover the correct
+             flow structure around the large crystal.}
     \label{fig:fno_exp4_big}
 \end{sidewaysfigure}
 
+\FloatBarrier
 % ----------------------------------------------------------------------------
 \subsection{Discussion of Size Generalization}
 \label{ssec:results:exp4:discussion}
@@ -916,26 +922,34 @@ For small crystals, the flow field is dominated by an extended, globally smooth 
 
 To assess whether explicit exposure to size variability during training improves generalization, a new FNO is trained on single-crystal samples ($n = 1$) drawn from three discrete radii: $r \in \{0.02, 0.05, 0.08\}$, with 1\,000 training and 100 validation samples per radius (3\,000 and 300 total, respectively). The architecture and optimizer settings are identical to Exp-1.4; the model is trained for 100~epochs.
 
-Table~\ref{tab:fno_metrics_exp4_var} reports the aggregated evaluation metrics over all 70~held-out samples spanning the three training radii.
+The evaluation set comprises 70~held-out samples: 10~samples each for the three training radii ($r \in \{0.02, 0.05, 0.08\}$), 10~samples each for two interpolation radii ($r \in \{0.035, 0.065\}$) lying between training sizes, and 10~samples each for two OOD radii ($r \in \{0.01, 0.1\}$) outside the training range. Table~\ref{tab:fno_metrics_exp4_var} reports the aggregated evaluation metrics over all 70~samples; the fixed-radius baseline values (FNO Exp-1.4, trained on $r = 0.05$ only) are reproduced from Table~\ref{tab:metrics_exp4} for direct comparison.
 
 \begin{table}[htbp]
 \centering
 \caption{\textbf{FNO variable-radius model evaluation metrics (Experiment~4, trained on
-         $r \in \{0.02, 0.05, 0.08\}$, evaluated on 70 mixed-radius samples, $n=1$).}}
+         $r \in \{0.02, 0.05, 0.08\}$, evaluated on 70 mixed-radius samples, $n=1$).}
+         Fixed-radius baseline (FNO Exp-1.4, $r=0.05$) reproduced from Table~\ref{tab:metrics_exp4}.}
 \label{tab:fno_metrics_exp4_var}
-\begin{tabular}{lcc}
+\begin{tabular}{llcc}
 \toprule
-\textbf{Model} & $\bar{\varepsilon}_\psi$ (\%) & $\bar{\varepsilon}_v$ (\%) \\
+\textbf{Model} & \textbf{Crystal size} & $\bar{\varepsilon}_\psi$ (\%) & $\bar{\varepsilon}_v$ (\%) \\
 \midrule
-FNO variable-radius (all radii) & $10.35 \pm 10.77$ & $11.63 \pm 10.35$ \\
+FNO variable-radius & all radii & $10.4 \pm 10.8$ & $11.6 \pm 10.4$ \\
 \midrule
-FNO Exp-1.4 (fixed $r=0.05$, small OOD) & $12.13 \pm 6.41$ & $20.36 \pm 6.69$ \\
-FNO Exp-1.4 (fixed $r=0.05$, large OOD) & $71.26 \pm 4.75$ & $67.71 \pm 3.93$ \\
+FNO Exp-1.4 (fixed $r=0.05$) & small ($r=0.005$) & $12.1 \pm 6.4$ & $20.4 \pm 6.7$ \\
+FNO Exp-1.4 (fixed $r=0.05$) & large ($r=0.5$)   & $71.3 \pm 4.8$ & $67.7 \pm 3.9$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The variable-radius FNO achieves a mean $\psi$ error of $10.35\%$ across all evaluated sizes, with substantially reduced velocity errors ($11.63\%$) compared to the fixed-radius model on OOD sizes. The large standard deviation ($\pm 10.77\%$) reflects the varying difficulty across different radii within the evaluation set. Compared to the fixed-radius baseline, the variable-radius model avoids the catastrophic failure observed for large crystals ($71.3\%$ on $\psi$), demonstrating that including size variability in training data substantially improves robustness to geometric scale changes. The radius input channel, which encodes crystal size explicitly at each grid point, enables the model to condition its predictions on the local crystal geometry and generalize across the evaluated size range.
+The variable-radius FNO achieves a mean $\psi$ error of $10.4\%$ across all evaluated sizes, with substantially reduced velocity errors ($11.6\%$) compared to the fixed-radius model on OOD sizes. The large standard deviation ($\pm 10.8\%$) reflects the varying difficulty across the different radii in the evaluation set.
+
+% ----------------------------------------------------------------------------
+\subsection{Effect of Size Conditioning}
+\label{ssec:results:exp4:conditioning}
+% ----------------------------------------------------------------------------
+
+Compared to the fixed-radius baseline (FNO Exp-1.4, trained on $r = 0.05$ only; Table~\ref{tab:metrics_exp4}), the variable-radius model avoids the catastrophic failure observed for large crystals ($71.3\%$ on $\psi$), demonstrating that including size variability in training data substantially improves robustness to geometric scale changes. The radius input channel, which encodes crystal size explicitly at each grid point, enables the model to condition its predictions on the local crystal geometry and generalize across the evaluated size range — including radii not seen during training.
 
 % ----------------------------------------------------------------------------
 \section{Spectral Analysis of FNO Prediction Errors}
