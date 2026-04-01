@@ -32,6 +32,7 @@ data_dir        = "data_val"
 out_dir         = "eval_output"
 save_preds      = true
 history_csv     = nothing
+denorm          = false
 
 for i in eachindex(ARGS)
     if (ARGS[i] == "--checkpoint" || ARGS[i] == "--ckpt") && i < length(ARGS)
@@ -44,6 +45,8 @@ for i in eachindex(ARGS)
         global save_preds = false
     elseif ARGS[i] == "--history_csv" && i < length(ARGS)
         global history_csv = ARGS[i+1]
+    elseif ARGS[i] == "--denorm"
+        global denorm = true
     end
 end
 
@@ -55,6 +58,7 @@ Evaluation-Konfiguration:
   Daten:       $data_dir
   Ausgabe:     $out_dir
   Predictions: $(save_preds ? "ja" : "nein")
+  Denorm:      $(denorm ? "ja" : "nein")
 """
 
 # =============================================================================
@@ -158,7 +162,7 @@ try
     # Gallery: 8 schlechteste Samples
     if pred_dir !== nothing && isdir(pred_dir)
         make_eval_gallery(pred_dir, joinpath(plots_dir, "gallery");
-                          n=8, pick=:worst, dx=dx, dz=dz)
+                          n=8, pick=:worst, dx=dx, dz=dz, denorm=denorm)
     end
 
     @info "Plots gespeichert in $plots_dir"

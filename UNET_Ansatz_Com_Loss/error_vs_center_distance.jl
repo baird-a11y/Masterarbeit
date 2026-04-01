@@ -245,26 +245,26 @@ function plot_error_vs_distance_byN(
     dist_accessor, x_label, title =
         if kind == :center
             (r -> r.dist_center,
-             "Abstand vom Domänenmittelpunkt (km)",
-             "Fehler vs. Abstand vom Zentrum (pro Kristall)")
+             "Distance from domain center (km)",
+             "Error vs. Distance from Center (per crystal)")
         elseif kind == :corner1
             (r -> r.dist_corner_1,
-             "Abstand zu Ecke 1 (unten links) (km)",
-             "Fehler vs. Abstand zu Ecke 1")
+             "Distance to Corner 1 (bottom left) (km)",
+             "Error vs. Distance to Corner 1")
         elseif kind == :corner2
             (r -> r.dist_corner_2,
-             "Abstand zu Ecke 2 (unten rechts) (km)",
-             "Fehler vs. Abstand zu Ecke 2")
+             "Distance to Corner 2 (bottom right) (km)",
+             "Error vs. Distance to Corner 2")
         elseif kind == :corner3
             (r -> r.dist_corner_3,
-             "Abstand zu Ecke 3 (oben links) (km)",
-             "Fehler vs. Abstand zu Ecke 3")
+             "Distance to Corner 3 (top left) (km)",
+             "Error vs. Distance to Corner 3")
         elseif kind == :corner4
             (r -> r.dist_corner_4,
-             "Abstand zu Ecke 4 (oben rechts) (km)",
-             "Fehler vs. Abstand zu Ecke 4")
+             "Distance to Corner 4 (top right) (km)",
+             "Error vs. Distance to Corner 4")
         else
-            error("Unbekanntes kind = $kind. Erlaubt: :center, :corner1..:corner4")
+            error("Unknown kind = $kind. Allowed: :center, :corner1..:corner4")
         end
 
     # Dateiname automatisch wählen, falls nicht gesetzt
@@ -284,7 +284,7 @@ function plot_error_vs_distance_byN(
     fig = Figure(resolution = (800, 500))
     ax  = Axis(fig[1, 1];
         xlabel = x_label,
-        ylabel = "rel. L2-Fehler ψ",
+        ylabel = "rel. L2 Error ψ",
         title  = title,
     )
 

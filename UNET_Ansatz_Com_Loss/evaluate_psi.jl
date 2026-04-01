@@ -451,7 +451,7 @@ function evaluate_dataset(; data_dir::String,
             hm3 = heatmap!(ax3, xcoords, zcoords, diff;
                            colorrange = (-max_abs_diff, max_abs_diff), colormap = :RdBu)
             plot_crystal_outlines!(ax3, centers_2D, radii)
-            Colorbar(gl3[1, 2], hm3, label = "Fehler")
+            Colorbar(gl3[1, 2], hm3, label = "Error")
 
             save(filename_psi, fig)
             @info "ψ-Plot gespeichert: $filename_psi"
@@ -495,7 +495,7 @@ function evaluate_dataset(; data_dir::String,
             hv3 = heatmap!(av3, xcoords, zcoords, speed_err;
                            colorrange = (-speed_emax, speed_emax), colormap = :RdBu)
             plot_crystal_outlines!(av3, centers_2D, radii)
-            Colorbar(gv3[1, 2], hv3, label = "Fehler")
+            Colorbar(gv3[1, 2], hv3, label = "Error")
 
             save(filename_vel, fig_vel)
             @info "Velocity-Plot gespeichert: $filename_vel"
@@ -508,7 +508,7 @@ function evaluate_dataset(; data_dir::String,
             dmax = maximum(abs.(filter(!isnan, vec(div_pred))))
             dmax = dmax > 0 ? dmax : 1.0
 
-            div_title = @sprintf("Divergenz | n=%d | idx=%d | RMS_int=%.3e", n, i, div_rms)
+            div_title = @sprintf("Divergence | n=%d | idx=%d | RMS_int=%.3e", n, i, div_rms)
             gd1 = fig_div[1, 1] = GridLayout()
             ad1 = Axis(gd1[1, 1],
                        title  = div_title,

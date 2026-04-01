@@ -22,8 +22,10 @@ using Statistics
 using Printf
 using DelimitedFiles   # CSV lesen (stdlib, kein Extra-Paket)
 using JLD2
+import CairoMakie
 
 using ..GridFDUtils: velocity_from_streamfunction, divergence, interior_mask
+using ..Normalization: denormalize_psi
 
 export plot_training_history,
        plot_psi_comparison,
@@ -31,7 +33,6 @@ export plot_training_history,
        plot_divergence_map,
        plot_metrics_vs_crystals,
        make_eval_gallery,
-       overlay_crystals!,
        common_clim,
        speed,
        safe_title
@@ -85,44 +86,25 @@ function safe_title(meta::NamedTuple; max_len::Int = 60)
 end
 
 # =============================================================================
-# P8b – Crystal Overlay
+# P8b – Crystal Overlay (CairoMakie, physikalische Koordinaten)
 # =============================================================================
 
 """
-    overlay_crystals!(p, centers_2D, radii, x_vec, z_vec)
+    _draw_crystal_outlines!(ax, centers_2D, radii; n_pts=200, linewidth=2, color=:black)
 
-Zeichnet schwarze Kreise an den Kristallpositionen in einen bestehenden Plot.
-Konvertiert physikalische Koordinaten → Gitterindizes (Pixel-Koordinaten),
-da die Heatmaps mit Array-Indizes arbeiten.
-
-- `centers_2D`: Vector{Tuple{Float64,Float64}} – Kristall-Mittelpunkte (phys.)
-- `radii`: Vector{Float64} – Kristall-Radien (phys.)
-- `x_vec`, `z_vec`: 1D-Vektoren der Gitterkoordinaten
+Zeichnet Kristall-Umrisse (Kreise) auf ein CairoMakie-Axis-Objekt
+direkt in physikalischen Koordinaten.
 """
-function overlay_crystals!(p, centers_2D, radii, x_vec, z_vec;
-                           color::Symbol = :black, lw::Real = 1.5,
-                           n_pts::Int = 60)
-    nx = length(x_vec)
-    nz = length(z_vec)
-    x_min, x_max = extrema(x_vec)
-    z_min, z_max = extrema(z_vec)
-
-    for (k, (cx, cz)) in enumerate(centers_2D)
-        r = radii[k]
-
-        # Kreis in physikalischen Koordinaten → Gitterindizes
-        # Heatmap(M') hat x-Achse = 1. Dim von M, y-Achse = 2. Dim von M
-        θ = range(0, 2π; length=n_pts)
-        x_phys = cx .+ r .* cos.(θ)
-        z_phys = cz .+ r .* sin.(θ)
-
-        # Physikalische Koordinaten → Pixel-Indizes (1-basiert)
-        ix = @. (x_phys - x_min) / (x_max - x_min) * (nx - 1) + 1
-        iz = @. (z_phys - z_min) / (z_max - z_min) * (nz - 1) + 1
-
-        plot!(p, ix, iz; label="", color=color, lw=lw, seriestype=:path)
+function _draw_crystal_outlines!(ax, centers_2D, radii;
+                                 n_pts::Int = 200,
+                                 linewidth::Real = 2,
+                                 color = :black)
+    θ = range(0, 2π; length = n_pts)
+    for ((cx, cz), r) in zip(centers_2D, radii)
+        CairoMakie.lines!(ax, cx .+ r .* cos.(θ), cz .+ r .* sin.(θ);
+                          color = color, linewidth = linewidth)
     end
-    return p
+    return ax
 end
 
 # =============================================================================
@@ -219,10 +201,12 @@ end
 
 """
     plot_psi_comparison(ψ_true, ψ_pred; out_path="psi_comparison.png",
-                        title="", clim=nothing)
+                        title="", clim=nothing, centers_2D=nothing,
+                        radii=nothing, x_vec=nothing, z_vec=nothing)
 
-3-Panel Vergleich: ψ_true | ψ_pred | Error.
+3-Panel Vergleich: ψ_true | ψ_pred (FNO) | Δψ = ψ_pred − ψ_true.
 Gleiche Farbskala für true/pred, eigene für Error.
+Verwendet CairoMakie mit physikalischen Koordinaten (km).
 """
 function plot_psi_comparison(ψ_true::AbstractMatrix, ψ_pred::AbstractMatrix;
                              out_path::AbstractString = "psi_comparison.png",
@@ -234,32 +218,60 @@ function plot_psi_comparison(ψ_true::AbstractMatrix, ψ_pred::AbstractMatrix;
                              z_vec = nothing)
     err = ψ_pred .- ψ_true
 
-    # Farbskala
-    cl = clim !== nothing ? clim : common_clim(ψ_true, ψ_pred)
-
-    # Error-Skala (symmetrisch)
+    cl  = clim !== nothing ? clim : common_clim(ψ_true, ψ_pred)
     emax = maximum(abs.(filter(!isnan, vec(err))))
     emax = emax > 0 ? emax : 1.0
     ecl = (-emax, emax)
 
-    p1 = heatmap(ψ_true'; title="ψ true", clim=cl, color=:RdBu,
-                 aspect_ratio=:equal, xlabel="x", ylabel="z")
-    p2 = heatmap(ψ_pred'; title="ψ pred", clim=cl, color=:RdBu,
-                 aspect_ratio=:equal, xlabel="x", ylabel="z")
-    p3 = heatmap(err'; title="Error (pred−true)", clim=ecl, color=:RdBu,
-                 aspect_ratio=:equal, xlabel="x", ylabel="z")
+    # Physikalische oder Index-Koordinaten
+    nx, nz = size(ψ_true)
+    xc = x_vec !== nothing ? x_vec : collect(1:nx)
+    zc = z_vec !== nothing ? z_vec : collect(1:nz)
+    coord_label = x_vec !== nothing ? " (km)" : ""
 
-    # Kristalle als schwarze Kreise einzeichnen
-    if centers_2D !== nothing && radii !== nothing && x_vec !== nothing && z_vec !== nothing
-        for p in (p1, p2, p3)
-            overlay_crystals!(p, centers_2D, radii, x_vec, z_vec)
-        end
-    end
+    fig = CairoMakie.Figure(resolution = (1500, 450))
 
-    sup_title = isempty(title) ? "ψ Comparison" : title
-    fig = plot(p1, p2, p3; layout=(1, 3), size=(1500, 400),
-              plot_title=sup_title)
-    savefig(fig, out_path)
+    gl1 = fig[1, 1] = CairoMakie.GridLayout()
+    gl2 = fig[1, 2] = CairoMakie.GridLayout()
+    gl3 = fig[1, 3] = CairoMakie.GridLayout()
+
+    sup = isempty(title) ? "ψ Comparison" : title
+    CairoMakie.Label(fig[0, :], sup; fontsize = 14, font = :bold)
+
+    ax1 = CairoMakie.Axis(gl1[1, 1];
+                           title  = "ψ true",
+                           xlabel = "x$(coord_label)",
+                           ylabel = "z$(coord_label)",
+                           aspect = CairoMakie.DataAspect())
+    hm1 = CairoMakie.heatmap!(ax1, xc, zc, ψ_true;
+                               colorrange = cl, colormap = :RdBu)
+    centers_2D !== nothing && radii !== nothing &&
+        _draw_crystal_outlines!(ax1, centers_2D, radii)
+    CairoMakie.Colorbar(gl1[1, 2], hm1; label = "ψ_true")
+
+    ax2 = CairoMakie.Axis(gl2[1, 1];
+                           title  = "ψ pred (FNO)",
+                           xlabel = "x$(coord_label)",
+                           ylabel = "z$(coord_label)",
+                           aspect = CairoMakie.DataAspect())
+    hm2 = CairoMakie.heatmap!(ax2, xc, zc, ψ_pred;
+                               colorrange = cl, colormap = :RdBu)
+    centers_2D !== nothing && radii !== nothing &&
+        _draw_crystal_outlines!(ax2, centers_2D, radii)
+    CairoMakie.Colorbar(gl2[1, 2], hm2; label = "ψ_pred")
+
+    ax3 = CairoMakie.Axis(gl3[1, 1];
+                           title  = "Δψ = ψ_pred − ψ_true",
+                           xlabel = "x$(coord_label)",
+                           ylabel = "z$(coord_label)",
+                           aspect = CairoMakie.DataAspect())
+    hm3 = CairoMakie.heatmap!(ax3, xc, zc, err;
+                               colorrange = ecl, colormap = :RdBu)
+    centers_2D !== nothing && radii !== nothing &&
+        _draw_crystal_outlines!(ax3, centers_2D, radii)
+    CairoMakie.Colorbar(gl3[1, 2], hm3; label = "Error")
+
+    CairoMakie.save(out_path, fig)
     @info "ψ-Comparison gespeichert: $out_path"
     return fig
 end
@@ -270,14 +282,21 @@ end
 
 """
     plot_velocity_comparison(Vx_true, Vz_true, Vx_pred, Vz_pred;
-                             out_path="velocity_comparison.png", title="")
+                             out_path="velocity_comparison.png", title="",
+                             centers_2D=nothing, radii=nothing,
+                             x_vec=nothing, z_vec=nothing)
 
-3-Panel Vergleich der Geschwindigkeitsbeträge: |v| true | |v| pred | |v| error.
+3-Panel Vergleich der Geschwindigkeitsbeträge: |v| true | |v| pred (FNO) | |v| error.
+Verwendet CairoMakie mit physikalischen Koordinaten (km).
 """
 function plot_velocity_comparison(Vx_true::AbstractMatrix, Vz_true::AbstractMatrix,
                                   Vx_pred::AbstractMatrix, Vz_pred::AbstractMatrix;
                                   out_path::AbstractString = "velocity_comparison.png",
-                                  title::AbstractString = "")
+                                  title::AbstractString = "",
+                                  centers_2D = nothing,
+                                  radii = nothing,
+                                  x_vec = nothing,
+                                  z_vec = nothing)
     s_true = speed(Vx_true, Vz_true)
     s_pred = speed(Vx_pred, Vz_pred)
     s_err  = s_pred .- s_true
@@ -285,21 +304,57 @@ function plot_velocity_comparison(Vx_true::AbstractMatrix, Vz_true::AbstractMatr
     vmax = max(maximum(filter(!isnan, vec(s_true))),
                maximum(filter(!isnan, vec(s_pred))))
     vmax = vmax > 0 ? vmax : 1.0
-
-    p1 = heatmap(s_true'; title="|v| true", clim=(0, vmax), color=:viridis,
-                 aspect_ratio=:equal, xlabel="x", ylabel="z")
-    p2 = heatmap(s_pred'; title="|v| pred", clim=(0, vmax), color=:viridis,
-                 aspect_ratio=:equal, xlabel="x", ylabel="z")
-
     emax = maximum(abs.(filter(!isnan, vec(s_err))))
     emax = emax > 0 ? emax : 1.0
-    p3 = heatmap(s_err'; title="|v| error", clim=(-emax, emax), color=:RdBu,
-                 aspect_ratio=:equal, xlabel="x", ylabel="z")
 
-    sup_title = isempty(title) ? "Velocity Comparison" : title
-    fig = plot(p1, p2, p3; layout=(1, 3), size=(1500, 400),
-              plot_title=sup_title)
-    savefig(fig, out_path)
+    nx, nz = size(s_true)
+    xc = x_vec !== nothing ? x_vec : collect(1:nx)
+    zc = z_vec !== nothing ? z_vec : collect(1:nz)
+    coord_label = x_vec !== nothing ? " (km)" : ""
+
+    fig = CairoMakie.Figure(resolution = (1500, 450))
+
+    gl1 = fig[1, 1] = CairoMakie.GridLayout()
+    gl2 = fig[1, 2] = CairoMakie.GridLayout()
+    gl3 = fig[1, 3] = CairoMakie.GridLayout()
+
+    sup = isempty(title) ? "Velocity Comparison" : title
+    CairoMakie.Label(fig[0, :], sup; fontsize = 14, font = :bold)
+
+    ax1 = CairoMakie.Axis(gl1[1, 1];
+                           title  = "|v| true",
+                           xlabel = "x$(coord_label)",
+                           ylabel = "z$(coord_label)",
+                           aspect = CairoMakie.DataAspect())
+    hv1 = CairoMakie.heatmap!(ax1, xc, zc, s_true;
+                               colorrange = (0, vmax), colormap = :viridis)
+    centers_2D !== nothing && radii !== nothing &&
+        _draw_crystal_outlines!(ax1, centers_2D, radii)
+    CairoMakie.Colorbar(gl1[1, 2], hv1; label = "|v| true")
+
+    ax2 = CairoMakie.Axis(gl2[1, 1];
+                           title  = "|v| pred (FNO)",
+                           xlabel = "x$(coord_label)",
+                           ylabel = "z$(coord_label)",
+                           aspect = CairoMakie.DataAspect())
+    hv2 = CairoMakie.heatmap!(ax2, xc, zc, s_pred;
+                               colorrange = (0, vmax), colormap = :viridis)
+    centers_2D !== nothing && radii !== nothing &&
+        _draw_crystal_outlines!(ax2, centers_2D, radii)
+    CairoMakie.Colorbar(gl2[1, 2], hv2; label = "|v| pred")
+
+    ax3 = CairoMakie.Axis(gl3[1, 1];
+                           title  = "Δ|v| = |v|_pred − |v|_true",
+                           xlabel = "x$(coord_label)",
+                           ylabel = "z$(coord_label)",
+                           aspect = CairoMakie.DataAspect())
+    hv3 = CairoMakie.heatmap!(ax3, xc, zc, s_err;
+                               colorrange = (-emax, emax), colormap = :RdBu)
+    centers_2D !== nothing && radii !== nothing &&
+        _draw_crystal_outlines!(ax3, centers_2D, radii)
+    CairoMakie.Colorbar(gl3[1, 2], hv3; label = "Error")
+
+    CairoMakie.save(out_path, fig)
     @info "Velocity-Comparison gespeichert: $out_path"
     return fig
 end
@@ -310,14 +365,17 @@ end
 
 """
     plot_divergence_map(divv; out_path="divergence_map.png", title="",
-                        mask_width=2)
+                        mask_width=2, x_vec=nothing, z_vec=nothing)
 
 Heatmap der Divergenz mit RMS im Inneren.
+Verwendet CairoMakie mit physikalischen Koordinaten (km).
 """
 function plot_divergence_map(divv::AbstractMatrix;
                              out_path::AbstractString = "divergence_map.png",
                              title::AbstractString = "",
-                             mask_width::Int = 2)
+                             mask_width::Int = 2,
+                             x_vec = nothing,
+                             z_vec = nothing)
     nx, nz = size(divv)
     mask = interior_mask(nx, nz; width=mask_width)
     div_clean = filter(!isnan, vec(divv[mask]))
@@ -330,10 +388,22 @@ function plot_divergence_map(divv::AbstractMatrix;
     dmax = maximum(abs.(filter(!isnan, vec(divv))))
     dmax = dmax > 0 ? dmax : 1.0
 
-    fig = heatmap(divv'; title=t, clim=(-dmax, dmax), color=:RdBu,
-                  aspect_ratio=:equal, xlabel="x", ylabel="z",
-                  size=(600, 500))
-    savefig(fig, out_path)
+    xc = x_vec !== nothing ? x_vec : collect(1:nx)
+    zc = z_vec !== nothing ? z_vec : collect(1:nz)
+    coord_label = x_vec !== nothing ? " (km)" : ""
+
+    fig = CairoMakie.Figure(resolution = (700, 550))
+    gl  = fig[1, 1] = CairoMakie.GridLayout()
+    ax  = CairoMakie.Axis(gl[1, 1];
+                          title  = t,
+                          xlabel = "x$(coord_label)",
+                          ylabel = "z$(coord_label)",
+                          aspect = CairoMakie.DataAspect())
+    hd  = CairoMakie.heatmap!(ax, xc, zc, divv;
+                               colorrange = (-dmax, dmax), colormap = :RdBu)
+    CairoMakie.Colorbar(gl[1, 2], hd; label = "div v")
+
+    CairoMakie.save(out_path, fig)
     @info "Divergence-Map gespeichert: $out_path"
     return fig
 end
@@ -443,7 +513,8 @@ function make_eval_gallery(pred_dir::AbstractString, out_dir::AbstractString;
                            n::Int = 0, pick::Symbol = :worst,
                            dx::Union{Real, Nothing} = nothing,
                            dz::Union{Real, Nothing} = nothing,
-                           mask_width::Int = 2)
+                           mask_width::Int = 2,
+                           denorm::Bool = false)
     mkpath(out_dir)
 
     # Alle pred_*.jld2 finden und laden
@@ -469,10 +540,15 @@ function make_eval_gallery(pred_dir::AbstractString, out_dir::AbstractString;
         xv = (inner !== nothing && hasproperty(inner, :x_vec_1D)) ? inner.x_vec_1D : nothing
         zv = (inner !== nothing && hasproperty(inner, :z_vec_1D)) ? inner.z_vec_1D : nothing
 
+        # Normalisierungsparameter für optionale Denormalisierung
+        scale_val  = (smeta !== nothing && hasproperty(smeta, :scale)) ? Float64(smeta.scale) : 1.0
+        offset_val = (inner !== nothing && hasproperty(inner, :psi_gauge_offset)) ? Float64(inner.psi_gauge_offset) : 0.0
+
         push!(entries, (file=f, rel_l2=Float64(m.psi_rel_l2), n_crystals=nc,
                         ψ_pred=d["ψ_pred_norm"], ψ_true=d["ψ_true_norm"],
                         centers_2D=centers, radii=radii_c,
-                        x_vec=xv, z_vec=zv))
+                        x_vec=xv, z_vec=zv,
+                        scale=scale_val, offset=offset_val))
     end
 
     # Nach Kristallanzahl gruppieren
@@ -507,29 +583,37 @@ function make_eval_gallery(pred_dir::AbstractString, out_dir::AbstractString;
         for (idx, entry) in enumerate(group[1:n_sel])
             prefix = @sprintf("%s/%03d_rel%.4f", sub_dir, idx, entry.rel_l2)
 
+            # Optionale Denormalisierung
+            ψ_true_plot = denorm ? denormalize_psi(entry.ψ_true, entry.scale, entry.offset) : entry.ψ_true
+            ψ_pred_plot = denorm ? denormalize_psi(entry.ψ_pred, entry.scale, entry.offset) : entry.ψ_pred
+            psi_label   = denorm ? "ψ (phys.)" : "ψ_norm"
+
             # ψ Comparison (mit Kristall-Overlay falls verfügbar)
-            plot_psi_comparison(entry.ψ_true, entry.ψ_pred;
+            plot_psi_comparison(ψ_true_plot, ψ_pred_plot;
                                 out_path="$(prefix)_psi.png",
-                                title=@sprintf("n=%d #%d rel_l2=%.4f", nc, idx, entry.rel_l2),
+                                title=@sprintf("n=%d #%d rel_l2=%.4f  [%s]", nc, idx, entry.rel_l2, psi_label),
                                 centers_2D=entry.centers_2D, radii=entry.radii,
                                 x_vec=entry.x_vec, z_vec=entry.z_vec)
 
             # Velocity + Divergence (falls dx/dz gegeben)
             if dx !== nothing && dz !== nothing
                 Vx_true, Vz_true = velocity_from_streamfunction(
-                    Float64.(entry.ψ_true), Float64(dx), Float64(dz))
+                    Float64.(ψ_true_plot), Float64(dx), Float64(dz))
                 Vx_pred, Vz_pred = velocity_from_streamfunction(
-                    Float64.(entry.ψ_pred), Float64(dx), Float64(dz))
+                    Float64.(ψ_pred_plot), Float64(dx), Float64(dz))
 
                 plot_velocity_comparison(Vx_true, Vz_true, Vx_pred, Vz_pred;
                                          out_path="$(prefix)_vel.png",
-                                         title=@sprintf("n=%d #%d velocity", nc, idx))
+                                         title=@sprintf("n=%d #%d velocity", nc, idx),
+                                         centers_2D=entry.centers_2D, radii=entry.radii,
+                                         x_vec=entry.x_vec, z_vec=entry.z_vec)
 
                 div_pred = divergence(Vx_pred, Vz_pred, Float64(dx), Float64(dz))
                 plot_divergence_map(div_pred;
                                     out_path="$(prefix)_div.png",
                                     title=@sprintf("n=%d #%d divergence", nc, idx),
-                                    mask_width=mask_width)
+                                    mask_width=mask_width,
+                                    x_vec=entry.x_vec, z_vec=entry.z_vec)
             end
 
             total_plotted += 1
