@@ -63,13 +63,21 @@ unet_exp4_dir(size::String) =
 # Fig 1 & 2: Trainingskurven (FNO und U-Net)
 # ═══════════════════════════════════════════════════════════════════════════════
 function plot_training_curves(arch::String, fig_nr::Int)
-    fig = Figure(size=(1100, 450), fontsize=14)
+    arch_fname = lowercase(replace(arch, "-" => ""))
 
-    for (col, bs) in enumerate([16, 8])
-        ax = Axis(fig[1, col],
+    for (bs_idx, bs) in enumerate([16, 8])
+        fig = Figure(size=(1000, 420), fontsize=14)
+
+        ax_train = Axis(fig[1, 1],
             xlabel = "Epoch",
-            ylabel = col == 1 ? "Validation error (rel. L²)" : "",
-            title  = "$arch – Experiment 1, batch size $bs",
+            ylabel = "Training MSE",
+            title  = "$arch – Exp. 1, batch size $bs – Training",
+            yscale = log10,
+        )
+        ax_val = Axis(fig[1, 2],
+            xlabel = "Epoch",
+            ylabel = "Validation MSE",
+            title  = "$arch – Exp. 1, batch size $bs – Validation",
             yscale = log10,
         )
 
@@ -83,17 +91,25 @@ function plot_training_curves(arch::String, fig_nr::Int)
                 safe_csv(joinpath(hist_dir, "training_history.csv"))
             end
             df === nothing && continue
-            lines!(ax, df.epoch, df.val_rel_l2;
+
+            lines!(ax_train, df.epoch, df.train_mse;
+                   color=C[cfg], linewidth=2, label=LR_LABEL[cfg])
+            lines!(ax_val, df.epoch, df.val_mse;
                    color=C[cfg], linewidth=2, label=LR_LABEL[cfg])
             n_plotted += 1
         end
-        n_plotted > 0 && axislegend(ax, position=:rt, framevisible=true)
-    end
 
-    fname = "fig$(fig_nr)_$(lowercase(arch))_trainingskurven"
-    save(joinpath(OUT, fname * ".pdf"), fig)
-    save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
-    println("  Gespeichert: $fname")
+        if n_plotted > 0
+            axislegend(ax_train, position=:rt, framevisible=true)
+            axislegend(ax_val,   position=:rt, framevisible=true)
+        end
+
+        suffix = bs_idx == 1 ? "a" : "b"
+        fname  = "fig$(fig_nr)$(suffix)_$(arch_fname)_training_curves_bs$(bs)"
+        save(joinpath(OUT, fname * ".pdf"), fig)
+        save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
+        println("  Saved: $fname")
+    end
 end
 
 
@@ -160,7 +176,7 @@ function plot_eval_bar_chart()
     fname = "fig3_exp1_eval_balken"
     save(joinpath(OUT, fname * ".pdf"), fig)
     save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
-    println("  Gespeichert: $fname")
+    println("  Saved: $fname")
 end
 
 
@@ -213,14 +229,14 @@ function plot_exp23_scaling()
             end
         end
 
-        any_data || println("  Warnung: keine Daten für Exp. $exp_nr gefunden.")
+        any_data || println("  Warning: keine Daten für Exp. $exp_nr gefunden.")
         axislegend(ax, position=:lt, framevisible=true)
     end
 
-    fname = "fig4_fno_exp23_generalisierung"
+    fname = "fig4_fno_exp23_generalization"
     save(joinpath(OUT, fname * ".pdf"), fig)
     save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
-    println("  Gespeichert: $fname")
+    println("  Saved: $fname")
 end
 
 
@@ -232,7 +248,7 @@ function plot_best_config_comparison()
     # Hier zeigen wir bs=16 als Vergleich (vollständige Daten)
     fig = Figure(size=(900, 430), fontsize=14)
     ax = Axis(fig[1, 1],
-        xlabel = "Epoche",
+        xlabel = "Epoch",
         ylabel = "Validation error (rel. L²)",
         title  = "FNO vs. U-Net comparison – batch size 16",
         yscale = log10,
@@ -263,10 +279,10 @@ function plot_best_config_comparison()
     end
     axislegend(ax, position=:rt, framevisible=true)
 
-    fname = "fig5_fno_unet_vergleich_bs16"
+    fname = "fig5_fno_unet_comparison_bs16"
     save(joinpath(OUT, fname * ".pdf"), fig)
     save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
-    println("  Gespeichert: $fname")
+    println("  Saved: $fname")
 end
 
 
@@ -291,18 +307,18 @@ function plot_fno_exp23_training()
             csv_name = "history_$(exp_str)_$(bs).csv"
             p  = joinpath(fno_exp23_dir(exp_nr, bs), csv_name)
             df = safe_csv(p)
-            df === nothing && (println("  Warnung: $p nicht gefunden."); continue)
+            df === nothing && (println("  Warning: $p nicht gefunden."); continue)
             any_data = true
             lines!(ax, df.epoch, df.val_rel_l2;
                    color=C[col_idx], linewidth=2, linestyle=lstyle, label="val. rel. L² (bs=$bs)")
         end
-        any_data || println("  Warnung: keine History für Exp. $exp_nr gefunden.")
+        any_data || println("  Warning: keine History für Exp. $exp_nr gefunden.")
         axislegend(ax, position=:rt, framevisible=true)
 
         fname = "fig$(fig_nr)_fno_$(exp_str)_training"
         save(joinpath(OUT, fname * ".pdf"), fig)
         save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
-        println("  Gespeichert: $fname")
+        println("  Saved: $fname")
     end
 end
 
@@ -327,18 +343,18 @@ function plot_unet_exp23_training()
         for (bs, col_idx, lstyle) in [(16, 1, :solid), (8, 2, :dash)]
             p  = joinpath(unet_exp23_dir(exp_nr, bs), "training_history.csv")
             df = safe_csv(p)
-            df === nothing && (println("  Warnung: $p nicht gefunden."); continue)
+            df === nothing && (println("  Warning: $p nicht gefunden."); continue)
             any_data = true
             lines!(ax, df.epoch, df.val_rel_l2;
                    color=C[col_idx], linewidth=2, linestyle=lstyle, label="val. rel. L² (bs=$bs)")
         end
-        any_data || println("  Warnung: keine History für U-Net Exp. $exp_nr gefunden.")
+        any_data || println("  Warning: keine History für U-Net Exp. $exp_nr gefunden.")
         axislegend(ax, position=:rt, framevisible=true)
 
         fname = "fig$(fig_nr)_unet_$(exp_str)_training"
         save(joinpath(OUT, fname * ".pdf"), fig)
         save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
-        println("  Gespeichert: $fname")
+        println("  Saved: $fname")
     end
 end
 
@@ -393,14 +409,14 @@ function plot_unet_exp23_scaling()
             end
         end
 
-        any_data || println("  Warnung: keine Daten für U-Net Exp. $exp_nr gefunden.")
+        any_data || println("  Warning: keine Daten für U-Net Exp. $exp_nr gefunden.")
         axislegend(ax, position=:lt, framevisible=true)
     end
 
-    fname = "fig10_unet_exp23_generalisierung"
+    fname = "fig10_unet_exp23_generalization"
     save(joinpath(OUT, fname * ".pdf"), fig)
     save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
-    println("  Gespeichert: $fname")
+    println("  Saved: $fname")
 end
 
 
@@ -434,7 +450,7 @@ function plot_exp4_size_generalization()
     end
 
     if isempty(vals)
-        println("  Warnung: keine Daten für Exp. 4 gefunden.")
+        println("  Warning: keine Daten für Exp. 4 gefunden.")
         return
     end
 
@@ -458,10 +474,10 @@ function plot_exp4_size_generalization()
 
     axislegend(ax, position=:rt, framevisible=true)
 
-    fname = "fig11_exp4_kristallgroesse"
+    fname = "fig11_exp4_crystal_size"
     save(joinpath(OUT, fname * ".pdf"), fig)
     save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
-    println("  Gespeichert: $fname")
+    println("  Saved: $fname")
 end
 
 
@@ -542,14 +558,14 @@ function plot_fno_unet_exp23_comparison()
             break  # nur eine batch-size verwenden
         end
 
-        any_data || println("  Warnung: keine Daten für Exp. $exp_nr Vergleich gefunden.")
+        any_data || println("  Warning: keine Daten für Exp. $exp_nr Vergleich gefunden.")
         axislegend(ax, position=:lt, framevisible=true)
     end
 
-    fname = "fig12_fno_unet_exp23_vergleich"
+    fname = "fig12_fno_unet_exp23_comparison"
     save(joinpath(OUT, fname * ".pdf"), fig)
     save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
-    println("  Gespeichert: $fname")
+    println("  Saved: $fname")
 end
 
 
@@ -603,7 +619,7 @@ function plot_fno_unet_overview_bar()
     end
 
     if isempty(rows)
-        println("  Warnung: keine Daten für Übersichtsbalken gefunden.")
+        println("  Warning: no data found for overview bar chart.")
         return
     end
 
@@ -639,10 +655,10 @@ function plot_fno_unet_overview_bar()
 
     axislegend(ax, position=:lt, framevisible=true, merge=true)
 
-    fname = "fig13_fno_unet_uebersicht_balken"
+    fname = "fig13_fno_unet_overview_bars"
     save(joinpath(OUT, fname * ".pdf"), fig)
     save(joinpath(OUT, fname * ".png"), fig, px_per_unit=2)
-    println("  Gespeichert: $fname")
+    println("  Saved: $fname")
 end
 
 
@@ -650,12 +666,12 @@ end
 # Main
 # ═══════════════════════════════════════════════════════════════════════════════
 println("=" ^ 60)
-println("Erzeuge Abbildungen für die Masterarbeit...")
-println("Ausgabe: $OUT")
+println("Generating figures for the thesis...")
+println("Output: $OUT")
 println("=" ^ 60)
 
 plot_training_curves("FNO",  1)
-plot_training_curves("UNet", 2)
+plot_training_curves("U-Net", 2)
 plot_eval_bar_chart()
 plot_exp23_scaling()
 plot_best_config_comparison()
@@ -667,6 +683,6 @@ plot_fno_unet_exp23_comparison()
 plot_fno_unet_overview_bar()
 
 println("=" ^ 60)
-println("Fertig! Alle Abbildungen gespeichert in:")
+println("Done! All figures saved to:")
 println("  $OUT")
 println("=" ^ 60)

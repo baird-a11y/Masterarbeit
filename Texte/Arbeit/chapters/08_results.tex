@@ -35,7 +35,7 @@
 \label{sec:results:exp1}
 % ============================================================================
 
-Experiment~1 establishes a per-architecture baseline on the simplest configuration: single-crystal flows ($n = 1$). The sole free parameter across the four configurations is the learning rate; all other hyperparameters are fixed at the architecture defaults (see Section~\ref{sec:experiments:setup}). The four configurations are referred to as \emph{Exp-1.1} through \emph{Exp-1.4}, with learning rates $10^{-3}$, $5\times10^{-3}$, $10^{-4}$, and $5\times10^{-4}$.
+Experiment~1 establishes a per-architecture baseline on the simplest configuration: single-crystal flows ($n = 1$). The two free parameters varied across configurations are the learning rate and the batch size; all other hyperparameters are fixed at the architecture defaults (see Section~\ref{sec:experiments:setup}). Four learning rates are evaluated—$10^{-3}$, $5\times10^{-3}$, $10^{-4}$, and $5\times10^{-4}$—each in combination with batch sizes of 8 and~16, yielding eight configurations per architecture. The four learning-rate configurations are referred to as \emph{Exp-1.1} through \emph{Exp-1.4}.
 
 % ----------------------------------------------------------------------------
 \subsection{FNO – Training Behavior}

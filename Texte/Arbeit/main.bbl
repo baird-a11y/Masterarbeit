@@ -164,6 +164,57 @@
       \verb 10.1146/annurev.fl.25.010193.002543
       \endverb
     \endentry
+    \entry{bezanson2015juliafreshapproachnumerical}{misc}{}{}
+      \name{author}{4}{}{%
+        {{hash=17e68031e06f57a7e83caeb4e0aed827}{%
+           family={Bezanson},
+           familyi={B\bibinitperiod},
+           given={Jeff},
+           giveni={J\bibinitperiod}}}%
+        {{hash=01a6ca61fcd12a3a071ec49304df57f8}{%
+           family={Edelman},
+           familyi={E\bibinitperiod},
+           given={Alan},
+           giveni={A\bibinitperiod}}}%
+        {{hash=bca7c93f55e669f71c4ff95e68ac9538}{%
+           family={Karpinski},
+           familyi={K\bibinitperiod},
+           given={Stefan},
+           giveni={S\bibinitperiod}}}%
+        {{hash=de802ff42d9c902868c57a332dbac5e0}{%
+           family={Shah},
+           familyi={S\bibinitperiod},
+           given={Viral\bibnamedelima B.},
+           giveni={V\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+      }
+      \strng{namehash}{07e3452af3652a626dc1d02355fda942}
+      \strng{fullhash}{651af5e2dc744eabe31cd448eb05d640}
+      \strng{fullhashraw}{651af5e2dc744eabe31cd448eb05d640}
+      \strng{bibnamehash}{07e3452af3652a626dc1d02355fda942}
+      \strng{authorbibnamehash}{07e3452af3652a626dc1d02355fda942}
+      \strng{authornamehash}{07e3452af3652a626dc1d02355fda942}
+      \strng{authorfullhash}{651af5e2dc744eabe31cd448eb05d640}
+      \strng{authorfullhashraw}{651af5e2dc744eabe31cd448eb05d640}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.MS}
+      \field{eprinttype}{arXiv}
+      \field{title}{Julia: A Fresh Approach to Numerical Computing}
+      \field{year}{2015}
+      \verb{eprint}
+      \verb 1411.1607
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/1411.1607
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/1411.1607
+      \endverb
+    \endentry
     \entry{cao2021choosetransformerfouriergalerkin}{misc}{}{}
       \name{author}{1}{}{%
         {{hash=24003556d1296b914686506f785f9613}{%
@@ -601,6 +652,47 @@
       \endverb
       \verb{url}
       \verb https://www.mdpi.com/2297-8747/28/5/102
+      \endverb
+    \endentry
+    \entry{ioffe2015batchnormalizationacceleratingdeep}{misc}{}{}
+      \name{author}{2}{}{%
+        {{hash=5543e82359e26b035efc009cb3efff9d}{%
+           family={Ioffe},
+           familyi={I\bibinitperiod},
+           given={Sergey},
+           giveni={S\bibinitperiod}}}%
+        {{hash=ed568d9c3bb059e6bf22899fbf170f86}{%
+           family={Szegedy},
+           familyi={S\bibinitperiod},
+           given={Christian},
+           giveni={C\bibinitperiod}}}%
+      }
+      \strng{namehash}{471fdb37b34deecc3604f22e1a373d02}
+      \strng{fullhash}{7e8dee717d54c2984b1c6bd3f3c0561f}
+      \strng{fullhashraw}{7e8dee717d54c2984b1c6bd3f3c0561f}
+      \strng{bibnamehash}{7e8dee717d54c2984b1c6bd3f3c0561f}
+      \strng{authorbibnamehash}{7e8dee717d54c2984b1c6bd3f3c0561f}
+      \strng{authornamehash}{471fdb37b34deecc3604f22e1a373d02}
+      \strng{authorfullhash}{7e8dee717d54c2984b1c6bd3f3c0561f}
+      \strng{authorfullhashraw}{7e8dee717d54c2984b1c6bd3f3c0561f}
+      \field{sortinit}{I}
+      \field{sortinithash}{8d291c51ee89b6cd86bf5379f0b151d8}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.LG}
+      \field{eprinttype}{arXiv}
+      \field{title}{Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift}
+      \field{year}{2015}
+      \verb{eprint}
+      \verb 1502.03167
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/1502.03167
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/1502.03167
       \endverb
     \endentry
     \entry{jin_nsfnets_2021}{article}{}{}
