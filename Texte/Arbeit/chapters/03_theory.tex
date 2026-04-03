@@ -65,9 +65,8 @@ coincide with level sets of $\psi$, allowing qualitative flow features such as
 recirculation zones, wakes, and stagnation points to be identified directly.
 
 From a numerical and learning perspective, the stream function offers several
-advantages. As a scalar field, $\psi$ typically exhibits smoother spatial
-structure than individual velocity components, as it integrates information
-over spatial derivatives. Moreover, representing the solution in terms of
+advantages. Since velocity components are spatial derivatives of $\psi$, the stream
+function is one order smoother than the velocity field in a Sobolev sense. Moreover, representing the solution in terms of
 $\psi$ eliminates the need to explicitly enforce the incompressibility
 constraint during learning, in contrast to direct velocity-based approaches.
 
@@ -81,7 +80,7 @@ components.
 % ==========================================================
 
 In two-dimensional incompressible flow, the scalar vorticity is defined as the
-$z$-component of the curl of the velocity field,
+out-of-plane ($y$-) component of the curl of the velocity field,
 \begin{equation}
 \omega = \frac{\partial u_z}{\partial x}
        - \frac{\partial u_x}{\partial z},
@@ -165,7 +164,8 @@ It is furthermore consistent with the neural operator framework
 \parencite{kovachki_neural_nodate}, which views surrogate models as
 approximations of solution operators on function spaces. By reducing
 the effective degrees of freedom of the output, the learning problem is
-simplified and numerical conditioning can be improved.
+simplified: the model no longer needs to learn the incompressibility
+constraint from data, as it is satisfied analytically by construction.
 
 A further strategy for introducing physical inductive bias is residual learning, which decomposes the solution into a physically motivated baseline and a learned correction. If the baseline captures the dominant large-scale behavior of the flow—for example, the analytical Stokes solution for a single isolated cylinder—the residual field $\Delta\psi = \psi - \psi_{\text{baseline}}$ is typically smoother and of lower amplitude than the full field, potentially simplifying the learning task. Such strategies have been shown to improve learning efficiency and generalization in physics-based surrogate models \parencite{sun_surrogate_2020}. While this approach is not pursued in the present thesis, which learns the full stream function $\psi$ directly, residual decomposition represents a natural extension that could improve accuracy in the dense multi-crystal regime; it is discussed as a future research direction in Chapter~\ref{ch:discussion}.
 
@@ -298,18 +298,18 @@ precise outputs.
 \subsection{Multiscale Feature Extraction}
 
 The hierarchical structure of the U-Net endows it with an inherently
-multiscale receptive field. Shallow layers operate at fine spatial resolution
+multiscale receptive field \parencite{ronneberger_u-net_2015}. Shallow layers operate at fine spatial resolution
 and capture localized features such as boundary layers and sharp gradients
 near crystal surfaces. Deep layers operate at coarse resolution with large
 effective receptive fields and can represent domain-scale flow structures.
 The skip connections allow the final prediction to integrate information
-across all scales simultaneously.
+across all scales simultaneously \parencite{ronneberger_u-net_2015}.
 
 For multi-crystal Stokes flow, this multiscale property is directly relevant:
 localized velocity gradients near crystal boundaries coexist with long-range
 hydrodynamic interactions that span the entire computational domain. The
 U-Net's ability to process both scales within a single forward pass makes it a
-natural candidate for this class of problems.
+natural candidate for this class of problems \parencite{thuerey_deep_2020}.
 
 % ==========================================================
 \section{Fourier Neural Operator}
@@ -448,9 +448,12 @@ surrogate modeling task considered in this work:
     sharp interfaces such as crystal boundaries, where high-frequency content
     is physically significant \parencite{qin_toward_2024}.
     \item \textbf{Discretization invariance:} Because the FNO operates on
-    continuous function representations via their Fourier coefficients, a model
-    trained on one grid resolution can, in principle, be evaluated on a
-    different resolution without retraining.
+    continuous function representations via their Fourier coefficients, its
+    parameters are in principle decoupled from the input resolution
+    \parencite{li_fourier_2021}. However, \textcite{gao2025discretizationinvariance}
+    show that this does not guarantee consistent performance across resolutions
+    in practice, as discretization mismatch errors accumulate across Fourier
+    layers whenever training and inference resolutions differ.
 \end{itemize}
 
 % ==========================================================
@@ -498,19 +501,20 @@ interactions and incompressibility impose global structure on the flow field,
 which is difficult to capture through purely local regression of velocity
 components. Predicting the stream function $\psi$ provides a principled way to
 reduce the complexity of the learning task by enforcing incompressibility
-analytically.
+analytically \parencite{happel_low_1983}.
 
 The choice of network architecture interacts with this multiscale, globally
 coupled structure in complementary ways. The U-Net's hierarchical encoder--decoder processing
 naturally mirrors the multiscale character of the flow: sharp boundary layers
 near crystal surfaces are captured at fine resolution levels, while
-domain-scale circulation patterns are represented in the deep, coarse layers.
-The FNO's spectral approach, on the other hand, directly reflects the
+domain-scale circulation patterns are represented in the deep, coarse layers
+\parencite{ronneberger_u-net_2015,thuerey_deep_2020}. The FNO's spectral approach, on the other hand, directly reflects the
 elliptic nature of the Stokes equations, where local perturbations propagate
-globally—a property that is inherently encoded in the Fourier representation.
+globally—a property that is inherently encoded in the Fourier representation
+\parencite{li_fourier_2021}.
 
 These complementary architectural biases determine how each model responds to
 the multiscale, globally coupled structure of multi-crystal Stokes flow: whether
 local spatial hierarchies or global spectral representations are better suited
 to capture the simultaneous presence of sharp boundary layers and long-range
-hydrodynamic interactions.
+hydrodynamic interactions \parencite{lu_comprehensive_2022}.

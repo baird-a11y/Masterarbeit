@@ -27,6 +27,8 @@
 \chapter{Experiments}
 \label{ch:experiments}
 
+This chapter defines the experimental design: the datasets used, the four experiments conducted, the evaluation metrics, and the concrete hyperparameter configurations. While Chapter~\ref{ch:methodology} establishes the general training and evaluation framework, this chapter specifies the exact parameter values, dataset sizes, and evaluation conditions under which the results reported in Chapter~\ref{ch:results} were obtained.
+
 % ----------------------------------------------------------------------------
 \section{Dataset and Data Split}
 \label{sec:experiments:dataset}
@@ -122,15 +124,10 @@ Both architectures are trained with the same composite loss that combines a poin
         + \alpha_{\mathrm{grad}}\,\mathcal{L}_{\mathrm{grad}}
         + \alpha_{\mathrm{bnd}}\,\mathcal{L}_{\mathrm{bnd}},
 \end{equation}
-where $\mathcal{L}_{\mathrm{grad}} = \mathrm{MSE}(\partial_x\hat{\psi},\partial_x\psi) + \mathrm{MSE}(\partial_z\hat{\psi},\partial_z\psi)$ is computed via central differences on interior points, and $\mathcal{L}_{\mathrm{bnd}} = \mathrm{MSE}(\hat{\psi}|_{\partial\Omega}, 0)$ enforces the homogeneous Dirichlet condition. The coefficient $\alpha_{\mathrm{grad}}$ is ramped linearly from $0$ to $0.1$ over the first five epochs to stabilize early training; $\alpha_{\mathrm{bnd}} = 0.01$ is kept fixed. The MSE term is evaluated on interior grid points only (a two-pixel boundary strip is excluded via a mask).
+where $\mathcal{L}_{\mathrm{grad}} = \mathrm{MSE}(\partial_x\hat{\psi},\partial_x\psi) + \mathrm{MSE}(\partial_z\hat{\psi},\partial_z\psi)$ is computed via central differences on interior points, and $\mathcal{L}_{\mathrm{bnd}} = \mathrm{MSE}(\hat{\psi}|_{\partial\Omega}, 0)$ enforces the homogeneous Dirichlet condition. The coefficient $\alpha_{\mathrm{grad}}$ is held at zero for the first five epochs and then ramped linearly to $0.1$ over the following five epochs to stabilize early training; $\alpha_{\mathrm{bnd}} = 0.01$ is kept fixed. The MSE term is evaluated on interior grid points only (a two-pixel boundary strip is excluded via a mask).
 
 The gradient term serves two purposes: it directly penalizes errors in the spatial derivatives of $\psi$, which propagate into the derived velocity field, and it acts as an implicit regularizer that suppresses high-frequency residuals. Preliminary experiments with a plain MSE loss for the U-Net showed substantially elevated velocity errors relative to the $\psi$ error (a factor of roughly $3\times$); adopting the composite loss reduced velocity errors significantly while leaving $\psi$ accuracy largely unchanged for batch size~8 (see Section~\ref{ssec:results:exp1:unet:metrics}).
 
-\paragraph{Model selection.}
-Both models are checkpointed after every epoch; the checkpoint with the lowest validation MSE is selected as the final model.
-
-\paragraph{Hardware.}
-All experiments are run on a single NVIDIA A100 GPU. Models are saved in CPU-compatible format to enable evaluation on systems without GPU support.
 
 \begin{table}[h]
 \centering

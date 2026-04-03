@@ -17,7 +17,7 @@ The central experimental factor in this thesis is therefore not the choice of le
 \label{sec:lamem_generation}
 % ==========================================================
 
-Training data are generated using the geodynamic finite-difference code \textsc{LaMEM}, which solves the incompressible Stokes equations on a regular Cartesian grid. The simulation setup follows established geodynamic Stokes
+Training data are generated using the geodynamic finite-difference code \textsc{LaMEM} \parencite{Popov2013LaMEM}, which solves the incompressible Stokes equations on a regular Cartesian grid. The simulation setup follows established geodynamic Stokes
 discretization practices, where robustness under viscosity and density contrasts is essential \parencite{thieulot_choice_2022}.  
 
 Each simulation represents a steady (quasi-static) configuration of $1\ldots N_{\max}$ rigid crystals settling in a viscous matrix. Since the incompressible Stokes equations are quasi-static, each simulation directly yields a steady-state velocity field for a fixed crystal arrangement. Transient crystal dynamics are not modeled; the surrogate is trained on individual steady-state flow snapshots.
@@ -144,7 +144,7 @@ The U-Net follows the encoder--decoder principle of the original architecture \p
 
 \paragraph{Encoder—}
 The encoder consists of five resolution levels. Spatial resolution is reduced by a factor of two at each level, while feature widths increase as $32 \rightarrow 64 \rightarrow 128 \rightarrow 256 \rightarrow 512$. Each level contains two
-$3\times3$ convolutions with batch normalization and Rectified Linear Unit (ReLU) activations, followed by downsampling via a strided convolution (stride~2, meaning the kernel advances two pixels at a time, halving the spatial resolution). Strided downsampling is used instead of max pooling to keep the operation learnable and to reduce grid-aligned artifacts in smooth Stokes-flow targets.
+$3\times3$ convolutions with batch normalization \parencite{ioffe2015batchnormalizationacceleratingdeep} and Rectified Linear Unit (ReLU) activations, followed by downsampling via a strided convolution (stride~2, meaning the kernel advances two pixels at a time, halving the spatial resolution). Strided downsampling is used instead of max pooling to keep the operation learnable and to reduce grid-aligned artifacts in smooth Stokes-flow targets.
 
 \paragraph{Bottleneck—}
 At the coarsest resolution, a bottleneck block with two $3\times3$ convolutions encodes global flow structure conditioned on the entire crystal configuration. This compressed representation provides the long-range context required to model hydrodynamic interactions between distant inclusions.
@@ -206,7 +206,7 @@ Both architectures are trained with an extended composite loss that combines the
 
 \subsection{Optimization and Checkpointing}
 
-Model parameters are optimized using the Adam optimizer \parencite{kingma2017adammethodstochasticoptimization} with adaptive learning rates. Adam maintains exponential moving averages of both the gradient (first moment) and its element-wise square (second moment), and applies bias correction to both estimates. This yields per-parameter adaptive step sizes that are approximately bounded by the chosen learning rate $\alpha$, making optimization robust to varying gradient magnitudes across network layers and reducing sensitivity to the initial learning rate choice. No learning rate scheduling is applied; the learning rate remains constant throughout each run so that differences in final performance can be attributed to architecture and hyperparameter choice rather than to scheduling strategy. After each epoch, model checkpoints are stored in a CPU-compatible format to enable reproducible evaluation on systems without GPU support. For each run, training configuration metadata (hyperparameters, data paths, and random seeds) are archived alongside the checkpoint.
+Model parameters are optimized using the Adam optimizer \parencite{kingma2017adammethodstochasticoptimization}, whose adaptive per-parameter step sizes reduce sensitivity to gradient magnitude variations across network layers. No learning rate scheduling is applied; the learning rate remains constant throughout each run so that differences in final performance can be attributed to architecture and hyperparameter choice rather than to scheduling strategy. After each epoch, model checkpoints are stored in a CPU-compatible format to enable reproducible evaluation on systems without GPU support. For each run, training configuration metadata (hyperparameters, data paths, and random seeds) are archived alongside the checkpoint.
 
 % ==========================================================
 \section{Evaluation Pipeline}

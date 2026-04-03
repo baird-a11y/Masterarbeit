@@ -7,7 +7,7 @@ Crystal sedimentation in viscous magmatic fluids is a fundamental process govern
 
 Early work by \textcite{martin_crystal_1988} showed that crystal settling can occur even in vigorously convecting magma chambers, provided that the Stokes settling velocity exceeds characteristic convective flow velocities near the chamber floor. This finding called into question the long-held view that convection necessarily suppresses sedimentation, and emphasized the role of local particle--fluid interactions. A settling crystal perturbs the surrounding flow field by generating viscous boundary layers and wake structures that extend over several crystal diameters \parencite{happel_low_1983}. These flow perturbations are not confined to the immediate vicinity of a single particle but can modify the trajectories and settling behavior of neighboring crystals.
 
-Subsequent experimental and numerical investigations \parencite{martin_fluid-dynamical_1989,weinstein_evolution_1988,verhoeven_numerical_2009,patocka_settling_2020,uhlmann_sedimentation_2014,penlou_experimental_2023,nissanka_dynamics_2023} revealed that such interactions may lead to asymmetric flow patterns, recirculation zones, and clustering phenomena. \textcite{weinstein_evolution_1988} further showed that the spatial distribution of deposited crystals is inherently asymmetric with respect to the geometry of the convection cell, offering a physical explanation for the non-uniform mineralogical layering commonly observed in plutonic rocks. As a consequence, even small variations in crystal geometry, spatial arrangement, or relative positioning can strongly affect collective settling dynamics and the development of such layering. Taken together, these results indicate that multi-crystal sedimentation is an inherently multiscale and interaction-dominated process, which places high demands on any numerical approach aimed at capturing the relevant physics.
+Subsequent experimental and numerical investigations in magmatic systems \parencite{martin_fluid-dynamical_1989,weinstein_evolution_1988,verhoeven_numerical_2009} revealed that such interactions lead to asymmetric flow patterns and non-uniform crystal deposition. Across a broader range of sedimentation regimes, particle--particle interactions are known to generate clustering phenomena that substantially modify effective settling velocities \parencite{uhlmann_sedimentation_2014,penlou_experimental_2023}, as well as complex wake structures and recirculation zones in the immediate vicinity of sedimenting bodies \parencite{nissanka_dynamics_2023,patocka_settling_2020}. \textcite{weinstein_evolution_1988} further showed that the spatial distribution of deposited crystals is inherently asymmetric with respect to the geometry of the convection cell, offering a physical explanation for the non-uniform mineralogical layering commonly observed in plutonic rocks. As a consequence, even small variations in crystal geometry, spatial arrangement, or relative positioning can strongly affect collective settling dynamics and the development of such layering. Taken together, these results indicate that multi-crystal sedimentation is an inherently multiscale and interaction-dominated process, which places high demands on any numerical approach aimed at capturing the relevant physics \parencite{verhoeven_numerical_2009,uhlmann_sedimentation_2014}.
 
 \subsection{Physical Parameter Regime}
 
@@ -15,10 +15,10 @@ To ground the qualitative picture in concrete physical scales, it is useful to r
 
 \begin{itemize}
     \item \textbf{Crystal radius:} $r \sim 0.1$--$10\,\text{mm}$ in basaltic chambers; larger crystals ($r \sim 1$--$5\,\text{cm}$) occur in slowly cooling plutonic bodies where crystal growth has proceeded over extended periods.
-    \item \textbf{Melt viscosity:} $\mu \sim 1$--$10^3\,\text{Pa\,s}$ for low-silica basaltic melts; significantly higher ($\mu \sim 10^6$--$10^{12}\,\text{Pa\,s}$) for rhyolitic compositions. Crystals are effectively rigid relative to the melt ($\mu_\text{crystal}/\mu_\text{melt} \gtrsim 10^5$).
-    \item \textbf{Density contrast:} olivine ($\rho \approx 3300\,\text{kg/m}^3$) vs.\ basaltic melt ($\rho \approx 2700\,\text{kg/m}^3$), yielding $\Delta\rho \approx 300$--$600\,\text{kg/m}^3$.
-    \item \textbf{Stokes settling velocity:} from $v_s = \frac{2}{9}\frac{\Delta\rho\,g\,r^2}{\mu}$, a 1\,mm olivine crystal in a 10\,Pa\,s melt settles at $v_s \approx 10^{-5}\,\text{m/s}$ ($\approx 1\,\text{m/day}$); a 1\,cm crystal at $v_s \approx 10^{-3}\,\text{m/s}$ ($\approx 100\,\text{m/day}$).
-    \item \textbf{Reynolds number:} $\mathrm{Re} = \rho\,v_s\,r/\mu \ll 1$ in all relevant cases (typically $\mathrm{Re} \sim 10^{-8}$--$10^{-4}$), confirming that the Stokes flow regime—in which inertial effects are negligible—is an appropriate physical approximation throughout the parameter range of interest.
+    \item \textbf{Melt viscosity:} $\mu \sim 1$--$10^3\,\text{Pa\,s}$ for low-silica basaltic melts; significantly higher ($\mu \sim 10^6$--$10^{12}\,\text{Pa\,s}$) for rhyolitic compositions. Crystals are effectively rigid relative to the melt ($\mu_\text{crystal}/\mu_\text{melt} \gtrsim 10^5$) \parencite{martin_crystal_1988,patocka_settling_2020}.
+    \item \textbf{Density contrast:} olivine ($\rho \approx 3300\,\text{kg/m}^3$) vs.\ basaltic melt ($\rho \approx 2700\,\text{kg/m}^3$), yielding $\Delta\rho \approx 300$--$600\,\text{kg/m}^3$ \parencite{martin_crystal_1988}.
+    \item \textbf{Stokes settling velocity:} from $v_s = \frac{2}{9}\frac{\Delta\rho\,g\,r^2}{\mu}$ \parencite{happel_low_1983}, a 1\,mm olivine crystal in a 10\,Pa\,s melt settles at $v_s \approx 10^{-5}\,\text{m/s}$ ($\approx 1\,\text{m/day}$); a 1\,cm crystal at $v_s \approx 10^{-3}\,\text{m/s}$ ($\approx 100\,\text{m/day}$).
+    \item \textbf{Reynolds number:} $\mathrm{Re} = \rho\,v_s\,r/\mu \ll 1$ in all relevant cases (typically $\mathrm{Re} \sim 10^{-8}$--$10^{-4}$), confirming that the Stokes flow regime—in which inertial effects are negligible—is an appropriate physical approximation throughout the parameter range of interest \parencite{happel_low_1983,martin_crystal_1988}.
 \end{itemize}
 
 In the normalized $[-1,1]^2$ simulation domain used in this thesis, the non-dimensionalized crystal radius $r = 0.05$ is consistent with a crystal that occupies approximately 5\% of the domain length — a value chosen to place several crystals in the domain while maintaining sufficient inter-crystal spacing for hydrodynamic interactions to develop. Hydrodynamic interaction effects become significant when crystal separation distances are comparable to several crystal radii \parencite{happel_low_1983}, which motivates the investigation of multi-crystal configurations.
@@ -41,7 +41,7 @@ Such computational demands make systematic parameter studies effectively infeasi
 
 \section{Machine Learning as a Surrogate Modeling Strategy}
 
-Machine learning has increasingly been applied to accelerate predictions in fluid dynamics, with the goal of replacing expensive numerical solvers with fast, trained approximations. Two architectural paradigms are of particular relevance to this work.
+Machine learning has increasingly been applied to accelerate predictions in fluid dynamics, with the goal of replacing expensive numerical solvers with fast, trained approximations \parencite{guo_convolutional_2016,thuerey_deep_2020,lu_comprehensive_2022}. Two architectural paradigms are of particular relevance to this work.
 
 First, U-Net architectures \parencite{ronneberger_u-net_2015} leverage an encoder--decoder structure with skip connections to capture multiscale spatial features. Their ability to encode complex geometric information at multiple resolutions has made them a widely used choice for structured flow-field prediction \parencite{guo_convolutional_2016,thuerey_deep_2020,ribeiro_deepcfd_nodate,chen_u-net_nodate}.
 
@@ -59,8 +59,8 @@ The central research question of this thesis is:
 \emph{To what extent can U-Net and Fourier Neural Operator architectures, trained on configurations containing up to a fixed maximal number of crystals ($N$), generalize to unseen sedimentation scenarios with varying particle numbers and spatial arrangements and which factors fundamentally limit this generalization capability?}
 \end{quote}
 
-This question is of direct relevance to geoscientific applications, as natural sedimentation processes rarely involve fixed particle counts or highly regular geometries \parencite{martin_crystal_1988,verhoeven_numerical_2009}. A practically useful surrogate model must therefore generalize across a wide 
-range of spatial configurations, interaction regimes, and crystal numbers.
+This question is of direct relevance to geoscientific applications, as natural sedimentation processes rarely involve fixed particle counts or highly regular geometries \parencite{martin_crystal_1988,verhoeven_numerical_2009}. A practically useful surrogate model must therefore generalize across a wide
+range of spatial configurations, interaction regimes, and crystal numbers \parencite{morimoto_generalization_2022,lu_comprehensive_2022}.
 
 We hypothesize that an ML-based surrogate model can achieve such generalization provided that:
 
@@ -100,13 +100,12 @@ These assumptions allow for a focused investigation of surrogate modeling strate
 \section{Structure of the Thesis}
 
 The remainder of this thesis is organized as follows.
-Chapter~\ref{ch:related} reviews recent machine-learning-based surrogate models for fluid dynamics and situates the present work within the existing literature.
-Chapter~\ref{ch:theory} introduces the physical and mathematical foundations of Stokes flow, the stream-function formulation, and the U-Net and FNO architectures employed for structured flow-field prediction.
-Chapter~\ref{ch:methodology} describes the computational workflow employed in this thesis, including LaMEM data generation, stream-function computation, input construction, network architecture, and training and evaluation procedures.
-Chapter~\ref{ch:implementation} details the technical realization of the surrogate modeling framework, covering the software environment, model implementations, data pipeline, and training infrastructure.
-Chapter~\ref{ch:experiments} presents the experimental setup, including the choice of hyperparameters, training configurations, and evaluation metrics used throughout the study.
-Chapter~\ref{ch:results} reports the numerical results obtained from the U-Net and FNO surrogate models across varying crystal numbers and spatial arrangements.
-Chapter~\ref{ch:discussion} interprets the results in the context of the research questions and hypotheses, identifies key insights and limitations, and discusses implications for future surrogate modeling efforts in geophysical fluid dynamics.
-Chapter~\ref{ch:conclusions} summarizes the main findings of the study, draws conclusions with respect to the research hypotheses, and outlines directions for future work.
+A review of recent machine-learning-based surrogate models for fluid dynamics and their relation to the present work is provided in Chapter~\ref{ch:related}.
+The physical and mathematical foundations of Stokes flow, the stream-function formulation, and the two network architectures are introduced in Chapter~\ref{ch:theory}.
+Chapter~\ref{ch:methodology} then describes the full computational workflow, including LaMEM data generation, stream-function computation, input construction, and training and evaluation procedures.
+The technical realization of the surrogate modeling framework---covering the software environment, model implementations, data pipeline, and training infrastructure---is detailed in Chapter~\ref{ch:implementation}.
+Building on this, Chapter~\ref{ch:experiments} presents the experimental setup, including the choice of hyperparameters, training configurations, and evaluation metrics used throughout the study.
+The numerical results obtained from the U-Net and FNO surrogate models across varying crystal numbers and spatial arrangements are reported in Chapter~\ref{ch:results}, followed by an interpretation of these findings in light of the research questions and hypotheses in Chapter~\ref{ch:discussion}.
+Chapter~\ref{ch:conclusions} summarizes the main findings, draws conclusions with respect to the research hypotheses, and outlines directions for future work.
 
 

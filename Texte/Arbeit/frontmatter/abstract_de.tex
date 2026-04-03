@@ -4,7 +4,7 @@
 \begin{otherlanguage}{ngerman}
 Kristallsedimentation in viskosen magmatischen Fluiden ist ein fundamentaler
 geodynamischer Prozess, der die chemische Differentiation und innere Struktur
-von Magmakammern steuert. Die numerisch exakte Simulation von
+von Magmareservoirs steuert. Die numerisch exakte Simulation von
 Mehrkristall-Sedimentation erfordert die gleichzeitige Auflösung mikroskopischer
 Grenzschichten um einzelne Kristalle und weitreichender hydrodynamischer
 Wechselwirkungen über das gesamte Strömungsgebiet. Dieser multiskalige
@@ -13,8 +13,8 @@ Interaktionskosten mit der Partikelzahl, macht systematische Parameterstudien
 mit klassischen Solvern rechnerisch kaum durchführbar.
 
 Diese Masterarbeit untersucht, ob datengetriebene Surrogatmodelle
-den Hochpräzisions-Stokes-Solver für die Strömungsfeldvorhersage in
-Mehrkristall-Sedimentationsszenarien ersetzen können. Zwei neuronale
+Hochpräzisions-Stokes-Solver für die Strömungsfeldvorhersage in
+Mehrkristall-Sedimentationsszenarien effektiv ersetzen können. Zwei neuronale
 Netzarchitekturen werden auf identischen Daten und Evaluationsmetriken
 systematisch verglichen: das U-Net, ein Encoder-Decoder-Modell mit
 Skip-Connections zur Extraktion räumlich hierarchischer Merkmale, und der
@@ -48,8 +48,8 @@ Architekturrangfolge bei der Kristallgrößen-Generalisierung: Für Kristalle, d
 größer als die Trainingsverteilung sind, degradiert der FNO stark
 ($71{,}3 \pm 4{,}8\%$ auf~$\psi$), während das U-Net wesentlich niedrigere
 Fehler aufweist ($44{,}9 \pm 8{,}2\%$)—zurückzuführen auf die feste
-Spektralabschneidung des FNO bei $k_{\max} = 16$ Fourier-Moden. Ein
-auf drei diskrete Kristallgrößen trainierter FNO reduziert diese Degradation
+Spektralabschneidung des FNO bei $k_{\max} = 16$ Fourier-Moden. Ein auf variablen Radien
+trainierter FNO mit drei diskreten Kristallgrößen reduziert diese Degradation
 durch explizite Größenkonditionierung über den Radiuseingangskanal auf
 $10{,}4\%$ und zeigt damit, dass die spektrale Einschränkung ohne
 Architekturänderungen überwunden werden kann.

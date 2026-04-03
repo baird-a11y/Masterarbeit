@@ -4,11 +4,13 @@
 \chapter{Implementation}
 \label{ch:implementation}
 
+This chapter documents the technical realization of the methodology described in Chapter~\ref{ch:methodology}. It covers the software environment, the concrete implementations of the U-Net and FNO architectures in Julia, the data loading pipeline, and the training infrastructure. The focus is on reproducibility: all design choices specific to the software stack are recorded here so that the experimental results in Chapter~\ref{ch:experiments} can be independently reproduced.
+
 % ----------------------------------------------------------------------------
 \section{Software Environment}
 % ----------------------------------------------------------------------------
 
-All experiments are implemented in \textbf{Julia~1.10.4}. The core
+All experiments are implemented in \textbf{Julia~1.10.4} \parencite{bezanson2015juliafreshapproachnumerical}. The core
 dependencies are:
 
 \begin{itemize}
@@ -132,7 +134,7 @@ where $\mathcal{L}_{\mathrm{grad}}$ penalizes errors in the spatial derivatives 
 
 \subsection*{Checkpointing}
 
-U-Net checkpoints are written at the end of each epoch in BSON format, which ensures CPU-compatible portability. FNO checkpoints use JLD2 and additionally store the optimizer state and epoch index, enabling training to be resumed from any saved checkpoint. In both cases, model parameters are explicitly transferred to CPU before saving.
+U-Net checkpoints are written in BSON format, which ensures CPU-compatible portability; the best-performing checkpoint (lowest validation loss) and the final checkpoint are retained. FNO checkpoints use JLD2 and additionally store the optimizer state and epoch index, enabling training to be resumed from any saved checkpoint. In both cases, model parameters are explicitly transferred to CPU before saving.
 
 % ----------------------------------------------------------------------------
 \section{Evaluation Utilities}
