@@ -60,6 +60,8 @@ Models are trained on samples with $n \in \{1, \ldots, 10\}$ crystals and evalua
 \paragraph{Experiment 3 – Stress-testing generalization limits.}
 Models are trained on configurations with up to $n = 25$ crystals and subsequently evaluated on substantially more complex scenes with up to $n = 84$ crystals. This experiment probes whether the models can capture the interactions arising from a large number of obstacles or whether their generalization capability breaks down beyond a critical level of geometric complexity.
 
+The hyperparameter configurations follow the same rationale as Experiment~2: the learning rates identified as best-performing for each architecture and batch size in Experiment~1 are used without modification. For the FNO, this means lr~$= 5\times10^{-4}$ with batch size~16 and lr~$= 5\times10^{-3}$ with batch size~8. For the U-Net, lr~$= 10^{-3}$ is used with batch size~8 and lr~$= 10^{-4}$ with batch size~16. The extended training distribution ($n \leq 25$ instead of $n \leq 10$) increases the complexity of each training batch but does not change the reasoning behind the choice of learning rate and batch size.
+
 \paragraph{Experiment 4 – Crystal size generalization.}
 This experiment investigates whether surrogate models can generalize to crystal radii not seen during training—an additional axis of out-of-distribution generalization beyond crystal count. The experiment is designed around two conditions:
 

@@ -126,27 +126,27 @@
         {{hash=18b06b97c47d91c02c7f3ab651dda50e}{%
            family={Berkooz},
            familyi={B\bibinitperiod},
-           given={G},
+           given={G.},
            giveni={G\bibinitperiod}}}%
         {{hash=c53d258c3b419a097004933d3123ad6c}{%
            family={Holmes},
            familyi={H\bibinitperiod},
-           given={PJ},
-           giveni={P\bibinitperiod}}}%
-        {{hash=464744800a901d00bc3fafda925cbda7}{%
+           given={P.\bibnamedelimi J.},
+           giveni={P\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+        {{hash=be8ece05a80e0b10446f677855380ff9}{%
            family={Lumley},
            familyi={L\bibinitperiod},
-           given={John},
-           giveni={J\bibinitperiod}}}%
+           given={John\bibnamedelima L.},
+           giveni={J\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
       }
       \strng{namehash}{b57c5047d044b8a93c5ef4021f24297c}
-      \strng{fullhash}{e15b8df97921d71e4d48355e4aeef826}
-      \strng{fullhashraw}{e15b8df97921d71e4d48355e4aeef826}
-      \strng{bibnamehash}{e15b8df97921d71e4d48355e4aeef826}
-      \strng{authorbibnamehash}{e15b8df97921d71e4d48355e4aeef826}
+      \strng{fullhash}{cd009fd403d9ec227b1e2ae601650199}
+      \strng{fullhashraw}{cd009fd403d9ec227b1e2ae601650199}
+      \strng{bibnamehash}{cd009fd403d9ec227b1e2ae601650199}
+      \strng{authorbibnamehash}{cd009fd403d9ec227b1e2ae601650199}
       \strng{authornamehash}{b57c5047d044b8a93c5ef4021f24297c}
-      \strng{authorfullhash}{e15b8df97921d71e4d48355e4aeef826}
-      \strng{authorfullhashraw}{e15b8df97921d71e4d48355e4aeef826}
+      \strng{authorfullhash}{cd009fd403d9ec227b1e2ae601650199}
+      \strng{authorfullhashraw}{cd009fd403d9ec227b1e2ae601650199}
       \field{sortinit}{B}
       \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
       \field{extradatescope}{labelyear}
@@ -251,7 +251,7 @@
       \verb https://arxiv.org/abs/2105.14995
       \endverb
     \endentry
-    \entry{chen_u-net_nodate}{article}{}{}
+    \entry{chen_u-net_nodate}{misc}{}{}
       \name{author}{3}{}{%
         {{hash=e5140c62f50f461658961b9ab6d71857}{%
            family={Chen},
@@ -269,9 +269,6 @@
            given={Elie},
            giveni={E\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{4c59782bee4ce19d50e778a2f53c9523}
       \strng{fullhash}{094f1b90f4cfe8b660b4b31c964bc45e}
       \strng{fullhashraw}{094f1b90f4cfe8b660b4b31c964bc45e}
@@ -286,11 +283,18 @@
       \field{labeldatesource}{}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
-      \field{abstract}{Machine learning is a popular tool that is being applied to many domains, from computer vision to natural language processing. It is not long ago that its use was extended to physics, but its capabilities remain to be accurately contoured. In this paper, we are interested in the prediction of 2D velocity and pressure ﬁelds around arbitrary shapes in laminar ﬂows using supervised neural networks. To this end, a dataset composed of random shapes is built using B´ezier curves, each shape being labeled with its pressure and velocity ﬁelds by solving Navier-Stokes equations using a CFD solver. Then, several U-net architectures are trained on the latter dataset, and their predictive eﬃciency is assessed on unseen shapes, using ad hoc error functions.}
+      \field{eprintclass}{physics.comp-ph}
+      \field{eprinttype}{arXiv}
       \field{title}{U-net architectures for fast prediction of incompressible laminar flows}
       \field{year}{2019}
-      \verb{file}
-      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\WM2CL78Q\\Chen et al. - U-net architectures for fast prediction in fluid mechanics.pdf:application/pdf
+      \verb{eprint}
+      \verb 1910.13532
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/1910.13532
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/1910.13532
       \endverb
     \endentry
     \entry{gao2025discretizationinvariance}{inproceedings}{}{}
@@ -911,7 +915,7 @@
         {{hash=ef790e7136aab8f6b1b707c6f44dd3a4}{%
            family={Kovachki},
            familyi={K\bibinitperiod},
-           given={Nikola\bibnamedelima B},
+           given={Nikola\bibnamedelima B.},
            giveni={N\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
         {{hash=a014cc0669036a9cec9a98d21084194d}{%
            family={Lanthaler},
@@ -921,7 +925,7 @@
         {{hash=ede60db687249a971389c3f251a065da}{%
            family={Stuart},
            familyi={S\bibinitperiod},
-           given={Andrew\bibnamedelima M},
+           given={Andrew\bibnamedelima M.},
            giveni={A\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
       }
       \list{language}{1}{%
@@ -953,7 +957,7 @@
         {{hash=ea574591c1f2232e7c9b1fd4aa63feb5}{%
            family={Ladd},
            familyi={L\bibinitperiod},
-           given={Anthony\bibnamedelimb J\bibnamedelima C},
+           given={Anthony\bibnamedelimb J.\bibnamedelimi C.},
            giveni={A\bibinitperiod\bibinitdelim J\bibinitperiod\bibinitdelim C\bibinitperiod}}}%
       }
       \list{language}{1}{%
@@ -2600,7 +2604,7 @@
         {{hash=9db211fe28b9db15bc04d29bedf2e03f}{%
            family={Chen},
            familyi={C\bibinitperiod},
-           given={Ricky\bibnamedelimb T\bibnamedelima Q},
+           given={Ricky\bibnamedelimb T.\bibnamedelimi Q.},
            giveni={R\bibinitperiod\bibinitdelim T\bibinitperiod\bibinitdelim Q\bibinitperiod}}}%
       }
       \list{language}{1}{%
@@ -2719,7 +2723,7 @@
         {{hash=2e5b4b0fd5bc4903da838ce86f63998b}{%
            family={Battaglia},
            familyi={B\bibinitperiod},
-           given={Peter\bibnamedelima W},
+           given={Peter\bibnamedelima W.},
            giveni={P\bibinitperiod\bibinitdelim W\bibinitperiod}}}%
       }
       \list{language}{1}{%

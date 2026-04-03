@@ -80,13 +80,14 @@
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\Q5RRXRUW\\Rana et al. - 2024 - A scalable convolutional neural network approach to fluid flow prediction in complex environments.pdf:application/pdf},
 }
 
-@article{koehler_apebench_nodate,
+@misc{koehler_apebench_nodate,
 	title = {{APEBench}: {A} {Benchmark} for {Autoregressive} {Neural} {Emulators} of {PDEs}},
-	abstract = {We introduce the Autoregressive PDE Emulator Benchmark (APEBench), a comprehensive benchmark suite to evaluate autoregressive neural emulators for solving partial differential equations. APEBench is based on JAX and provides a seamlessly integrated differentiable simulation framework employing efficient pseudo-spectral methods, enabling 46 distinct PDEs across 1D, 2D, and 3D. Facilitating systematic analysis and comparison of learned emulators, we propose a novel taxonomy for unrolled training and introduce a unique identifier for PDE dynamics that directly relates to the stability criteria of classical numerical methods. APEBench enables the evaluation of diverse neural architectures, and unlike existing benchmarks, its tight integration of the solver enables support for differentiable physics training and neural-hybrid emulators. Moreover, APEBench emphasizes rollout metrics to understand temporal generalization, providing insights into the long-term behavior of emulating PDE dynamics. In several experiments, we highlight the similarities between neural emulators and numerical simulators. The code is available at https://github.com/tum-pbs/apebench and APEBench can be installed via pip install apebench.},
-	language = {en},
 	author = {Koehler, Felix and Niedermayr, Simon and Westermann, Rüdiger and Thuerey, Nils},
 	year = {2024},
-	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\ZGCF94QS\\Koehler et al. - APEBench A Benchmark for Autoregressive Neural Emulators of PDEs.pdf:application/pdf},
+	eprint = {2411.00180},
+	archivePrefix = {arXiv},
+	primaryClass = {cs.LG},
+	url = {https://arxiv.org/abs/2411.00180},
 }
 
 @article{hu_applying_2023,
@@ -215,22 +216,24 @@
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\3URMHN53\\Thuerey et al. - 2020 - Deep Learning Methods for Reynolds-Averaged Navier–Stokes Simulations of Airfoil Flows.pdf:application/pdf},
 }
 
-@article{ribeiro_deepcfd_nodate,
+@misc{ribeiro_deepcfd_nodate,
 	title = {{DeepCFD}: {Efficient} {Steady}-{State} {Laminar} {Flow} {Approximation} with {Deep} {Convolutional} {Neural} {Networks}},
-	abstract = {Computational Fluid Dynamics (CFD) simulation by the numerical solution of the Navier-Stokes equations is an essential tool in a wide range of applications from engineering design to climate modeling. However, the computational cost and memory demand required by CFD codes may become very high for ﬂows of practical interest, such as in aerodynamic shape optimization. This expense is associated with the complexity of the ﬂuid ﬂow governing equations, which include non-linear partial derivative terms that are of diﬃcult solution, leading to long computational times and limiting the number of hypotheses that can be tested during the process of iterative design. Therefore, we propose DeepCFD: a convolutional neural network (CNN) based model that eﬃciently approximates solutions for the problem of non-uniform steady laminar ﬂows. The proposed model is able to learn complete solutions of the Navier-Stokes equations, for both velocity and pressure ﬁelds, directly from ground-truth data generated using a state-of-the-art CFD code. Using DeepCFD, we found a speedup of up to 3 orders of magnitude compared to the standard CFD approach at a cost of low error rates.},
-	language = {en},
 	author = {Ribeiro, Mateus Dias and Rehman, Abdul and Ahmed, Sheraz and Dengel, Andreas},
-	year={2021},
-	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\TKMXS2V6\\Ribeiro et al. - DeepCFD Efficient Steady-State Laminar Flow Approximation with Deep Convolutional Neural Networks.pdf:application/pdf},
+	year = {2021},
+	eprint = {2004.08826},
+	archivePrefix = {arXiv},
+	primaryClass = {physics.comp-ph},
+	url = {https://arxiv.org/abs/2004.08826},
 }
 
-@article{liu_domain_nodate,
+@misc{liu_domain_nodate,
 	title = {Domain {Agnostic} {Fourier} {Neural} {Operators}},
-	abstract = {Fourier neural operators (FNOs) can learn highly nonlinear mappings between function spaces, and have recently become a popular tool for learning responses of complex physical systems. However, to achieve good accuracy and efficiency, FNOs rely on the Fast Fourier transform (FFT), which is restricted to modeling problems on rectangular domains. To lift such a restriction and permit FFT on irregular geometries as well as topology changes, we introduce domain agnostic Fourier neural operator (DAFNO), a novel neural operator architecture for learning surrogates with irregular geometries and evolving domains. The key idea is to incorporate a smoothed characteristic function in the integral layer architecture of FNOs, and leverage FFT to achieve rapid computations, in such a way that the geometric information is explicitly encoded in the architecture. In our empirical evaluation, DAFNO has achieved state-of-the-art accuracy as compared to baseline neural operator models on two benchmark datasets of material modeling and airfoil simulation. To further demonstrate the capability and generalizability of DAFNO in handling complex domains with topology changes, we consider a brittle material fracture evolution problem. With only one training crack simulation sample, DAFNO has achieved generalizability to unseen loading scenarios and substantially different crack patterns from the trained scenario. Our code and data accompanying this paper are available at https://github.com/ningliu-iga/DAFNO.},
-	language = {en},
 	author = {Liu, Ning and Jafarzadeh, Siavash and Yu, Yue},
 	year = {2023},
-	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\WAUMIJIA\\Liu et al. - Domain Agnostic Fourier Neural Operators.pdf:application/pdf},
+	eprint = {2305.00478},
+	archivePrefix = {arXiv},
+	primaryClass = {cs.LG},
+	url = {https://arxiv.org/abs/2305.00478},
 }
 
 @misc{liu_enhancing_2025,
@@ -305,6 +308,7 @@
 	author = {Li, Zongyi and Huang, Daniel Zhengyu and Liu, Burigede},
 	year = {2022},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\GIRELEU3\\Li et al. - Fourier Neural Operator with Learned Deformations for PDEs on General Geometries.pdf:application/pdf},
+	doi = {https://doi.org/10.5555/3648699.3649087},
 }
 
 @article{morimoto_generalization_2022,
@@ -397,13 +401,14 @@
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\JE65VKCM\\Mohapatra et al. - 2025 - Inferring activity from the flow field around active colloidal particles using deep learning.pdf:application/pdf},
 }
 
-@article{sanchez-gonzalez_learning_nodate,
+@misc{sanchez-gonzalez_learning_nodate,
 	title = {Learning to {Simulate} {Complex} {Physics} with {Graph} {Networks}},
-	abstract = {Here we present a machine learning framework and model implementation that can learn to simulate a wide variety of challenging physical domains, involving ﬂuids, rigid solids, and deformable materials interacting with one another. Our framework—which we term “Graph Network-based Simulators” (GNS)—represents the state of a physical system with particles, expressed as nodes in a graph, and computes dynamics via learned message-passing. Our results show that our model can generalize from single-timestep predictions with thousands of particles during training, to different initial conditions, thousands of timesteps, and at least an order of magnitude more particles at test time. Our model was robust to hyperparameter choices across various evaluation metrics: the main determinants of long-term performance were the number of message-passing steps, and mitigating the accumulation of error by corrupting the training data with noise. Our GNS framework advances the state-of-the-art in learned physical simulation, and holds promise for solving a wide range of complex forward and inverse problems.},
-	language = {en},
-	author = {Sanchez-Gonzalez, Alvaro and Godwin, Jonathan and Pfaff, Tobias and Ying, Rex and Leskovec, Jure and Battaglia, Peter W},
+	author = {Sanchez-Gonzalez, Alvaro and Godwin, Jonathan and Pfaff, Tobias and Ying, Rex and Leskovec, Jure and Battaglia, Peter W.},
 	year = {2020},
-	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\BHDL2LZZ\\Sanchez-Gonzalez et al. - Learning to Simulate Complex Physics with Graph Networks.pdf:application/pdf},
+	eprint = {2002.09405},
+	archivePrefix = {arXiv},
+	primaryClass = {cs.LG},
+	url = {https://arxiv.org/abs/2002.09405},
 }
 
 @article{margenberg_structure_2021,
@@ -428,6 +433,7 @@
 	author = {Kovachki, Nikola and Li, Zongyi and Liu, Burigede and Azizzadenesheli, Kamyar and Bhattacharya, Kaushik and Stuart, Andrew},
 	year = {2021},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\BIHFK5EL\\Kovachki et al. - Neural Operator Learning Maps Between Function Spaces With Applications to PDEs.pdf:application/pdf},
+	doi = {10.5555/3648699.3648788},
 }
 
 @article{jin_nsfnets_2021,
@@ -448,12 +454,17 @@
 }
 
 @article{ladd_numerical_nodate,
-	title = {Numerical {Simulations} of {Particulate} {Suspensions} via a {Discretized} {Boltzmann} {Equation} {Part} {I}. {Theoretical} {Foundation}},
-	abstract = {A new and very general technique for simulating solid- uid suspensions is described; its most important feature is that the computational cost scales linearly with the number of particles. The method combines Newtonian dynamics of the solid particles with a discretized Boltzmann equation for the uid phase; the many-body hydrodynamic interactions are fully accounted for, both in the creeping- ow regime and at higher Reynolds numbers. Brownian motion of the solid particles arises spontaneously from stochastic uctuations in the uid stress tensor, rather than from random forces or displacements applied directly to the particles. In this paper, the theoretical foundations of the technique are laid out, illustrated by simple analytical and numerical examples; in the companion paper, extensive numerical tests of the method, for stationary ows, time-dependent ows, and nite Reynolds number ows, are reported.},
-	language = {en},
-	author = {Ladd, Anthony J C},
-	year={1994},
-	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\69GMIEUF\\Ladd - Numerical Simulations of Particulate Suspensions via a Discretized Boltzmann Equation Part I. Theore.pdf:application/pdf},
+	title = {Numerical simulations of particulate suspensions via a discretized {Boltzmann} equation. {Part} 1. {Theoretical} foundation},
+	volume = {271},
+	issn = {1469-7645},
+	url = {http://dx.doi.org/10.1017/S0022112094001771},
+	doi = {10.1017/S0022112094001771},
+	journal = {Journal of Fluid Mechanics},
+	publisher = {Cambridge University Press},
+	author = {Ladd, Anthony J. C.},
+	year = {1994},
+	month = jul,
+	pages = {285--309},
 }
 
 @article{thieulot_choice_2022,
@@ -475,22 +486,24 @@
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\L94SJ5CU\\Thieulot und Bangerth - 2022 - On the choice of finite element for applications in geodynamics.pdf:application/pdf},
 }
 
-@article{kovachki_operator_nodate,
-	title = {{OPERATOR} {LEARNING}: {ALGORITHMS} {AND} {ANALYSIS}},
-	abstract = {Operator learning refers to the application of ideas from machine learning to approximate (typically nonlinear) operators mapping between Banach spaces of functions. Such operators often arise from physical models expressed in terms of partial differential equations (PDEs). In this context, such approximate operators hold great potential as efficient surrogate models to complement traditional numerical methods in many-query tasks. Being data-driven, they also enable model discovery when a mathematical description in terms of a PDE is not available. This review focuses primarily on neural operators, built on the success of deep neural networks in the approximation of functions defined on finite dimensional Euclidean spaces. Empirically, neural operators have shown success in a variety of applications, but our theoretical understanding remains incomplete. This review article summarizes recent progress and the current state of our theoretical understanding of neural operators, focusing on an approximation theoretic point of view.},
-	language = {en},
-	author = {Kovachki, Nikola B and Lanthaler, Samuel and Stuart, Andrew M},
+@misc{kovachki_operator_nodate,
+	title = {Operator {Learning}: {Algorithms} and {Analysis}},
+	author = {Kovachki, Nikola B. and Lanthaler, Samuel and Stuart, Andrew M.},
 	year = {2024},
-	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\77CBM9QZ\\Kovachki et al. - OPERATOR LEARNING ALGORITHMS AND ANALYSIS.pdf:application/pdf},
+	eprint = {2402.15715},
+	archivePrefix = {arXiv},
+	primaryClass = {cs.LG},
+	url = {https://arxiv.org/abs/2402.15715},
 }
 
-@article{takamoto_pdebench_nodate,
+@misc{takamoto_pdebench_nodate,
 	title = {{PDEBENCH}: {An} {Extensive} {Benchmark} for {Scientific} {Machine} {Learning}},
-	abstract = {Machine learning-based modeling of physical systems has experienced increased interest in recent years. Despite some impressive progress, there is still a lack of benchmarks for Scientific ML that are easy to use but still challenging and representative of a wide range of problems. We introduce PDEBENCH, a benchmark suite of time-dependent simulation tasks based on Partial Differential Equations (PDEs). PDEBENCH comprises both code and data to benchmark the performance of novel machine learning models against both classical numerical simulations and machine learning baselines. Our proposed set of benchmark problems contribute the following unique features: (1) A much wider range of PDEs compared to existing benchmarks, ranging from relatively common examples to more realistic and difficult problems; (2) much larger ready-to-use datasets compared to prior work, comprising multiple simulation runs across a larger number of initial and boundary conditions and PDE parameters; (3) more extensible source codes with user-friendly APIs for data generation and baseline results with popular machine learning models (FNO, U-Net, PINN, Gradient-Based Inverse Method). PDEBENCH allows researchers to extend the benchmark freely for their own purposes using a standardized API and to compare the performance of new models to existing baseline methods. We also propose new evaluation metrics with the aim to provide a more holistic understanding of learning methods in the context of Scientific ML. With those metrics we identify tasks which are challenging for recent ML methods and propose these tasks as future challenges for the community. The code is available at https://github.com/pdebench/PDEBench.},
-	language = {en},
 	author = {Takamoto, Makoto and Praditia, Timothy and Leiteritz, Raphael and MacKinlay, Dan and Alesiani, Francesco and Pflüger, Dirk and Niepert, Mathias},
-	year = {2022},
-	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\R365KEXU\\Takamoto et al. - PDEBENCH An Extensive Benchmark for Scientific Machine Learning.pdf:application/pdf},
+	year = {2024},
+	eprint = {2210.07182},
+	archivePrefix = {arXiv},
+	primaryClass = {cs.LG},
+	url = {https://arxiv.org/abs/2210.07182},
 }
 
 @misc{raissi_physics_2017,
@@ -606,7 +619,7 @@
 	title = {Neural {Conservation} {Laws}: {A} {Divergence}-{Free} {Perspective}},
 	abstract = {We investigate the parameterization of deep neural networks that by design satisfy the continuity equation, a fundamental conservation law. This is enabled by the observation that any solution of the continuity equation can be represented as a divergence-free vector field. We hence propose building divergence-free neural networks through the concept of differential forms, and with the aid of automatic differentiation, realize two practical constructions. As a result, we can parameterize pairs of densities and vector fields that always exactly satisfy the continuity equation, foregoing the need for extra penalty methods or expensive numerical simulation. Furthermore, we prove these models are universal and so can be used to represent any divergence-free vector field. Finally, we experimentally validate our approaches by computing neural network-based solutions to fluid equations, solving for the Hodge decomposition, and learning dynamical optimal transport maps.},
 	language = {en},
-	author = {Richter-Powell, Jack and Lipman, Yaron and Chen, Ricky T Q},
+	author = {Richter-Powell, Jack and Lipman, Yaron and Chen, Ricky T. Q.},
 	year = {2022},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\2EJUHHVU\\Richter-Powell et al. - Neural Conservation Laws A Divergence-Free Perspective.pdf:application/pdf},
 }
@@ -716,13 +729,15 @@
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\P9SWMCJ2\\Wen et al. - 2022 - U-FNO—An enhanced Fourier neural operator-based deep-learning model for multiphase flow.pdf:application/pdf},
 }
 
-@article{chen_u-net_nodate,
-	title = {U-net architectures for fast prediction of incompressible laminar flows},
-	abstract = {Machine learning is a popular tool that is being applied to many domains, from computer vision to natural language processing. It is not long ago that its use was extended to physics, but its capabilities remain to be accurately contoured. In this paper, we are interested in the prediction of 2D velocity and pressure ﬁelds around arbitrary shapes in laminar ﬂows using supervised neural networks. To this end, a dataset composed of random shapes is built using B´ezier curves, each shape being labeled with its pressure and velocity ﬁelds by solving Navier-Stokes equations using a CFD solver. Then, several U-net architectures are trained on the latter dataset, and their predictive eﬃciency is assessed on unseen shapes, using ad hoc error functions.},
-	language = {en},
-	author = {Chen, Junfeng and Viquerat, Jonathan and Hachem, Elie},
-	year = {2019},
-	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\WM2CL78Q\\Chen et al. - U-net architectures for fast prediction in fluid mechanics.pdf:application/pdf},
+
+@misc{chen_u-net_nodate,
+      title={U-net architectures for fast prediction of incompressible laminar flows}, 
+      author={Junfeng Chen and Jonathan Viquerat and Elie Hachem},
+      year={2019},
+      eprint={1910.13532},
+      archivePrefix={arXiv},
+      primaryClass={physics.comp-ph},
+      url={https://arxiv.org/abs/1910.13532}, 
 }
 
 @misc{ronneberger_u-net_2015,
@@ -991,7 +1006,7 @@ url="https://doi.org/10.1007/978-3-642-35289-8_3"
 }
 
 @article{berkooz_proper_1993,
-author = {Berkooz, G and Holmes, PJ and Lumley, John},
+author = {Berkooz, G. and Holmes, P. J. and Lumley, John L.},
 year = {2003},
 month = {11},
 pages = {539-575},
