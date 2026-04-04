@@ -164,11 +164,11 @@ function plot_eval_bar_chart()
         any(valid(psi_fno))  && barplot!(ax, xs[valid(psi_fno)]  .- 1.5w,
             psi_fno[valid(psi_fno)];  width=w, color=C[1], label="FNO – ψ")
         any(valid(vel_fno))  && barplot!(ax, xs[valid(vel_fno)]  .- 0.5w,
-            vel_fno[valid(vel_fno)];  width=w, color=C[2], label="FNO – v")
+            vel_fno[valid(vel_fno)];  width=w, color=C[2], label="FNO – u")
         any(valid(psi_unet)) && barplot!(ax, xs[valid(psi_unet)] .+ 0.5w,
             psi_unet[valid(psi_unet)]; width=w, color=C[3], label="U-Net – ψ")
         any(valid(vel_unet)) && barplot!(ax, xs[valid(vel_unet)] .+ 1.5w,
-            vel_unet[valid(vel_unet)]; width=w, color=C[4], label="U-Net – v")  # labels already English
+            vel_unet[valid(vel_unet)]; width=w, color=C[4], label="U-Net – u")  # labels already English
 
         axislegend(ax, position=:rt, framevisible=true)
     end
@@ -213,7 +213,7 @@ function plot_exp23_scaling()
             scatter!(ax, df.n_crystals[id], df.v_rel_l2_mean[id];
                      color=C[2], markersize=8)
             lines!(ax, df.n_crystals[id], df.v_rel_l2_mean[id];
-                   color=C[2], linewidth=2, linestyle=lstyle, label="v ($bs_lbl, in-dist)")
+                   color=C[2], linewidth=2, linestyle=lstyle, label="u ($bs_lbl, in-dist)")
 
             if any(ood)
                 scatter!(ax, df.n_crystals[ood], df.psi_rel_l2_mean[ood];
@@ -223,7 +223,7 @@ function plot_exp23_scaling()
                 scatter!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
                          color=C[2], marker=:diamond, markersize=9)
                 lines!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
-                       color=C[2], linewidth=2, linestyle=lstyle, label="v ($bs_lbl, OOD)")
+                       color=C[2], linewidth=2, linestyle=lstyle, label="u ($bs_lbl, OOD)")
                 bs_idx == 1 && vlines!(ax, [max_train + 0.5];
                                        color=:gray60, linestyle=:dot, linewidth=1.5)
             end
@@ -467,7 +467,7 @@ function plot_exp4_size_generalization()
     any(valid(psi_vals)) && barplot!(ax, xs[valid(psi_vals)] .- w/2,
         psi_vals[valid(psi_vals)]; width=w, color=C[1], label="ψ")
     any(valid(v_vals))   && barplot!(ax, xs[valid(v_vals)]   .+ w/2,
-        v_vals[valid(v_vals)];   width=w, color=C[2], label="v")
+        v_vals[valid(v_vals)];   width=w, color=C[2], label="u")
 
     # Trennlinie zwischen FNO und U-Net
     vlines!(ax, [2.5]; color=:gray60, linestyle=:dot, linewidth=1.5)
@@ -512,7 +512,7 @@ function plot_fno_unet_exp23_comparison()
                    color=C[1], linewidth=2, linestyle=:solid, label="FNO – ψ (in-dist)")
             scatter!(ax, df.n_crystals[id], df.v_rel_l2_mean[id]; color=C[2], markersize=7)
             lines!(ax, df.n_crystals[id], df.v_rel_l2_mean[id];
-                   color=C[2], linewidth=2, linestyle=:solid, label="FNO – v (in-dist)")
+                   color=C[2], linewidth=2, linestyle=:solid, label="FNO – u (in-dist)")
 
             if any(ood)
                 scatter!(ax, df.n_crystals[ood], df.psi_rel_l2_mean[ood];
@@ -522,7 +522,7 @@ function plot_fno_unet_exp23_comparison()
                 scatter!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
                          color=C[2], marker=:diamond, markersize=8)
                 lines!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
-                       color=C[2], linewidth=2, linestyle=:dash, label="FNO – v (OOD)")
+                       color=C[2], linewidth=2, linestyle=:dash, label="FNO – u (OOD)")
                 vlines!(ax, [max_train + 0.5]; color=:gray60, linestyle=:dot, linewidth=1.5)
                 vline_done = true
             end
@@ -541,7 +541,7 @@ function plot_fno_unet_exp23_comparison()
                    color=C[3], linewidth=2, linestyle=:solid, label="U-Net – ψ (in-dist)")
             scatter!(ax, df.n_crystals[id], df.v_rel_l2_mean[id]; color=C[4], markersize=7)
             lines!(ax, df.n_crystals[id], df.v_rel_l2_mean[id];
-                   color=C[4], linewidth=2, linestyle=:solid, label="U-Net – v (in-dist)")
+                   color=C[4], linewidth=2, linestyle=:solid, label="U-Net – u (in-dist)")
 
             if any(ood)
                 scatter!(ax, df.n_crystals[ood], df.psi_rel_l2_mean[ood];
@@ -551,7 +551,7 @@ function plot_fno_unet_exp23_comparison()
                 scatter!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
                          color=C[4], marker=:diamond, markersize=8)
                 lines!(ax, df.n_crystals[ood], df.v_rel_l2_mean[ood];
-                       color=C[4], linewidth=2, linestyle=:dash, label="U-Net – v (OOD)")
+                       color=C[4], linewidth=2, linestyle=:dash, label="U-Net – u (OOD)")
                 !vline_done && vlines!(ax, [max_train + 0.5];
                                        color=:gray60, linestyle=:dot, linewidth=1.5)
             end
@@ -644,7 +644,7 @@ function plot_fno_unet_overview_bar()
         col_psi = fno ? C[1]   : C[3]
         col_v   = fno ? C[2]   : C[4]
         lbl_psi = fno ? "FNO – ψ" : "U-Net – ψ"
-        lbl_v   = fno ? "FNO – v"  : "U-Net – v"
+        lbl_v   = fno ? "FNO – u"  : "U-Net – u"
 
         isnan(r.psi) || barplot!(ax, [x + psi_off], [r.psi]; width=w, color=col_psi, label=lbl_psi)
         isnan(r.v)   || barplot!(ax, [x + v_off],   [r.v];   width=w, color=col_v,   label=lbl_v)
