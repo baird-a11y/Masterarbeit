@@ -6,12 +6,12 @@
 # plot_training_history     Training-CSV → Loss-Kurven (MSE, rel_l2, grad_mse)
 # plot_psi_comparison       3-Panel: ψ_true | ψ_pred | Error
 # plot_error_map            Fehlerkarte mit Statistik-Overlay
-# plot_velocity_comparison  |v| true | |v| pred | |v| error
+# plot_velocity_comparison  |u| true | |u| pred | |u| error
 # plot_divergence_map       Divergenzkarte mit RMS
 # plot_metrics_vs_crystals  Metriken vs. Kristallanzahl (Generalisierung)
 # make_eval_gallery         Batch: n Beispiele → Plots automatisch erzeugen
 # common_clim               Robuste gemeinsame Farbskala (Quantile)
-# speed                     |v| = √(Vx² + Vz²)
+# speed                     |u| = √(Vx² + Vz²)
 # safe_title                Titelstring aus Meta-Daten
 
 module PlotsEval
@@ -61,7 +61,7 @@ end
 """
     speed(Vx, Vz)
 
-Geschwindigkeitsbetrag: |v| = √(Vx² + Vz²).
+Geschwindigkeitsbetrag: |u| = √(Vx² + Vz²).
 """
 speed(Vx, Vz) = sqrt.(Vx .^ 2 .+ Vz .^ 2)
 
@@ -286,7 +286,7 @@ end
                              centers_2D=nothing, radii=nothing,
                              x_vec=nothing, z_vec=nothing)
 
-3-Panel Vergleich der Geschwindigkeitsbeträge: |v| true | |v| pred (FNO) | |v| error.
+3-Panel Vergleich der Geschwindigkeitsbeträge: |u| true | |u| pred (FNO) | |u| error.
 Verwendet CairoMakie mit physikalischen Koordinaten (km).
 """
 function plot_velocity_comparison(Vx_true::AbstractMatrix, Vz_true::AbstractMatrix,
@@ -322,7 +322,7 @@ function plot_velocity_comparison(Vx_true::AbstractMatrix, Vz_true::AbstractMatr
     CairoMakie.Label(fig[0, :], sup; fontsize = 14, font = :bold)
 
     ax1 = CairoMakie.Axis(gl1[1, 1];
-                           title  = "|v| true",
+                           title  = "|u| true",
                            xlabel = "x$(coord_label)",
                            ylabel = "z$(coord_label)",
                            aspect = CairoMakie.DataAspect())
@@ -330,10 +330,10 @@ function plot_velocity_comparison(Vx_true::AbstractMatrix, Vz_true::AbstractMatr
                                colorrange = (0, vmax), colormap = :viridis)
     centers_2D !== nothing && radii !== nothing &&
         _draw_crystal_outlines!(ax1, centers_2D, radii)
-    CairoMakie.Colorbar(gl1[1, 2], hv1; label = "|v| true")
+    CairoMakie.Colorbar(gl1[1, 2], hv1; label = "|u| true")
 
     ax2 = CairoMakie.Axis(gl2[1, 1];
-                           title  = "|v| pred (FNO)",
+                           title  = "|u| pred (FNO)",
                            xlabel = "x$(coord_label)",
                            ylabel = "z$(coord_label)",
                            aspect = CairoMakie.DataAspect())
@@ -341,10 +341,10 @@ function plot_velocity_comparison(Vx_true::AbstractMatrix, Vz_true::AbstractMatr
                                colorrange = (0, vmax), colormap = :viridis)
     centers_2D !== nothing && radii !== nothing &&
         _draw_crystal_outlines!(ax2, centers_2D, radii)
-    CairoMakie.Colorbar(gl2[1, 2], hv2; label = "|v| pred")
+    CairoMakie.Colorbar(gl2[1, 2], hv2; label = "|u| pred")
 
     ax3 = CairoMakie.Axis(gl3[1, 1];
-                           title  = "Δ|v| = |v|_pred − |v|_true",
+                           title  = "Δ|u| = |u|_pred − |u|_true",
                            xlabel = "x$(coord_label)",
                            ylabel = "z$(coord_label)",
                            aspect = CairoMakie.DataAspect())

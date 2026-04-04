@@ -474,23 +474,23 @@ function evaluate_dataset(; data_dir::String,
             gv3 = fig_vel[1, 3] = GridLayout()
 
             av1 = Axis(gv1[1, 1],
-                       title  = @sprintf("|v| true | n=%d | idx=%d | v_rel_l2=%.4f", n, i, v_rel_l2),
+                       title  = @sprintf("|u| true | n=%d | idx=%d | v_rel_l2=%.4f", n, i, v_rel_l2),
                        xlabel = "x (km)", ylabel = "z (km)", aspect = DataAspect())
             hv1 = heatmap!(av1, xcoords, zcoords, speed_true;
                            colorrange = (0, vmax), colormap = :viridis)
             plot_crystal_outlines!(av1, centers_2D, radii)
-            Colorbar(gv1[1, 2], hv1, label = "|v| true")
+            Colorbar(gv1[1, 2], hv1, label = "|u| true")
 
             av2 = Axis(gv2[1, 1],
-                       title  = "|v| pred (U-Net)",
+                       title  = "|u| pred (U-Net)",
                        xlabel = "x (km)", ylabel = "z (km)", aspect = DataAspect())
             hv2 = heatmap!(av2, xcoords, zcoords, speed_pred;
                            colorrange = (0, vmax), colormap = :viridis)
             plot_crystal_outlines!(av2, centers_2D, radii)
-            Colorbar(gv2[1, 2], hv2, label = "|v| pred")
+            Colorbar(gv2[1, 2], hv2, label = "|u| pred")
 
             av3 = Axis(gv3[1, 1],
-                       title  = "Δ|v| = |v|_pred − |v|_true",
+                       title  = "Δ|u| = |u|_pred − |u|_true",
                        xlabel = "x (km)", ylabel = "z (km)", aspect = DataAspect())
             hv3 = heatmap!(av3, xcoords, zcoords, speed_err;
                            colorrange = (-speed_emax, speed_emax), colormap = :RdBu)

@@ -47,42 +47,42 @@
 
 # /opt/julia/bin/julia run_training.jl --epochs 100 --batch 16 --train_dir /local/home/baselt/src/Ansatz/data_train/n01 --val_dir /local/home/baselt/src/Ansatz/data_val/n01 --lr 1e-3 --save_dir checkpoints_exp1_16_1 --history_csv history_exp1_16_1.csv
 
-#/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_1/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_16_1 --history_csv eval_output_exp1_16_1/history_exp1_16_1.csv --denorm
+/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_1/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_16_1 --history_csv eval_output_exp1_16_1/history_exp1_16_1.csv --denorm
 
 # /opt/julia/bin/julia run_training.jl --epochs 100 --batch 16 --train_dir /local/home/baselt/src/Ansatz/data_train/n01 --val_dir /local/home/baselt/src/Ansatz/data_val/n01 --lr 5e-3 --save_dir checkpoints_exp1_16_2 --history_csv history_exp1_16_2.csv
 
-#/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_2/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_16_2 --history_csv eval_output_exp1_16_2/history_exp1_16_2.csv --denorm
+/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_2/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_16_2 --history_csv eval_output_exp1_16_2/history_exp1_16_2.csv --denorm
 
 # /opt/julia/bin/julia run_training.jl --epochs 100 --batch 16 --train_dir /local/home/baselt/src/Ansatz/data_train/n01 --val_dir /local/home/baselt/src/Ansatz/data_val/n01 --lr 1e-4 --save_dir checkpoints_exp1_16_3 --history_csv history_exp1_16_3.csv
 
-#/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_3/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_16_3 --history_csv eval_output_exp1_16_3/history_exp1_16_3.csv --denorm
+/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_3/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_16_3 --history_csv eval_output_exp1_16_3/history_exp1_16_3.csv --denorm
 
-#/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_4/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_16_4 --history_csv eval_output_exp1_16_4/history_exp1_16_4.csv --denorm
+/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_4/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_16_4 --history_csv eval_output_exp1_16_4/history_exp1_16_4.csv --denorm
 
 #/opt/julia/bin/julia run_training.jl --epochs 100 --batch 16 --train_dir /local/home/baselt/src/Ansatz/data_train_exp4 --val_dir /local/home/baselt/src/Ansatz/data_val_exp4 --lr 5e-4 --save_dir checkpoints_exp4_16 --history_csv history_exp4_16.csv
 
-#/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp4_16/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval_exp4 --out eval_output_exp4_16 --history_csv eval_output_exp4_16/history_exp4_16.csv --denorm
+/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp4_16/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval_exp4 --out eval_output_exp4_16 --history_csv eval_output_exp4_16/history_exp4_16.csv --denorm
 
-/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_4/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval_big --out eval_output_exp1_16_big --history_csv eval_output_exp1_16_big/history_exp1_16_4.csv
+/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_4/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval_big --out eval_output_exp1_16_big --history_csv eval_output_exp1_16_big/history_exp1_16_4.csv --denorm
 
 
-/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_4/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval_small --out eval_output_exp1_16_small --history_csv eval_output_exp1_16_small/history_exp1_16_4.csv
+/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_16_4/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval_small --out eval_output_exp1_16_small --history_csv eval_output_exp1_16_small/history_exp1_16_4.csv --denorm
 
 # /opt/julia/bin/julia run_training.jl --epochs 100 --batch 8 --train_dir /local/home/baselt/src/Ansatz/data_train/n01 --val_dir /local/home/baselt/src/Ansatz/data_val/n01 --lr 1e-3 --save_dir checkpoints_exp1_8_1 --history_csv history_exp1_8_1.csv
 
-#/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_8_1/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_8_1 --history_csv eval_output_exp1_8_1/history_exp1_8_1.csv --denorm
+/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_8_1/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_8_1 --history_csv eval_output_exp1_8_1/history_exp1_8_1.csv --denorm
 
 # /opt/julia/bin/julia run_training.jl --epochs 100 --batch 8 --train_dir /local/home/baselt/src/Ansatz/data_train/n01 --val_dir /local/home/baselt/src/Ansatz/data_val/n01 --lr 5e-3 --save_dir checkpoints_exp1_8_2 --history_csv history_exp1_8_2.csv
 
-#/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_8_2/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_8_2 --history_csv eval_output_exp1_8_2/history_exp1_8_2.csv --denorm
+/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_8_2/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_8_2 --history_csv eval_output_exp1_8_2/history_exp1_8_2.csv --denorm
 
 #/opt/julia/bin/julia run_training.jl --epochs 100 --batch 8 --train_dir /local/home/baselt/src/Ansatz/data_train/n01 --val_dir /local/home/baselt/src/Ansatz/data_val/n01 --lr 1e-4 --save_dir checkpoints_exp1_8_3 --history_csv history_exp1_8_3.csv
 
-#/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_8_3/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_8_3 --history_csv eval_output_exp1_8_3/history_exp1_8_3.csv --denorm
+/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_8_3/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_8_3 --history_csv eval_output_exp1_8_3/history_exp1_8_3.csv --denorm
 
 # /opt/julia/bin/julia run_training.jl --epochs 100 --batch 8 --train_dir /local/home/baselt/src/Ansatz/data_train/n01 --val_dir /local/home/baselt/src/Ansatz/data_val/n01 --lr 5e-4 --save_dir checkpoints_exp1_8_4 --history_csv history_exp1_8_4.csv
 
-#/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_8_4/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_8_4 --history_csv eval_output_exp1_8_4/history_exp1_8_4.csv --denorm
+/opt/julia/bin/julia run_eval.jl --checkpoint checkpoints_exp1_8_4/best_model.jld2 --data_dir /local/home/baselt/src/Ansatz/data_eval/n01 --out eval_output_exp1_8_4 --history_csv eval_output_exp1_8_4/history_exp1_8_4.csv --denorm
 
 # =============================================
 # Experiment 2 und 3 
@@ -105,12 +105,12 @@
 # # Evaluation (separat, nutzt best_model)
 # # =============================================
 
-#/opt/julia/bin/julia run_eval.jl \
-#     --checkpoint checkpoints_exp2_8/best_model.jld2 \
-#     --data_dir /local/home/baselt/src/Ansatz/data_eval_n01_n25 \
-#     --out eval_output_exp2_8 \
-#     --history_csv eval_output_exp2_8/history_exp2_8.csv\
-#     --denorm
+/opt/julia/bin/julia run_eval.jl \
+     --checkpoint checkpoints_exp2_8/best_model.jld2 \
+     --data_dir /local/home/baselt/src/Ansatz/data_eval_n01_n25 \
+     --out eval_output_exp2_8 \
+     --history_csv eval_output_exp2_8/history_exp2_8.csv\
+     --denorm
 
 
 #  /opt/julia/bin/julia run_training.jl \
@@ -126,12 +126,12 @@
 # Evaluation (separat, nutzt best_model)
 # =============================================
 
-#/opt/julia/bin/julia run_eval.jl \
-#     --checkpoint checkpoints_exp2_16_long/best_model.jld2 \
-#     --data_dir /local/home/baselt/src/Ansatz/data_eval_n01_n25 \
-#     --out eval_output_exp2_16_long \
-#     --history_csv eval_output_exp2_16_long/history_exp2_16_long.csv \
-#     --denorm
+/opt/julia/bin/julia run_eval.jl \
+     --checkpoint checkpoints_exp2_16_long/best_model.jld2 \
+     --data_dir /local/home/baselt/src/Ansatz/data_eval_n01_n25 \
+     --out eval_output_exp2_16_long \
+     --history_csv eval_output_exp2_16_long/history_exp2_16_long.csv \
+     --denorm
 
 
 # # =============================================
@@ -151,12 +151,12 @@
 # # Evaluation (separat, nutzt best_model)
 # # =============================================
 
-#/opt/julia/bin/julia run_eval.jl \
-#     --checkpoint checkpoints_exp3_8/best_model.jld2 \
-#     --data_dir /local/home/baselt/src/Ansatz/data_eval \
-#     --out eval_output_exp3_8 \
-#     --history_csv eval_output_exp3_8/history_exp3_8.csv \
-#     --denorm
+/opt/julia/bin/julia run_eval.jl \
+     --checkpoint checkpoints_exp3_8/best_model.jld2 \
+     --data_dir /local/home/baselt/src/Ansatz/data_eval \
+     --out eval_output_exp3_8 \
+     --history_csv eval_output_exp3_8/history_exp3_8.csv \
+     --denorm
 
 
 #  /opt/julia/bin/julia run_training.jl \
@@ -172,18 +172,18 @@
 # Evaluation (separat, nutzt best_model)
 # =============================================
 
-#/opt/julia/bin/julia run_eval.jl \
-#     --checkpoint checkpoints_exp3_16/best_model.jld2 \
-#     --data_dir /local/home/baselt/src/Ansatz/data_eval \
-#     --out eval_output_exp3_16 \
-#     --history_csv eval_output_exp3_16/history_exp3_16.csv \
-#     --denorm
+/opt/julia/bin/julia run_eval.jl \
+     --checkpoint checkpoints_exp3_16/best_model.jld2 \
+     --data_dir /local/home/baselt/src/Ansatz/data_eval \
+     --out eval_output_exp3_16 \
+     --history_csv eval_output_exp3_16/history_exp3_16.csv \
+     --denorm
 
 
 
-#/opt/julia/bin/julia run_eval.jl \
-#     --checkpoint checkpoints_exp4_16/best_model.jld2 \
-#     --data_dir /local/home/baselt/src/Ansatz/data_eval \
-#     --out eval_output_exp4_16 \
-#    --history_csv eval_output_exp4_16/history_exp4_16.csv \
-#     --denorm
+/opt/julia/bin/julia run_eval.jl \
+    --checkpoint checkpoints_exp4_16/best_model.jld2 \
+    --data_dir /local/home/baselt/src/Ansatz/data_eval \
+    --out eval_output_exp4_16 \
+    --history_csv eval_output_exp4_16/history_exp4_16.csv \
+    --denorm
