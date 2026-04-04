@@ -336,7 +336,7 @@ For the U-Net, all batch size\,8 configurations cluster within a narrow range in
 \label{ssec:results:exp2:unet:training}
 % ----------------------------------------------------------------------------
 
-Figure~\ref{fig:unet_training_exp2} shows the training and validation loss curves over 180~epochs. The training MSE decreases monotonically, but the validation relative $L_2$ error fluctuates without reaching stable convergence; the best checkpoint is reached already at epoch~43 with a validation relative $L_2$ error of $28.5\%$.
+Figure~\ref{fig:unet_training_exp2} shows the training and validation loss curves over 180~epochs. The training MSE decreases monotonically, but the validation relative $L_2$ error fluctuates without reaching stable convergence; the best checkpoint is reached already at epoch~51 with a validation relative $L_2$ error of $32.4\%$.
 
 \begin{figure}[htbp]
     \centering
@@ -344,8 +344,8 @@ Figure~\ref{fig:unet_training_exp2} shows the training and validation loss curve
     \caption{\textbf{U-Net Experiment~2: validation relative $L_2$ error and normalized training MSE over
              180~training epochs (training distribution: $n \leq 10$).} Solid line: bs\,16;
              dashed line: bs\,8. The validation error fluctuates without reaching stable
-             convergence; the best checkpoint is reached at epoch~43 with a validation error
-             of $28.5\%$.}
+             convergence; the best checkpoint is reached at epoch~51 with a validation error
+             of $32.4\%$.}
     \label{fig:unet_training_exp2}
 \end{figure}
 
@@ -591,7 +591,7 @@ The FNO outperforms the U-Net by a factor of roughly $4\times$ within the traini
 \label{ssec:results:exp3:unet:training}
 % ----------------------------------------------------------------------------
 
-Figure~\ref{fig:unet_training_exp3} shows the training and validation loss curves over 180~epochs. The behavior is qualitatively similar to Experiment~2: training MSE decreases steadily while validation relative $L_2$ error oscillates without reaching stable convergence. The best checkpoint is reached at epoch~49 with a validation relative $L_2$ error of $28.6\%$, comparable to Experiment~2 ($28.5\%$ at epoch~43).
+Figure~\ref{fig:unet_training_exp3} shows the training and validation loss curves over 180~epochs. The behavior is qualitatively similar to Experiment~2: training MSE decreases steadily while validation relative $L_2$ error oscillates without reaching stable convergence. The best checkpoint is reached at epoch~25 with a validation relative $L_2$ error of $33.6\%$, comparable to Experiment~2 ($32.4\%$ at epoch~51).
 
 \begin{figure}[htbp]
     \centering
@@ -599,7 +599,7 @@ Figure~\ref{fig:unet_training_exp3} shows the training and validation loss curve
     \caption{\textbf{U-Net Experiment~3: validation relative $L_2$ error and normalized training MSE over
              180~training epochs (training distribution: $n \leq 25$).} Solid line: bs\,16;
              dashed line: bs\,8. Convergence behavior is qualitatively similar to Experiment~2;
-             the best checkpoint is reached at epoch~49 with a validation error of $28.6\%$.}
+             the best checkpoint is reached at epoch~25 with a validation error of $33.6\%$.}
     \label{fig:unet_training_exp3}
 \end{figure}
 
