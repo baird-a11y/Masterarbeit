@@ -111,9 +111,6 @@ For batch size~8 (bs\,8), Exp-1.2 ($5\times10^{-3}$) achieves the best bs\,8 res
 
 A notable pattern is that the optimal learning rate shifts when the batch size changes: while lr~$= 5\times10^{-4}$ is best for bs\,16, lr~$= 5\times10^{-3}$ is best for bs\,8. This is consistent with the linear scaling rule of \textcite{goyal2018accuratelargeminibatchsgd}, which prescribes scaling the learning rate proportionally to the batch size: halving the batch size should be accompanied by halving the learning rate to keep the effective step size constant. \textcite{smith2018dontdecaylearningrate} provide a complementary perspective, showing that the ratio of learning rate to batch size governs the noise scale of stochastic gradient descent; keeping this ratio constant is equivalent to interchanging batch size reduction and learning-rate decay. In our setting, the factor-of-two difference in batch size is reflected approximately by a factor-of-two difference in optimal learning rate ($5\times10^{-4}$ vs.\ $5\times10^{-3}$ would exceed the linear prediction, but the FNO's gradient clipping and the non-convex loss landscape introduce additional confounders that can shift the optimal operating point).
 
-Figure~\ref{fig:exp1_eval_bars} (left panel) gives an overview of all bs\,16 evaluation metrics across configurations.
-
-
 % ----------------------------------------------------------------------------
 \subsection{FNO – Qualitative Results}
 \label{ssec:results:exp1:fno:qualitative}
@@ -185,6 +182,7 @@ Figures~\ref{fig:unet_training_exp1_bs16} and~\ref{fig:unet_training_exp1_bs8} s
 \end{figure}
 
 
+\FloatBarrier
 % ----------------------------------------------------------------------------
 \subsection{U-Net – Evaluation Metrics}
 \label{ssec:results:exp1:unet:metrics}
@@ -199,23 +197,24 @@ Table~\ref{tab:unet_metrics_exp1} reports the best-checkpoint validation metrics
          held-out evaluation set (10~samples, best checkpoint);
          $\bar{\varepsilon}_v^{\mathrm{eval}}$: mean relative $L_2$ error on derived velocity;
          $\varepsilon_\psi^{\mathrm{val}}$: best validation relative $L_2$ error on $\psi$
-         over all 180~epochs.}
+         over all 180~epochs.
+         Standard deviations over the 10 samples in parentheses.}
 \label{tab:unet_metrics_exp1}
-\begin{tabular}{lccc}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccc}
 \toprule
 \textbf{Config (lr, bs)} & $\bar{\varepsilon}_\psi^{\mathrm{eval}}$ (\%) & $\bar{\varepsilon}_v^{\mathrm{eval}}$ (\%) & $\varepsilon_\psi^{\mathrm{val}}$ (\%) \\
 \midrule
-Exp-1.1 ($10^{-3}$,        bs\,16) & $13.9$ & $22.1$ & $3.48$ \\
-Exp-1.2 ($5\times10^{-3}$, bs\,16) & $24.0$ & $24.4$ & $4.81$ \\
-Exp-1.3 ($10^{-4}$,        bs\,16) & $13.5$ & $23.1$ & $2.98$ \\
-Exp-1.4 ($5\times10^{-4}$, bs\,16) & $15.0$ & $29.9$ & $3.41$ \\
+Exp-1.1 ($10^{-3}$,        bs\,16) & $13.9 \pm 5.1$  & $22.1 \pm 8.0$  & $3.48$ \\
+Exp-1.2 ($5\times10^{-3}$, bs\,16) & $24.0 \pm 17.2$ & $53.0 \pm 41.3$ & $4.81$ \\
+Exp-1.3 ($10^{-4}$,        bs\,16) & $13.5 \pm 3.8$  & $23.1 \pm 8.1$  & $2.98$ \\
+Exp-1.4 ($5\times10^{-4}$, bs\,16) & $15.0 \pm 7.9$  & $29.9 \pm 23.4$ & $3.41$ \\
 \midrule
-Exp-1.1 ($10^{-3}$,        bs\,8)  & $\phantom{0}6.0$ & $\phantom{0}9.3$ & $3.41$ \\
-Exp-1.2 ($5\times10^{-3}$, bs\,8)  & $\phantom{0}5.5$ & $\phantom{0}8.5$ & $3.34$ \\
-Exp-1.3 ($10^{-4}$,        bs\,8)  & $\phantom{0}6.5$ & $12.7$ & $2.68$ \\
-Exp-1.4 ($5\times10^{-4}$, bs\,8)  & $\phantom{0}5.9$ & $\phantom{0}9.6$ & $2.99$ \\
+Exp-1.1 ($10^{-3}$,        bs\,8)  & $6.0 \pm 3.2$   & $9.3 \pm 2.4$   & $3.41$ \\
+Exp-1.2 ($5\times10^{-3}$, bs\,8)  & $5.5 \pm 2.3$   & $8.5 \pm 1.5$   & $3.34$ \\
+Exp-1.3 ($10^{-4}$,        bs\,8)  & $6.5 \pm 2.1$   & $12.7 \pm 7.2$  & $2.68$ \\
+Exp-1.4 ($5\times10^{-4}$, bs\,8)  & $5.9 \pm 1.6$   & $9.6 \pm 1.5$   & $2.99$ \\
 \bottomrule
-\end{tabular}
+\end{tabular*}
 \end{table}
 
 For bs\,8, all four configurations cluster tightly in the range $5.5$–$6.5\%$ on the stream function~$\psi$, with Exp-1.2 ($5\times10^{-3}$) achieving the best result ($5.5\%$ on~$\psi$ / $8.5\%$ on the derived velocity field). The velocity errors remain roughly $1.5$–$2\times$ larger than the $\psi$ errors, which is a clear improvement over a plain-MSE training baseline, where the ratio was approximately $3\times$ (see Section~\ref{ssec:results:exp1:unet:hf}). The gradient term in the composite loss explicitly penalizes errors in the spatial derivatives of the predicted stream function~$\hat{\psi}$ and thereby suppresses high-frequency residuals that would otherwise be amplified by the finite-difference differentiation step.
@@ -228,6 +227,15 @@ For bs\,16, the composite loss leads to substantially higher evaluation errors (
 % ----------------------------------------------------------------------------
 
 Figures~\ref{fig:unet_exp1_qual_bs16} and~\ref{fig:unet_exp1_qual_bs8} show representative evaluation plots for the bs\,16 configuration Exp-1.1 (lr~$=10^{-3}$) and the best bs\,8 configuration (Exp-1.2, lr~$=5\times10^{-3}$). Both figures display the predicted stream function $\psi$ and the derived velocity magnitude $|\mathbf{u}|$ alongside the numerical reference solution. The overall flow structure is reproduced qualitatively, but local errors near the crystal boundary appear more pronounced than in the corresponding FNO predictions. With composite loss training, velocity errors ($\approx 8.5\%$) are substantially reduced compared to the plain-MSE baseline ($\approx 16\%$), while $\psi$ accuracy remains similar ($5.5\%$ vs.\ $5.2\%$).
+
+% ----------------------------------------------------------------------------
+\subsection{U-Net – High-Frequency Residuals in the Velocity Field}
+\label{ssec:results:exp1:unet:hf}
+% ----------------------------------------------------------------------------
+
+When trained with plain-MSE loss (without the gradient penalty term), the U-Net yields evaluation errors of approximately $5.2\%$ on~$\psi$ and $\approx 16\%$ on the derived velocity field for the best bs\,8 configuration (note: the $8.6$–$11.2\%$ range cited in Section~\ref{ssec:results:exp1:unet:metrics} refers to plain-MSE errors on~$\psi$ for the bs\,16 configurations, a different metric and batch size)—a velocity-to-$\psi$ error ratio of roughly $3\times$. Since the velocity field is obtained by finite-difference differentiation of~$\hat\psi$, high-frequency residuals in the predicted stream function are amplified by the differentiation step, disproportionately increasing the velocity error. This explains why the plain-MSE ratio exceeds the corresponding FNO ratio ($\approx 2\times$) even when the $\psi$ errors are similar: the FNO's spectral architecture naturally suppresses high-frequency components above the retained mode count ($k_{\max} = 16$) \parencite{qin_toward_2024}, whereas the U-Net places no such constraint on the spatial frequency content of its output.
+
+The adoption of the composite loss reduces the velocity-to-$\psi$ ratio to $1.5$–$2\times$, as shown in Table~\ref{tab:unet_metrics_exp1}, confirming that the gradient penalty term effectively suppresses the high-frequency artefacts responsible for the inflated velocity errors. For bs\,16 configurations, the ratio likewise improves with composite loss, although the absolute error level remains substantially higher than for bs\,8.
 
 \begin{sidewaysfigure}[p]
     \centering
@@ -263,17 +271,7 @@ Figures~\ref{fig:unet_exp1_qual_bs16} and~\ref{fig:unet_exp1_qual_bs8} show repr
     \label{fig:unet_exp1_qual_bs8}
 \end{sidewaysfigure}
 
-
-
-% ----------------------------------------------------------------------------
-\subsection{U-Net – High-Frequency Residuals in the Velocity Field}
-\label{ssec:results:exp1:unet:hf}
-% ----------------------------------------------------------------------------
-
-When trained with plain-MSE loss (without the gradient penalty term), the U-Net yields evaluation errors of approximately $5.2\%$ on~$\psi$ and $\approx 16\%$ on the derived velocity field for the best bs\,8 configuration (note: the $8.6$–$11.2\%$ range cited in Section~\ref{ssec:results:exp1:unet:metrics} refers to plain-MSE errors on~$\psi$ for the bs\,16 configurations, a different metric and batch size)—a velocity-to-$\psi$ error ratio of roughly $3\times$. Since the velocity field is obtained by finite-difference differentiation of~$\hat\psi$, high-frequency residuals in the predicted stream function are amplified by the differentiation step, disproportionately increasing the velocity error. This explains why the plain-MSE ratio exceeds the corresponding FNO ratio ($\approx 2\times$) even when the $\psi$ errors are similar: the FNO's spectral architecture naturally suppresses high-frequency components above the retained mode count ($k_{\max} = 16$) \parencite{qin_toward_2024}, whereas the U-Net places no such constraint on the spatial frequency content of its output.
-
-The adoption of the composite loss reduces the velocity-to-$\psi$ ratio to $1.5$–$2\times$, as shown in Table~\ref{tab:unet_metrics_exp1}, confirming that the gradient penalty term effectively suppresses the high-frequency artefacts responsible for the inflated velocity errors. For bs\,16 configurations, the ratio likewise improves with composite loss, although the absolute error level remains substantially higher than for bs\,8.
-
+\FloatBarrier
 % ----------------------------------------------------------------------------
 \subsection{Comparison: FNO vs.\ U-Net}
 \label{ssec:results:exp1:comparison}
@@ -285,7 +283,7 @@ Figure~\ref{fig:exp1_eval_bars} gives a visual overview of all configurations fo
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig3_exp1_eval_balken.pdf}
+    \includegraphics[width=\textwidth, height=0.45\textheight, keepaspectratio]{../../Ergebnisse/Bilder_Arbeit/fig3_exp1_eval_balken.pdf}
     \caption{\textbf{Experiment~1 evaluation metrics for all learning-rate configurations, shown
              separately for batch size~16 (left) and batch size~8 (right).} Each group of bars
              shows the mean relative $L_2$ error on $\psi$ and on the derived velocity field
@@ -299,18 +297,18 @@ Figure~\ref{fig:exp1_eval_bars} gives a visual overview of all configurations fo
          FNO: 100~epochs; U-Net: 180~epochs, composite loss), evaluated on the held-out
          evaluation set (10~samples).}}
 \label{tab:comparison_exp1}
-\begin{tabular}{llcc}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}llcc}
 \toprule
 \textbf{Architecture} & \textbf{Config (lr, bs)} & $\bar{\varepsilon}_\psi$ (\%) & $\bar{\varepsilon}_v$ (\%) \\
 \midrule
 FNO   & Exp-1.4 ($5\times10^{-4}$, bs\,16) & $1.62$ & $3.44$ \\
 FNO   & Exp-1.2 ($5\times10^{-3}$,  bs\,8)  & $2.07$ & $4.13$ \\
-U-Net & Exp-1.3 ($10^{-4}$,         bs\,16)  & $13.5\phantom{0}$ & $23.1\phantom{0}$ \\
-U-Net & Exp-1.2 ($5\times10^{-3}$, bs\,8)   & $5.5\phantom{0}$ & $8.5\phantom{0}$ \\
+U-Net & Exp-1.3 ($10^{-4}$,         bs\,16)  & $13.5$ & $23.1$ \\
+U-Net & Exp-1.2 ($5\times10^{-3}$,  bs\,8)   & $5.5$  & $8.5$  \\
 \bottomrule
-\end{tabular}
+\end{tabular*}
 \end{table}
-
+\newpage
 % ----------------------------------------------------------------------------
 \subsection{Spatial Error Analysis: Crystal Position vs.\ Prediction Error}
 \label{ssec:results:exp1:spatial}
