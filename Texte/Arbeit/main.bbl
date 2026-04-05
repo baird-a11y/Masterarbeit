@@ -19,6 +19,77 @@
 
 \refsection{0}
   \datalist[entry]{nyt/global//global/global/global}
+    \entry{agarwal_physics-based_2025}{misc}{}{}
+      \name{author}{5}{}{%
+        {{hash=2c443cbe5178ff867bbad76ac18ad598}{%
+           family={Agarwal},
+           familyi={A\bibinitperiod},
+           given={Siddhant},
+           giveni={S\bibinitperiod}}}%
+        {{hash=f9ab6b00c06aa37d6bd3110f67d719b8}{%
+           family={Bekar},
+           familyi={B\bibinitperiod},
+           given={Ali\bibnamedelima Can},
+           giveni={A\bibinitperiod\bibinitdelim C\bibinitperiod}}}%
+        {{hash=2d5f59c45f4cb6e5d54752dcd7d0f1e4}{%
+           family={Hüttig},
+           familyi={H\bibinitperiod},
+           given={Christian},
+           giveni={C\bibinitperiod}}}%
+        {{hash=c8be60acb9177227851385b5f793094d}{%
+           family={Greenberg},
+           familyi={G\bibinitperiod},
+           given={David\bibnamedelima S.},
+           giveni={D\bibinitperiod\bibinitdelim S\bibinitperiod}}}%
+        {{hash=a4c3113a87752b4836c8dd6551059be6}{%
+           family={Tosi},
+           familyi={T\bibinitperiod},
+           given={Nicola},
+           giveni={N\bibinitperiod}}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \list{publisher}{1}{%
+        {arXiv}%
+      }
+      \strng{namehash}{961e5cfc29362a5741553f43dacbf4b8}
+      \strng{fullhash}{79ca87a1877dc13e4b743b924b520a93}
+      \strng{fullhashraw}{79ca87a1877dc13e4b743b924b520a93}
+      \strng{bibnamehash}{961e5cfc29362a5741553f43dacbf4b8}
+      \strng{authorbibnamehash}{961e5cfc29362a5741553f43dacbf4b8}
+      \strng{authornamehash}{961e5cfc29362a5741553f43dacbf4b8}
+      \strng{authorfullhash}{79ca87a1877dc13e4b743b924b520a93}
+      \strng{authorfullhashraw}{79ca87a1877dc13e4b743b924b520a93}
+      \field{sortinit}{A}
+      \field{sortinithash}{2f401846e2029bad6b3ecc16d50031e2}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Mantle convection simulations are an essential tool for understanding how rocky planets evolve. However, the poorly known input parameters to these simulations, the non-linear dependence of transport properties on pressure and temperature, and the long integration times in excess of several billion years all pose a computational challenge for numerical solvers. We propose a physics-based machine learning approach that predicts creeping flow velocities as a function of temperature while conserving mass, thereby bypassing the numerical solution of the Stokes problem. A finite-volume solver then uses the predicted velocities to advect and diffuse the temperature field to the next time-step, enabling autoregressive rollout at inference. For training, our model requires temperature-velocity snapshots from a handful of simulations (94). We consider mantle convection in a two-dimensional rectangular box with basal and internal heating, pressure- and temperature-dependent viscosity. Overall, our model is up to 89 times faster than the numerical solver. We also show the importance of different components in our convolutional neural network architecture such as mass conservation, learned paddings on the boundaries, and loss scaling for the overall rollout performance. Finally, we test our approach on unseen scenarios to demonstrate some of its strengths and weaknesses.}
+      \field{month}{5}
+      \field{note}{arXiv:2505.16041 [astro-ph]}
+      \field{title}{Physics-based machine learning for mantle convection simulations}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{year}{2025}
+      \field{urldateera}{ce}
+      \verb{doi}
+      \verb 10.48550/arXiv.2505.16041
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\RLQHU98W\\Agarwal et al. - 2025 - Physics-based machine learning for mantle convection simulations.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://arxiv.org/abs/2505.16041
+      \endverb
+      \verb{url}
+      \verb http://arxiv.org/abs/2505.16041
+      \endverb
+      \keyw{Computer Science - Machine Learning,Astrophysics - Earth and Planetary Astrophysics}
+    \endentry
     \entry{alimehmeti-gopel_weight_2024}{inproceedings}{}{}
       \name{author}{2}{}{%
         {{hash=f34c953ea26e50c092a6bfb052237e95}{%
@@ -1790,6 +1861,76 @@
       \verb https://academic.oup.com/petrology/article-lookup/doi/10.1093/petrology/30.6.1471
       \endverb
     \endentry
+    \entry{mohapatra_inferring_2025}{misc}{}{}
+      \name{author}{5}{}{%
+        {{hash=f4deb19d77a6281db933d1e0ff85c13e}{%
+           family={Mohapatra},
+           familyi={M\bibinitperiod},
+           given={Aditya},
+           giveni={A\bibinitperiod}}}%
+        {{hash=af0aad64e6d5a3611b80661435f724d6}{%
+           family={Kumar},
+           familyi={K\bibinitperiod},
+           given={Aditya},
+           giveni={A\bibinitperiod}}}%
+        {{hash=1ad4897d244bde9101494edea3bc3a32}{%
+           family={Deb},
+           familyi={D\bibinitperiod},
+           given={Mayurakshi},
+           giveni={M\bibinitperiod}}}%
+        {{hash=3d4365cabf0fe483efa3868ede73082c}{%
+           family={Dhomkar},
+           familyi={D\bibinitperiod},
+           given={Siddharth},
+           giveni={S\bibinitperiod}}}%
+        {{hash=e5a71cee03c976c8b5ea85f877295be3}{%
+           family={Singh},
+           familyi={S\bibinitperiod},
+           given={Rajesh},
+           giveni={R\bibinitperiod}}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \list{publisher}{1}{%
+        {arXiv}%
+      }
+      \strng{namehash}{d602e2128c40b39d0b9fa42c8e759010}
+      \strng{fullhash}{55f2af6744850de1199568718049eae5}
+      \strng{fullhashraw}{55f2af6744850de1199568718049eae5}
+      \strng{bibnamehash}{d602e2128c40b39d0b9fa42c8e759010}
+      \strng{authorbibnamehash}{d602e2128c40b39d0b9fa42c8e759010}
+      \strng{authornamehash}{d602e2128c40b39d0b9fa42c8e759010}
+      \strng{authorfullhash}{55f2af6744850de1199568718049eae5}
+      \strng{authorfullhashraw}{55f2af6744850de1199568718049eae5}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Active colloidal particles create flow around them due to non-equilibrium process on their surfaces. In this paper, we infer the activity of such colloidal particles from the flow field created by them via deep learning. We first explain our method for one active particle, inferring the \$2s\$ mode (or the stresslet) and the \$3t\$ mode (or the source dipole) from the flow field data, along with the position and orientation of the particle. We then apply the method to a system of many active particles. We find excellent agreements between the predictions and the true values of activity. Our method presents a principled way to predict arbitrary activity from the flow field created by active particles.}
+      \field{note}{Version Number: 3}
+      \field{title}{Inferring activity from the flow field around active colloidal particles using deep learning}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{year}{2025}
+      \field{urldateera}{ce}
+      \verb{doi}
+      \verb 10.48550/ARXIV.2505.10270
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\JE65VKCM\\Mohapatra et al. - 2025 - Inferring activity from the flow field around active colloidal particles using deep learning.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/2505.10270
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/2505.10270
+      \endverb
+      \keyw{FOS: Physical sciences,Fluid Dynamics (physics.flu-dyn),Soft Condensed Matter (cond-mat.soft)}
+    \endentry
     \entry{morimoto_generalization_2022}{article}{}{}
       \name{author}{4}{}{%
         {{hash=f69618164e1baf769b4da7bb0bfd21da}{%
@@ -1919,6 +2060,73 @@
       \verb http://arxiv.org/abs/2206.09505
       \endverb
       \keyw{Condensed Matter - Soft Condensed Matter}
+    \endentry
+    \entry{obrien_imaging_2023}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=45a12f91cb5875147b3ef2394dbf440e}{%
+           family={O’Brien},
+           familyi={O\bibinitperiod},
+           given={Gareth\bibnamedelima Shane},
+           giveni={G\bibinitperiod\bibinitdelim S\bibinitperiod}}}%
+        {{hash=ca7b1c8d124a636e34adf168ebc459a7}{%
+           family={Bean},
+           familyi={B\bibinitperiod},
+           given={Christopher\bibnamedelima J.},
+           giveni={C\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+        {{hash=1347ed09a7ddff5da4f1ed7bde493d05}{%
+           family={Meiland},
+           familyi={M\bibinitperiod},
+           given={Hugo},
+           giveni={H\bibinitperiod}}}%
+        {{hash=f5a107e24657807e98e8ad296bfbd019}{%
+           family={Witte},
+           familyi={W\bibinitperiod},
+           given={Philipp},
+           giveni={P\bibinitperiod}}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{3e940eeed54e6de18fc8f226eacabbe6}
+      \strng{fullhash}{3a81f26b60a52781f87d54fb8a8e2c18}
+      \strng{fullhashraw}{3a81f26b60a52781f87d54fb8a8e2c18}
+      \strng{bibnamehash}{3e940eeed54e6de18fc8f226eacabbe6}
+      \strng{authorbibnamehash}{3e940eeed54e6de18fc8f226eacabbe6}
+      \strng{authornamehash}{3e940eeed54e6de18fc8f226eacabbe6}
+      \strng{authorfullhash}{3a81f26b60a52781f87d54fb8a8e2c18}
+      \strng{authorfullhashraw}{3a81f26b60a52781f87d54fb8a8e2c18}
+      \field{sortinit}{O}
+      \field{sortinithash}{2cd7140a07aea5341f9e2771efe90aae}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Abstract Despite advances in seismology and computing, the ability to image subsurface volcanic environments is poor, limiting our understanding of the overall workings of volcanic systems. This is related to substantive structural heterogeneities which strongly scatters seismic waves obscuring the ballistic arrivals normally used in seismology for wave velocity determination. Here we address this constraint by, using a deep learning approach, a Fourier neural operator (FNO), to model and invert seismic signals in volcanic settings. The FNO is trained using 40,000+ simulations of elastic wave propagation through complex volcano models, and includes the full scattered wavefield. Once trained, the forward network is used to predict elastic wave propagation and is shown to accurately reproduce the seismic wavefield. The FNO is also trained to predict heterogeneous velocity models given a limited set of input seismograms. It is shown to capture details of the complex velocity structure that lie far outside the ability of current methods available in volcano imagery.}
+      \field{issn}{2045-2322}
+      \field{journaltitle}{Scientific Reports}
+      \field{month}{1}
+      \field{number}{1}
+      \field{title}{Imaging and seismic modelling inside volcanoes using machine learning}
+      \field{urlday}{15}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{volume}{13}
+      \field{year}{2023}
+      \field{urldateera}{ce}
+      \field{pages}{630}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1038/s41598-023-27738-6
+      \endverb
+      \verb{file}
+      \verb PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\27Y8KDNY\\O’Brien et al. - 2023 - Imaging and seismic modelling inside volcanoes using machine learning.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://www.nature.com/articles/s41598-023-27738-6
+      \endverb
+      \verb{url}
+      \verb https://www.nature.com/articles/s41598-023-27738-6
+      \endverb
     \endentry
     \entry{odena_deconvolution_2016}{article}{}{}
       \name{author}{3}{}{%
