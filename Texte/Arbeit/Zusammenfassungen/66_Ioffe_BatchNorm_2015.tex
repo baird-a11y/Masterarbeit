@@ -1,0 +1,148 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+
+\begin{document}
+
+% =========================================================
+\section*{Batch Normalization: Accelerating Deep Network Training
+          by Reducing Internal Covariate Shift}
+% =========================================================
+
+\noindent\textbf{Autoren:} Sergey Ioffe, Christian Szegedy\\[2pt]
+\textbf{Institution:} Google Inc.\\[2pt]
+\textbf{Ver\"offentlicht:} arXiv:1502.03167v3 [cs.LG], 2015 (ICML 2015)\\[2pt]
+
+% =========================================================
+\subsection*{Motivation und Problemstellung}
+% =========================================================
+
+Das Training tiefer neuronaler Netze wird dadurch erschwert, dass sich die
+Eingangsverteilung jeder Schicht w\"ahrend des Trainings kontinuierlich ver\"andert,
+da sich die Parameter der vorgelagerten Schichten laufend anpassen. Dieses Ph\"anomen
+bezeichnen die Autoren als \emph{Internal Covariate Shift}. Es erzwingt niedrige
+Lernraten und eine sorgf\"altige Initialisierung, verlangsamt die Konvergenz
+erheblich und macht das Training von Netzen mit s\"attigenden Nichtlinearit\"aten
+(z.\,B.\ Sigmoid) besonders schwierig.
+
+Als L\"osung schlagen die Autoren \textbf{Batch Normalization (BN)} vor: eine
+Normierungsschicht, die die Eingangsverteilung jeder Schicht pro Mini-Batch
+stabilisiert und direkt in die Netzwerkarchitektur eingebettet wird.
+
+% =========================================================
+\subsection*{Kernbeitrag: Batch Normalizing Transform}
+% =========================================================
+
+F\"ur eine Aktivierung $x$ \"uber einen Mini-Batch $\mathcal{B} = \{x_1,\ldots,x_m\}$
+wird die BN-Transformation definiert als:
+\[
+  \hat{x}_i = \frac{x_i - \mu_\mathcal{B}}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}},
+  \qquad
+  y_i = \gamma\,\hat{x}_i + \beta,
+\]
+wobei $\mu_\mathcal{B}$ und $\sigma^2_\mathcal{B}$ Mini-Batch-Mittelwert und
+-Varianz sind, $\epsilon$ eine numerische Konstante, und $\gamma, \beta$ gelernte
+Skalierungs- und Verschiebungsparameter. Diese Parameter stellen sicher, dass die
+BN-Schicht die Identit\"atstransformation repr\"asentieren kann und die
+Ausdrucksst\"arke des Netzes erhalten bleibt.
+
+F\"ur faltende Schichten wird BN auf alle Aktivierungen einer Feature-Map
+\"uber Mini-Batch und r\"aumliche Positionen gemeinsam angewendet;
+dabei werden $\gamma$ und $\beta$ pro Feature-Map (nicht pro Aktivierung) gelernt.
+
+W\"ahrend der Inferenz werden Populations- statt Mini-Batch-Statistiken verwendet,
+so dass die Normierung eine einfache lineare Transformation darstellt, die
+mit den gelernten $\gamma, \beta$ zusammengefasst werden kann.
+
+% =========================================================
+\subsection*{Vorteile von Batch Normalization}
+% =========================================================
+
+\begin{itemize}
+  \item \textbf{H\"ohere Lernraten:} BN begrenzt die Amplifikation von
+    Parameteraktualisierungen durch tiefe Schichten und reduziert das Risiko
+    des Gradientenexplodierens oder -verschwindens.
+
+  \item \textbf{Reduzierter Regularisierungsbedarf:} Durch die Abh\"angigkeit
+    jedes Beispiels von den \"ubrigen Beispielen im Mini-Batch wirkt BN
+    implizit regularisierend; Dropout kann in batch-normalisierten Netzen
+    oft reduziert oder weggelassen werden.
+
+  \item \textbf{Robustheit gegen\"uber Initialisierung:} Da BN die
+    Eingangsverteilung stabilisiert, sind Netze weniger empfindlich gegen\"uber
+    der genauen Wahl der Startgewichte.
+\end{itemize}
+
+% =========================================================
+\subsection*{Experimentelle Ergebnisse}
+% =========================================================
+
+Die Autoren wenden BN auf eine Variante des Inception-Netzes (ImageNet-Klassifikation)
+an und zeigen:
+
+\begin{itemize}
+  \item \textbf{Beschleunigung:} BN-Inception (BN-x5) erreicht die Genauigkeit
+    des Basis-Inception-Netzes in 14-mal weniger Trainingsschritten.
+
+  \item \textbf{H\"ohere Endgenauigkeit:} BN-x30 erzielt nach $6\cdot10^6$
+    Schritten 74{,}8\,\% Top-1-Genauigkeit, gegen\"uber 72{,}2\,\% des
+    Original-Inception nach $31\cdot10^6$ Schritten.
+
+  \item \textbf{State of the Art (ImageNet 2015):} Ein Ensemble batch-normalisierter
+    Netze erreicht 4{,}9\,\% Top-5-Fehler auf dem Validierungsdatensatz und
+    4{,}82\,\% auf dem Testdatensatz -- besser als alle damals bekannten
+    Systeme und erstmals vergleichbar mit menschlicher Leistung.
+\end{itemize}
+
+% =========================================================
+\subsection*{Bezug zur Masterarbeit}
+% =========================================================
+
+\subsubsection*{1.\ Einsatz im U-Net-Surrogatmodell}
+
+Batch Normalization wird im U-Net der Masterarbeit nach jeder $3\times3$-Faltung
+und vor der ReLU-Aktivierung eingesetzt (sowohl im Encoder als auch im Decoder).
+Dies entspricht der von Ioffe \& Szegedy empfohlenen Platzierung \emph{vor} der
+Nichtlinearit\"at. BN stabilisiert das Training bei variablen Kristallkonfigurationen,
+bei denen Eingangsskalen und Feature-Verteilungen stark schwanken k\"onnen.
+
+\subsubsection*{2.\ Kein Einsatz im FNO}
+
+Das FNO-Modell dieser Arbeit verwendet kein Batch Normalization. Stattdessen
+\"ubernimmt der spektrale Gl\"attungsbias durch Mode-Abschneidung eine implizit
+regularisierende Funktion, und GELU-Aktivierungen ohne explizite Normierung
+haben sich in der Operator-Learning-Literatur als stabil erwiesen. Der Verzicht
+auf BN im FNO ist architekturmotiviert und im Einklang mit der Originalimplementierung
+von \textcite*{li_fourier_2021}.
+
+\subsubsection*{3.\ Dropout-Verzicht}
+
+Konsistent mit der Empfehlung von Ioffe \& Szegedy, dass BN Dropout weitgehend
+ersetzen kann, wird im U-Net kein Dropout verwendet. Die Regularisierung erfolgt
+stattdessen durch geometrische Vielfalt in den Trainingsdaten.
+
+% =========================================================
+\subsection*{Kritische Einsch\"atzung}
+% =========================================================
+
+\begin{itemize}
+  \item Sp\"atere Arbeiten (z.\,B.\ Ba et al., 2016: Layer Normalization;
+    He et al., 2016: Group Normalization) haben gezeigt, dass BN f\"ur kleine
+    Mini-Batches und wiederkehrende Netze problematisch sein kann, da die
+    Mini-Batch-Statistiken dann instabil werden. Im vorliegenden Kontext
+    (Batch-Gr\"o\ss en 8 und 16, konvolutionelles U-Net) ist dies kein relevantes
+    Problem.
+
+  \item Die theoretische Erkl\"arung \"uber Internal Covariate Shift wurde sp\"ater
+    in Frage gestellt (Santurkar et al., 2018: \emph{How does BN help optimization?});
+    empirisch ist der Nutzen von BN jedoch unbestritten.
+\end{itemize}
+
+\end{document}

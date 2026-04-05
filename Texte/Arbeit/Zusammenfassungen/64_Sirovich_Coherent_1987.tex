@@ -1,0 +1,64 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Turbulence and the Dynamics of Coherent Structures. Part I: Coherent Structures}
+\textbf{Autor:} Lawrence Sirovich \\
+\textbf{Journal:} Quarterly of Applied Mathematics, Vol.\ 45, Nr.\ 3, S.\ 561--571 \\
+\textbf{Jahr:} 1987
+
+\subsection*{Zusammenfassung}
+
+\subsubsection*{Motivation und Problemstellung}
+
+Sirovich (1987) adressiert ein fundamentales praktisches Problem der POD-basierten Strömungsanalyse: Der klassische Zugang über den Zwei-Punkt-Korrelationstensor $R(\mathbf{x}, \mathbf{x}')$ erfordert die Lösung eines integralen Eigenwertproblems auf dem vollen Strömungsgebiet, was bei räumlich hochaufgelösten Feldern enorm rechenaufwändig ist. Um diesen Engpass zu überwinden, entwickelt Sirovich die sogenannte \emph{Snapshot-Methode}.
+
+\subsubsection*{Die Snapshot-Methode}
+
+Gegeben sei eine Sammlung von $M$ Momentaufnahmen (Snapshots) $\{\mathbf{u}(\mathbf{x}, t_j)\}_{j=1}^{M}$ eines Strömungsfeldes. Die Snapshot-Methode nutzt die Tatsache, dass jede POD-Mode, die aus endlich vielen Snapshots gewonnen wird, notwendigerweise im Span dieser Snapshots liegt:
+\begin{equation}
+\phi_k(\mathbf{x}) = \sum_{j=1}^{M} c_j^{(k)}\,\mathbf{u}(\mathbf{x}, t_j).
+\end{equation}
+Statt eines Eigenwertproblems der Größe $N \times N$ (wobei $N$ die Anzahl der Gitterpunkte ist) genügt es daher, ein $M \times M$-Eigenwertproblem zu lösen, wobei $M$ die (i.\,d.\,R.\ viel kleinere) Anzahl der Snapshots ist. Die Koeffizientenmatrix hat die Einträge:
+\begin{equation}
+C_{ij} = \frac{1}{M}\int_\Omega \mathbf{u}(\mathbf{x}, t_i) \cdot \mathbf{u}(\mathbf{x}, t_j)\,\mathrm{d}\mathbf{x}.
+\end{equation}
+
+\subsubsection*{Optimalitätseigenschaften}
+
+Sirovich zeigt, dass die aus der Snapshot-Methode gewonnenen Moden dieselben Optimalitätseigenschaften besitzen wie die klassischen POD-Moden: Sie maximieren die erfasste Varianz (mittlere kinetische Energie) in jeder Unterraumdimension. Die Snapshot-Methode ist also keine Näherung, sondern eine exakte, numerisch effiziente Reformulierung des POD-Problems.
+
+\subsubsection*{Kohärente Strukturen}
+
+Der Artikel legt besonderes Gewicht auf die physikalische Interpretation der POD-Moden als \emph{kohärente Strukturen} turbulenter Strömungen -- raum-zeitliche Muster, die über viele Realisierungen hinweg stabil auftreten und den Hauptteil der kinetischen Energie tragen. Diese Perspektive verbindet die mathematisch-optimale Eigenschaft der POD mit einem physikalisch motivierten Bild von Turbulenz als Überlagerung organisierter Strukturen.
+
+\subsubsection*{Anwendung auf turbulente Grenzschichten}
+
+Als Demonstrationsbeispiel wendet Sirovich die Snapshot-Methode auf turbulente Grenzschichtdaten an und zeigt, dass bereits wenige dominante Moden die wesentliche Dynamik der turbulenten Fluktuationen erfassen. Dies begründet die praktische Attraktivität der POD als Werkzeug zur Dimensionsreduktion.
+
+\subsection*{Bezug zur Masterarbeit}
+
+\subsubsection*{Snapshot-Methode als algorithmische Grundlage der POD}
+
+In der Masterarbeit wird POD in Abschnitt 2.5.2 als Vertreter linearer Reduced-Order-Modelle diskutiert. Sirovich (1987) liefert die algorithmische Grundlage, auf der moderne POD-basierte Surrogate aufgebaut sind. Die Erwähnung der Snapshot-Methode ist relevant, da diese auch in ML-nahen Kontexten (z.\,B.\ als Vorverarbeitungsschritt oder Initialisierung) eingesetzt wird.
+
+\subsubsection*{Einschränkungen im Kontext variabler Geometrien}
+
+Obwohl die Snapshot-Methode die numerische Effizienz der POD erheblich steigert, ändert sie nichts an der fundamentalen linearen Natur der Darstellung. Für die in der Masterarbeit untersuchten multi-kristallinen Konfigurationen bedeutet dies:
+\begin{itemize}
+    \item Ein POD-Modell, das auf Snapshots einer bestimmten Kristallanordnung trainiert wurde, kann nur dann neue Konfigurationen approximieren, wenn diese als Linearkombination der Trainingssnapshots darstellbar sind.
+    \item Bei variierender Kristallanzahl und -position liegen neue Konfigurationen strukturell außerhalb des von den Trainings-Snapshots aufgespannten linearen Unterraums.
+    \item Die für diese Arbeit zentrale Frage nach der Generalisierung über Kristallzahlen ($1 \ldots N$) ist mit einem linearen ROM prinzipiell nicht beantwortbar -- ein nichtlineares Surrogat (U-Net, FNO) ist erforderlich.
+\end{itemize}
+
+\subsubsection*{Konzeptueller Ausgangspunkt für latente Repräsentationen}
+
+Die Idee, ein hochdimensionales Strömungsfeld durch wenige latente Koordinaten zu beschreiben, ist das gemeinsame konzeptuelle Fundament von POD und neuronalen Encodern. Während Sirovich die optimale \emph{lineare} Einbettung konstruiert, lernen Encoder-Decoder-Architekturen wie das U-Net eine \emph{nichtlineare} Einbettung -- eine direkte konzeptuelle Weiterentwicklung, die die Beschränkungen des linearen Rahmens überwindet.
+
+\end{document}

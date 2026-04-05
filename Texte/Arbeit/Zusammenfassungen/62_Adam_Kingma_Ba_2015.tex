@@ -1,0 +1,134 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+% ================================================================
+\section*{Adam: A Method for Stochastic Optimization}
+
+\textbf{Autoren:} Diederik P. Kingma, Jimmy Lei Ba \\
+\textbf{Institution:} University of Amsterdam / OpenAI; University of Toronto \\
+\textbf{Konferenz:} ICLR 2015 \\
+\textbf{arXiv:} 1412.6980
+
+% ================================================================
+\subsection*{1\quad Problemstellung und Motivation}
+
+Stochastische gradientenbasierte Optimierung ist eine Grundvoraussetzung für das Training tiefer
+neuronaler Netze. Klassische Verfahren wie SGD verwenden eine einheitliche Lernrate für alle
+Parameter, was in hochdimensionalen, nicht-stationären Optimierungslandschaften ineffizient ist.
+Zwei spezialisierte Methoden existieren als Vorgänger:
+\begin{itemize}
+    \item \textbf{AdaGrad} akkumuliert vergangene Gradienten und passt die Lernrate pro Parameter
+    an -- wirksam bei spärlichen Gradienten, aber führt zu monoton fallender Lernrate.
+    \item \textbf{RMSProp} verwendet einen exponentiellen gleitenden Durchschnitt des quadrierten
+    Gradienten -- geeignet für nicht-stationäre Ziele, besitzt jedoch keine Korrektur des
+    Initialisierungs-Bias.
+\end{itemize}
+
+Adam (\emph{Adaptive Moment Estimation}) kombiniert die Vorteile beider Ansätze: es schätzt
+sowohl den ersten Moment (Mittelwert) als auch den zweiten Moment (unzentrierte Varianz) der
+Gradienten adaptiv und korrigiert den Initialisierungs-Bias explizit.
+
+% ================================================================
+\subsection*{2\quad Methodik: Algorithmus und Update-Regel}
+
+\paragraph{Momentschätzung.}
+Zu jedem Zeitschritt $t$ wird der Gradient $g_t = \nabla_\theta f_t(\theta_{t-1})$ berechnet.
+Daraus werden zwei exponentiell gewichtete gleitende Durchschnitte geschätzt:
+\begin{align}
+    m_t &= \beta_1 m_{t-1} + (1 - \beta_1)\, g_t, \\
+    v_t &= \beta_2 v_{t-1} + (1 - \beta_2)\, g_t^2,
+\end{align}
+wobei $m_t$ die Schätzung des ersten Moments (Erwartungswert) und $v_t$ die Schätzung des zweiten
+rohen Moments (unzentrierte Varianz) sind. Standardwerte: $\beta_1 = 0{,}9$, $\beta_2 = 0{,}999$.
+
+\paragraph{Bias-Korrektur.}
+Da $m_0 = v_0 = 0$, sind die Momentschätzungen zu Beginn des Trainings gegen null verzerrt
+(besonders bei $\beta$-Werten nahe 1). Adam korrigiert diesen Bias:
+\[
+    \hat{m}_t = \frac{m_t}{1 - \beta_1^t}, \qquad \hat{v}_t = \frac{v_t}{1 - \beta_2^t}.
+\]
+
+\paragraph{Parameter-Update.}
+Die Parameter werden gemäß
+\[
+    \theta_t = \theta_{t-1} - \alpha \cdot \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}
+\]
+aktualisiert, wobei $\alpha$ die globale Lernrate und $\epsilon \approx 10^{-8}$ eine
+Stabilisierungskonstante ist. Die effektive Schrittgröße $|\Delta_t| \lesssim \alpha$ ist
+näherungsweise durch $\alpha$ beschränkt, unabhängig von der Skalierung der Gradienten.
+
+\paragraph{Konvergenzeigenschaften.}
+Adam besitzt eine $\mathcal{O}(\sqrt{T})$-Reue-Schranke für konvexe online-Optimierung, was
+einer mittleren Reue von $\mathcal{O}(1/\sqrt{T}) \to 0$ für $T \to \infty$ entspricht. In
+der Praxis konvergiert Adam bei nicht-konvexen Problemen (tiefe neuronale Netze) robuster und
+schneller als SGD oder AdaGrad auf einer Vielzahl von Benchmarks (logistische Regression auf
+MNIST, mehrschichtige Netze mit Dropout, CNNs auf CIFAR-10).
+
+% ================================================================
+\subsection*{3\quad Experimentelle Ergebnisse}
+
+Adam wurde auf drei Problemklassen getestet:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Problem} & \textbf{Datensatz} & \textbf{Ergebnis} \\
+\midrule
+Logistische Regression & MNIST, IMDB BoW & Vergleichbar mit SGD+Nesterov, schneller als AdaGrad \\
+Mehrschichtige Netze   & MNIST + Dropout  & Adam $>$ RMSProp, AdaDelta, SGD-Nesterov \\
+Konvolutionale Netze   & CIFAR-10         & Adam $\approx$ SGD+Nesterov; Adagrad deutlich langsamer \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Darüber hinaus zeigen Ablationsstudien, dass die Bias-Korrektur bei großen $\beta_2$-Werten
+(nahe 1, nötig für spärliche Gradienten) kritisch ist: Ohne Korrektur entstehen zu Beginn des
+Trainings instabile, sehr große Schrittgrößen (analog zu RMSProp ohne Bias-Term).
+
+\paragraph{AdaMax.}
+Als Erweiterung leiten Kingma und Ba den AdaMax-Algorithmus her, der die $L^2$-Normierung
+durch die $L^\infty$-Norm ersetzt ($u_t = \max(\beta_2 u_{t-1}, |g_t|)$). AdaMax benötigt
+keine Bias-Korrektur des zweiten Moments und besitzt die einfache Schrittweiten-Schranke
+$|\Delta_t| \leq \alpha$.
+
+% ================================================================
+\subsection*{4\quad Bezug zur Masterarbeit}
+
+\paragraph{4.1\quad Verwendung als primärer Optimierer.}
+In der Masterarbeit wird Adam als einziger Optimierer für das Training sowohl von U-Net als auch
+FNO eingesetzt. Die Wahl ist durch seine Robustheit gegenüber der Lernrate motiviert: Da in
+Experiment~1 vier verschiedene Lernraten ($10^{-3}$, $5 \times 10^{-3}$, $10^{-4}$, $5 \times 10^{-4}$)
+verglichen werden, ist es wichtig, einen Optimierer zu verwenden, dessen Verhalten nicht stark
+von der Wahl der Lernrate abhängt. Die adaptive Lernratenanpassung von Adam macht die
+Ergebnisse vergleichbarer über verschiedene Lernraten hinweg.
+
+\paragraph{4.2\quad Feste Lernrate ohne Scheduling.}
+Im Gegensatz zu vielen Anwendungen, die Lernraten-Scheduling (z.B.\ Cosine Annealing oder
+Step Decay) einsetzen, werden in der Masterarbeit feste Lernraten ohne Scheduling verwendet.
+Dies entspricht der ursprünglichen Adam-Formulierung mit konstantem $\alpha$ und vereinfacht
+den Hyperparameter-Vergleich in Experiment~1.
+
+\paragraph{4.3\quad Normalisierung als Voraussetzung.}
+Die in Abschnitt~4.3 der Masterarbeit beschriebene individuelle Normalisierung des Streamfunktions-Feldes
+$\psi$ (Skalierung auf $\mathcal{O}(1)$-Wertebereich durch $10^{-p_\text{mean}}$) steht in
+direktem Bezug zu LeCuns Empfehlungen für eingangs-normalisierte Daten. Adam reduziert zwar
+die Abhängigkeit von der Input-Skalierung durch seine adaptiven Lernraten, profitiert aber
+dennoch von einer guten Konditionierung des Eingaberaums -- insbesondere da die Hessian-Geometrie
+des Verlustes durch die Eingabevarianz bestimmt wird.
+
+\paragraph{4.4\quad Abgrenzung.}
+Adam wurde primär für nicht-konvexe ML-Probleme mit stochastischen Mini-Batch-Gradienten entwickelt.
+Die theoretischen Konvergenzeigenschaften (Reue-Schranke) gelten strikt nur für konvexe Probleme.
+Für die in der Masterarbeit verwendeten tiefen U-Net- und FNO-Architekturen ist Adam empirisch
+motiviert, ohne formale Konvergenzgarantien für den nicht-konvexen Fall.
+
+\end{document}

@@ -1,0 +1,41 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\begin{document}
+
+\section*{A Novel Approach for Data-Free, Physics-Informed Neural Networks for Flow Prediction}
+\textbf{Autoren:} Ahmed Atallah, Abdelrahman A. Elmaradny, Haithem E. Taha \\
+\textbf{Jahr:} 2024 \\
+\textbf{Venue:} AIAA SciTech Forum 2024, Orlando, FL \\
+\textbf{DOI:} 10.2514/6.2024-2742
+
+\subsection*{Zusammenfassung}
+
+Diese Arbeit stellt einen neuartigen, vollständig datenfreien Ansatz für physikalisch-informierte neuronale Netze (Physics-Informed Neural Networks, PINNs) vor, der auf dem \textit{Prinzip des minimalen Druckgradienten} (Principle of Minimum Pressure Gradient, PMPG) basiert. Das PMPG wurde von Taha et al.\ entwickelt und besagt, dass sich eine inkompressible Strömung von einem Zeitschritt zum nächsten so entwickelt, dass der gesamte Betrag des Druckgradienten im Strömungsgebiet minimiert wird. Es wurde bewiesen, dass die Navier-Stokes-Gleichungen die notwendige Bedingung erster Ordnung für die Minimierung dieses Druckgradienten darstellen – die Erfüllung des PMPG impliziert also automatisch die Erfüllung der Navier-Stokes-Gleichungen.
+
+Das PMPG basiert auf dem \textit{Gauss'schen Prinzip des kleinsten Zwangs}, welches gegenüber Hamiltons Prinzip der kleinsten Wirkung den Vorteil bietet, auch nicht-konservative, dissipative Kräfte (wie Viskositätskräfte) berücksichtigen zu können und instantan anwendbar zu sein, ohne eine zeitliche Integration zu erfordern. Durch die Kombination von PINNs und PMPG wird das Strömungsproblem in ein reines Minimierungsproblem überführt: Die neuronalen Netzwerkparameter (Gewichte und Biases) dienen als Freiheitsgrade, und die Kostenfunktion ist der physikalisch motivierte Druckgradient über dem Strömungsgebiet.
+
+Im Gegensatz zu klassischen PINNs, die typischerweise sowohl ein Geschwindigkeits- als auch ein Druckmodell erfordern, konzentriert sich der PMPG-Ansatz ausschließlich auf das Geschwindigkeitsfeld und vermeidet damit die explizite Druckberechnung sowie die damit verbundene Druck-Geschwindigkeitskopplung. Als Netzwerkausgabe wird die Stromfunktion $\psi$ gewählt, wodurch die Kontinuitätsgleichung ($\nabla \cdot \mathbf{u} = 0$) automatisch und exakt erfüllt wird. Die Geschwindigkeitskomponenten werden durch Differenzierung der Stromfunktion gewonnen:
+\begin{equation*}
+    u_x = \frac{\partial \psi}{\partial y}, \qquad u_y = -\frac{\partial \psi}{\partial x}.
+\end{equation*}
+Randbedingungen (Undurchdringlichkeit an der Zylinderoberfläche, Fernfeldströmung) werden über eine Straftermmethode (Penalty Method) als harte Nebenbedingungen in die Verlustfunktion eingebettet.
+
+Die Methode wird anhand des klassischen Problems der stationären, reibungsfreien (inviskiden) Umströmung eines Zylinders in 2D validiert. Das Netzwerk besteht aus zwei vollverbundenen verdeckten Schichten mit je 50 Neuronen und Tanh-Aktivierungsfunktionen sowie einem skalaren Ausgang für $\psi$. Trainiert wird mittels Adam-Optimierung auf 5000 zufällig verteilten Kollokationspunkten, vollständig ohne Trainingsdaten aus Simulationen oder Experimenten. Der RMS-Fehler der Stromfunktion gegenüber der analytischen Lösung beträgt lediglich 2{,}3\,\%, und physikalische Prüfgrößen wie Divergenz ($\approx 10^{-10}$) und Wirbelstärke bestätigen die physikalische Konsistenz der Lösung.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Die vorliegende Arbeit steht in einem aufschlussreichen Kontrastverhältnis zur Methodik der Masterarbeit und ermöglicht eine präzise Einordnung des eigenen Ansatzes im Forschungsfeld physikalisch-informierter maschineller Lernmethoden für Strömungsprobleme.
+
+\textbf{Datenfreie vs.\ datengetriebene Ansätze:} Der PMPG-PINN-Ansatz repräsentiert das eine Extrem des Methodenspektrums: Er benötigt keinerlei Simulationsdaten und leitet die Strömungslösung rein aus physikalischen Prinzipien und Randbedingungen ab. Die Masterarbeit verfolgt hingegen einen komplementären, datengetriebenen Ansatz, bei dem UNet- und FNO-Architekturen aus LaMEM-Simulationsdaten trainiert werden. Dieser Ansatz ermöglicht zwar keine vollständig datenfreie Vorhersage, bietet aber entscheidende Vorteile hinsichtlich Schnelligkeit und Generalisierbarkeit über viele unterschiedliche Konfigurationen hinweg: Ein einmal trainiertes Surrogat-Modell kann in Millisekunden Vorhersagen für neue Kristallanordnungen liefern, während PMPG-PINNs für jede neue Geometrie einen vollständigen Optimierungsprozess durchlaufen müssten.
+
+\textbf{Stokes-Strömung vs.\ Navier-Stokes:} Das PMPG-Prinzip wurde für allgemeine inkompressible Strömungen entwickelt und in dieser Arbeit für inviskide Hochreynoldszahlströmungen eingesetzt. Die Masterarbeit operiert im Stokes-Regime sehr niedriger Reynoldszahlen, wie es für magmatische Systeme mit sedimentierenden Kristallen charakteristisch ist. Für Stokes-Strömungen existieren analytische Lösungen (z.\,B. die Hadamard-Rybczynski-Lösung für einzelne Partikel), die im residualen Lernansatz der Masterarbeit ($\mathbf{v}_\text{total} = \mathbf{v}_\text{Stokes} + \Delta\mathbf{v}_\text{gelernt}$) als physikalisch motivierte Basislösung genutzt werden – ein Konzept, das der Idee des PMPG ähnelt, physikalisches Vorwissen direkt in die Modellstruktur zu integrieren.
+
+\textbf{Verwendung der Stromfunktion:} Die Entscheidung der Autoren, die Stromfunktion als Netzwerkausgabe zu verwenden, um die Divergenzfreiheit zu garantieren, ist direkt relevant für die in der Masterarbeit untersuchten Architekturvarianten. Der Stromfunktionsansatz stellt eine elegante Möglichkeit dar, die Kontinuitätsbedingung als harte Nebenbedingung zu enkodieren – im Gegensatz zur weichen Bestrafung durch einen Divergenz-Verlustterm, wie sie in der physikalisch-informierten Verlustfunktion der Masterarbeit implementiert ist. Ein Vergleich beider Strategien (harte vs.\ weiche Nebenbedingung für $\nabla \cdot \mathbf{u} = 0$) wäre ein interessanter Aspekt für die Diskussion.
+
+\textbf{Generalisierung als Kernunterschied:} Der fundamentalste Unterschied liegt in der Generalisierungsaufgabe: PMPG-PINNs lösen ein spezifisches Randwertproblem für eine gegebene Geometrie ohne Daten, sind aber nicht darauf ausgelegt, auf ungesehene Geometrien zu generalisieren. Die Masterarbeit adressiert genau diese Generalisierungsherausforderung – die Fähigkeit eines trainierten Netzwerks, Strömungsfelder für Konfigurationen mit $N$ bis $N+m$ Kristallen vorherzusagen, ohne erneut trainiert zu werden. Diese Generalisierungsfähigkeit ist der zentrale wissenschaftliche Beitrag der Masterarbeit und grenzt sie klar von Ansätzen wie dem PMPG-PINN ab.
+
+\end{document}

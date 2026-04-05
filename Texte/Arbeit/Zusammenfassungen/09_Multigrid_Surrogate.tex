@@ -1,0 +1,86 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\begin{document}
+
+\section*{Surrogate Modeling of Fluid Dynamics with a Multigrid-Inspired Neural
+Network Architecture}
+\textbf{Autoren:} Quang Tuyen Le, Chinchun Ooi \\
+\textbf{Jahr:} 2021 \\
+\textbf{Journal:} Machine Learning with Applications, 6, 100176
+
+\subsection*{Zusammenfassung}
+
+Die Arbeit präsentiert eine modifizierte neuronale Netzwerkarchitektur für
+Strömungssurrogate, die strukturell von algebraischen Mehrgitterverfahren aus der
+numerischen Mathematik inspiriert ist. Ausgangspunkt ist die etablierte U-Net-Architektur,
+die Le und Ooi um zusätzliche Gitter unterschiedlicher Auflösung in jeder Encoderschicht
+erweitern -- die sogenannte U-Net-MG-Architektur. Auf jeder Tiefenstufe des Encoders
+werden drei parallele Gitter mit unterschiedlicher räumlicher Auflösung verarbeitet, wobei
+Max-Pooling und Subsampling als Kommunikationswerkzeuge zwischen den Skalen dienen.
+Die resultierenden Merkmalskarten werden konkateniert und als Eingabe an die nächste
+Schicht weitergegeben. Dieser Ansatz ermöglicht es dem Netzwerk, Information über
+mehrere Längenskalen hinweg effizienter auszutauschen, analog zur Wirkungsweise von
+Mehrgitterlösern in der numerischen Strömungssimulation, bei denen gröbere Gitter die
+Informationsübertragung zwischen weit entfernten Knoten auf feinen Gittern
+beschleunigen.
+
+Die Methode wird an drei kanonischen Strömungskonfigurationen evaluiert: stationäre
+Umströmung eines einzelnen Zylinders, Umströmung zweier Zylinder in Gegenphasenbewegung sowie Umströmung eines oszillierenden NACA-0012-Profils in Vortriebs- und
+Energiegewinnungsmodus. Alle Simulationen werden mit OpenFOAM bei Reynolds-Zahlen
+zwischen $\mathrm{Re} = 4\times10^4$ und $\mathrm{Re} = 1{,}15\times10^5$ durchgeführt.
+Als Eingabefelder dienen aktuelle Geschwindigkeitskomponenten sowie ein binäres
+Geometriefeld; die Netzwerke sagen die verbleibenden Strömungsgrößen (Druck und/oder
+Geschwindigkeit) vorher. Der mittlere quadratische Fehler (MSE) wird als Verlustfunktion
+verwendet.
+
+Die Ergebnisse zeigen, dass U-Net-MG konsistent besser abschneidet als die
+konventionelle U-Net-Architektur: Die Test-RMSE-Werte werden über alle betrachteten
+Konfigurationen hinweg um 20\,\% bis 70\,\% reduziert, bei vergleichbarer Parameteranzahl
+(1,65\,M gegenüber 1,24\,M). Entscheidend ist dabei, dass die Verbesserung auch bei der
+Generalisierung auf ungesehene Randbedingungen (unterschiedliche Einströmgeschwindigkeiten) und ungesehene Geometrien (NACA-0025-Profil) erhalten bleibt. Um
+auszuschließen, dass die Verbesserungen allein auf die höhere Parameteranzahl zurückzuführen sind, vergleichen die Autoren U-Net-MG zusätzlich mit zwei skalierten
+U-Net-Varianten gleicher Parameterzahl (U-Net-S1, U-Net-S2) -- der Vorteil der
+Mehrgitterstruktur bleibt bestehen. Als gemeinsame Schwäche beider Architekturen
+identifizieren die Autoren Ungenauigkeiten in Wandnähe und in Regionen mit starken
+Gradienten, also genau dort, wo physikalisch relevante Grenzschichteffekte auftreten.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Die Arbeit von Le und Ooi ist für die vorliegende Masterarbeit aus mehreren Gründen
+relevant. Erstens belegt sie, dass U-Net-basierte Architekturen grundsätzlich in der Lage
+sind, vollständige Strömungsfelder in komplexen, geometrieabhängigen Szenarien zu
+approximieren -- eine Voraussetzung, die auch für die Vorhersage der Stromfunktion
+$\psi$ um sedimentierende Kristalle gilt. Die Mehrskalenstruktur des U-Net ist dabei
+besonders geeignet, sowohl die lokalen Grenzschichten unmittelbar an den
+Kristalloberflächen als auch die langreichweitigen hydrodynamischen Wechselwirkungen
+im Stokes-Regime zu erfassen.
+
+Zweitens ist der Befund zur Generalisierung auf ungesehene Geometrien direkt
+anschlussfähig an die zentrale Forschungsfrage dieser Arbeit: Wenn ein auf $N$ Kristalle
+trainiertes Modell auf Konfigurationen mit einer abweichenden Anzahl und räumlichen
+Anordnung von Kristallen generalisieren soll, stellt dies höhere Anforderungen als die
+Interpolation zwischen ähnlichen Geometrien gleichen Typs. Le und Ooi zeigen, dass
+U-Net-MG selbst bei Extrapolation auf untrainierte Konfigurationen robuster ist als das
+Standard-U-Net, was einen Hinweis darauf liefert, dass die Mehrskalenverarbeitung die
+Repräsentation geometrischer Variabilität verbessert.
+
+Drittens adressieren Le und Ooi explizit das Problem starker Gradienten in Wandnähe als
+Schwachstelle beider Architekturen. Diese Beobachtung ist auf den Kristall-Fluid-Kontext
+direkt übertragbar: Die Genauigkeit der Vorhersage in der Nähe der Kristallränder,
+wo Viskositätskontraste und steile Geschwindigkeitsgradienten auftreten, ist auch in der
+vorliegenden Arbeit eine zentrale Herausforderung. Die Wahl der Stromfunktion $\psi$
+als Lernziel, die in dieser Masterarbeit motiviert wird, zielt unter anderem darauf ab,
+dieser Schwäche durch eine physikalisch strukturierte Ausgaberepräsentation entgegenzuwirken.
+
+Schließlich bietet der direkte Architekturvergleich (U-Net vs. U-Net-MG bei gleicher
+Parameteranzahl) methodisch ein Vorbild für den Vergleich von U-Net und Fourier Neural
+Operator (FNO) in dieser Arbeit: Auch hier werden beide Architekturen auf identischen
+Daten mit gleicher Verlustfunktion und gleichem Evaluierungsprotokoll verglichen, um
+Leistungsunterschiede auf die architektonische Induktionsbias zurückführen zu können --
+räumliche Hierarchieverarbeitung im Fall des U-Net gegenüber spektraler Globalverarbeitung im Fall des FNO.
+
+\end{document}

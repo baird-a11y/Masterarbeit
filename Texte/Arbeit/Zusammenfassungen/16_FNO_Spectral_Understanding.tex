@@ -1,0 +1,122 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{amsmath}
+\usepackage{parskip}
+\setlength{\parskip}{6pt}
+
+\begin{document}
+
+\section*{Toward a Better Understanding of Fourier Neural Operators from a Spectral Perspective}
+
+\textbf{Autoren:} Shaoxiang Qin, Fuyuan Lyu, Wenhui Peng, Dingyang Geng, Ju Wang, Xing Tang,
+Sylvie Leroyer, Naiping Gao, Xue Liu, Liangzhu (Leon) Wang \\
+\textbf{Jahr:} 2024 \\
+\textbf{Konferenz/Preprint:} arXiv:2404.07200v2
+
+% -------------------------------------------------------
+\subsection*{Zusammenfassung}
+
+Fourier Neural Operators (FNOs) haben sich als besonders effektive Surrogatmodelle f\"ur das
+L\"osen partieller Differentialgleichungen (PDEs) etabliert. Trotz ihrer vielfach demonstrierten
+Leistungsf\"ahigkeit besteht ein bislang unzureichend verstandenes Problem: FNOs profitieren
+kaum von gr\"o\ss{}eren Fourier-Kernen, die ein breiteres Frequenzspektrum abdecken. Die
+Standardl\"osung in der Literatur war es, die Gr\"o\ss{}e des Fourier-Kerns (den sogenannten
+Truncation-Mode $k$) m\"oglichst klein zu halten -- was jedoch die F\"ahigkeit des Modells
+einschr\"ankt, komplexe PDE-Daten zu repr\"asentieren.
+
+Diese Arbeit liefert eine systematische spektralanalytische Untersuchung des FNO und identifiziert
+die Ursache dieses Problems als \textit{Fourier Parameterization Bias}: Konvolutionskerne, die
+im Fourierraum parametrisiert werden, zeigen eine deutlich st\"arkere Tendenz, dominante
+Frequenzen der Zieldaten zu lernen, w\"ahrend nicht-dominante Frequenzen vernachl\"assigt
+werden. Konkret bedeutet dies: Da die Energie von PDE-Daten im Fourierraum typischerweise
+stark auf wenige dominante Frequenzmoden konzentriert ist (im Navier-Stokes-Beispiel der
+Autoren enthalten $1{,}2\,\%$ der Pixel mit den gr\"o\ss{}ten Merkmalen $99\,\%$ der Gesamtenergie),
+optimiert die Verlustfunktion w\"ahrend des Trainings haupts\"achlich diese wenigen Moden.
+Zus\"atzliche Frequenzparameter, die durch einen vergr\"o\ss{}erten Kern hinzukommen, werden
+kaum genutzt und erzeugen stattdessen Rauschen.
+
+Zur Illustration werden sogenannte NMSE-Spektren eingesetzt: Die Vorhersageresiduen werden
+in den Fourierraum transformiert, und die Energieverteilung \"uber Frequenzmoden wird
+analysiert. Verglichen mit Conv-basierten Modellen wie U-Net, das Kerne im Ortsraum
+parametrisiert, zeigt FNO unterhalb seiner Abschneidefrequenz eine stark \"uberproportionale
+Reduktion des Fehlers bei den dominanten Frequenzen, w\"ahrend es bei nicht-dominanten
+Frequenzen schlechter abschneidet.
+
+Als L\"osungsansatz schlagen die Autoren \textbf{SpecB-FNO} (Spectral Boosted FNO) vor.
+Die zentrale Beobachtung ist, dass die Residuen eines trainierten FNO eine gleichm\"a\ss{}igere
+Energieverteilung im Fourierraum aufweisen als die Originaldaten, da der FNO die dominanten
+Frequenzen bereits gut erfasst hat. SpecB-FNO nutzt diesen Umstand durch iteratives
+Residuallernen: Nach dem Training eines Basis-FNO $\mathcal{G}_0$ werden $T$ zus\"atzliche
+FNO-Module sequenziell trainiert, wobei jedes Modul $\mathcal{G}_i$ das Vorhersageresiduum
+des vorherigen Moduls lernt:
+\[
+    r_i = y - \sum_{j=0}^{i-1} \hat{r}_j, \qquad \hat{r}_i = \mathcal{G}_i\!\left([x,\, \hat{r}_{i-1}]\right).
+\]
+Die finale Vorhersage ergibt sich als Summe aller Modul-Ausgaben:
+$\hat{y} = \sum_{i=0}^{T} \hat{r}_i$.
+
+Die experimentelle Evaluation auf f\"unf PDE-Datens\"atzen (Navier-Stokes, Darcy Flow,
+Flachwassergleichung, Diffusions-Reaktions-Gleichung) zeigt, dass SpecB-FNO den
+Vorhersagefehler gegen\"uber dem besten Baseline-Modell im Durchschnitt um $50\,\%$ reduziert,
+in einzelnen F\"allen sogar bis zu $93\,\%$. Dar\"uber hinaus erweist sich SpecB-FNO als
+speichereffizient, da stets nur ein Teilmodell trainiert wird, was den maximalen GPU-Speicherbedarf
+gegen\"uber vergleichbaren vergr\"o\ss{}erten FNO-Varianten deutlich senkt.
+
+% -------------------------------------------------------
+\subsection*{Bezug zur Masterarbeit}
+
+Die Erkenntnisse dieser Arbeit sind auf mehreren Ebenen direkt relevant f\"ur die vorliegende
+Masterarbeit, in der FNO als Surrogatmodell zur Vorhersage von Str\"omungsfeldern um
+sedimentierende Kristalle im Stokes-Regime untersucht wird.
+
+\textbf{Frequenzinhalt von Stokes-Str\"omungsfeldern.}
+Im Stokes-Regime sind Str\"omungsfelder um Kristalle in der Regel glatt und werden von
+niederfrequenten Komponenten dominiert -- insbesondere durch die weitreichenden
+Druckgradienten und Wirbelstrukturen. An den Kristallr\"andern k\"onnen jedoch starke
+lokale Gradienten auftreten, die h\"ohere Frequenzanteile erzeugen. Der \textit{Fourier
+Parameterization Bias} liefert eine plausible Erkl\"arung daf\"ur, warum ein Standard-FNO
+diese randnahen Details schlechter erfasst als die grob-skaligen Str\"omungsstrukturen --
+ein Verhalten, das in den Evaluationsmetriken der Masterarbeit als r\"aumlich ungleichm\"a\ss{}iger
+Fehler sichtbar werden kann.
+
+\textbf{Wahl des Truncation-Mode $k$.}
+Ein zentrales Hyperparameter-Design des FNO ist die Anzahl der beibehaltenen Fourier-Moden.
+Qin et al. zeigen empirisch, dass eine naive Vergr\"o\ss{}erung von $k$ die Genauigkeit nicht
+verbessert und sogar verschlechtern kann. F\"ur die Masterarbeit impliziert dies, dass bei
+der Hyperparameteroptimierung des FNO nicht automatisch ein m\"oglichst gro\ss{}es $k$ gew\"ahlt
+werden sollte; stattdessen sollte $k$ an die tats\"achlich vorliegende Frequenzstruktur der
+Str\"omungsfelder angepasst werden, die mit Methoden wie dem NMSE-Spektrum charakterisiert
+werden kann.
+
+\textbf{Residuallernen als Erweiterungsm\"oglichkeit.}
+Der SpecB-FNO-Ansatz ist konzeptuell verwandt mit dem in der Masterarbeit untersuchten
+Residuallernansatz ($v_{\text{total}} = v_{\text{Stokes}} + \Delta v_{\text{learned}}$),
+bei dem das Netzwerk Korrekturen zur analytischen Stokes-L\"osung lernt. W\"ahrend der
+Residualansatz der Masterarbeit physikalisch motiviert ist und die analytische L\"osung als
+Vorwissen nutzt, adressiert SpecB-FNO das spektrale Residual iterativ ohne Vorannahmen
+\"uber die Physik. Eine Kombination beider Ideen -- physikalisch informiertes Residuallernen
+mit anschlie\ss{}endem spektralem Boosting -- k\"onnte eine interessante Erweiterung darstellen.
+
+\textbf{Vergleich FNO vs.\ U-Net.}
+Die Arbeit zeigt quantitativ, dass FNO und U-Net komplementäre St\"arken besitzen: FNO
+\"ubertrifft U-Net bei dominanten (niederfrequenten) Strukturen, w\"ahrend U-Net eine
+konsistentere spektrale Performance \"uber alle Frequenzen zeigt. Da die Masterarbeit
+beide Architekturen vergleicht, bieten die NMSE-Spektren eine zus\"atzliche Analysedimension
+jenseits globaler Fehlermetriken: Ein Vergleich der spektralen Fehlerverteilungen kann
+erkl\"aren, in welchen r\"aumlichen Skalen U-Net oder FNO jeweils \"uberlegen ist und ob die
+Unterschiede auf den Fourier Parameterization Bias zur\"uckzuf\"uhren sind.
+
+\textbf{Generalisierung auf mehrere Kristalle.}
+Die Kernfragestellung der Masterarbeit -- ob ein auf $N$ Kristallen trainiertes Modell auf
+$N{+}m$ Kristalle generalisiert -- hat eine direkte spektrale Dimension: Mehr Kristalle
+erzeugen komplexere Interferenzmuster in den Str\"omungsfeldern, was den Anteil
+nicht-dominanter Frequenzen vergr\"o\ss{}ert. Der Fourier Parameterization Bias k\"onnte
+demnach bei Multi-Kristall-Konfigurationen st\"arker zum Tragen kommen als bei einfachen
+Einzel-Kristall-Systemen, was m\"oglicherweise die beobachtete schlechtere Generalisierung
+des FNO auf komplexere Konfigurationen erkl\"art.
+
+\end{document}

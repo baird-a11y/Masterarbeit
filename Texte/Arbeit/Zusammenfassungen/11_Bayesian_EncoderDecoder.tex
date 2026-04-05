@@ -1,0 +1,20 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Bayesian Deep Convolutional Encoder--Decoder Networks for Surrogate Modeling and Uncertainty Quantification}
+\textbf{Autoren:} Yinhao Zhu, Nicholas Zabaras \\
+\textbf{Jahr:} 2018
+
+\subsection*{Zusammenfassung}
+Die Arbeit stellt einen Bayesschen Ansatz für tiefe konvolutionelle Encoder-Decoder-Netzwerke zur Surrogat-Modellierung physikalischer Systeme vor. Durch die Verwendung von Bayesscher Inferenz können neben den Vorhersagen auch Unsicherheitsabschätzungen für die Modellausgaben erzeugt werden. Das Modell wird auf Probleme der Strömung durch poröse Medien und Wärmeleitung angewendet und zeigt, dass die Unsicherheitsschätzungen mit den tatsächlichen Vorhersagefehlern korrelieren. Die Autoren verwenden variationelle Inferenz und Dropout-basierte Approximationen zur effizienten Berechnung der posterioren Verteilung.
+
+\subsection*{Bezug zur Masterarbeit}
+Die Encoder-Decoder-Architektur ist strukturell verwandt mit dem in der Masterarbeit verwendeten U-Net-Ansatz. Der Bayessche Ansatz zur Unsicherheitsquantifizierung bietet eine interessante Erweiterungsmöglichkeit für die Surrogat-Modelle der Masterarbeit, da die Zuverlässigkeit der Vorhersagen für verschiedene Kristallkonfigurationen variieren kann. Die Anwendung auf Strömungsprobleme mit räumlich verteilten Eingaben und Ausgaben demonstriert die generelle Eignung von Encoder-Decoder-Netzen für derartige Probleme.
+
+\end{document}

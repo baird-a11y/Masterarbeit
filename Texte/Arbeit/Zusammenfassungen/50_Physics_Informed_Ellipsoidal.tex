@@ -1,0 +1,194 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Zusammenfassung: Ashwin et al. (2024)}
+\textbf{Titel:} Physics Informed Deep Learning for Flow and Force Predictions
+in Dense Ellipsoidal Particle Suspensions \\
+\textbf{Autoren:} Neil Raj Ashwin, Danesh Tafti, Nikhil Muralidhar, Ze Cao \\
+\textbf{Journal:} Powder Technology 439 (2024) 119684
+
+% ----------------------------------------------------------------
+\subsection*{Problemstellung und Motivation}
+% ----------------------------------------------------------------
+
+Dichte Feststoff-Fluid-Suspensionen treten in zahlreichen industriellen und
+natürlichen Prozessen auf, darunter Sedimentation, Wirbelschichtreaktoren und
+chemische Verarbeitungsanlagen. Das zentrale numerische Hilfsmittel zur genauen
+Untersuchung solcher Systeme sind \emph{Particle Resolved Simulations} (PRS), die
+die Strömung um jedes einzelne Partikel explizit auflösen. Aufgrund des hohen
+Rechenaufwands ist PRS jedoch auf kleine Systeme mit typischerweise weniger als
+$10^5$ Partikeln beschränkt. Gröbere Modelle wie Euler-Lagrange- oder
+Zwei-Fluid-Modelle müssen die Kraft- und Drehmomentübertragung zwischen
+Partikeln und Fluid durch phänomenologische Korrelationen annähern, die nur
+die mittleren Bedingungen (Reynolds-Zahl, Feststoffanteil) berücksichtigen und
+daher die individuellen Variationen der Widerstandskräfte zwischen Partikeln
+nicht erfassen.
+
+Die Autoren begegnen dieser Lücke, indem sie Deep-Learning-Surrogatmodelle
+entwickeln, die auf PRS-Daten trainiert werden und in der Lage sind, sowohl die
+interstitiellen Strömungsfelder als auch die Widerstandskräfte auf einzelne
+Partikel in Echtzeit vorherzusagen.
+
+% ----------------------------------------------------------------
+\subsection*{Datengenerierung und Versuchsaufbau}
+% ----------------------------------------------------------------
+
+Als Grundlage dienen PRS-Simulationen ellipsoidaler Partikel mit einem
+Achsenverhältnis von 2{,}5, die mit dem hauseigenen Code
+\textit{GenIDLEST} unter Verwendung der \emph{Immersed Boundary Method} (IBM)
+durchgeführt werden. Die dimensionslosen inkompressiblen Navier-Stokes-Gleichungen
+werden gelöst:
+\begin{equation}
+    \frac{\partial u_i}{\partial x_i} = 0, \qquad
+    \rho\frac{\partial u_i}{\partial t} + \rho\frac{\partial}{\partial x_j}(u_i u_j)
+    = -\frac{\partial p}{\partial x_i}
+      + \frac{\partial}{\partial x_j}\!\left[\frac{1}{Re}\frac{\partial u_i}{\partial x_j}\right].
+\end{equation}
+Der Datensatz umfasst drei Feststoffanteile ($\varphi = 0{,}1;\;0{,}2;\;0{,}3$)
+und vier Reynolds-Zahlen ($Re = 10;\;50;\;100;\;200$), was insgesamt
+4632 Partikel-Datenpunkte ergibt. Für jedes betrachtete Partikel
+(\emph{particle of interest}, POI) wird ein kubischer Ausschnitt der Größe
+$\pm2{,}5$ Einheiten in alle Raumrichtungen um das POI extrahiert und auf ein
+Gitter von $51^3$ Voxeln subsampelt.
+
+% ----------------------------------------------------------------
+\subsection*{Methodik: U-Net-Architektur und Eingaberepräsentation}
+% ----------------------------------------------------------------
+
+\paragraph{Eingaberepräsentationen.}
+Es werden zwei Eingabedarstellungen verglichen. Die \emph{binäre Methode}
+weist jedem Voxel den Wert 0 (Feststoff) oder 1 (Fluid) zu. Die
+\emph{5-Kanal-Distanzfunktion} kodiert für jeden Fluidvoxel die Abstände zur
+nächstgelegenen, zweitnächstgelegenen, \ldots, fünftnächstgelegenen
+Partikeloberfläche:
+\begin{equation}
+    D^n = \begin{cases}
+        |\delta_n| & \text{Fluidvoxel} \\
+        0          & \text{Feststoffvoxel}
+    \end{cases}
+\end{equation}
+Der Vorteil dieses Ansatzes liegt darin, dass höhere Kanalindizes
+Informationen über weiter entfernte Partikel tragen, die außerhalb des
+$5^3$-Ausschnitts liegen und somit nicht direkt im Eingabetensor sichtbar sind.
+
+\paragraph{U-Net-Architektur.}
+Das U-Net besteht aus einem Encoder-Zweig (sukzessive 3D-Faltungen mit
+Max-Pooling) und einem Decoder-Zweig (Upsampling mit bilinearer Interpolation).
+Skip-Connections verbinden korrespondierende Encoder- und Decoder-Ebenen, um
+hochauflösende Merkmale wiederzuverwenden und dem Vanishing-Gradient-Problem
+entgegenzuwirken. Im Flaschenhals werden Reynolds-Zahl und Feststoffanteil als
+skalare Eingaben in den Tensor eingebettet. Vier separate Decoder-Zweige
+sagen gleichzeitig die $x$-, $y$-, $z$-Geschwindigkeiten und das Druckfeld
+vorher. Als Verlustfunktion wird der mittlere quadratische Fehler (MSE) mit
+dem Adam-Optimierer minimiert.
+
+\paragraph{Druckvorverarbeitung.}
+Eine wichtige Vorverarbeitungsentscheidung betrifft das Druckfeld: Da der
+mittlere Druck in Strömungsrichtung stark abfällt und dieses globale Signal
+die lokalen Druckstörungen der Partikel überdeckt, trainieren die Autoren auf
+dem Fluktuationsdruckfeld
+\begin{equation}
+    p'(x,y,z) = p(x,y,z) - \bar{p}(x),
+\end{equation}
+wobei $\bar{p}(x)$ der ebenengemittelte Druck in der jeweiligen $x$-Ebene ist.
+Dieses Vorgehen verbessert die Druckvorhersagen erheblich.
+
+% ----------------------------------------------------------------
+\subsection*{Ergebnisse: Strömungsfeldvorhersage}
+% ----------------------------------------------------------------
+
+Die 5-Kanal-Distanzfunktion übertrifft die binäre Eingabe konsistent für alle
+drei Geschwindigkeitskomponenten. Der mittlere $R^2$ erreicht bei
+$\varphi = 0{,}3$ und $Re = 10$ Werte von $\sim\!0{,}94$ für die
+$x$-Geschwindigkeit und $\sim\!0{,}98$ für den Druck. Die Vorhersagegenauigkeit
+sinkt mit steigender Reynolds-Zahl (zunehmende Nichtlinearitäten) und steigt
+mit zunehmendem Feststoffanteil (dichtere Partikelanordnungen sind leichter zu
+lernen). Interessanterweise zeigt sich, dass das Modell auf ungesehenen
+Reynolds-Zahlen ($Re = 50$ und $100$) ähnlich gut abschneidet wie auf
+Reynolds-Zahlen aus dem Trainingsdatensatz -- die Interpolation zwischen
+Strömungsbedingungen ist leichter als die Generalisierung auf neue
+Partikelanordnungen.
+
+Die physikalische Konsistenz der vorhergesagten Felder wird anhand der
+Kontinuitätsgleichung und der Impulsgleichung überprüft. Die Residuen sind
+zentriert um Null und zeigen eine ähnliche Verteilung wie die Residuen der
+(ebenfalls subgesampelten) PRS-Felder.
+
+\paragraph{Widerstandskraftvorhersage.}
+Die Autoren vergleichen zwei Strategien: (1) ein CNN, das direkt aus der
+5-Kanal-Distanzfunktion die Widerstandskraft vorhersagt, und (2) ein CNN, das
+die vorhergesagten Strömungsfelder des U-Nets als Eingabe verwendet. Methode~2
+erzielt durchgehend bessere Ergebnisse ($R^2 = 0{,}927$ vs.\
+$0{,}865$; $\sim\!85\%$ aller Partikel innerhalb eines relativen Fehlers von
+$20\%$ vs.\ $71\%$ für Methode~1). Der Vorteil von Methode~2 ist besonders
+ausgeprägt bei niedrigem Feststoffanteil ($\varphi = 0{,}1$), wo die
+Datendichte gering ist -- das Modell profitiert in diesem Fall stark von den
+zusätzlichen physikalischen Informationen der Strömungsfelder.
+
+% ----------------------------------------------------------------
+\subsection*{Relevanz für die Masterarbeit}
+% ----------------------------------------------------------------
+
+Dieses Paper ist in mehrfacher Hinsicht eng mit der Masterarbeit verknüpft:
+
+\paragraph{Gemeinsamer Ansatz: U-Net zur Strömungsfeldvorhersage.}
+Wie in der vorliegenden Arbeit wird eine U-Net-Architektur eingesetzt, um
+vollständige Strömungsfelder aus geometrischen Eingabeinformationen
+vorherzusagen. Ashwin et al.\ operieren in 3D mit der Navier-Stokes-Gleichung
+bei moderaten Reynolds-Zahlen, während die Masterarbeit 2D-Stokes-Strömungen
+($Re \to 0$) im Kontext magmatischer Sedimentation untersucht. In beiden Fällen
+sind die langen hydrodynamischen Wechselwirkungen zwischen Partikeln das
+zentrale Modellierungsproblem.
+
+\paragraph{Eingaberepräsentation und physikalische Informationen.}
+Die 5-Kanal-Distanzfunktion von Ashwin et al.\ stellt Partikelinformationen
+jenseits des lokalen Ausschnitts zur Verfügung -- konzeptuell verwandt mit dem
+binären Belegungsfeld, das in der Masterarbeit als Eingabe genutzt wird. Die
+Überlegenheit der distanzbasierten Darstellung gegenüber der binären Methode
+unterstützt die Entscheidung, physikalisch informierte Eingabemerkmale zu
+verwenden.
+
+\paragraph{Druckvorverarbeitung als Analogie zur Strom\-funktion.}
+Die Subtraktion des mittleren Druckgradienten ($p \to p'$) hat ein direktes
+Analogon in der Masterarbeit: Die Verwendung der Stromfunktion $\psi$ anstelle
+der Geschwindigkeitskomponenten eliminiert die Divergenzbedingung
+$\nabla \cdot \mathbf{u} = 0$ analytisch und reduziert damit die Freiheitsgrade
+des Lernproblems -- dies entspricht dem Entfernen eines dominanten, schwer zu
+lernenden Signals, das die eigentlich interessanten Partikelinteraktionen
+überdecken würde.
+
+\paragraph{Generalisierung auf ungesehene Konfigurationen.}
+Der zentrale Befund von Ashwin et al., dass die Generalisierung auf neue
+Partikelanordnungen deutlich schwieriger ist als die Interpolation auf neue
+Strömungsbedingungen, hat direkte Implikationen für die Masterarbeit. Die
+Kernfragestellung -- ob Modelle, die auf $N$ Kristalle trainiert wurden, auf
+$N + m$ Kristalle generalisieren -- entspricht genau dem schwierigeren dieser
+beiden Generalisierungsszenarien. Die Ergebnisse von Ashwin et al.\
+unterstreichen, dass für diese Art der Generalisierung physikalisch reichhaltige
+Eingaben und Ausgaberepräsentationen besonders wichtig sind.
+
+\paragraph{Verwendung von Hilfsverlusten und mehrstufigem Training.}
+Ashwin et al.\ zeigen, dass das Training auf Strömungsfeldern (Hilfsaufgabe)
+und anschließende Kraft\-vorhersage eine erhebliche Verbesserung gegenüber dem
+direkten Lernen der Zielvariable bringt -- insbesondere wenn die Datenlage dünn
+ist. Dieser Ansatz des indirekten, physikalisch informierten Lernens ist
+konzeptuell verwandt mit dem in der Masterarbeit untersuchten Residuallern\-ansatz,
+bei dem $\Delta\mathbf{v}_\text{learned}$ als Korrektur zur analytischen
+Stokes-Lösung gelernt wird.
+
+\paragraph{Skalierbarkeit und Datenmenge.}
+Mit 4632 Datenpunkten und 12 Experimenten operieren Ashwin et al.\ in einem
+ähnlichen Datenregime wie die Masterarbeit (200--300 LaMEM-Simulationen).
+Die vergleichbaren Trainingsgrößen bestätigen, dass physikalisch strukturierte
+Modelle auch in datenknappen Szenarien erfolgreich sein können.
+
+\end{document}

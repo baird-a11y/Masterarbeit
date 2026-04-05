@@ -1,0 +1,166 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+% ================================================================
+\section*{GNOT: A General Neural Operator Transformer for Operator Learning}
+
+\textbf{Autoren:} Zhongkai Hao, Zhengyi Wang, Hang Su, Chengyang Ying, Yinpeng Dong, \\
+\hspace*{2.3cm} Songming Liu, Ze Cheng, Jian Song, Jun Zhu \\
+\textbf{Institution:} Tsinghua-Bosch Joint ML Center, Tsinghua University; RealAI; Bosch China Investment Ltd. \\
+\textbf{Konferenz:} ICML 2023 \\
+\textbf{arXiv:} 2302.14376
+
+% ================================================================
+\subsection*{1\quad Problemstellung und Motivation}
+
+Bestehende Operatorlerner für PDEs weisen drei praktische Einschränkungen auf:
+\begin{enumerate}
+    \item \textbf{Irreguläre Gitter:} Methoden wie FNO und U-Net sind auf reguläre
+    rechteckige Gitter beschränkt. Reale Geometrien (z.B.\ Tragflügelprofile, Wärmesenken)
+    erfordern unstrukturierte Gitter, auf denen diese Ansätze versagen.
+
+    \item \textbf{Multiple Eingabefunktionen:} Physikalische Systeme werden oft durch
+    mehrere Eingabegrößen beschrieben (Randform, verteilte Quellterme, Materialparameter).
+    Bestehende Methoden wie FNO und MIONet sind nicht direkt auf diese allgemeine
+    Situation ausgelegt.
+
+    \item \textbf{Mehrskaligkeitsprobleme:} In vielen Systemen sind unterschiedliche
+    physikalische Phänomene auf verschiedenen Skalen aktiv (z.B.\ Nahfeld vs.\ Fernfeld
+    bei Strömungen). Ein einzelnes globales Modell kann solche Strukturen nur schwer
+    gleichzeitig repräsentieren.
+\end{enumerate}
+
+GNOT (\emph{General Neural Operator Transformer}) adressiert alle drei Herausforderungen
+durch zwei neuartige Komponenten: (1)~einen \emph{Heterogeneous Normalized Attention}-Block
+(HNA) für allgemeines Operatorlernen mit variabler Anzahl von Eingabefunktionen und
+(2)~einen \emph{Geometric Gating}-Mechanismus (GGM) für mehrskalige Probleme.
+
+% ================================================================
+\subsection*{2\quad Methodik: HNA-Block und geometrisches Gating}
+
+\paragraph{Eingabekodierung.}
+Das Modell empfängt Abfragepunkte $\{x_i^q\}_{i=1}^{N_q}$ und bis zu $L$ verschiedene
+Eingabefunktionen $\{a^1, \ldots, a^L\}$, die auf potenziell unterschiedlichen Gittern
+$\{x^{j}\}$ diskretisiert sind. Jede Eingabefunktion wird durch ein individuelles
+MLP $f_w(x_i, a_i)$ in ein Embedding $Y^l \in \mathbb{R}^{N_l \times n_e}$ kodiert.
+
+\paragraph{Heterogeneous Normalized Cross-Attention.}
+Der HNA-Block berechnet zunächst eine normalisierte lineare Cross-Attention zwischen
+den Abfragepunkten $X \in \mathbb{R}^{N_q \times n_e}$ und den $L$ Konditionierungs-Embeddings
+$\{Y^l\}$:
+\begin{align}
+    \bar{q}_i &= \mathrm{Softmax}(q_i) = \left(\frac{e^{q_{ij}}}{\sum_j e^{q_{ij}}}\right),\quad
+    \bar{k}_i = \mathrm{Softmax}(k_i), \\
+    z_t &= \bar{q}_t + \frac{1}{L} \sum_{l=1}^{L} \alpha_t^l\,\bar{q}_t \cdot
+           \left(\sum_{i_l=1}^{N_l} \bar{k}_{i_l}^l \otimes v_{i_l}^l\right),
+\end{align}
+wobei $\alpha_t^l = \left(\sum_j \bar{q}_t \cdot \bar{k}_j^l\right)^{-1}$ der
+Normierungskoeffizient ist. Der Aufwand ist $\mathcal{O}((N_q + \sum_l N_l) n_e^2)$,
+also linear in der Sequenzlänge. Anschließend wird eine normalisierte lineare
+Selbst-Attention auf $X$ angewendet. Dieser \emph{Cross+Self}-Block ist der
+leistungsstärkste Aufmerksamkeitstyp im Ablationsvergleich.
+
+\paragraph{Geometrisches Gating.}
+Um mehrskalige Probleme zu behandeln, wird ein \emph{Mixture-of-Experts}-Mechanismus
+mit geometrischer Konditionierung eingesetzt. In jedem Block gibt es $K$ spezialisierte
+FFN-Expertennetze $\{E_i(\cdot)\}$; ein Gating-Netzwerk $G(\cdot) : \mathbb{R}^d \to \mathbb{R}^K$
+berechnet die räumlich variablen Gewichte:
+\begin{equation}
+    z_t \leftarrow z_t + \sum_{i=1}^{K} p_i(x_t) \cdot E_i(z_t), \quad
+    p_i(x_t) = \frac{\exp(G_i(x_t))}{\sum_{j=1}^K \exp(G_j(x_t))}.
+\end{equation}
+Das Gating-Netzwerk erhält die geometrischen Koordinaten der Abfragepunkte als Eingabe
+und lernt so eine weiche Gebietsdekomposition, bei der unterschiedliche Skalen
+durch spezialisierte Experten abgedeckt werden.
+
+% ================================================================
+\subsection*{3\quad Experimente und Ergebnisse}
+
+GNOT wird auf neun Datensätzen aus vier Bereichen (Strömungsmechanik, Elastizität,
+Elektromagnetismus, Wärmeleitung) getestet:
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Datensatz} & \textbf{MIONet} & \textbf{FNO} & \textbf{GK-Transf.} & \textbf{GNOT} \\
+\midrule
+Darcy2d & 5.45e-2 & 1.09e-2 & \textbf{8.40e-3} & 1.05e-2 \\
+NS2d (voll) & -- & 8.20e-2 & 7.92e-2 & \textbf{4.43e-2} \\
+Elasticity & 9.65e-2 & 5.08e-2 & 2.01e-2 & \textbf{8.65e-3} \\
+NACA & 1.32e-1 & 4.21e-2 & 1.61e-2 & \textbf{7.57e-3} \\
+Inductor2d ($A_z$) & 3.10e-2 & -- & 2.56e-1 & \textbf{1.21e-2} \\
+Heat (voll) & 1.45e-1 & -- & -- & \textbf{2.56e-2} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Für Datensätze mit irregulärem Gitter und multiplen Eingaben (Typen A und/oder B)
+reduziert GNOT den Vorhersagefehler gegenüber den Basislinien um typischerweise
+40--50\,\%. Auf dem einfachen regulären Darcy2d-Gitter ist der Galerkin-Transformer
+minimal besser. Bei mehrskaligen Problemen (Heatsink, Heat) kann GNOT als einzige
+Methode überhaupt eine sinnvolle Lösung liefern.
+
+Skalierungsexperimente zeigen, dass GNOT data-effizienter als MIONet ist:
+Mit wachsender Datenmenge nähert sich der Fehler schneller dem Optimum, und
+größere Modellkapazität (GNOT-large) verbessert die Leistung konsistent gemäß
+einer annähernd logarithmischen Skalierungsregel.
+
+% ================================================================
+\subsection*{4\quad Bezug zur Masterarbeit}
+
+\paragraph{4.1\quad Multiple Eingabekanäle als konzeptuelle Parallele.}
+In der Masterarbeit wird das Strömungsfeld aus fünf Eingabekanälen (Kristallmaske,
+Signed-Distance-Feld, Abstandsfeld zum nächsten Kristall, normalisierte $x$- und $z$-Koordinaten)
+vorhergesagt. Dies entspricht einer mehrkanaligen Eingabestruktur, die konzeptuell
+mit GNOT's Fähigkeit zur Verarbeitung multipler Eingabefunktionen verwandt ist.
+Der HNA-Block bietet dabei den Vorteil, dass jeder Eingabekanal durch ein separates
+Encoder-MLP verarbeitet wird und die Kreuzaufmerksamkeit die Beiträge flexibel
+gewichtet -- eine Eigenschaft, die für die Modellierung komplexer Wechselwirkungen
+zwischen Kristallgeometrie und Strömungsfeld interessant sein könnte.
+
+\paragraph{4.2\quad Irreguläre Gitter und variierende Topologie.}
+Ein zentrales Ziel der Masterarbeit ist die Generalisierung auf variierende Kristallzahlen,
+also auf Konfigurationen mit unterschiedlicher geometrischer Topologie. GNOT ist so
+konzipiert, dass es auf irregulären Gittern mit beliebigen Abfragepunkten operiert.
+Diese Eigenschaft würde es prinzipiell erlauben, Kristallkonfigurationen direkt durch
+ihre geometrischen Gitterpunkte (z.B.\ Knoten eines unstrukturierten FEM-Netzes) zu
+repräsentieren -- eine Alternative zur regulären Gitterrepräsentation der Masterarbeit.
+Allerdings setzt dies eine deutlich andere Datenpipeline voraus und wurde in der
+Masterarbeit bewusst zugunsten der regulären $256 \times 256$-Repräsentation verzichtet.
+
+\paragraph{4.3\quad Geometrisches Gating als Mehrskaligkeitsstrategie.}
+In der Multi-Kristall-Stokes-Strömung koexistieren zwei charakteristische Längenskalen:
+die lokalen Grenzschichten unmittelbar an den Kristalloberflächen und die
+langreichweitigen Wirbelstrukturen im Fernfeld. Der geometrische Gating-Mechanismus
+in GNOT -- der durch räumliche Koordinaten eine weiche Gebietsdekomposition lernt --
+ist strukturell geeignet, diese Mehrskaligkeit zu adressieren: Verschiedene Experten
+könnten sich auf Nah- und Fernfeldregionen spezialisieren. Dies ist eine konzeptuell
+interessante Alternative zur Mehrskalenverarbeitung durch Skip-Connections im U-Net.
+
+\paragraph{4.4\quad Skalierungsverhalten und Dateneffizienz.}
+Die in der Masterarbeit beobachteten Unterschiede zwischen U-Net und FNO in Bezug auf
+Generalisierungsverhalten könnten durch einen Architekturvergleich mit GNOT ergänzt
+werden. Das Skalierungsverhalten von GNOT -- bessere Nutzung größerer Datensätze bei
+höherer Modellkapazität -- könnte relevant sein, wenn in zukünftigen Arbeiten die
+Trainingsdatengröße erhöht wird.
+
+\paragraph{4.5\quad Abgrenzung.}
+GNOT wurde für Probleme mit irregulären Gittern und multiplen Eingabefunktionen auf
+\emph{fixer} Geometrie entwickelt. Die variierende Topologie (unterschiedliche Anzahl
+eingebetteter Festkörper) ist ein anderes Generalisierungsproblem als die in GNOT
+adressierte Skalierungsheterogenität. Insbesondere enthält GNOT keine Mechanismen
+zur expliziten Codierung der Anzahl oder Positionen von eingebetteten Festkörpern --
+ein Problem, das in der Masterarbeit durch Kristallmasken und Abstandsfelder gelöst wird.
+Die Frage, ob GNOTs allgemeines Encoder-Framework auf variierende Kristallzahlen
+generalisiert, wäre ein eigenständiges Forschungsprojekt.
+
+\end{document}

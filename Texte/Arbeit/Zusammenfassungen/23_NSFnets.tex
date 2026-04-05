@@ -1,0 +1,176 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{csquotes}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{NSFnets (Navier-Stokes Flow Nets): Physics-Informed Neural Networks
+for the Incompressible Navier-Stokes Equations}
+
+\textbf{Autoren:} Xiaowei Jin, Shengze Cai, Hui Li, George Em Karniadakis \\
+\textbf{Jahr:} 2021 \\
+\textbf{Quelle:} \textit{Computer Methods in Applied Mechanics and Engineering}, 376, 113627
+
+% -----------------------------------------------------------------------
+\subsection*{Kernbeitrag und Motivation}
+
+Jin et al.\ präsentieren NSFnets als spezialisierte Variante der
+Physics-Informed Neural Networks (PINNs) für die inkompressiblen
+Navier-Stokes-Gleichungen. Die zentrale Motivation der Arbeit ist dieselbe,
+die auch für Surrogatmodelle in der Geophysik gilt: klassische numerische
+Strömungssimulationen (CFD) sind zu rechenintensiv für umfangreiche
+Parameterstudien, weshalb dateneffiziente neuronale Netze als schnelle
+Ersatzmodelle gesucht werden. Der Unterschied zu rein datengetriebenen
+Ansätzen liegt darin, dass PINNs die Physik der Strömung explizit in die
+Verlustfunktion integrieren -- sie lernen also nicht nur aus Beispieldaten,
+sondern werden gleichzeitig durch die Differentialgleichungen selbst
+regularisiert.
+
+% -----------------------------------------------------------------------
+\subsection*{Zwei Formulierungen der Navier-Stokes-Gleichungen}
+
+Ein zentraler methodischer Beitrag der Arbeit ist der systematische Vergleich
+zweier äquivalenter mathematischer Formulierungen der inkompressiblen
+Navier-Stokes-Gleichungen als Grundlage für das Training:
+
+\paragraph{Geschwindigkeit-Druck-Formulierung (VP).}
+Das neuronale Netz bildet Raum-Zeit-Koordinaten $(t, x, y, z)$ auf die
+Felder $(u, v, w, p)$ ab. Die Verlustfunktion bestraft Residuen der
+Impulsgleichungen sowie der Inkompressibilitätsbedingung
+$\nabla \cdot \mathbf{u} = 0$ als separate Terme. Druck ist dabei eine
+\emph{versteckte Zustandsgröße}: Es werden keine Druckrandbedingungen
+benötigt, da der Druck allein über die Divergenzfreiheitsbedingung implizit
+bestimmt wird -- ohne die in klassischen CFD-Methoden übliche
+Druck-Poisson-Gleichung.
+
+\paragraph{Wirbelstärke-Geschwindigkeit-Formulierung (VV).}
+Das Netz gibt statt Druck die Wirbelstärke $\boldsymbol{\omega} = \nabla
+\times \mathbf{u}$ aus. Da $\nabla \cdot (\nabla \times \mathbf{u}) \equiv
+0$ per Konstruktion gilt, ist die Divergenzfreiheitsbedingung bei dieser
+Formulierung \emph{mathematisch automatisch erfüllt} -- die
+Inkompressibilität muss nicht als Soft-Constraint in der Verlustfunktion
+erzwungen werden. Die Verlustfunktion enthält stattdessen die
+Wirbelstärke-Transport- sowie die Poisson-Gleichung für die Geschwindigkeit.
+Die VV-Formulierung erwies sich für laminare Strömungen als präziser als
+die VP-Variante, da ein expliziter Freiheitsgrad (Druck) entfällt und die
+physikalische Nebenbedingung strukturell eingebettet ist.
+
+% -----------------------------------------------------------------------
+\subsection*{Verlustfunktion und dynamische Gewichtung}
+
+Die gesamte Verlustfunktion für die VP-Formulierung lautet:
+\begin{equation}
+    \mathcal{L} = \mathcal{L}_e + \alpha\,\mathcal{L}_b + \beta\,\mathcal{L}_i,
+\end{equation}
+wobei $\mathcal{L}_e$ den physikalischen Residualterm (Navier-Stokes-Gleichungen),
+$\mathcal{L}_b$ den Randbedingungs- und $\mathcal{L}_i$ den
+Anfangsbedingungsterm bezeichnet. Die Gewichte $\alpha$ und $\beta$ steuern das
+Verhältnis zwischen datengetriebenen und physikbasierten Anteilen.
+
+Ein wesentlicher praktischer Beitrag ist die Einführung einer \emph{dynamischen
+Gewichtungsstrategie}: Statt $\alpha$ und $\beta$ manuell einzustellen, werden
+sie während des Trainings adaptiv aktualisiert, indem die maximalen
+Gradienten des Physik-Residualterms ins Verhältnis zu den Gradienten der
+Datenterme gesetzt werden:
+\begin{equation}
+    \hat{\alpha}^{(k+1)} = \frac{\max_\theta|\nabla_\theta \mathcal{L}_e|}
+    {|\nabla_\theta \alpha^{(k)} \mathcal{L}_b|}.
+\end{equation}
+Die Koeffizienten werden dann als gleitender Mittelwert aktualisiert, um
+Instabilitäten zu vermeiden. Die Autoren zeigen, dass diese Strategie sowohl
+die Konvergenz beschleunigt als auch die Genauigkeit der Lösungen verbessert,
+weil sie ein Ungleichgewicht zwischen physikalischen und Datengradienten
+verhindert -- ein bekanntes Problem bei PINNs, das als \emph{gradient
+pathology} bezeichnet wird.
+
+% -----------------------------------------------------------------------
+\subsection*{Experimente und Ergebnisse}
+
+Die Methode wird an drei laminaren Benchmarks validiert:
+\begin{itemize}
+    \item \textbf{Kovasznay-Strömung (2D, stationär):} Relative $L_2$-Fehler
+        im Bereich $10^{-5}$ bis $10^{-3}$; VV-Formulierung übertrifft VP
+        bei großen Netzwerken.
+    \item \textbf{Zylinderumströmung (2D, instationär, $Re = 100$):}
+        Qualitativ und quantitativ gute Rekonstruktion der Wirbelablösung
+        über einen vollen Ablösezyklus; VV erzielt durchgehend geringere
+        Fehler als VP.
+    \item \textbf{Beltrami-Strömung (3D, instationär):} Beide Formulierungen
+        liefern genaue Lösungen; VV zeigt erneut bessere Genauigkeit, mit
+        relativen Fehlern unter $0{,}3\,\%$ für alle Geschwindigkeitskomponenten.
+\end{itemize}
+
+Zusätzlich werden erste PINN-Simulationen turbulenter Kanalströmungen
+bei $Re_\tau \approx 1000$ mit der VP-Formulierung und DNS-Referenzdaten
+präsentiert. Die VP-NSFnet-Simulationen halten die Turbulenz über mehrere
+konvektive Zeiteinheiten aufrecht, mit Geschwindigkeitsfehlern unter $10\,\%$,
+wobei der Druckfehler bis zu $17\,\%$ erreichen kann.
+
+% -----------------------------------------------------------------------
+\subsection*{Bezug zur Masterarbeit}
+
+Obwohl die NSFnets-Arbeit konzeptionell verwandt ist, unterscheidet sie sich in
+mehreren wesentlichen Aspekten vom Ansatz der Masterarbeit -- diese Unterschiede
+sind für die Positionierung der eigenen Arbeit besonders relevant:
+
+\paragraph{Stokes- statt Navier-Stokes-Regime.}
+Die Masterarbeit betrachtet die Sedimentation von Kristallen in Magma im
+Stokes-Regime (sehr kleine Reynolds-Zahlen, $Re \ll 1$). In diesem Grenzfall
+entfallen der nichtlineare Trägheitsterm $(\mathbf{u} \cdot \nabla)\mathbf{u}$
+und der Zeitterm $\partial_t \mathbf{u}$, sodass die Stokes-Gleichungen
+instantan eine elliptische PDE darstellen. Die bei NSFnets behandelten
+Navier-Stokes-Gleichungen sind allgemeiner, aber für das geophysikalische
+Problem nicht unmittelbar anwendbar. Das Stokes-Regime erlaubt außerdem die
+Nutzung analytischer Referenzlösungen (z.\,B.\ Hadamard-Rybczynski) als
+Ausgangspunkt für das Residuallernverfahren.
+
+\paragraph{Surrogatmodell statt Solver.}
+NSFnets verwenden PINNs als \emph{Solver}, der für jede neue Geometrie
+neu trainiert werden muss. Die Masterarbeit verfolgt einen anderen Ansatz:
+Ein UNet- bzw.\ FNO-basiertes Surrogatmodell wird einmalig auf einem
+Datensatz von LaMEM-Simulationen trainiert und kann dann für neue
+Kristallkonfigurationen \emph{ohne Neutraining} schnelle Vorhersagen liefern.
+Die Generalisierungsfähigkeit über verschiedene Kristallanzahlen ($N$-zu-$N+m$)
+stellt dabei den genuinen wissenschaftlichen Beitrag dar.
+
+\paragraph{Strukturelle Erfüllung der Inkompressibilität.}
+Die VV-Formulierung in NSFnets nutzt denselben mathematischen Mechanismus,
+der auch in der Masterarbeit durch die \emph{Stromfunktionsformulierung}
+realisiert wird: Statt die Divergenzfreiheitsbedingung $\nabla \cdot
+\mathbf{u} = 0$ als Soft-Constraint in der Verlustfunktion zu erzwingen,
+wird sie durch die Wahl der Ausgabegröße automatisch erfüllt. Für 2D-Stokes-
+Strömungen gilt $\mathbf{u} = \nabla \times \psi$ mit der Stromfunktion
+$\psi$, was $\nabla \cdot \mathbf{u} \equiv 0$ per Konstruktion garantiert.
+NSFnets belegen, dass dieser Ansatz im Navier-Stokes-Kontext (VV-Formulierung)
+tatsächlich zu besserer Genauigkeit führt als die explizite Soft-Constraint-
+Variante -- ein wichtiges Argument, das die Designentscheidung der Masterarbeit
+stützt.
+
+\paragraph{Physik-informierte Verlustfunktionen.}
+Die in NSFnets vorgestellte dynamische Gewichtungsstrategie ist direkt auf die
+Masterarbeit übertragbar. Das dort implementierte adaptive Gewichtungsschema
+zwischen Daten- und Physikloss basiert auf demselben Grundprinzip: Der
+Gradientstatistik der verschiedenen Verlustterme wird verwendet, um ein
+Ungleichgewicht zu verhindern. Die Experimente in NSFnets zeigen, dass ein zu
+geringes Gewicht auf Randbedingungen ($\alpha = 1$) zu deutlich schlechteren
+Ergebnissen führt -- eine Beobachtung, die mit den Erfahrungen in der
+Masterarbeit konsistent ist.
+
+\paragraph{Residuallernverfahren.}
+Das Konzept des \emph{residual learning} -- also das Lernen von Korrekturen zu
+einer bekannten Referenzlösung ($\mathbf{v}_\text{total} = \mathbf{v}_\text{Stokes}
++ \Delta\mathbf{v}_\text{gelernt}$) -- findet in NSFnets keine direkte
+Entsprechung, da die Autoren vollständige Lösungen approximieren. Für das
+Stokes-Regime der Masterarbeit bietet das Residuallernen jedoch einen klaren
+Vorteil: Die analytische Einzelkristall-Lösung ist bekannt, und das Netzwerk
+muss nur die Wechselwirkungskorrekturen zwischen Kristallen lernen, was den
+Suchraum erheblich einschränkt und physikalisch sinnvollere Zwischenzustände
+während des Trainings garantiert.
+
+\end{document}

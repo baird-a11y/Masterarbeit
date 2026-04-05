@@ -1,0 +1,159 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{A Comprehensive and Fair Comparison of Two Neural Operators
+(with Practical Extensions) based on FAIR Data}
+
+\noindent\textbf{Autoren:} Lu Lu, Xuhui Meng, Shengze Cai, Zhiping Mao,
+Somdatta Goswami, Zhongqiang Zhang, George Em Karniadakis \\
+\textbf{Journal:} Computer Methods in Applied Mechanics and Engineering,
+393, 114778 \\
+\textbf{Jahr:} 2022
+
+\subsection*{Zusammenfassung}
+
+Diese Arbeit pr\"asentiert einen methodisch rigorosen und systematischen
+Vergleich der zwei zentralen neuronalen Operatoren \emph{DeepONet} und
+\emph{Fourier Neural Operator} (FNO) anhand von 16 sorgf\"altig
+ausgew\"ahlten Benchmark-Problemen aus der wissenschaftlichen Simulation.
+Beide Architekturen werden unter kontrollierten und vergleichbaren
+Bedingungen getestet, wobei die Autoren explizit auf einen fairen Vergleich
+achten -- ein Aspekt, der in der fr\"uheren Literatur oft vernachl\"assigt
+wurde.
+
+\paragraph{DeepONet} basiert auf dem universellen Approximationssatz f\"ur
+Operatoren von Chen \& Chen (1995) und besteht aus zwei Teilnetzen: einem
+\emph{Branch-Netz}, das die Eingabefunktion verarbeitet, und einem
+\emph{Trunk-Netz}, das die Ausgabekoordinaten als Eingabe erh\"alt. Die
+Ausgabe ergibt sich als Skalarprodukt beider Teilnetze. Ein wesentlicher
+Vorteil von DeepONet ist seine Flexibilit\"at: Das Branch-Netz kann
+beliebige Architekturen verwenden (FNN, CNN, ResNet, GNN), und die
+Ausgabe kann an beliebigen Punkten im Raum ausgewertet werden, ohne die
+Ausgabefunktion diskretisieren zu m\"ussen.
+
+\paragraph{FNO} parametrisiert den Integraloperator direkt im
+Fourier-Raum und verarbeitet die Eingabefunktion durch aufeinanderfolgende
+Fourier-Schichten, die spektrale Gewichte mit einem lokalen residualen
+Pfad kombinieren. FNO ist auf \"aquidistante Gitter und gleiche
+Eingabe-/Ausgabe-Dom\"anen beschr\"ankt, bietet daf\"ur aber bei solchen
+einfachen Einstellungen h\"aufig eine sehr effiziente Berechnung.
+
+\paragraph{Neue Erweiterungen} Die Autoren entwickeln mehrere praxisrelevante
+Erweiterungen. F\"ur DeepONet werden unter anderem vorberechnete
+POD-Moden (Proper Orthogonal Decomposition) als Trunk-Netz eingesetzt
+(\emph{POD-DeepONet}), harte Randbedingungen durch Modifikation der
+Netzwerkausgabe durchgesetzt sowie eine Reskalierung basierend auf
+Varianzanalyse eingef\"uhrt. F\"ur FNO werden Erweiterungen auf
+unterschiedliche Dom\"anen (\emph{dFNO+}) und komplexe Geometrien
+(\emph{gFNO+}) vorgeschlagen. Zus\"atzlich wird f\"ur beide Architekturen
+eine Ausgabenormalisierung als wichtige Ma\ss{}nahme zur
+Genauigkeitsverbesserung identifiziert.
+
+\paragraph{Wichtige Ergebnisse} Die 16 Benchmarks umfassen Probleme mit
+unterschiedlichen Charakteristika: glatte und diskontinuierliche L\"osungen,
+einfache und komplexe Geometrien, station\"are und instation\"are Str\"omungen
+sowie verrauschte Daten. Die wesentlichen Erkenntnisse lassen sich wie
+folgt zusammenfassen:
+
+\begin{itemize}
+  \item F\"ur einfache Einstellungen auf \"aquidistanten Gittern zeigen
+    DeepONet und FNO vergleichbare Genauigkeit (z.\,B.\ Burgers-Gleichung:
+    FNO $1{,}93\,\%$, POD-DeepONet $1{,}94\,\%$ relativer $L^2$-Fehler).
+
+  \item Bei komplexen Geometrien (Pentagramm, Dreieck mit Kerbe) versagt
+    der standard FNO vollst\"andig, w\"ahrend DeepONet und POD-DeepONet
+    robuste Ergebnisse liefern (Dreieck: POD-DeepONet $0{,}18\,\%$
+    gegenüber dgFNO+ $1{,}00\,\%$).
+
+  \item FNO zeigt systematische Schwierigkeiten bei diskontinuierlichen
+    L\"osungen, da die Fourier-Approximation dort ihre Schw\"achen hat
+    (Gibbs-Ph\"anomen). DeepONet ist hier deutlich robuster.
+
+  \item POD-DeepONet \"ubertrifft in den meisten Szenarien sowohl
+    vanilla DeepONet als auch FNO und erreicht die beste Genauigkeit
+    bei geringstem Speicherbedarf.
+
+  \item Feature-Erweiterung -- das Hinzuf\"ugen dom\"anenspezifischen
+    Vorwissens als zus\"atzliche Eingaben -- verbessert die Leistung
+    beider Architekturen signifikant.
+
+  \item Die Ausgabenormalisierung ist eine einfache, aber wirkungsvolle
+    Ma\ss{}nahme, die f\"ur beide Architekturen konsequent empfohlen wird.
+\end{itemize}
+
+\paragraph{Theoretischer Vergleich} Die Autoren zeigen formal, dass FNO
+in seiner kontinuierlichen Form als Spezialfall von DeepONet aufgefasst
+werden kann, bei dem das Branch-Netz eine trigonometrische Basis verwendet.
+F\"ur die Burgers-Gleichung wird nachgewiesen, dass beide Architekturen bei
+gleicher Netzwerkgr\"o\ss{}e $\mathcal{O}(m^3 \ln m)$ eine Genauigkeit von
+$\mathcal{O}(m^{-1})$ erreichen k\"onnen.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Diese Publikation ist aus mehreren Gr\"unden direkt relevant f\"ur die
+Masterarbeit \emph{Physics-Based Machine Learning for Predicting Flow
+Fields Around Settling Crystals}.
+
+\paragraph{Direkter Architekturvergleich} Die Masterarbeit vergleicht
+U-Net und FNO als Surrogatmodelle f\"ur Stokes-Str\"omungen. Lu et al.\ liefern
+eine methodische Vorlage f\"ur einen fairen Vergleich neuronaler Operatoren
+unter kontrollierten Bedingungen, die direkt \"ubertragbar ist. Insbesondere
+die Empfehlung, beide Architekturen mit vergleichbaren Parameteranzahlen
+und identischen Trainingsdaten zu evaluieren, sollte in der Masterarbeit
+explizit aufgegriffen werden.
+
+\paragraph{Robustheit bei geometrischer Komplexit\"at} Das zentrale Ergebnis,
+dass FNO bei komplexen oder unregelm\"a\ss{}igen Geometrien deutlich schlechter
+abschneidet als DeepONet, ist f\"ur Kristallkonfigurationen mit mehreren
+Partikeln hochrelevant. Mehrere Kristalle erzeugen eine intrinsisch
+unregelm\"a\ss{}ige r\"aumliche Struktur, bei der FNO aufgrund seiner
+Abh\"angigkeit von \"aquidistanten Gittern systematisch benachteiligt sein
+k\"onnte. Die Ergebnisse bei U-Net sollten in diesem Kontext interpretiert
+werden, da U-Net lokal im physikalischen Raum operiert und damit strukturell
+flexibler ist als FNO.
+
+\paragraph{POD als Vorbild f\"ur Residuall\"arnen} Der Einsatz von POD-Moden
+als physikalisch motiviertes Trunk-Netz in POD-DeepONet entspricht
+konzeptuell dem Residuallernansatz der Masterarbeit ($v_\mathrm{total} =
+v_\mathrm{Stokes,analytisch} + \Delta v_\mathrm{gelernt}$): In beiden
+F\"allen werden bekannte Strukturen der L\"osung vorab extrahiert, und das
+Netzwerk lernt lediglich die Korrektur bzw.\ die Koeffizienten bez\"uglich
+einer gut gew\"ahlten Basis. Die starke Leistung von POD-DeepONet
+best\"atigt indirekt, dass solche physikalisch motivierten Induktionsbias-
+Strategien generell vorteilhaft sind.
+
+\paragraph{Normalisierung und Skalierung} Die in der Arbeit betonte
+Bedeutung der Ausgabenormalisierung deckt sich mit den Herausforderungen
+der Masterarbeit bei der Normalisierung \"uber verschiedene
+Kristallkonfigurationen hinweg. Lu et al.\ zeigen, dass fehlerhafte oder
+fehlende Normalisierung die Leistung beider Architekturen stark
+verschlechtern kann -- ein Befund, der die in der Masterarbeit entwickelten
+physikalisch motivierten Normalisierungsstrategien (per-sample vs.\
+physikalisch skalierte Normalisierung) unterst\"utzt.
+
+\paragraph{Diskontinuit\"aten und Grenzschichteffekte} Die
+Beobachtung, dass FNO bei diskontinuierlichen L\"osungen und steilen
+Gradienten (z.\,B.\ Grenzschichten im Elektrokonvektionsproblem)
+systematisch schw\"acher abschneidet, ist f\"ur Stokes-Str\"omungen um
+Kristalle relevant, da die Geschwindigkeitsfelder starke lokale Gradienten
+in der N\"ahe der Kristalloberfl\"achen aufweisen. Hier hat U-Net aufgrund
+seiner lokal operierenden Faltungsoperationen m\"oglicherweise strukturelle
+Vorteile, w\"ahrend FNO globale spektrale Muster bevorzugt.
+
+\paragraph{Generalisierung auf ungesehene Konfigurationen} Das in der
+Masterarbeit zentrale Generalisierungsproblem -- vom Training auf
+$N$-Kristall-Konfigurationen zur Vorhersage f\"ur $N{+}m$-Kristalle --
+wird von Lu et al.\ nicht direkt adressiert, aber deren Ergebnis, dass FNO
+eine gr\"o\ss{}ere Generalisierungsl\"ucke zwischen Training- und Testfehler
+aufweist als DeepONet, legt nahe, dass FNO bei starker Verteilungs-
+verschiebung (z.\,B.\ neue Kristallanzahl) schlechter generalisieren k\"onnte.
+
+\end{document}

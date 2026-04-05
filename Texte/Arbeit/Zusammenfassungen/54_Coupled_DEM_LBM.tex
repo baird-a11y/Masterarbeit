@@ -1,0 +1,175 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Coupled DEM-LBM Method for the Free-Surface Simulation of
+Heterogeneous Suspensions}
+
+\textbf{Autoren:} Alessandro Leonardi, Falk K.\ Wittel, Miller Mendoza,
+Hans J.\ Herrmann\\
+\textbf{Institution:} Institute for Building Materials, ETH Zürich\\
+\textbf{Jahr:} 2015 (arXiv:1509.01052)
+
+% ------------------------------------------------------------------
+\subsection*{Zusammenfassung}
+% ------------------------------------------------------------------
+
+Die Arbeit präsentiert ein hybrides Simulationsframework, das die Diskrete-Elemente-Methode (DEM) mit der Lattice-Boltzmann-Methode (LBM) koppelt, um heterogene Suspensionen mit freier Oberfläche unter Schwerkrafteinfluss zu simulieren. Das zentrale Anliegen ist die physikalisch konsistente Behandlung der Wechselwirkungen zwischen einer granularen Feststoffphase und einer viskosen Flüssigkeitsphase, wie sie etwa in Frischbeton oder natürlichen Schuttströmen auftreten.
+
+\paragraph{Mehrskalen-Klassifikation.}
+Ausgangspunkt der Modellierung ist eine phänomenologische Klassifikation der Körner nach ihrer dominanten Wechselwirkungsphysik mithilfe der dimensionslosen Bagnold-Zahl
+\begin{equation}
+    \mathrm{Ba} = \frac{\rho_s d_s^2 \lambda_s^{1/2}\,\dot{\gamma}}{\mu_f},
+\end{equation}
+welche das Verhältnis von kollisiven zu viskosen Kornspannungen beschreibt.
+Kleine Körner (elektrostatisch dominiert, $\mathrm{Ba} < 40$) und mittelgroße
+Körner (viskos dominiert) werden in der Flüssigphase homogenisiert und durch
+ein nicht-Newtonsches Bingham-Kontinuumsmodell mit Fließgrenze $\sigma_y$ und
+plastischer Viskosität $\mu_\mathrm{pl}$ beschrieben. Lediglich die
+großkörnige Fraktion ($\mathrm{Ba} \geq 450$), bei der kollisive Effekte
+dominieren, wird explizit diskret modelliert. Dieses Mehrskalen-Prinzip
+ermöglicht eine effiziente Behandlung realistischer Korngrößenverteilungen,
+ohne jedes einzelne Partikel auflösen zu müssen.
+
+\paragraph{Diskrete-Elemente-Methode (DEM).}
+Die großen Körner werden als Lagrange-Elemente mit translatorischen und
+rotatorischen Freiheitsgraden behandelt. Partikelkontakte werden über das
+Hertz'sche Kontaktgesetz mit einem Dämpfungsterm modelliert; tangentiale
+Kräfte folgen dem Coulomb'schen Reibungsgesetz. Um die für Kugeln typischen
+künstlichen Roll- und Mischungsartefakte zu vermeiden, werden zusammengesetzte
+nicht-sphärische Elemente aus mehreren Teilkugeln aufgebaut. Die Zeitintegration
+erfolgt mit dem Gear-Prädiktor-Korrektor-Schema; die Rotationsdynamik wird
+durch Quaternionen singularitätsfrei behandelt.
+
+\paragraph{Lattice-Boltzmann-Methode (LBM).}
+Die Flüssigphase wird durch die LBM auf einem D3Q19-Gitter gelöst. Der
+kollisive Operator folgt dem BGK-Ansatz (Bhatnagar-Gross-Krook), in dem die
+Relaxationszeit $\tau$ direkt mit der lokalen dynamischen Viskosität verknüpft
+ist. Die Kopplung der nicht-Newtonschen Bingham-Rheologie erfolgt über eine
+ortsabhängige Relaxationszeit $\tau(\mathbf{x}, t)$, die aus dem lokalen
+Scherraten-Tensor berechnet wird. Um die Divergenz von $\tau$ für
+$\dot{\gamma} \to 0$ zu vermeiden, wird die Viskosität auf einen zulässigen
+Bereich $[\tau_\mathrm{min}, \tau_\mathrm{max}]$ begrenzt, was ein
+Tri-Viskositäts-Fluid ergibt.
+
+\paragraph{Fluid-Partikel-Kopplung.}
+Die no-slip-Randbedingung an beweglichen Partikeloberflächen wird durch die
+\emph{Bounce-Back}-Regel realisiert: Eine in Richtung eines Festknotens
+strömende Verteilungsfunktion $f_i$ wird in Gegenrichtung reflektiert,
+korrigiert um den Wandgeschwindigkeitsterm $6w_i\rho\,\mathbf{u}_w\cdot
+\mathbf{c}_i$. Der integrierte Impulsaustausch liefert gleichzeitig die auf
+jedes Partikel wirkende Strömungskraft. Bei sehr kleinen Partikelabständen
+unterhalb der Gitterknotenauflösung wird zusätzlich eine Lubrikationskraftkorrektur nach Nguyen und Ladd eingesetzt. Fluid- und Festknoten werden bei
+jeder Partikelbewegung dynamisch reklassifiziert; neu entstehende Fluidknoten
+erhalten ihre Anfangsverteilung durch Mittelung über die Nachbarschaft.
+
+\paragraph{Freie Oberfläche.}
+Das Massen-Tracking-Algorithmus von Körner et al.\ unterteilt Fluidknoten in
+drei Klassen (flüssig, Interface, Gas). Über eine lokale Massenbilanz der
+Verteilungsfunktionen wird die zeitliche Entwicklung der freien Oberfläche
+verfolgt; fehlende Verteilungsfunktionen an Interfaceknoten werden aus den
+makroskopischen Größen rekonstruiert.
+
+\paragraph{Experimentelle Validierung.}
+Das Modell wird anhand eines schwerkraftgetriebenen Ausbreitungsexperiments
+mit Frischbeton (Portland-Zement mit 1000 Kieselkieseln, $R = 4$--$8\,\rm
+mm$, $\rho_s = 2680\,\rm kg/m^3$) auf einer geneigten Ebene ($15^\circ$)
+validiert. Die Simulation auf einem $350 \times 250 \times 80$-LBM-Gitter mit
+1000 DEM-Elementen (je 4 Teilsphären) reproduziert die experimentell beobachtete Endform der Betonprobe mit sehr guter Übereinstimmung. Die Gesamtrechenzeit beträgt 63 Stunden auf vier CPU-Kernen -- ein Wert, der die hohen
+Kosten vollständig aufgelöster Partikel-Fluid-Simulationen exemplarisch
+verdeutlicht.
+
+% ------------------------------------------------------------------
+\subsection*{Bezug zur Masterarbeit}
+% ------------------------------------------------------------------
+
+Die Arbeit von Leonardi et al.\ ist in der Masterarbeit explizit als
+Referenzpunkt für den Rechenaufwand vollständig gekoppelter
+Partikel-Fluid-Simulationen zitiert \cite{leonardi_coupled_2014} und
+steht in mehrfacher Hinsicht in direktem Bezug zu der dort entwickelten
+Methodik.
+
+\paragraph{1. Gemeinsamer physikalischer Kontext: viskose Partikelströmung.}
+Sowohl das DEM-LBM-Framework als auch die in der Masterarbeit untersuchten
+LaMEM-Simulationen modellieren Partikel, die in einer viskosen Flüssigphase
+sedimentieren. Beide Ansätze behandeln das Problem im Regime kleiner
+Reynolds-Zahlen (Stokes-Strömung), in dem viskose Kräfte gegenüber Trägheitskräften dominieren und das Strömungsfeld quasistatisch auf Geometrieänderungen reagiert. Das wesentliche physikalische Phänomen -- die Fernwirkung
+hydrodynamischer Wechselwirkungen zwischen mehreren Partikeln --
+ist in beiden Fällen zentral.
+
+\paragraph{2. Begründung der Surrogat-Modellierung.}
+Die von Leonardi et al.\ berichtete Rechenzeit von 63 Stunden für eine
+einzelne Simulation mit 1000 Partikeln auf vier CPU-Kernen illustriert
+prägnant den Rechenaufwand, dem vollständig aufgelöste Methoden
+unterliegen. Die Masterarbeit verweist darauf explizit: LBM-DEM- und
+Immersed-Boundary-Ansätze benötigen je Partikel $10^5$--$10^6$ Fluidknoten,
+was für Systeme mit mehr als zehn Kristallen zu Gittergrößen von $10^7$--$10^8$
+Freiheitsgraden und Laufzeiten von Stunden bis Tagen führt
+\cite{leonardi_coupled_2014}. Genau dieser Engpass motiviert die Entwicklung
+von Surrogat-Modellen: Neuronale Netze sollen das Strömungsfeld bei
+gegebener Kristallkonfiguration in Millisekunden anstatt Stunden
+approximieren, ohne die volle Partikel-Fluid-Simulation zu wiederholen.
+
+\paragraph{3. Mehrskalen-Prinzip vs.\ Generalisierungsproblem.}
+Die Mehrskalen-Behandlung in Leonardi et al.\ -- feine Partikel werden in
+der Flüssigphase homogenisiert, grobe explizit modelliert -- entspricht
+konzeptionell der zentralen Fragestellung der Masterarbeit: Kann ein neuronales
+Netz, das auf Strömungsfeldern mit $N$ Kristallen trainiert wurde, auf
+Konfigurationen mit einer anderen Anzahl $N' \neq N$ generalisieren? Während
+Leonardi et al.\ die Mehrskaligkeit durch eine physikalisch begründete
+Modelltrennung auflösen, versucht die Masterarbeit, das Netz durch
+Trainingsdaten aus einem weiten Bereich von Kristallzahlen
+$\{1, \ldots, N_\mathrm{max}\}$ zur impliziten Abstraktion zu befähigen.
+Beide Ansätze adressieren somit dasselbe Grundproblem: die Beschreibung
+komplexer Partikel-Fluid-Systeme mit variierender Kompositionsstruktur.
+
+\paragraph{4. Behandlung der Randbedingungen und Diskretisierung.}
+Die Bounce-Back-Regel der LBM und die Lubrikationskorrektur für kleine
+Partikelabstände sind in Leonardi et al.\ notwendig, weil die Partikel
+auf dem Eulerschen Gitter diskretisiert werden und ihr Einfluss auf das
+Strömungsfeld explizit erzwungen werden muss. In der Masterarbeit übernimmt
+LaMEM diese Aufgabe durch scharfe Viskositäts- und Dichtekontraste zwischen
+Kristall- und Matrixphase auf einem regulären kartesischen Gitter. Die
+konzeptionelle Parallele liegt in der Notwendigkeit, Strömungsgradienten in
+unmittelbarer Nähe der Partikeloberflächen korrekt aufzulösen -- eine
+Anforderung, die auch für die neuronalen Netze eine besondere Herausforderung
+darstellt, da lokale Fehler nahe der Kristallränder in den abgeleiteten
+Geschwindigkeitsfeldern $\psi_x, \psi_z$ stärker ins Gewicht fallen.
+
+\paragraph{5. Nicht-newtonsche Rheologie vs.\ newtonsche Grundannahme.}
+Das Bingham-Modell in Leonardi et al.\ erlaubt die Simulation von
+Fließgrenzenflüssigkeiten, wie sie in Frischbeton oder Schuttströmen vorkommen.
+Die Masterarbeit hingegen beschränkt sich bewusst auf einen newtonschen
+Matrixfluss konstanter Viskosität $\mu$, um das Generalisierungsproblem über
+die Kristallzahl methodisch isoliert untersuchen zu können. Die Erweiterung auf
+nicht-newtonsche Matrizes -- etwa zur realistischeren Abbildung von
+Magmasystemen mit temperaturabhängiger Viskosität -- bleibt für zukünftige
+Arbeiten offen und könnte durch das in Leonardi et al.\ etablierte Bingham-LBM-Konzept informiert werden.
+
+\paragraph{6. Freie Oberfläche: ein abgegrenzter Unterschied.}
+Der Massen-Tracking-Algorithmus für freie Oberflächen ist in Leonardi et al.\
+wesentlich für die Simulation von Ausbreitungsexperimenten. In der
+Masterarbeit werden hingegen stationäre, volumenerhaltende Strömungsfelder
+in einem geschlossenen Rechengebiet betrachtet, in dem kein freier Flächenrand
+existiert. Dieser Unterschied ist konzeptionell bedeutsam: Die
+Stokes-Strömung um sedimentierende Kristalle in der Magmakammer ist
+quasistatisch und bildet keine dynamische Phasengrenze aus, wodurch die
+Stream-Funktion $\psi$ als globales, divergenzfreies Lernziel formulierbar ist.
+
+\paragraph{Fazit.}
+Leonardi et al.\ (2014) liefern sowohl einen methodischen als auch einen
+motivationalen Beitrag zur Masterarbeit. Methodisch demonstrieren sie, wie
+vollständig aufgelöste Partikel-Fluid-Kopplungen im viskosen Regime realisiert
+und validiert werden können -- ein Maßstab, an dem die Qualität der
+LaMEM-Trainingsdaten gemessen wird. Motivational verdeutlichen sie durch ihren
+Rechenaufwand, warum der Übergang von vollständigen Direktsimulationen zu
+physikalisch informierten Surrogat-Modellen in der Geowissenschaft notwendig
+und lohnend ist.
+
+\end{document}

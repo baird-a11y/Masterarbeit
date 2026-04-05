@@ -1,0 +1,162 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Fourier Neural Operator Based Fluid--Structure Interaction for
+Predicting the Vesicle Dynamics}
+
+\textbf{Autoren:} Wang Xiao, Ting Gao, Kai Liu, Jinqiao Duan, Meng Zhao\\
+\textbf{Jahr:} 2024 \quad \textbf{Journal:} arXiv:2401.02311 (eingereicht bei Elsevier)
+
+% -------------------------------------------------------------------
+\subsection*{Motivation und Problemstellung}
+% -------------------------------------------------------------------
+
+Fluid-Struktur-Interaktionsprobleme (FSI) -- bei denen ein deformierbares
+Objekt in eine viskose Strömung eingebettet ist -- erfordern typischerweise
+aufwendige numerische Verfahren wie die \emph{Immersed Boundary Method}~(IBM).
+Diese klassischen CFD-Löser sind für große Parameterräume oder lange
+Simulationszeiträume rechnerisch prohibitiv teuer, da bei jedem Zeitschritt
+ein vollständiges Strömungsfeld neu berechnet werden muss.
+
+Die Arbeit begegnet diesem Engpass, indem der Fourier Neural Operator~(FNO)
+als datengetriebener Strömungslöser eingesetzt wird, der anschließend mit
+einem klassischen Strukturlöser (Finite-Differenzen-Methode) gekoppelt wird.
+Das Anwendungsbeispiel ist die Dynamik von \emph{Vesikeln} -- membranumhüllten
+Flüssigkeitsbläschen -- in einer zeitabhängigen Dehnströmung, die durch die
+inkompressible Stokes-Gleichung beschrieben wird:
+\begin{align}
+    \rho \frac{\partial \mathbf{u}^{\text{ind}}}{\partial t}
+    &= \mu \,\Delta \mathbf{u}^{\text{ind}} - \nabla p + \mathbf{f}, \\
+    \nabla \cdot \mathbf{u}^{\text{ind}} &= 0.
+\end{align}
+Die Kopplung zwischen Fluid und Membran erfolgt über die Dirac-Delta-Funktion
+der IBM.  Der FNO übernimmt dabei ausschließlich die zeitliche Propagation des
+Strömungsfeldes; die Strukturgleichungen werden weiterhin klassisch gelöst.
+
+% -------------------------------------------------------------------
+\subsection*{Methodik: FNO-basierter FSI-Löser}
+% -------------------------------------------------------------------
+
+Der FNO lernt eine Abbildung zwischen Funktionenräumen: gegeben $\alpha$ aufeinanderfolgende Zeitschritte des Geschwindigkeitsfeldes wird der nächste
+Zeitschritt prädiziert. Die Architektur besteht aus einem
+\emph{Lifting-Layer}~$P$, mehreren Fourier-Integral-Operator-Schichten
+\begin{equation}
+    v_{t+1}(x) = \sigma\!\left(W v_t(x)
+    + \mathcal{F}^{-1}\!\left[R \cdot \mathcal{F}[v_t]\right](x)\right),
+\end{equation}
+sowie einem abschließenden \emph{Projection-Layer}~$Q$.  Die komplexwertigen
+Gewichtsmatrizen~$R$ werden direkt als lernbare Fourier-Koeffizienten
+parametrisiert und auf $k_{\max} = 12$ Moden trunkiert.
+
+Trainiert wird auf 3D-Simulationsdaten ($64^3$-Gitter) der IBM für zwei
+verschiedene Anfangsformen des Vesikels.  Das Zeitfenster beträgt $\alpha = 10$
+Eingabeschritte.  Es werden vier Experimente (FNO-1 bis FNO-4) systematisch
+verglichen, die sich in zwei Dimensionen unterscheiden:
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Experiment & Trainingsmethode & Trainingsdaten & Samples \\
+\midrule
+FNO-1 & sequence-to-one   & ohne Gleichgewichtszustand & 340 \\
+FNO-2 & sequence-to-one   & mit Gleichgewichtszustand  & 420 \\
+FNO-3 & sequence-to-sequence & ohne Gleichgewichtszustand & 320 \\
+FNO-4 & sequence-to-sequence & mit Gleichgewichtszustand  & 400 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% -------------------------------------------------------------------
+\subsection*{Zentrale Ergebnisse}
+% -------------------------------------------------------------------
+
+\paragraph{Sequence-to-one vs.\ sequence-to-sequence.}
+Die \emph{sequence-to-one}-Variante (FNO-1, FNO-2) erzielt in den ersten
+Zeitschritten geringere Fehler, da keine kumulative Fehlerakkumulation stattfindet. Für Langzeitprognosen (ab dem 15.\ Zeitschritt) erweist sich dagegen
+die \emph{sequence-to-sequence}-Variante (FNO-3, FNO-4) als überlegen: Die
+gleichzeitige Optimierung über mehrere Zeitschritte reguliert die
+Fehlerakkumulation implizit.
+
+\paragraph{Interpolation vs.\ Extrapolation.}
+Wie bei anderen neuronalen Operatoren ist die Vorhersagegenauigkeit für
+\emph{Interpolation} (Eingabedaten aus dem Trainingsbereich) stets höher
+als für \emph{Extrapolation} (Eingabedaten aus einem noch nicht gesehenen
+Zeitbereich).  Dies gilt unabhängig davon, ob Gleichgewichtsdaten im
+Trainingsset enthalten sind.
+
+\paragraph{Einfluss der Gleichgewichtsdaten.}
+Das Einbeziehen des stationären Zustands in die Trainingsdaten verbessert die
+Vorhersagegenauigkeit geringfügig, da das Netzwerk die asymptotische Lösung
+der Differentialgleichung explizit sieht.
+
+\paragraph{Vesikeldynamik.}
+Die aus dem FNO-Strömungsfeld abgeleiteten Vesikelkonfigurationen stimmen
+qualitativ gut mit den IBM-Referenzlösungen überein.  Der mittlere absolute
+Fehler der Vesikelposition liegt in allen Szenarien unter 1.4\,\% des
+Gesamtdomänendurchmessers.  Der FNO-basierte FSI-Löser ist dabei um eine
+Größenordnung schneller als der klassische IBM-Löser.
+
+% -------------------------------------------------------------------
+\subsection*{Bezug zur Masterarbeit}
+% -------------------------------------------------------------------
+
+Diese Arbeit weist mehrere direkte Parallelen zur vorliegenden Masterarbeit
+auf und ist in verschiedener Hinsicht relevant:
+
+\paragraph{Gemeinsamer physikalischer Rahmen.}
+Beide Arbeiten operieren im Regime inkompressibler Stokes-Strömung mit sehr
+kleinen Reynolds-Zahlen und eingebetteten Objekten (Vesikel bzw.\ Kristalle).
+Die zugrundeliegenden Differentialgleichungen sind strukturell identisch; die
+Randbedingungen und Geometrien unterscheiden sich jedoch: Vesikel sind
+deformierbare, membranumhüllte Objekte, während die Kristalle in der
+Masterarbeit als rigide Kreise modelliert werden.  Diese Vereinfachung
+ermöglicht es der Masterarbeit, sich vollständig auf die Frage der
+Architekturwahl und Generalisierung zu konzentrieren, ohne die FSI-Kopplung
+zu berücksichtigen.
+
+\paragraph{FNO als gemeinsame Architektur.}
+Xiao et al.\ setzen den FNO für zeitabhängige Strömungsvorhersage ein,
+während die Masterarbeit den FNO für stationäre Strömungsfelder mit variabler
+Kristallanzahl verwendet.  Beide Kontexte testen die Generalisierungsfähigkeit
+des FNO auf ungesehene geometrische Konfigurationen -- ein zentrales Thema
+beider Arbeiten.  Die in Xiao et al.\ beobachtete globale Erfassung von
+Stokes-Interaktionen durch die spektrale Repräsentation des FNO stimmt mit
+der theoretischen Motivation in der Masterarbeit überein: Die elliptische
+Natur der Stokes-Gleichungen begünstigt Architekturen mit globalem
+Rezeptivfeld.
+
+\paragraph{Komplementäre Architekturvergleiche.}
+Während Xiao et al.\ ausschließlich den FNO untersuchen, ist ein zentraler
+Beitrag der Masterarbeit der \emph{systematische Vergleich} von U-Net und
+FNO auf demselben physikalischen Problem.  Die Erkenntnisse aus Xiao et al.\
+zu Stärken und Schwächen des FNO (etwa die Anfälligkeit für Extrapolation)
+liefern dabei wertvolle Erwartungshaltungen für diesen Vergleich.
+
+\paragraph{Stream-Function-Formulierung.}
+In der Masterarbeit wird die inkompressible Strömung über die Stromfunktion
+$\psi$ prädiziert, was die Divergenzfreiheit analytisch erzwingt.  Xiao et al.\
+prädizieren direkt das Geschwindigkeitsfeld und müssen die
+Divergenzfreiheitsbedingung daher implizit durch die Trainingsdaten und den
+FNO-Bias gewährleisten.  Die Überlegenheit der Stromfunktionsformulierung
+als physikalisch strukturiertes Lernziel ist damit ein methodischer
+Mehrwert der Masterarbeit gegenüber Xiao et al.
+
+\paragraph{Statische vs.\ zeitabhängige Prognose.}
+Ein wesentlicher Unterschied besteht im Prognosetyp: Xiao et al.\ lösen ein
+Zeitentwicklungsproblem, bei dem der FNO autoregressiv eingesetzt wird.  Die
+Masterarbeit hingegen betrachtet \emph{stationäre} Strömungsfelder, was das
+Problem strukturell vereinfacht (kein Fehlerakkumulationseffekt), jedoch die
+Generalisierung auf geometrisch neuartige Konfigurationen in den Vordergrund
+stellt.  Die Erkenntnis von Xiao et al., dass sequence-to-sequence-Training
+die Langzeitstabilität verbessert, ist für die Masterarbeit zwar nicht direkt
+übertragbar, unterstreicht aber grundsätzlich den Wert von Regularisierungsstrategien, die die physikalische Konsistenz der Ausgabe fördern.
+
+\end{document}

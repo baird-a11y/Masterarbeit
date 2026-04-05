@@ -1,0 +1,151 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+% ================================================================
+\section*{Choose a Transformer: Fourier or Galerkin}
+
+\textbf{Autor:} Shuhao Cao \\
+\textbf{Institution:} Department of Mathematics and Statistics, Washington University in St.\ Louis \\
+\textbf{Konferenz:} NeurIPS 2021 \\
+\textbf{arXiv:} 2105.14995
+
+% ================================================================
+\subsection*{1\quad Problemstellung und Motivation}
+
+Das Paper überträgt den Selbst-Aufmerksamkeitsmechanismus aus dem Transformer-Modell
+(\emph{Attention Is All You Need}) erstmals auf das datengetriebene Operatorlernen für
+partielle Differentialgleichungen. Ausgangspunkt ist die Beobachtung, dass ein trainierter
+Operatorlerner -- im Gegensatz zu klassischen Lösern oder PINNs -- eine einzige Vorwärtsberechnung
+genügt, um für beliebige neue Eingabefunktionen eine Ausgabe zu produzieren, ohne Neukalibrierung
+oder Kollokationspunkte.
+
+Der Autor betrachtet zwei Klassen von Operatorlernaufgaben: (i)~parametrische PDEs, bei denen
+aus einem variablen Koeffizienten $a$ die zugehörige Lösung $u = L_a^{-1}f$ gelernt wird, und
+(ii)~inverse Koeffizientenidentifikation, bei der aus einer verrauschten Lösung $u$ der
+zugrundeliegende Koeffizient $a$ rekonstruiert wird.
+
+% ================================================================
+\subsection*{2\quad Methodik: Fourier-Typ versus Galerkin-Typ Aufmerksamkeit}
+
+\paragraph{Grundprinzip.}
+Der klassische skalierte Skalarprodukt-Attention-Mechanismus lautet:
+\begin{equation}
+    \mathbf{z} = \mathrm{Attn}(\mathbf{y}) := (\widetilde{Q}\widetilde{K}^\top)V / n,
+\end{equation}
+wobei $Q = \mathbf{y}W^Q$, $K = \mathbf{y}W^K$, $V = \mathbf{y}W^V \in \mathbb{R}^{n \times d}$
+die Projektionstransformationen sind. Das Paper schlägt vor, die Softmax-Normalisierung vollständig
+zu entfernen und stattdessen eine mesh-gewichtete Normalisierung einzusetzen, die eine
+Integrations-basierte Interpretation erlaubt.
+
+\paragraph{Fourier-Typ Aufmerksamkeit (FT, quadratische Komplexität).}
+\begin{equation}
+    \mathbf{z} = \mathrm{Attn}_{\mathrm{f}}(\mathbf{y}) := (\widetilde{Q}\widetilde{K}^\top) V / n.
+\end{equation}
+Hier werden $Q$ und $K$ vor dem Skalarprodukt mit einer Schicht-Normalisierung versehen.
+Die resultierende Ausgabe approximiert ein Fredholm-Integral zweiter Art mit einem
+nicht-symmetrischen lernbaren Kernoperator $\kappa(x, \xi) = \zeta_q(x)\phi_k(\xi)$.
+Die Komplexität pro Schicht beträgt $\mathcal{O}(n^2 d)$.
+
+\paragraph{Galerkin-Typ Aufmerksamkeit (GT, lineare Komplexität).}
+Durch Ausnutzen der Assoziativität der Matrizenmultiplikation ($K^\top V$ zuerst berechnen)
+ergibt sich:
+\begin{equation}
+    \mathbf{z} = \mathrm{Attn}_{\mathrm{g}}(\mathbf{y}) := Q(\widetilde{K}^\top \widetilde{V}) / n.
+\end{equation}
+Die Komplexität reduziert sich auf $\mathcal{O}(nd^2)$, d.h.\ linear in der Sequenzlänge $n$.
+Theoretisch entspricht diese Operation einer lernbaren Petrov-Galerkin-Projektion:
+Die Ausgabe $z_j(x)$ approximiert $f$ durch eine Linearkombination von Basisfunktionen
+aus dem Spaltenraum von $Q$, wobei die Koeffizienten aus dem inneren Produkt von $K$
+und $V$ bestimmt werden (Theorem 4.3, Céa-type Lemma). Diese Approximationskapazität
+ist \emph{unabhängig von der Sequenzlänge} $n$ -- ein zentrales theoretisches Ergebnis.
+
+\paragraph{Neue Schicht-Normalisierung.}
+Um die Trainingsinstabilität ohne Softmax zu beheben, wird eine diagonale
+Galerkin-Projektions-Schicht-Normalisierung eingeführt, bei der $K$ und $V$ (statt $Q$ und $K$)
+vor dem Skalarprodukt normalisiert werden. Diese Normalisierung entspricht einer
+billigen diagonalen Alternative zu den Normalierungen, die aus dem Petrov-Galerkin-Beweis
+folgen, und erlaubt es einem lernbaren Skalierungsfaktor, durch die Encoder-Schichten zu
+propagieren.
+
+% ================================================================
+\subsection*{3\quad Experimente und Ergebnisse}
+
+Es werden drei Benchmarks untersucht:
+\begin{enumerate}
+    \item \textbf{Viskose Burgers-Gleichung} (1D, periodisch): Alle aufmerksamkeitsbasierten
+    Operatorlerner erzielen vergleichbare Leistung wie FNO1d. Die neue Galerkin-Schicht-Normalisierung
+    verbessert das Ergebnis deutlich, wenn Daten unnormalisiert vorliegen.
+
+    \item \textbf{Darcy-Strömung} (2D, elliptisch): Die aufmerksamkeitsbasierten Modelle
+    erzielen \textbf{30--50\,\% niedrigeren Evaluierungsfehler} als das Baseline-FNO2d bei
+    gleicher Trainingskonfiguration. Der GT Ln on $K,V$ erreicht den besten Wert ($8.39 \times 10^{-3}$
+    gegenüber $10.9 \times 10^{-3}$ für FNO2d).
+
+    \item \textbf{Inverse Koeffizientenidentifikation} (2D, Darcy): Für dieses schlecht
+    gestellte inverse Problem schlägt das aufmerksamkeitsbasierte Modell das FNO2d deutlich,
+    da FNO2d hochfrequente Merkmale durch seine Modus-Trunkierung nicht rekonstruieren kann.
+\end{enumerate}
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Modell} & \textbf{CUDA Mem (GB)} & \textbf{GFLOP} \\
+\midrule
+ST (Softmax) & 31.06 & 1393 \\
+FT (Fourier-Typ) & 22.92 & 1138 \\
+GT (Galerkin-Typ) & \textbf{1.93} & \textbf{275} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Der GT ist damit um einen Faktor $\sim 16\times$ speichereffizienter und $\sim 5\times$
+recheneffizienter als der Standard-Softmax-Transformer bei $n = 8192$.
+
+% ================================================================
+\subsection*{4\quad Bezug zur Masterarbeit}
+
+\paragraph{4.1\quad Attention als globale Alternative zu FNO-Spektralschichten.}
+Der FNO operiert im Spektralbereich und erfasst globale Abhängigkeiten durch Fourier-Koeffizienten.
+Die Galerkin-Typ Aufmerksamkeit bietet einen konzeptuell verwandten Zugang: Sie approximiert
+das Lösungsfeld durch eine Linearkombination von lernbaren Basisfunktionen und erfasst
+globale Korrelationen in einem einzigen Berechnungsschritt. Beide Mechanismen sind für
+elliptische Operatoren wie die Stokes-Gleichungen strukturell geeignet, da dort lokale Störungen
+das gesamte Rechengebiet beeinflussen.
+
+\paragraph{4.2\quad Relevanz für das Hochfrequenz-Problem an Kristallgrenzen.}
+Ein bekanntes Defizit des Standard-FNO ist die Trunkierung hoher Fourier-Moden, die zu
+ungenauer Vorhersage an Kristallgrenzen führen kann. Die Galerkin-Typ Aufmerksamkeit
+arbeitet dagegen im Ortsraum und hat prinzipiell Zugang zu hochfrequenten räumlichen
+Merkmalen -- sofern die Basisfunktionen ausreichend expressiv sind. Dies macht sie zu einem
+interessanten Vergleichsmodell für zukünftige Arbeiten, die das Grenzschichtproblem
+gezielt adressieren.
+
+\paragraph{4.3\quad Stationäre elliptische PDE: Darcy-Strömung als engste Analogie.}
+Die Darcy-Strömung -- $-\nabla \cdot (a \nabla u) = f$, eine stationäre elliptische PDE
+zweiter Ordnung -- ist strukturell eng mit der in der Masterarbeit verwendeten
+Stokes-Strömung verwandt: Beide sind lineare elliptische Operatoren, bei denen lokale
+Inhomogenitäten globale Lösungsstrukturen erzeugen. Die Ergebnisse zeigen, dass
+aufmerksamkeitsbasierte Operatorlerner für elliptische Probleme gegenüber FNO
+klare Vorteile besitzen -- eine Beobachtung, die die Entwicklung derartiger Modelle
+für Stokes-Strömungssurrogate motiviert.
+
+\paragraph{4.4\quad Abgrenzung.}
+Das Galerkin-Transformer-Modell operiert auf regulären Gittern und setzt eine einzige
+skalare Eingabefunktion (z.B.\ Koeffizientenfeld $a$) voraus. In der Masterarbeit hingegen
+werden fünf Eingabekanäle (Kristallmaske, Signed-Distance-Feld, Abstandsfeld, $x$- und
+$z$-Koordinaten) auf einem $256 \times 256$-Gitter verwendet, und die geometrische Topologie
+variiert zwischen den Proben (unterschiedliche Kristallzahlen). Die direkte Anwendung des
+Galerkin-Transformers auf dieses Problem würde Anpassungen an der Eingabekodierung
+erfordern. Zudem sind im Galerkin-Transformer-Paper keine Generalisierungsexperimente
+auf variierende geometrische Topologien (analog zu variierende Kristallzahlen) enthalten.
+
+\end{document}

@@ -1,0 +1,161 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{A Scalable Convolutional Neural Network Approach to Fluid Flow Prediction
+in Complex Environments}
+
+\textbf{Autoren:} Pratip Rana, Timothy M.\ Weigand, Kevin R.\ Pilkiewicz, Michael L.\ Mayo \\
+\textbf{Journal:} Scientific Reports, 14, 23080 \\
+\textbf{Jahr:} 2024 \\
+\textbf{DOI:} \href{https://doi.org/10.1038/s41598-024-73529-y}{10.1038/s41598-024-73529-y}
+
+\subsection*{Zusammenfassung}
+
+Diese Arbeit untersucht die Fähigkeit konvolutioneller neuronaler Netze (CNNs), stationäre
+Strömungsfelder in zweidimensionalen rechteckigen Domänen mit variierenden Hinderniskonfigurationen
+effizient und genau vorherzusagen. Der zentrale Beitrag besteht in einer Domänendekompositionsstrategie,
+die es ermöglicht, ein auf einfachen Einzelhindernisszenarien trainiertes Modell auf beliebig große
+und geometrisch komplexe Domänen zu übertragen, ohne das Modell neu trainieren zu müssen.
+
+\paragraph{Datengenerierung und physikalisches Setup.}
+Die Trainingsdaten werden mit der Open-Source-Software OpenFOAM durch Lösung der zeitabhängigen,
+inkompressiblen Navier-Stokes-Gleichungen erzeugt. Dabei werden laminare und transitionelle Strömungen
+um konvexe Hindernisse -- kreisförmige und rechteckige Objekte in verschiedenen Orientierungen und
+Größen -- simuliert. Die resultierenden Strömungsfelder werden auf einem $128 \times 128$ Gitter
+diskretisiert, und zeitgemittelte Geschwindigkeitsfelder werden als Lernziel verwendet.
+Die Reynolds-Zahl variiert im Bereich von ca.\ 2 bis 350, womit sowohl laminare als auch
+schwach turbulente Regime abgedeckt werden.
+
+\paragraph{Netzwerkarchitektur.}
+Als primäre Architektur verwenden die Autoren ein \emph{Gated Residual U-Net}, das auf der Arbeit
+von Hennigh (2017) basiert. Das Netz besteht aus einem Encoder-Pfad, einem Decoder-Pfad und
+Skip-Connections, die hochauflösende räumliche Information über alle Skalen hinweg bewahren.
+Als Grundbaustein dienen \emph{Gated Residual Units}, in denen eine Sigmoid-Aktivierung einen
+Gating-Mechanismus realisiert, der die Informationsfluss selektiv steuert. Im Vergleich mit
+konkurrierenden Architekturen -- Standard-U-Net, Residual U-Net, Nested U-Net sowie Recurrent
+Residual U-Net -- erzielt das Gated Residual U-Net einen guten Kompromiss aus Vorhersagegenauigkeit,
+Parameterzahl und Trainingszeit. Der MSE-Wert auf dem Testdatensatz ($0{,}0324$) liegt nur
+geringfügig über dem des aufwendigeren Recurrent Residual U-Net ($0{,}0305$), bei deutlich
+kürzerer Trainingszeit und höherer Stabilität.
+
+Der Eingangsrepräsentation wird besondere Sorgfalt gewidmet: Neun Merkmalskanäle kodieren
+neben der binären Hindernismaske auch die Lage benachbarter Hindernisse in verschiedenen
+Richtungen relativ zur Einströmrichtung sowie normierte Komponenten der Einlaufgeschwindigkeit.
+Diese mehrkanalige Darstellung ermöglicht dem Modell, die Wechselwirkung zwischen benachbarten
+Hindernissen implizit zu berücksichtigen.
+
+\paragraph{Domänendekomposition und Skalierung.}
+Die Kernidee der Arbeit ist eine hierarchische Domänendekompositionsstrategie. Eine große Domäne
+mit mehreren Hindernissen wird in nicht-überlappende Teildomänen gleicher Größe zerlegt,
+von denen jede genau ein Hindernis enthält. Das auf Einzelhindernisdomänen trainierte
+\emph{lokale Modell} (``Local Contiguous Model'') wird sequenziell auf diese Teildomänen
+angewendet, wobei das vorhergesagte Ausströmfeld einer Teildomäne als Einströmrandbedingung
+für die stromabwärts liegende Teildomäne dient. Die so zusammengesetzten Teilvorhersagen
+werden zu einem globalen Strömungsfeld zusammengefügt (``Contiguous Model'').
+
+Da an den Nahtstellen zwischen Teildomänen Diskontinuitäten im Geschwindigkeitsfeld
+entstehen, wird ein zweites Modell -- das ``Continuous Model'' -- nachgeschaltet, das
+Glattheitsbedingungen an den Grenzflächen erzwingt. Dieses Modell arbeitet auf dem
+zusammengesetzten Feld als Eingabe und reduziert den mittleren quadratischen Fehler
+gegenüber dem reinen ``Contiguous Model'' um ca.\ 18\,\%. Quantitativ ergibt sich für
+eine $1280 \times 384$ Pixel Domäne ein mittlerer MSE von $0{,}0033$ (Contiguous) bzw.\
+$0{,}0027$ (Continuous).
+
+\paragraph{LOVE-Metrik und optimale Gitterzerlegung.}
+Zur Bestimmung einer optimalen Teildomänengröße führen die Autoren eine informationstheoretische
+Methode ein: die \emph{Local Orientational Vector Field Entropy} (LOVE). Diese Shannon-Entropie
+des Geschwindigkeitsvektorfeldwinkels quantifiziert, wie weit stromabwärts eines Hindernisses
+das gestörte Strömungsfeld bis zur ungestörten Einströmung relaxiert (Dekorrela\-tionslänge).
+Das Prinzip ist: Teildomänengrenzen sollten idealerweise so gewählt werden, dass sie jenseits
+der Dekorrelationslänge des stromaufwärts gelegenen Hindernisses liegen. Die Fehlerfortpflanzung
+im Continuous Model skaliert annähernd linear mit der Anzahl der Teildomänen
+($\mathrm{MSE}(n) \approx n\,\Delta\varepsilon$), was eine vorhersagbare und kontrollierte
+Fehlerentwicklung ermöglicht.
+
+\paragraph{Ergebnisse und Grenzen.}
+Die fünffache Kreuzvalidierung belegt, dass nach ca.\ 6\,000 Trainingsbeispielen eine
+Sättigung der Lernkurve einsetzt und der Verlust exponentiell abnimmt. Die Methode wurde
+erfolgreich auf Domänen angewendet, die deutlich größer sind als die Trainingsdaten, ohne
+die Architektur anzupassen. Gleichzeitig identifizieren die Autoren zentrale Limitierungen:
+Fehler akkumulieren mit zunehmender Distanz zur Quelle; die Methode ist auf Domänen
+beschränkt, die sich durch ein reguläres Gitter gleichartiger Hindernisdomänen darstellen
+lassen; und die Ausdehnung auf drei Dimensionen würde eine erhöhte Modellkomplexität
+erfordern.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Die Arbeit von Rana et al.\ (2024) ist auf mehreren Ebenen unmittelbar relevant für die
+vorliegende Masterarbeit, auch wenn sich die physikalischen Regime und Zielsetzungen
+deutlich unterscheiden.
+
+\paragraph{Gemeinsame Fragestellung: Generalisierung auf ungesehene Geometrien.}
+Der Kernbefund der Arbeit -- dass ein auf einfachen Konfigurationen trainiertes Netz auf
+komplexere Mehrhindernis-Szenarien übertragen werden kann -- entspricht direkt der
+zentralen Forschungsfrage dieser Masterarbeit: Können U-Net- und FNO-Architekturen,
+die auf $N$ Kristallkonfigurationen trainiert wurden, auf ungesehene Anordnungen mit
+abweichender Partikelanzahl generalisieren? Rana et al.\ nähern sich diesem Problem über
+eine explizite Domänendekomposition; die vorliegende Arbeit verfolgt stattdessen einen
+globalen Ansatz, bei dem das Netz implizit lernen soll, beliebig viele Kristalle in einer
+festen $256 \times 256$ Domäne zu handhaben.
+
+\paragraph{Architekturelle Überschneidungen.}
+Rana et al.\ validieren experimentell, dass Gated Residual U-Net-Architekturen mit
+Skip-Connections besonders gut für strukturierte Strömungsfeldvorhersage geeignet sind --
+eine Beobachtung, die die Wahl des U-Net als primäre Architektur in dieser Masterarbeit
+stützt. Die in Rana et al.\ berichteten MSE-Werte für das einfachere Standard-U-Net
+($0{,}0471$) bis hin zum Gated Residual U-Net ($0{,}0324$) auf $128 \times 128$ Gittern
+mit Einzelhindernissen bieten einen quantitativen Referenzrahmen. Da die vorliegende
+Masterarbeit die physikalisch deutlich anspruchsvolleren Stokes-Gleichungen im Niedrig-Reynolds-Regime behandelt und Konfigurationen mit bis zu $N_{\max}$ Kristallen modelliert,
+ist eine direkte Vergleichbarkeit der Fehlermetriken nicht gegeben; die Größenordnungen
+sind jedoch instruktiv.
+
+\paragraph{Eingaberepräsentation und mehrkanalige Kodierung.}
+Der Ansatz von Rana et al., Nachbarhindernisse in verschiedenen Richtungen als separate
+Eingangskanäle zu kodieren, ist konzeptionell verwandt mit der in dieser Masterarbeit
+verwendeten Kombination aus Kristallmaske, Signed Distance Field und Koordinatenkanälen.
+Beide Strategien verfolgen das Ziel, dem Netz räumliche Kontextinformation über die
+Hindernisgeometrie zu vermitteln, die über die bloße lokale Präsenz eines Hindernisses
+hinausgeht. Während Rana et al.\ richtungsabhängige Binärinformationen über externe
+Hindernisse verwenden, wählt die vorliegende Arbeit eine stetigere Darstellung durch das
+Distanzfeld, das eine kontinuierliche Näherungsinformation für alle Kristalle gleichzeitig
+kodiert.
+
+\paragraph{Physikalische Unterschiede und Implikationen.}
+Ein wesentlicher Unterschied besteht im physikalischen Regime: Rana et al.\ arbeiten bei
+Reynolds-Zahlen bis 350 und damit in laminaren bis transitionellen Navier-Stokes-Regimen,
+in denen Trägheitseffekte eine Rolle spielen. Die vorliegende Masterarbeit fokussiert auf
+sehr niedrige Reynolds-Zahlen (Stokes-Regime), in denen viskose Kräfte dominieren, die
+Strömung linear und elliptisch ist und Fernfeldwechselwirkungen zwischen Partikeln
+besonders ausgeprägt sind. Dieser Unterschied hat direkte Konsequenzen für die Architekturwahl: Die elliptische Natur der Stokes-Gleichungen motiviert den Einsatz des Fourier
+Neural Operator (FNO), der durch seine globale Rezeptivität im Spektralraum besonders
+geeignet erscheint, die langreicher Wechselwirkungen zu erfassen -- eine Dimension, die
+Rana et al.\ durch ihre sequenzielle Domänendekomposition approximativ adressieren.
+
+\paragraph{Fehlerfortpflanzung und Skalierbarkeit.}
+Die von Rana et al.\ beobachtete lineare Fehlerfortpflanzung ($\mathrm{MSE}(n) \approx n\,\Delta\varepsilon$)
+ist für diese Masterarbeit insofern relevant, als sie aufzeigt, dass ein globaler Ansatz --
+der die gesamte Mehrpartikeldomain in einem einzigen Vorwärtsdurchlauf behandelt -- dem
+sequenziellen Stitching-Ansatz grundsätzlich überlegen sein sollte, sofern die Netzarchitektur
+ausreichend Ausdrucksstärke besitzt. Gleichzeitig legt die Arbeit nahe, dass die Komplexität
+des Lernproblems mit der Anzahl der Hindernisse wächst -- eine Herausforderung, die in
+der Masterarbeit durch Datenerweiterung und systematisches Training über alle Kristallanzahlen
+$1, \ldots, N_{\max}$ adressiert wird.
+
+\paragraph{Strömungsfeldrepräsentation.}
+Rana et al.\ sagen Geschwindigkeitskomponenten direkt vorher und verwenden
+physikalisch informierte Nachbearbeitung (das Continuous Model) zur Durchsetzung von
+Stetigkeitsbedingungen. Die vorliegende Masterarbeit wählt demgegenüber die Stromfunktion
+$\psi$ als Lernziel, die Inkompressibilität analytisch garantiert und damit die explizite
+Nachbearbeitung zur Stetigkeitskorrektur überflüssig macht. Dieser Ansatz stellt eine
+konzeptionelle Weiterentwicklung dar, die strukturerhaltende Eigenschaften durch die
+Ausgaberepräsentation selbst realisiert, anstatt sie a posteriori zu erzwingen.
+
+\end{document}

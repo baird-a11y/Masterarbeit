@@ -1,0 +1,182 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{parskip}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Physics-Constrained Deep Learning for High-dimensional Surrogate Modeling
+and Uncertainty Quantification without Labeled Data}
+
+\textbf{Autoren:} Yinhao Zhu, Nicholas Zabaras, Phaedon-Stelios Koutsourelakis, Paris Perdikaris \\
+\textbf{Journal:} Journal of Computational Physics \\
+\textbf{Jahr:} 2019 (arXiv: 1901.06314)
+
+\subsection*{Motivation und Problemstellung}
+
+Surrogat-Modelle für PDE-Systeme werden üblicherweise als überwachte Lernprobleme formuliert,
+bei denen Paare aus Eingabe- und Ausgabedaten für das Training benötigt werden.
+Das grundlegende Problem dabei ist, dass die Erzeugung dieser Ausgabedaten (d.\,h. das
+Lösen der Gleichungen mit klassischen Simulatoren) rechenintensiv und oft der eigentliche
+Flaschenhals in der wissenschaftlichen Praxis ist. Die Autoren identifizieren zwei zentrale
+Herausforderungen: (1) den hohen Datenbedarf tiefer neuronaler Netze im Vergleich zur
+begrenzten Verfügbarkeit teurer Simulationsdaten (``small data problem''), und (2) die
+fehlende Berücksichtigung physikalischer Nebenbedingungen in rein datengetriebenen Ansätzen.
+
+\subsection*{Kernbeitrag: Physik-beschränktes Surrogat-Training}
+
+Das Hauptmerkmal der Arbeit ist ein Framework, das die physikalischen Gleichungen direkt
+in die Verlustfunktion integriert und damit das Training \emph{ohne} gelabelte
+Ausgabedaten ermöglicht. Statt der klassischen mittleren quadratischen Abweichung zwischen
+Vorhersage und Referenzsimulation wird die sogenannte \emph{Physics-Constrained Loss} verwendet:
+%
+\begin{equation}
+\mathcal{L}(\theta; \{x^{(i)}\}) = \frac{1}{N} \sum_{i=1}^{N} \bigl[ V(\hat{y}_\theta(x^{(i)}), x^{(i)}) + \lambda\, B(\hat{y}_\theta(x^{(i)})) \bigr],
+\end{equation}
+%
+wobei $V(\cdot)$ der PDE-Verlustterm (z.\,B. das Residuum oder ein Variationsfunktional)
+und $B(\cdot)$ der Randbedingungs-Verlustterm ist. Das Netz lernt also, die Gleichung
+zu lösen, anstatt eine vorberechnete Lösung nachzuahmen.
+
+Die Arbeit untersucht vier Varianten der Verlustfunktion für Darcy-Strömungen:
+\emph{Primal Residual}, \emph{Primal Variational}, \emph{Mixed Variational} und
+\emph{Mixed Residual}. Die mixed-residual Formulierung wird bevorzugt, da sie die
+Differentiationsordnung reduziert (approximiert durch Sobel-Filter) und die beste
+Vorhersagegenauigkeit für das Druckfeld liefert.
+
+\subsection*{Architektur: Convolutional Encoder-Decoder}
+
+Als Surrogat-Architektur verwenden die Autoren ein \emph{Dense Convolutional Encoder-Decoder}
+Netz (ähnlich dem U-Net~\cite{ronneberger2015unet}), das aus drei dichten Blöcken mit je 6,
+8 und 6 Schichten (Growth Rate 16) aufgebaut ist. Das Netz empfängt ein einzelnes
+Eingabekanal-Bild der Permeabilitätsfeld-Realisierung ($1 \times 64 \times 64$) und gibt
+drei Ausgabekanäle aus: Druckfeld und zwei Flussfeld-Komponenten ($3 \times 64 \times 64$).
+Räumliche Gradienten werden durch Sobel-Filter approxi\-miert, was gegenüber automatischer
+Differentiation durch das FC-NN deutlich effizienter ist.
+
+Ein zentrales Ergebnis ist die Überlegenheit von CNNs gegenüber vollständig verbundenen
+Netzen (FC-NNs) für diesen Aufgabentyp: CNNs konvergieren deutlich schneller, erfassen
+multi\-skalige Strukturen der Strömungsfelder besser und scheitern nicht bei komplexen
+Eingabefeldern wie kanalisierten Strukturen, bei denen FC-NNs keine ausreichende Genauigkeit
+erreichen.
+
+\subsection*{Probabilistisches Surrogat und Unsicherheitsquantifizierung}
+
+Neben dem deterministischen Surrogat wird ein probabilistisches Modell vorgestellt,
+das auf einem konditionierten \emph{Flow-basierten generativen Modell} (Conditional Glow)
+basiert. Das Modell wird durch Minimierung der \emph{reversen Kullback-Leibler-Divergenz}
+zwischen der Modellverteilung $p_\theta(\mathbf{y}|\mathbf{x})$ und einer
+Boltzmann-Gibbs-Referenzverteilung trainiert:
+%
+\begin{equation}
+\text{D}_{\mathrm{KL}}(p_\theta(\mathbf{y}|\mathbf{x}) \| p_\beta(\mathbf{y}|\mathbf{x})) = \beta\, \mathbb{E}[\mathcal{L}(\mathbf{y},\mathbf{x})] - H_\theta(\mathbf{y}|\mathbf{x}) + \text{const},
+\end{equation}
+%
+wobei $\beta$ ein inverser Temperatur-Parameter ist, der die Breite der Vorhersageverteilung
+kontrolliert. Der erste Term erzwingt die Erfüllung der PDE, der zweite Term (negative
+Entropie) fördert Vielfalt und verhindert Modenkollaps. Das Modell ermöglicht exakte
+Log-Likelihood-Bewertung und generiert Unsicherheitsabschätzungen ohne Ausgabedaten.
+
+\subsection*{Experimentelle Ergebnisse}
+
+Die Methode wird an stationären Darcy-Strömungen in zufälligen heterogenen Medien
+evaluiert. Als Eingaben dienen fünf Verteilungstypen: Gausssche Zufallsfelder (GRF)
+mit unterschiedlicher KLE-Trunkierung (KLE128 bis KLE2048), verzerrte GRFs und
+kanalisierte Felder. Wichtige quantitative Resultate:
+
+\begin{itemize}
+    \item Das physik-beschränkte Surrogat (PCS) erzielt für das Druckfeld relative
+          $L_2$-Fehler von ca. 1,7\,\% (bei 8192 Trainingsdaten, GRF KLE512),
+          vergleichbar mit dem datengetriebenen Surrogat (DDS) bei 2,0\,\%.
+
+    \item Bei der Generalisierung auf \emph{Out-of-Distribution}-Eingaben (kanalisierte
+          Felder, verzerrte GRFs) zeigt das PCS konsistent bessere Generalisierungs\-fähigkeit
+          als das DDS, da die Physik als Regularisierung wirkt.
+
+    \item Das probabilistische Surrogat (Conditional Glow, $\beta = 150$) erreicht
+          einen relativen $L_2$-Fehler von 0,38\,\% für das Druckfeld und gut
+          kalibrierte Unsicherheitsabschätzungen.
+\end{itemize}
+
+\subsection*{Bezug zur Masterarbeit}
+
+Die Arbeit von Zhu et al.\ berührt mehrere Kernthemen der vorliegenden Masterarbeit
+und bietet sowohl konzeptionelle Inspiration als auch wichtige Vergleichspunkte:
+
+\textbf{1. Convolutional Encoder-Decoder als Surrogat für Strömungsfelder.}
+Die verwendete Netzarchitektur ist konzeptionell direkt verwandt mit der in dieser
+Masterarbeit eingesetzten U-Net-Architektur. Beide verwenden Skip-Connections zwischen
+Encoder- und Decoder-Pfad, mehrskalige Feature-Extraktion und lernen eine
+Abbildung von einem skalaren Eingabefeld auf vektorielle Strömungsfelder.
+Ein wesentlicher Unterschied besteht darin, dass das Eingabefeld bei Zhu et al.\ das
+Permeabilitätsfeld darstellt, während in der Masterarbeit die Positionen und
+Geometrien der sedi\-men\-tierenden Kristalle als Eingabe dienen.
+
+\textbf{2. Physik-informierte Verlustterme.}
+Die Integration physikalischer Nebenbedingungen als Verlustterme -- insbesondere
+Kontinuitätsgleichungen und Divergenzfreiheit -- ist auch für die Vorhersage von
+Stokes-Strömungsfeldern um Kristalle relevant. Die Masterarbeit implementiert eine
+ähnliche Strategie mit einem Kontinuitätsverlust $\mathcal{L}_{\text{cont}} = \|\nabla \cdot
+\mathbf{v}\|^2$, der die Inkompressibilität des Fluids erzwingt. Das in Zhu et al.\
+beschriebene Residual-Learning mit gemischter Formulierung bietet dabei Anknüpfungs\-punkte
+für alternative Verlustformulierungen im Stokes-Regime.
+
+\textbf{3. Residual-Learning-Ansatz.}
+Obwohl Zhu et al.\ keinen expliziten Residual-Learning-Ansatz im Sinne von
+$\mathbf{v}_{\text{total}} = \mathbf{v}_{\text{Stokes}} + \Delta\mathbf{v}_{\text{gelernt}}$
+verfolgen, entspricht die mixed-residual Verlustfunktion konzeptionell dem Prinzip,
+das Netz auf die Abweichung von einer analytischen Basislösung zu trainieren.
+Die Masterarbeit erweitert dieses Prinzip durch das explizite Einbetten der analytischen
+Stokes-Lösung als Priori, was eine stärkere physikalische Regularisierung bietet.
+
+\textbf{4. Generalisierung auf unbekannte Konfigurationen.}
+Ein Kernbefund von Zhu et al.\ ist, dass physik-beschränkte Modelle bessere
+Out-of-Distribution-Generalisierung zeigen als rein datengetriebene Methoden.
+Dieser Befund ist direkt relevant für die zentrale Forschungsfrage der Masterarbeit:
+Kann ein Netz, das auf $N$ Kristallen trainiert wurde, auf $N{+}m$ Kristalle generalisieren?
+Die Ergebnisse von Zhu et al.\ stützen die Hypothese, dass Physik-informierung die
+Generalisierungsfähigkeit systematisch verbessert -- insbesondere wenn die Testverteilung
+von der Trainingsverteilung abweicht, wie es beim Übergang von $N$- zu $(N{+}m)$-Kristall-
+Konfigurationen der Fall ist.
+
+\textbf{5. Vergleich CNN vs.\ FC-NN.}
+Der klare Befund, dass CNNs FC-NNs für räumliche Strömungsfelder überlegen sind,
+unterstützt die Architekturwahl der Masterarbeit. Insbesondere die effizientere
+Erfassung multi\-skaliger Strukturen -- die im Stokes-Regime durch
+Wechselwirkungen zwischen mehreren Kristallen auf verschiedenen Längenskalen
+entstehen -- spricht für die U-Net-basierte Herangehensweise.
+
+\textbf{Wesentliche Unterschiede und Erweiterungen.}
+Im Gegensatz zu Zhu et al., die ein festes räumliches Medium mit stochastischen
+Eigenschaften modellieren, muss die Masterarbeit strukturelle Variabilität in der
+Anzahl und Position der Kristalle berücksichtigen. Dies entspricht einem Szenario,
+in dem sich nicht nur die PDE-Koeffizienten, sondern auch die Geometrie des Problems
+verändert -- eine deutlich anspruchsvollere Generalisierungsaufgabe. Darüber hinaus
+konzentriert sich die Masterarbeit auf das Stokes-Regime (Re $\ll 1$) mit bekannter
+analytischer Einzellösungsstruktur, während Zhu et al.\ allgemeine Darcy-Strömungen
+behandeln.
+
+\subsection*{Einschätzung und Relevanz}
+
+Die Arbeit von Zhu et al.\ ist eine der ersten, die physik-beschränktes Training für
+hochdimensionale PDE-Surrogat-Modelle systematisch demonstriert. Sie liefert starke
+empirische Evidenz dafür, dass die Integration physikalischer Nebenbedingungen sowohl
+die Dateneffizienz als auch die Generalisierungsfähigkeit verbessert. Für die
+Masterarbeit ist die Arbeit als methodische Referenz für physik-informierte Encoder-Decoder-
+Architekturen besonders wertvoll -- insbesondere hinsichtlich der Verlustformulierung und
+der Bewertung von Generalisierungsleistung auf Out-of-Distribution-Szenarien.
+
+\begin{thebibliography}{9}
+\bibitem{ronneberger2015unet}
+O.~Ronneberger, P.~Fischer, T.~Brox,
+\emph{U-Net: Convolutional Networks for Biomedical Image Segmentation},
+MICCAI 2015.
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,188 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+
+\begin{document}
+
+% =========================================================
+\section*{Discretization-invariance? On the Discretization Mismatch
+          Errors in Neural Operators}
+% =========================================================
+
+\noindent\textbf{Autoren:} Wenhan Gao, Ruichen Xu, Yuefan Deng, Yi Liu\\[2pt]
+\textbf{Institution:} Department of Applied Mathematics and Statistics;
+Department of Computer Science, Stony Brook University\\[2pt]
+\textbf{Ver\"offentlicht:} ICLR 2025 (OpenReview: J9FgrqOOni)\\[2pt]
+\textbf{Code:} \url{https://github.com/wenhangao21/ICLR25-CROP}
+
+% =========================================================
+\subsection*{Motivation und Problemstellung}
+% =========================================================
+
+Eine der zentralen Eigenschaften, mit denen der Fourier Neural Operator (FNO)
+beworben wird, ist die sogenannte \emph{Diskretisierungsinvarianz}: Da die
+gelernten Kerneloperatoren im Funktionenraum definiert sind und die Netzwerkparameter von der Gitteraufl\"osung entkoppelt sind, soll das Modell prinzipiell
+auf Aufl\"osungen angewendet werden k\"onnen, die von der Trainingsaufl\"osung
+abweichen. Diese Eigenschaft hat in der Praxis dazu gef\"uhrt, dass FNO-Modelle
+routinem\"a\ss ig auf einer niedrigeren Aufl\"osung trainiert und auf einer
+h\"oheren getestet werden (\emph{zero-shot super-resolution}).
+
+Die Autoren identifizieren dies als ein verbreitetes Missverst\"andnis in der
+Operator-Learning-Community: W\"ahrend die Parameter des FNO tats\"achlich
+aufl\"osungsunabh\"angig sind und das Modell Eingaben verschiedener Aufl\"osungen
+verarbeiten \emph{kann}, garantiert dies keineswegs, dass die Ausgabequalit\"at
+konsistent bleibt. Ziel der Arbeit ist es, dieses Missverst\"andnis formell
+zu adressieren, die Fehlerquelle zu isolieren und eine L\"osungspipeline
+vorzuschlagen.
+
+% =========================================================
+\subsection*{Kernbeitrag: Discretization Mismatch Error (DME)}
+% =========================================================
+
+Die Autoren f\"uhren den Begriff des \textbf{Discretization Mismatch Error
+(DME)} ein, definiert als die Diskrepanz zwischen den FNO-Ausgaben, wenn
+dieselbe kontinuierliche Eingabefunktion in zwei verschiedenen Aufl\"osungen
+diskretisiert wird:
+\[
+  E_{MN} := \bigl\| \mathcal{G}_\theta\bigl(a|_{\Omega_M}\bigr)
+             - \mathcal{G}_\theta\bigl(a|_{\Omega_N}\bigr) \bigr\|_{\mathcal{U}}.
+\]
+Sie unterscheiden bewusst zwischen der klassischen Definition von
+Diskretisierungsinvarianz nach Kovachki et al.\ (2021) -- Konvergenz des
+diskreten Operators gegen den kontinuierlichen Grenzoperator -- und der
+praktisch relevanten Frage, ob die Modellausgaben bei verschiedenen
+Diskretisierungen \emph{konsistent} sind.
+
+\textbf{Proposition 4.4} zeigt theoretisch, dass der DME mit wachsender
+Anzahl von Fourier-Schichten akkumuliert und mit zunehmendem Abstand
+zwischen Trainings- und Inferenzaufl\"osung w\"achst. Der Fehler ist durch
+einen Ausdruck beschr\"ankt, der von den Lipschitz-Konstanten der
+Aktivierungsfunktionen, den Operatornormen der linearen Schichten und
+dem relativen Aufl\"osungsunterschied $|M - N|/(MN)$ abh\"angt.
+
+Zus\"atzlich zu DMEs identifizieren die Autoren \emph{Aliasing-Fehler} als
+verwandte, aber separate Fehlerquelle -- bereits von Raoni\v{c} et al.\
+(CNO, NeurIPS 2023) diskutiert -- und zeigen, dass alias-freie
+Aktivierungsfunktionen die DME-Problematik nicht beheben.
+
+% =========================================================
+\subsection*{Vorgeschlagene L\"osung: CROP-Pipeline}
+% =========================================================
+
+Als Reaktion auf die DME-Analyse schlagen die Autoren die
+\textbf{Cross-Resolution Operator-learning Pipeline (CROP)} vor. CROP
+besteht aus zwei Bausteinen:
+
+\begin{itemize}
+  \item \textbf{CROP Lifting Layer:} Bildet die Eingabefunktion durch eine
+    globale bandlimitierte Faltung auf eine latente Repr\"asentation mit
+    fester Diskretisierung ab. Da die Bandlimitierung die Diskretisierung
+    des latenten Raums fixiert, entstehen keine DMEs.
+
+  \item \textbf{CROP Projection Layer:} Bildet die latente Funktion durch
+    eine bandlimitierte Faltung kombiniert mit einem punktweisen
+    vollverbundenen Netz auf den Ausgaberaum ab. Das vollverbundene Netz
+    kann dabei Frequenzanteile \"uber die Bandgrenze hinaus erzeugen,
+    sodass auch feine Details rekonstruiert werden k\"onnen.
+\end{itemize}
+
+Der Zwischenoperator zwischen Lifting und Projection kann frei gew\"ahlt
+werden -- sowohl FNO als auch U-Net sind m\"oglich -- was CROP zu einer
+generischen Pipeline macht. Die CROP-Architektur erf\"ullt
+Continuous-Discrete Equivalence (CDE) im Sinne von Raoni\v{c} et al.\
+(2023) und ist somit frei von Aliasing- und Diskretisierungsfehlern.
+
+% =========================================================
+\subsection*{Experimentelle Ergebnisse}
+% =========================================================
+
+Die Autoren evaluieren CROP auf der 2D-Navier-Stokes-Gleichung sowie
+Darcy-Flow, Helmholtz und Poisson, mit besonderem Fokus auf
+Cross-Resolution-Aufgaben.
+
+\begin{itemize}
+  \item \textbf{DME-Akkumulation (Navier-Stokes, Re = 1000):} Ein auf
+    $64 \times 64$ trainierter FNO erzielt bei Inferenz auf
+    $128 \times 128$ einen dreimal h\"oheren Fehler als bei der
+    Trainingsaufl\"osung (0{,}66\,\% vs.\ 0{,}22\,\% relativer
+    $\ell_2$-Fehler, bereits im ersten Zeitschritt). Der DME w\"achst
+    monoton mit der Anzahl der Fourier-Schichten.
+
+  \item \textbf{Cross-Resolution (Navier-Stokes):} FNO zeigt starke
+    Abh\"angigkeit von der Trainingsaufl\"osung (Fehler 0{,}58\,\%
+    bei $64\times64$, 4{,}65\,\% bei $256\times256$). CROP erreicht
+    konsistent 0{,}54\,\% auf allen getesteten Aufl\"osungen
+    ($32\times32$ bis $256\times256$).
+
+  \item \textbf{Lernf\"ahigkeit (High-Re Navier-Stokes, Darcy, Helmholtz,
+    Poisson):} CROP \"ubertrifft alle Baselines (FNO, CNO, U-Net, ResNet,
+    DeepONet) auch bei der In-distribution-Genauigkeit, da die
+    bandlimitierten Lifting- und Projection-Schichten globale und lokale
+    Merkmale effizient kombinieren.
+\end{itemize}
+
+% =========================================================
+\subsection*{Bezug zur Masterarbeit}
+% =========================================================
+
+\subsubsection*{1.\ Direkte Rechtfertigung der Einschr\"ankung im Related Work}
+
+Die Arbeit liefert die formelle theoretische Grundlage f\"ur den Hinweis
+in Kapitel~2.3 der Masterarbeit, dass die Diskretisierungsinvarianz des FNO
+in der Praxis nur n\"aherungsweise gilt. Der DME-Begriff erkl\"art pr\"azise,
+warum: Die Netzwerkparameter sind zwar aufl\"osungsunabh\"angig, aber die
+diskrete Implementierung via FFT akkumuliert Fehler, sobald Trainings- und
+Inferenzaufl\"osung voneinander abweichen.
+
+\subsubsection*{2.\ Kein direkter Einfluss auf die Masterarbeit-Experimente}
+
+Da alle Experimente der Masterarbeit auf einer festen $256 \times 256$-Aufl\"osung
+durchgef\"uhrt werden -- sowohl Training als auch Inferenz -- tritt der DME
+in der vorliegenden Arbeit nicht auf. Die Relevanz der Gao et al.-Arbeit liegt
+daher prim\"ar in der \emph{konzeptionellen Einordnung}: Die Behauptung aus dem
+FNO-Paper, das Modell sei diskretisierungsinvariant, ist mit Vorsicht zu
+genie\ss en und sollte nicht unkommentiert \"ubernommen werden.
+
+\subsubsection*{3.\ Spektrale Bias-Problematik}
+
+Ein Nebenbefund der Gao et al.-Arbeit ist, dass FNO auch bei gleicher
+Trainings- und Inferenzaufl\"osung zur Gl\"attung feiner Details neigt, da
+hohe Fourier-Moden abgeschnitten werden. Dies ist konsistent mit den in der
+Masterarbeit beobachteten Residuen an Kristallgrenzen, wo der FNO steile
+Gradienten in $\psi$ unterschätzt.
+
+\subsubsection*{4.\ CROP als m\"ogliche Weiterentwicklung}
+
+Die CROP-Architektur k\"onnte als Ausgangspunkt f\"ur eine Weiterentwicklung
+des FNO-Surrogatmodells dienen, insbesondere wenn k\"unftige Arbeiten
+verschiedene Gitteraufl\"osungen untersuchen oder den Fehler an
+Kristallgrenzen durch bessere Hochfrequenzrepresentation reduzieren wollen.
+
+% =========================================================
+\subsection*{Kritische Einsch\"atzung}
+% =========================================================
+
+\begin{itemize}
+  \item Die Arbeit konzentriert sich auf Standard-PDE-Benchmarks (Navier-Stokes,
+    Darcy, Poisson, Helmholtz) ohne starre Einschl\"usse oder variable
+    Geometrien. \"Ubertragbarkeit auf geometrisch komplexere Probleme wie
+    Mehrkristall-Stokes-Str\"omung ist nicht direkt demonstriert.
+
+  \item Die CROP-Pipeline erfordert zus\"atzliche Hyperparameter (Bandlimit,
+    Wahl des Zwischenoperators), was den Abstimmungsaufwand gegen\"uber einem
+    einfachen FNO erh\"oht.
+
+  \item Der DME ist konzeptionell klar, aber die vorgestellten Schranken
+    (Proposition 4.4) sind obere Schranken und k\"onnen in der Praxis sehr
+    konservativ sein -- die tats\"achliche Fehlerakkumulation h\"angt stark
+    vom Problem ab.
+\end{itemize}
+
+\end{document}

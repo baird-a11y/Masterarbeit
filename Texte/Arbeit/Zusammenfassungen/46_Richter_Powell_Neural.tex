@@ -1,0 +1,125 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{amsmath}
+
+\begin{document}
+
+\section*{Neural Conservation Laws: A Divergence-Free Perspective}
+\textbf{Autoren:} Jack Richter-Powell, Yaron Lipman, Ricky T.\ Q.\ Chen \\
+\textbf{Jahr:} 2022 \\
+\textbf{Konferenz:} 36th Conference on Neural Information Processing Systems (NeurIPS 2022)
+
+\subsection*{Zusammenfassung}
+
+Diese Arbeit untersucht die Parameterisierung tiefer neuronaler Netzwerke, die per Konstruktion die
+Kontinuit\"atsgleichung -- ein fundamentales Erhaltungsgesetz der mathematischen Physik -- exakt
+erf\"ullen. Der zentrale Ausgangspunkt ist die Beobachtung, dass jede L\"osung der Kontinuit\"atsgleichung
+als divergenzfreies Vektorfeld dargestellt werden kann. Auf dieser Grundlage entwickeln die Autoren
+zwei konkrete Konstruktionen divergenzfreier neuronaler Netzwerke, die auf dem Konzept
+\emph{Differentialformen} basieren und durch automatische Differentiation effizient realisierbar sind.
+
+\subsubsection*{Divergenzfreie Vektorfelder durch Differentialformen}
+
+Die erste Konstruktion, die sogenannte \emph{Matrix-Feld-Methode}, repr\"asentiert ein
+divergenzfreies Vektorfeld $v : \mathbb{R}^n \to \mathbb{R}^n$ als zeilenweise Divergenz eines
+antisymmetrischen Matrixfeldes $A : \mathbb{R}^n \to \mathbb{R}^{n \times n}$:
+\[
+    v = \bigl(\operatorname{div}(A_1), \ldots, \operatorname{div}(A_n)\bigr)^\top,
+    \qquad A = -A^\top.
+\]
+Die zweite Konstruktion, die \emph{Vektorfeld-Methode}, startet von einem beliebigen Vektorfeld
+$b : \mathbb{R}^n \to \mathbb{R}^n$ und konstruiert $A$ als antisymmetrischen Anteil der
+Jacobi-Matrix:
+\[
+    A = J_b - J_b^\top,
+\]
+woraus das divergenzfreie Feld durch zeilenweise Divergenz von $A$ gewonnen wird. Beide Ans\"atze
+sind nachweislich universell, d.\,h.\ sie k\"onnen beliebige glatte divergenzfreie Vektorfelder
+approximieren (bis auf eine konstante Komponente, die separat erg\"anzt werden kann). Die
+Matrix-Feld-Methode ist rechentechnisch effizienter, da sie eine Jacobi-Berechnung einspart,
+erfordert jedoch $\mathcal{O}(n^2)$ Ausgabekomponenten; die Vektorfeld-Methode ben\"otigt nur
+$\mathcal{O}(n)$ Komponenten und erlaubt die einfache Einbettung zus\"atzlicher Constraints
+wie Nicht-Negativit\"at der Dichte.
+
+\subsubsection*{Neural Conservation Laws}
+
+Der entscheidende Beitrag der Arbeit besteht in der Erkenntnis, dass die Kontinuit\"atsgleichung
+\[
+    \frac{\partial \rho}{\partial t} + \operatorname{div}(\rho\, u) = 0
+\]
+durch Erweiterung des Raums um die Zeitvariable als divergenzfreies Vektorfeld
+$v = (\rho,\, \rho u)$ reformuliert werden kann, wobei die Divergenz \"uber die gemeinsamen
+Variablen $(t, x)$ gebildet wird. Wird $v$ als divergenzfreies neuronales Netzwerk
+parameterisiert, erf\"ullt das Modell die Kontinuit\"atsgleichung per Konstruktion -- ohne
+zus\"atzliche Strafterme im Verlustfunktional und ohne kostspielige numerische Simulation der
+Dichte. Die Autoren bezeichnen diese Klasse von Modellen als \emph{Neural Conservation Laws}
+(NCL).
+
+\subsubsection*{Experimentelle Validierung}
+
+Die Methode wird an mehreren Testf\"allen demonstriert. Bei der L\"osung der inkompressiblen
+Euler-Gleichungen in einer Kugeldom\"ane in $\mathbb{R}^3$ sowie auf dem flachen Torus $\mathbb{T}^2$
+zeigt der NCL-Ansatz gegen\"uber klassischen physik-informierten neuronalen Netzwerken (PINNs)
+deutlich bessere Ergebnisse: W\"ahrend PINNs trotz kleiner Verlustfunktionswerte die korrekte
+Dichtedynamik nicht reproduzieren k\"onnen, konvergiert NCL linear gegen eine Referenzl\"osung
+der Finiten-Elemente-Methode. Weitere Anwendungen umfassen das Lernen der Hodge-Zerlegung in
+hohen Dimensionen (bis $n = 100$) sowie die L\"osung des dynamischen optimalen Transportproblems,
+bei dem NCL ohne Minimax-Optimierung auskommt und stabilere Trainingsverl\"aufe liefert.
+
+\subsection*{Kritische Einsch\"atzung}
+
+Ein wesentlicher Nachteil der Methode ist ihre Skalierbarkeit: Die zeilenweise Divergenzberechnung
+erfordert den vollst\"andigen Jacobi-Tensor des Netzwerks, was quadratisch mit der Dimension skaliert
+und bei hochdimensionalen Gitterproblemen erheblichen Rechenaufwand verursacht. Die Autoren
+erkennen dies an und verweisen auf zuk\"unftige Entwicklungen in der automatischen Differentiation als
+m\"ogliche Abhilfe. F\"ur gitterbasierte Anwendungen mit fester r\"aumlicher Aufl\"osung -- wie in
+der vorliegenden Masterarbeit -- ist dieser Nachteil jedoch weniger kritisch, da die Dimension durch
+das Simulationsgitter fixiert ist.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Die Arbeit von Richter-Powell et al.\ ist in mehrfacher Hinsicht direkt relevant f\"ur die vorliegende
+Masterarbeit zur physik-basierten maschinellen Lernvorhersage von Str\"omungsfeldern um
+sedimentierende Kristalle.
+
+\paragraph{Stromfunktionsansatz als architektonische Garantie.}
+Die Masterarbeit verwendet die Stromfunktion $\psi$ als Ausgabegr\"o{\ss}e neuronaler Netzwerke,
+wobei die Geschwindigkeitskomponenten durch Differentiation gewonnen werden:
+$v_x = \partial\psi/\partial y$, $v_y = -\partial\psi/\partial x$. Dies ist ein Spezialfall des
+von Richter-Powell et al.\ beschriebenen allgemeinen Rahmens: In zwei Dimensionen reduziert sich
+die antisymmetrische Matrixdarstellung genau auf die Stromfunktionsformulierung. Die
+Divergenzfreiheitsbedingung $\nabla \cdot v = 0$ -- im Stokes-Regime zwingend erf\"ullt -- wird
+dadurch auf Maschinengenauigkeit ($\sim 10^{-6}$) garantiert, ohne sie als Strafterm in den
+Verlust aufnehmen zu m\"ussen. Dies stimmt direkt mit dem in dieser Arbeit erzielten Ergebnis
+\"uberein, dass der Stromfunktionsansatz die physikalische Konsistenz gegen\"uber direkter
+Geschwindigkeitsvorhersage erheblich verbessert.
+
+\paragraph{\"Uberlegenheit exakter Constraints gegen\"uber Straftermen.}
+Ein zentrales Ergebnis von Richter-Powell et al.\ ist, dass das exakte Erf\"ullen der
+Kontinuit\"atsgleichung -- selbst bei vergleichbaren Verlustfunktionswerten -- zu signifikant
+besserer physikalischer Dynamik f\"uhrt als die Penalisierung mit Straftermen (PINNs). Diese
+Beobachtung motiviert und st\"utzt die in der Masterarbeit getroffene Entscheidung, die
+Divergenzfreiheit architektonisch durch die Stromfunktion zu garantieren anstatt sie als
+weichen Constraint mit adaptiver Gewichtung zu behandeln.
+
+\paragraph{Residuallernen und analytische L\"osungen.}
+Der NCL-Rahmen l\"asst sich mit dem in der Masterarbeit verwendeten Residuallernansatz
+kombinieren: Statt das vollst\"andige Str\"omungsfeld $v$ zu lernen, lernt das Netzwerk die
+Korrektur $\Delta\psi = \psi_{\text{gesamt}} - \psi_{\text{Stokes,analytisch}}$ zur analytischen
+Einkristall-Stokes-L\"osung. Da sowohl die analytische Stromfunktion als auch die gelernte
+Korrektur divergenzfrei sind, bleibt die physikalische Konsistenz erhalten, w\"ahrend das
+Netzwerk sich auf die Modellierung der Mehrteilchen-Wechselwirkungen konzentriert.
+
+\paragraph{Generalisierung als zentrales Forschungsziel.}
+Die von Richter-Powell et al.\ demonstrierte verbesserte Generalisierungsf\"ahigkeit durch
+physikalisch konsistente Formulierungen unterst\"utzt die Hauptforschungsfrage der Masterarbeit:
+ob Netzwerke, die auf $N$-Kristall-Konfigurationen trainiert wurden, auf Konfigurationen mit
+$N+m$ Kristallen generalisieren k\"onnen. Die exakte Einhaltung physikalischer Erhaltungsgesetze
+durch den Stromfunktionsansatz reduziert den effektiven Hypothesenraum und d\"urfte die
+Generalisierung \"uber verschiedene Kristallanzahlen hinweg beg\"unstigen.
+
+\end{document}

@@ -1,0 +1,78 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Numerical Simulations of Particulate Suspensions via a Discretized Boltzmann Equation. Part 1. Theoretical Foundation}
+
+\textbf{Autor:} Anthony J. C. Ladd \\
+\textbf{Institution:} Lawrence Livermore National Laboratory \\
+\textbf{Jahr:} 1994 \\
+\textbf{Zeitschrift:} Journal of Fluid Mechanics
+
+\subsection*{Zusammenfassung}
+
+Die Arbeit pr\"asentiert eine neuartige Simulationstechnik f\"ur Feststoff-Fluid-Suspensionen, die auf einer diskretisierten Boltzmann-Gleichung (Lattice-Boltzmann-Methode, LBM) basiert. Der zentrale Vorteil dieser Methode liegt in der linearen Skalierung der Rechenkosten mit der Partikelanzahl $N$, w\"ahrend klassische Methoden wie Stokesian Dynamics oder Boundary-Element-Verfahren typischerweise mit $\mathcal{O}(N^2)$ bis $\mathcal{O}(N^3)$ skalieren.
+
+\subsubsection*{Theoretische Grundlagen}
+
+Die Methode basiert auf der Erkenntnis, dass die makroskopischen Navier-Stokes-Gleichungen aus einer diskretisierten Boltzmann-Gleichung abgeleitet werden k\"onnen. Das verwendete Modell nutzt 18 diskrete Geschwindigkeitsrichtungen auf einem kubischen Gitter, wobei die Zeitentwicklung der Verteilungsfunktion $n_i(\mathbf{r}, t)$ durch
+\begin{equation}
+n_i(\mathbf{r} + \mathbf{c}_i, t + 1) = n_i(\mathbf{r}, t) + \Delta_i(\mathbf{r}, t)
+\end{equation}
+beschrieben wird. Der Kollisionsoperator $\Delta_i$ wird durch Linearisierung um das lokale Gleichgewicht konstruiert und erf\"ullt die Erhaltung von Masse und Impuls.
+
+Durch eine Multi-Skalen-Analyse (Chapman-Enskog-Entwicklung) wird gezeigt, dass diese diskretisierte Gleichung im makroskopischen Limit die inkompressiblen Navier-Stokes-Gleichungen reproduziert:
+\begin{equation}
+\partial_t(\rho \mathbf{u}) + \nabla \cdot (\rho \mathbf{u}\mathbf{u}) = -\nabla p + \eta \nabla^2 \mathbf{u}
+\end{equation}
+
+\subsubsection*{Behandlung der Fest-Fluid-Grenzfl\"achen}
+
+Ein wesentlicher Beitrag der Arbeit ist die Entwicklung lokaler Regeln f\"ur die Wechselwirkung zwischen Fluid und festen Partikeln an den Grenzfl\"achen. Die Partikeloberfl\"achen werden durch Randknoten (boundary nodes) repr\"asentiert, die auf den Verbindungslinien zwischen Gitterknoten liegen. Die ``Bounce-Back''-Randbedingung gew\"ahrleistet die Haftbedingung (no-slip) an der Partikeloberfl\"ache. F\"ur bewegte Partikel wird die Populationsdichte gem\"a{\ss}
+\begin{equation}
+n_i(\mathbf{r} + \mathbf{c}_i, t + 1) = n_{i'}(\mathbf{r} + \mathbf{c}_i, t_+) + 2a_1^{c_i} \rho \mathbf{u}_b \cdot \mathbf{c}_i
+\end{equation}
+modifiziert, wobei $\mathbf{u}_b$ die lokale Geschwindigkeit der Partikeloberfl\"ache ist.
+
+\subsubsection*{Fluktuationen und Brownsche Bewegung}
+
+Die Arbeit erweitert die LBM um stochastische Fluktuationen im Spannungstensor, wodurch Brownsche Bewegung der suspendierten Partikel emergent aus den Fluidfluktuationen entsteht. Die Varianz der Fluktuationen wird \"uber das Fluktuations-Dissipations-Theorem mit der effektiven Temperatur des Fluids verkn\"upft:
+\begin{equation}
+A = 2\eta k_B T \lambda^2
+\end{equation}
+Diese Formulierung erm\"oglicht die Simulation kolloidaler Suspensionen ohne explizite Zufallskr\"afte auf die Partikel.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Die Arbeit von Ladd ist aus mehreren Gr\"unden f\"ur die Masterarbeit \"uber ML-basierte Vorhersage von Str\"omungsfeldern um sedimentierende Kristalle relevant:
+
+\subsubsection*{1. Problemstellung und physikalischer Kontext}
+
+Beide Arbeiten adressieren das gleiche fundamentale Problem: die Vorhersage von Str\"omungsfeldern um multiple sedimentierende Partikel mit vollst\"andiger Ber\"ucksichtigung der hydrodynamischen Wechselwirkungen. Ladd betont explizit, dass hydrodynamische Wechselwirkungen sich ``in Zeit und Raum aus rein lokalen Kr\"aften entwickeln, die an den Fest-Fluid-Grenzfl\"achen erzeugt werden und dann durch das Fluid diffundieren'' -- genau diese physikalische Charakteristik muss das ML-Surrogat-Modell der Masterarbeit lernen.
+
+\subsubsection*{2. Skalierungsproblematik als Motivation}
+
+Ladd dokumentiert pr\"azise das Skalierungsproblem klassischer Methoden: ``The computational cost scales as at least the square and often as the cube of the number of particles.'' Diese Aussage wird in Kapitel 1.2 der Masterarbeit aufgegriffen und motiviert direkt die Entwicklung von ML-Surrogat-Modellen als schnelle Alternative. Die lineare Skalierung der LBM ist bereits ein Fortschritt, aber ML-Modelle versprechen nach dem Training noch gr\"o{\ss}ere Geschwindigkeitsvorteile.
+
+\subsubsection*{3. Stokes-Regime und Inkompressibilit\"at}
+
+Beide Arbeiten fokussieren auf das Stokes-Regime (niedrige Reynolds-Zahlen), das f\"ur Kristallsedimentation in magmatischen Systemen charakteristisch ist. Die Inkompressibilit\"atsbedingung $\nabla \cdot \mathbf{u} = 0$ ist zentral: Bei Ladd wird sie \"uber die Konstruktion der Gleichgewichtsverteilung erf\"ullt, w\"ahrend die Masterarbeit die Stromfunktion $\psi$ als Lernziel w\"ahlt, um Inkompressibilit\"at per Konstruktion zu garantieren -- zwei unterschiedliche Strategien f\"ur das gleiche physikalische Constraint.
+
+\subsubsection*{4. Multiskalen-Charakter der Str\"omung}
+
+Ladd betont die Notwendigkeit, sowohl lokale Grenzschichten an den Partikeloberfl\"achen als auch langreichweitige hydrodynamische Wechselwirkungen aufzul\"osen. Dies korrespondiert direkt mit der Architekturwahl der Masterarbeit: Das U-Net mit seinem hierarchischen Encoder-Decoder-Aufbau und Skip-Connections ist explizit darauf ausgelegt, Information \"uber multiple Skalen zu verarbeiten, w\"ahrend der FNO durch seine spektrale Repr\"asentation globale Abh\"angigkeiten erfasst.
+
+\subsubsection*{5. Methodischer Kontrast}
+
+W\"ahrend Ladd einen physikbasierten Simulator entwickelt, der die zugrundeliegenden Gleichungen diskretisiert l\"ost, verfolgt die Masterarbeit einen datengetriebenen Ansatz, bei dem ein neuronales Netz die Abbildung von Geometrie auf Str\"omungsfeld aus Trainingsdaten lernt. Die LaMEM-Simulationen, die die Trainingsdaten f\"ur die Masterarbeit generieren, l\"osen ebenfalls die Stokes-Gleichungen -- allerdings mit Finite-Elemente-Methoden statt LBM. Der Vergleich dieser Ans\"atze illustriert das Spannungsfeld zwischen physikalischer Interpretierbarkeit (LBM/FEM) und Inferenzgeschwindigkeit (ML).
+
+\subsubsection*{6. Behandlung variabler Partikelanzahlen}
+
+Ein zentrales Forschungsziel der Masterarbeit ist die Generalisierung \"uber variable Kristallanzahlen (1 bis $N$). Ladd's LBM behandelt dies inh\"arent durch die lokale Natur der Randbedingungen -- jedes Partikel f\"ugt einfach weitere Randknoten hinzu. F\"ur die ML-Modelle ist diese Generalisierung hingegen nicht trivial und erfordert eine sorgf\"altige Input-Repr\"asentation (Masken, Distanzfelder), die geometrie-agnostisch ist.
+
+\end{document}

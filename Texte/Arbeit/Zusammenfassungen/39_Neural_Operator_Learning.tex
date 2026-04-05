@@ -1,0 +1,174 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
+
+\begin{document}
+
+\section*{Neural Operator: Learning Maps Between Function Spaces with Applications to PDEs}
+
+\noindent\textbf{Autoren:} Nikola Kovachki, Zongyi Li, Burigede Liu,
+Kamyar Azizzadenesheli, Kaushik Bhattacharya, Andrew Stuart, Anima Anandkumar\\[2pt]
+\textbf{Erschienen in:} Journal of Machine Learning Research, Vol.\,24 (2023), S.\,1--97\\
+\textbf{Eingereicht:} Dezember 2021 \quad \textbf{Veröffentlicht:} Dezember 2022
+
+% -----------------------------------------------------------------
+\subsection*{Kernbeitrag}
+
+Diese Arbeit schlägt ein allgemeines Deep-Learning-Framework vor, das klassische
+neuronale Netze von Abbildungen zwischen endlichdimensionalen euklidischen Räumen
+auf Abbildungen zwischen \emph{unendlichdimensionalen Funktionenräumen} verallgemeinert.
+Die resultierende Modellklasse wird als \textbf{Neuronaler Operator} bezeichnet.
+Motiviert wird dieser Ansatz durch PDE-Anwendungen, bei denen die Eingangs- und
+Ausgangsgröße des zu erlernenden Lösungsoperators Funktionen und keine Vektoren sind
+-- zum Beispiel die Abbildung von Anfangs- oder Randbedingungen auf die zugehörige
+Lösungsfunktion.
+
+% -----------------------------------------------------------------
+\subsection*{Theoretische Grundlagen}
+
+\paragraph{Diskretisierungsinvarianz.}
+Ein zentrales Konzept der Arbeit ist die \emph{Diskretisierungsinvarianz}:
+Ein Modell mit fester Parameteranzahl gilt als diskretisierungsinvariant, wenn es
+(i) beliebige Diskretisierungen der Eingangsfunktion akzeptiert,
+(ii) die Ausgabefunktion an beliebigen Punkten auswerten kann, und
+(iii) im Grenzfall immer feinerer Diskretisierung gegen einen kontinuierlichen
+Operator konvergiert.
+Die Autoren zeigen formal, dass klassische CNNs und Standard-Neuronalnetze diese
+Eigenschaft \emph{nicht} besitzen -- ihr Fehler wächst bei Gitterverfeinerung --,
+während neuronale Operatoren sie garantieren.
+Für die Masterarbeit bedeutet das, dass ein FNO-Modell prinzipiell auf einer
+niedrigeren Trainingsauflösung trainiert und dann auf $256{\times}256$-Gittern
+ausgewertet werden kann.
+
+\paragraph{Universelle Approximation.}
+Theorem\,11 der Arbeit beweist, dass neuronale Operatoren jeden stetigen Operator
+$G^\dagger: \mathcal{A} \to \mathcal{U}$ zwischen Banachräumen gleichmäßig auf
+kompakten Mengen approximieren können. Dies wird sowohl für $L^p$- und
+Sobolev-Räume als auch für Räume stetiger Funktionen gezeigt und stellt die
+einzige bekannte Modellklasse dar, die gleichzeitig Diskretisierungsinvarianz
+\emph{und} universelle Approximation garantiert.
+
+% -----------------------------------------------------------------
+\subsection*{Architektur}
+
+Der neuronale Operator der Arbeit folgt der allgemeinen Struktur
+\[
+  G_\theta = Q \circ \sigma_T(W_{T-1} + K_{T-1} + b_{T-1})
+              \circ \cdots \circ
+              \sigma_1(W_0 + K_0 + b_0) \circ P,
+\]
+wobei $P$ einen punktweisen Lifting-Schritt, $K_t$ einen nichtlokalen
+Integral-Kern-Operator, $W_t$ einen lokalen linearen Operator und $Q$
+eine abschließende Projektion bezeichnet.
+Insgesamt werden vier konkrete Parametrisierungen des Kernoperators vorgestellt:
+
+\begin{itemize}
+  \item \textbf{GNO} (Graph Neural Operator): Approximiert das Integral über
+        Nystrom-Stichproben auf einem Graphen; flexibel für unstrukturierte Gitter.
+  \item \textbf{LNO} (Low-rank Neural Operator): Dekomponiert den Kern in eine
+        Produkt-Form mit linearer Komplexität $\mathcal{O}(J)$.
+  \item \textbf{MGNO} (Multipole Graph Neural Operator): Kombiniert lokale
+        Graphstruktur mit hierarchischer Mehrskalendekomposition à la Fast
+        Multipole Method; ebenfalls $\mathcal{O}(J)$.
+  \item \textbf{FNO} (Fourier Neural Operator): Parametrisiert den Kern direkt
+        im Frequenzraum über die FFT mit quasilinearer Komplexität
+        $\mathcal{O}(J \log J)$; derzeit bester Ansatz auf uniformen Gittern.
+\end{itemize}
+
+Jede FNO-Schicht führt eine Fouriertransformation durch, multipliziert die
+niedrigfrequenten Moden mit einer lernbaren Matrix $R \in \mathbb{C}^{k_\text{max}
+\times m \times n}$ und transformiert zurück, addiert dabei einen lokalen
+residualen Pfad $W v(x)$:
+\[
+  u(x) = \mathcal{F}^{-1}\!\bigl(R \cdot \mathcal{F}(v)\bigr)(x) + W v(x) + b(x).
+\]
+
+% -----------------------------------------------------------------
+\subsection*{Numerische Ergebnisse}
+
+Die Arbeit benchmarkt alle vier Methoden auf vier Testproblemen: der
+1D-Poisson-Gleichung, Darcy-Strömung, Burgers-Gleichung und Navier-Stokes.
+Wichtige Befunde für die Masterarbeit:
+
+\begin{itemize}
+  \item Auf der \textbf{2D-Darcy-Strömung} erreicht FNO einen relativen $L_2$-Fehler
+        von $1{,}08\,\%$ (Auflösung $s=85$), während U-Net nicht direkt verglichen
+        wird, aber FCN auf größeren Gittern deutlich schlechter abschneidet.
+  \item Auf der \textbf{Navier-Stokes-Gleichung} ($\nu = 10^{-3}$, $N=1000$,
+        $T=50$) erzielt FNO-3D einen relativen Fehler von $0{,}86\,\%$, während
+        \textbf{U-Net denselben Fehler von $2{,}45\,\%$} aufweist -- also etwa
+        dreimal höher. Dieser direkte Vergleich ist für den Architekturvergleich
+        in der Masterarbeit unmittelbar relevant.
+  \item FNO ist gegenüber U-Net beim \textbf{Zero-Shot Super-Resolution}-Transfer
+        (Training auf $64{\times}64$, Inferenz auf $256{\times}256$) der einzige
+        Ansatz, der keine Fehlerdegradierung zeigt.
+  \item Im \textbf{Bayes'schen Inversionsproblem} ist FNO als Surrogatmodell
+        ca.\ 440-mal schneller als der traditionelle Löser (0,005\,s vs.\ 2,2\,s
+        pro Evaluierung), was MCMC-Sampling erst praktikabel macht.
+\end{itemize}
+
+% -----------------------------------------------------------------
+\subsection*{Beziehung zu anderen Methoden}
+
+Die Autoren zeigen außerdem, dass DeepONets ein Spezialfall des
+neuronalen Operators sind, bei dem die Diskretisierungsinvarianz gebrochen wird
+(Proposition~5). Transformers mit Self-Attention lassen sich als kontinuierliche
+Grenzfälle des nichtlinearen Kernoperators interpretieren (Proposition~6).
+CNNs approximieren im Kontinuumslimit Differentialoperatoren, verlieren aber
+bei Gitterverfeinerung die Konsistenz -- ein wichtiger Unterschied zu FNO.
+
+% -----------------------------------------------------------------
+\subsection*{Bezug zur Masterarbeit}
+
+\paragraph{Theoretische Einordnung des FNO.}
+Die Masterarbeit vergleicht UNet- und FNO-Architekturen als Surrogatmodelle für
+LaMEM-Simulationen von Stokes-Strömungsfeldern um sedimentierende Kristalle.
+Kovachki et al.\ liefern die formale Grundlage dafür: Der FNO approximiert den
+Lösungsoperator $G^\dagger: a \mapsto (v_x, v_y)$ -- also die Abbildung von
+Kristallgeometrie und -position auf die Geschwindigkeitsfelder -- als neuronalen
+Operator im Sinne von Theorem\,11. Die universelle Approximationseigenschaft
+begründet, warum ein FNO prinzipiell in der Lage ist, die nichtlokalen
+Druckwechselwirkungen zwischen mehreren Kristallen zu erlernen, auch wenn während
+des Trainings nur $N$ Kristalle vorhanden waren.
+
+\paragraph{Diskretisierungsinvarianz und Generalisierung.}
+Die zentrale Forschungsfrage der Masterarbeit -- ob ein auf $N$ Kristallen
+trainiertes Netz auf Konfigurationen mit $N{+}m$ Kristallen generalisiert --
+ist eng mit der Diskretisierungsinvarianz verknüpft: Da der FNO den
+Funktionsraum und nicht eine spezifische Diskretisierung erlernt, sollte er
+robuster gegenüber veränderten Eingabestrukturen sein als ein klassisches UNet,
+das fest an das Trainingsgitter gebunden ist. Diese Eigenschaft des FNO stützt
+die Hypothese, dass er für das $N$-zu-$(N{+}m)$-Generalisierungsproblem
+geeigneter sein könnte.
+
+\paragraph{FNO vs.\ U-Net für Strömungsfelder.}
+Die in Tabelle~4 der Arbeit gezeigte Überlegenheit des FNO gegenüber U-Net
+auf der Navier-Stokes-Gleichung (Fehlerreduktion um Faktor ${\sim}3$) liefert
+eine empirische Baseline-Erwartung: Falls ähnliche Muster auf dem Stokes-Problem
+der Masterarbeit auftreten, wäre dies ein starker Hinweis auf die strukturelle
+Eignung von FNO für Strömungssurrogate. Gleichzeitig ist zu beachten, dass das
+Stokes-Regime ($Re \ll 1$) weit glattere Lösungen erzeugt als turbulente
+Navier-Stokes-Strömungen, was dem UNet durch seine Multiskalen-Encoder-Decoder-
+Struktur zugutekommen könnte.
+
+\paragraph{Residuales Lernen und physikalische Konsistenz.}
+Der in dieser Arbeit verwendete additive residuale Pfad $Wv(x)$ in jeder FNO-Schicht
+ist konzeptuell verwandt mit dem in der Masterarbeit implementierten
+\emph{residualen Lernansatz} $v_\text{total} = v_\text{Stokes} + \Delta v_\text{NN}$,
+bei dem das Netz lediglich die Korrektur zur analytischen Stokes-Lösung erlernt.
+Beide Mechanismen nutzen strukturelles Vorwissen, um den Lernprozess zu stabilisieren.
+
+\paragraph{Spektrale Eigenschaften.}
+Die in der Arbeit diskutierten spektralen Zerfallsanalysen (Abschnitt\,7.3.2)
+zeigen, dass FNO auch Hochfrequenzanteile der Lösung rekonstruieren kann,
+obwohl der Kern nur auf $k_\text{max}$ Moden beschränkt ist. Dies ist für die
+Masterarbeit relevant, da Strömungsfelder um Kristalle im Nahfeld scharfe
+Gradienten aufweisen, die präzise Hochfrequenzinformation erfordern.
+
+\end{document}

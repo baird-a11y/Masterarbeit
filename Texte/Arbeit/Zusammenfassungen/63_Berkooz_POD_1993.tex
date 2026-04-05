@@ -1,0 +1,74 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{The Proper Orthogonal Decomposition in the Analysis of Turbulent Flows}
+\textbf{Autoren:} Gal Berkooz, Philip Holmes, John L. Lumley \\
+\textbf{Journal:} Annual Review of Fluid Mechanics, Vol.\ 25, S.\ 539--575 \\
+\textbf{Jahr:} 1993
+
+\subsection*{Zusammenfassung}
+
+\subsubsection*{Grundidee und mathematische Formulierung}
+
+Die \emph{Proper Orthogonal Decomposition} (POD), auch bekannt als Karhunen-Lo\`eve-Entwicklung oder Hauptkomponentenanalyse, ist ein Verfahren zur optimalen linearen Niedrigrang-Approximation hochdimensionaler Datenmengen. In der Strömungsmechanik zielt die POD darauf ab, ein ensemble von Strömungsfeldern $\mathbf{u}(\mathbf{x}, t)$ durch eine möglichst kleine Anzahl orthonormaler Basisfunktionen (Moden) $\phi_k(\mathbf{x})$ darzustellen:
+\begin{equation}
+\mathbf{u}(\mathbf{x}, t) \approx \sum_{k=1}^{r} a_k(t)\,\phi_k(\mathbf{x}),
+\end{equation}
+wobei $a_k(t)$ zeitabhängige Koeffizienten und $r \ll N$ die Anzahl der beibehaltenen Moden ist.
+
+Die POD-Moden sind Eigenfunktionen des integralen Operators, der durch den Zwei-Punkt-Korrelationstensor $R(\mathbf{x}, \mathbf{x}') = \langle \mathbf{u}(\mathbf{x}) \otimes \mathbf{u}(\mathbf{x}') \rangle$ definiert wird. Die $k$-te Mode maximiert den Anteil der erfassten Varianz -- d.\,h., die POD liefert unter allen linearen Zerlegungen der Dimension $r$ die energieoptimale Darstellung.
+
+\subsubsection*{Snapshot-Methode}
+
+Der Artikel diskutiert ausführlich die von Sirovich (1987) eingeführte \emph{Snapshot-Methode}, die eine rechnerisch effiziente Berechnung der POD-Moden aus einer endlichen Sammlung von $M$ Strömungsfeldern (Snapshots) ermöglicht. Anstatt den hochdimensionalen Korrelationsoperator direkt zu diagonalisieren, wird ein $M \times M$-Eigenwertproblem gelöst, was bei $M \ll N$ (wenige Snapshots, viele Gitterpunkte) erhebliche Rechenersparnis bietet.
+
+\subsubsection*{Anwendungen in der Turbulenzforschung}
+
+Der Artikel präsentiert Anwendungen der POD auf klassische turbulente Strömungsprobleme:
+\begin{itemize}
+    \item \textbf{Turbulente Scherströmungen:} POD-Moden von Kanalströmungen fangen kohärente Wandstrukturen (``horseshoe vortices'') mit wenigen dominanten Moden ein.
+    \item \textbf{Reduced-Order-Modellierung:} Durch Projektion der Navier-Stokes-Gleichungen auf den POD-Unterraum erhält man ein niedrigdimensionales ODE-System (Galerkin-Projektion), das die zeitliche Dynamik des Strömungsfeldes approximiert.
+    \item \textbf{Optimale Modenanzahl:} Für typische turbulente Kanalströmungen reichen wenige Dutzend Moden aus, um 90\% der turbulenten kinetischen Energie zu erfassen.
+\end{itemize}
+
+\subsubsection*{Eigenschaften und Einschränkungen}
+
+\paragraph{Optimalität:} Die POD ist die beste lineare Approximation in dem Sinne, dass keine andere $r$-dimensionale lineare Unterraumbasis mehr Varianz (Energie) erfasst als die ersten $r$ POD-Moden.
+
+\paragraph{Globalität der Moden:} POD-Moden sind globale Strukturen, die das gesamte Strömungsgebiet überdecken. Dies macht sie effizient für Geometrien, auf denen die Trainings-Snapshots definiert sind, aber ineffizient bei der Übertragung auf neue Geometrien.
+
+\paragraph{Linearität als fundamentale Einschränkung:} Die lineare Natur der POD-Darstellung ist ihre zentrale Schwäche für nichtlineare Probleme. Jede Lösung wird als Linearkombination fester Moden dargestellt; nichtlineare Wechselwirkungen zwischen verschiedenen Geometrien, Randbedingungen oder Parameterregimes können nicht durch eine fixe Modenbasis abgebildet werden. Für Strömungen mit stark variierender Geometrie -- wie Stokes-Strömungen um multiple Kristalle -- sind entweder sehr viele Moden erforderlich oder die Approximationsqualität sinkt drastisch.
+
+\subsubsection*{Verbindung zur Datengetriebenen Modellierung}
+
+Der Artikel etabliert die POD als methodisches Fundament datengetriebener Strömungsmodellierung: Die Idee, Strömungsfelder durch wenige latente Koordinaten zu beschreiben, ist konzeptuell auch modernen Machine-Learning-Ansätzen gemeinsam. Allerdings erlauben neuronale Netze nichtlineare Transformationen des latenten Raums, was gegenüber der linearen POD einen strukturellen Vorteil bei geometrisch variablen Problemen darstellt.
+
+\subsection*{Bezug zur Masterarbeit}
+
+\subsubsection*{POD als Referenzparadigma für lineare ROM}
+
+In Abschnitt 2.5.2 der Masterarbeit werden lineare Reduced-Order-Modelle (POD, PCA) als Alternative zu gitterbasierten neuronalen Surrogaten diskutiert. Berkooz et al. (1993) ist die kanonische Referenz für die theoretischen Grundlagen der POD und begründet, warum diese Methode trotz ihrer Effizienz für das vorliegende Problem ungeeignet ist.
+
+\subsubsection*{Warum POD für multi-kristalline Stokes-Strömungen versagt}
+
+Die fundamentale Einschränkung der linearen POD -- globale, fixe Moden -- trifft bei der Stokes-Strömung um multiple Kristalle besonders stark zu:
+\begin{itemize}
+    \item Die Geometrie ändert sich mit jeder neuen Kristallkonfiguration. POD-Moden, die auf einer bestimmten Anordnung von $N$ Kristallen trainiert wurden, können nicht direkt auf eine andere Anzahl oder Anordnung übertragen werden.
+    \item Nachlaufstrukturen und Grenzschichten an einzelnen Kristallen sind geometrieabhängig und lokal; eine globale Modenzerlegung kann diese nicht effizient darstellen, wenn sich die Geometrie ändert.
+    \item Die nichtlineare Kopplung zwischen Kristallen (hydrodynamische Wechselwirkungen) kann prinzipiell nicht als Linearkombination fester Basisfunktionen dargestellt werden.
+\end{itemize}
+
+Diese Überlegungen motivieren direkt den Einsatz nichtlinearer Architekturen (U-Net, FNO), die geometrische Information implizit durch Masken und Distanzfelder kodieren und damit auf beliebige Kristallkonfigurationen generalisieren können.
+
+\subsubsection*{Historische Einordnung}
+
+Als grundlegende Übersichtsarbeit liefert Berkooz et al. (1993) den historischen und konzeptuellen Rahmen, innerhalb dessen datengetriebene Strömungsmodellierung entstanden ist. Das Ziel, hochdimensionale Strömungsfelder durch wenige latente Koordinaten zu beschreiben, ist der gemeinsame Ausgangspunkt sowohl klassischer ROM-Verfahren als auch moderner neuronaler Surrogate.
+
+\end{document}

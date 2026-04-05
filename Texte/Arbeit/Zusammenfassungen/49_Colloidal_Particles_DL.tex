@@ -1,0 +1,42 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\begin{document}
+
+\section*{Inferring Activity from the Flow Field Around Active Colloidal Particles Using Deep Learning}
+\textbf{Autoren:} Aditya Mohapatra, Aditya Kumar, Mayurakshi Deb, Siddharth Dhomkar, Rajesh Singh \\
+\textbf{Jahr:} 2025 \\
+\textbf{Journal:} Journal of Fluid Mechanics (under consideration)
+
+\subsection*{Zusammenfassung}
+
+Die Arbeit untersucht das inverse Problem der Strömungsmechanik im Stokes-Regime: Gegeben ein gemessenes Geschwindigkeitsfeld um aktive kolloidale Partikel, sollen die zugrundeliegenden physikalischen Parameter der Partikel inferiert werden. Aktive kolloidale Partikel – darunter Mikroorganismen wie Algen und synthetische Mikroschwimmer – erzeugen aufgrund nicht-equilibrialer Prozesse an ihrer Oberfläche charakteristische Strömungsfelder, selbst wenn sie sich nicht fortbewegen.
+
+Die Methode basiert auf einer Zerlegung des Strömungsfeldes in irreduzible Komponenten gemäß der Multipol-Entwicklung der Stokes-Gleichung. Die zwei führenden Moden für kraft- und drehmomentfreie aktive Partikel sind der Stresslet-Modus ($2s$-Modus, auch Stresslet genannt) und der Quell-Dipol-Modus ($3t$-Modus). Mit einer uniaxialen Parametrisierung lassen sich diese Moden durch je einen skalaren Parameter charakterisieren: die Stresslet-Stärke $s_0$ und die Quell-Dipol-Stärke $d_0$. Das Vorzeichen des Verhältnisses $s_0/d_0$ bestimmt dabei, ob ein Partikel als „Puller" oder „Pusher" klassifiziert wird.
+
+Zur Lösung des inversen Problems wird ein vollständig faltungsbasiertes neuronales Netz (CNN) eingesetzt, das das zweidimensionale Geschwindigkeitsfeld ($v_x$, $v_y$) als Eingabe erhält und die zugehörige Kraftdichte im Fluid als Ausgabe liefert. Das Netz besteht aus einer Folge von Faltungsschichten mit $3 \times 3$-Kernel, ReLU-Aktivierungsfunktionen und Dropout zur Regularisierung. Das Training erfolgt mit dem mittleren quadratischen Fehler (MSE) als Verlustfunktion und dem Adam-Optimierer. Auf Basis der vorhergesagten Kraftdichte werden anschließend Position, Orientierung sowie die Stärken der beiden Moden mittels eines Gradientenabstiegsalgorithmus (Algorithmus 1) geschätzt.
+
+Die Methode wird zunächst für ein einzelnes Partikel auf einem $128 \times 128$-Gitter validiert. Die Vorhersagefehler für $s_0$ und $d_0$ betragen im Mittel über 600 Testfälle lediglich 3{,}26\,\% bzw. 5{,}70\,\%. Anschließend wird das Verfahren auf Systeme mit $N = 4$ Partikeln sowie auf variable Partikelanzahlen ($N = 1$ bis $4$) erweitert. Ein Algorithmus zur automatischen Detektion der Partikelanzahl und -position basierend auf lokalen Maxima der Kraftdichte ermöglicht dabei eine flexible Anwendung auf beliebige Konfigurationen. Zudem wird gezeigt, dass das Netz robust gegenüber Änderungen der räumlichen Auflösung des Eingabegitters ist.
+
+\subsection*{Methodische Details}
+
+Der Trainingsdatensatz umfasst 4000 Realisierungen mit zufällig platzierten Partikeln, wobei $s_0 \in [800, 1200]$ und $d_0 \in [12000, 16000]$ gleichverteilt gewählt werden. Die Orientierung der Partikel wird aus einem diskreten Winkelraum mit $1^\circ$-Auflösung gesampelt, was die Lernbarkeit der Orientierungsinformation durch das Netz verbessert. Die Daten werden in Trainings- ($2800$), Validierungs- ($600$) und Testmengen ($600$) aufgeteilt. Eine Ablationsstudie zeigt, dass nichtlineare Aktivierungsfunktionen essenziell für die Konvergenz des Modells sind – ein lineares CNN (ohne Aktivierungsfunktionen) konvergiert unter gleichen Bedingungen nicht.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Diese Arbeit steht in direkter methodischer und physikalischer Verwandtschaft zur Masterarbeit, wenngleich die Problemstellungen entgegengesetzt orientiert sind:
+
+\textbf{Inverse vs. Forward Problem:} Während die Masterarbeit das Vorwärtsproblem adressiert – also die Vorhersage von Strömungsfeldern aus gegebenen Partikelkonfigurationen mittels U-Net oder Fourier Neural Operator – löst Mohapatra et al. das inverse Problem und inferiert Partikelparameter aus bekannten Strömungsfeldern. Beide Ansätze beruhen auf derselben physikalischen Grundlage, der Stokes-Gleichung im Regime kleiner Reynolds-Zahlen, und nutzen neuronale Netze als universelle Funktionsapproximatoren.
+
+\textbf{Physikalischer Kontext:} Beide Arbeiten operieren im Stokes-Regime ($\mathrm{Re} \ll 1$), in dem die Strömung vollständig durch die instantane Konfiguration der Partikel bestimmt wird und keine Trägheitseffekte auftreten. Während die Masterarbeit LaMEM-Simulationen als Grundwahrheit für magmatische Sedimentationsprozesse verwendet, generieren Mohapatra et al. ihre Trainingsdaten durch analytische Lösungen der Stokes-Gleichung mit Gaußschen Mollifikatoren.
+
+\textbf{Generalisierung auf Vielpartikelsysteme:} Ein zentrales Thema der Masterarbeit ist die Generalisierungsfähigkeit von Modellen, die auf $N$-Kristall-Konfigurationen trainiert wurden, auf Systeme mit $N+m$ Kristallen. Mohapatra et al. demonstrieren eine analoge Generalisierungsstrategie: Das CNN wird auf variable Partikelanzahlen ($N = 1$ bis $4$) trainiert und kann dabei zuverlässig auf beliebige Konfigurationen innerhalb dieses Bereichs angewendet werden. Die Kombination aus einem lernenden CNN für die Kraftdichte und einem analytischen Nachverarbeitungsalgorithmus zur Parameterextraktion bietet hierbei einen Ansatz, der die Stärken datengetriebener und physikbasierter Methoden vereint – ähnlich dem Residual-Learning-Ansatz der Masterarbeit, bei dem das Netz nur Korrekturen zur analytischen Stokes-Lösung lernt.
+
+\textbf{Architekturwahl:} Das in dieser Arbeit verwendete vollständig faltungsbasierte CNN ohne Encoder-Decoder-Struktur (also ohne Pooling und Skip-Connections wie beim U-Net) stellt eine simplere Alternative zu den in der Masterarbeit untersuchten Architekturen dar. Der Vergleich ist aufschlussreich: Für das hier betrachtete Problem mit dominanten lokalen Kraftdichtestrukturen genügt ein einfaches CNN, während die Masterarbeit zeigt, dass für die Vorhersage globaler Strömungsfelder in Vielpartikelsystemen komplexere Architekturen wie U-Net oder FNO notwendig sein können.
+
+\textbf{Ausblick:} Die Autoren nennen als zukünftige Arbeitsrichtung die Erweiterung auf physikalisch informierte Verlustfunktionen (PINNs) sowie auf dreidimensionale Systeme – beides Aspekte, die in der Masterarbeit bereits implementiert sind. Zudem könnte die Inferenzmethode von Mohapatra et al. perspektivisch genutzt werden, um aus LaMEM-generierten Strömungsfeldern physikalische Partikelparameter zu extrahieren und so die Modellvalidierung zu vertiefen.
+
+\end{document}

@@ -1,0 +1,61 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{parskip}
+\setlength{\parskip}{6pt}
+
+\begin{document}
+
+\section*{U-net Architectures for Fast Prediction of Incompressible Laminar Flows}
+
+\textbf{Autoren:} Junfeng Chen, Jonathan Viquerat, Elie Hachem \\
+\textbf{Jahr:} 2019 (arXiv) / eingereicht bei \textit{Computers and Fluids}
+
+\subsection*{Zusammenfassung}
+
+Die Arbeit untersucht systematisch verschiedene U-Net-Architekturen zur schnellen Vorhersage inkompressibler laminarer Strömungsfelder um beliebige zweidimensionale Körpergeometrien. Motivation ist die hohe Rechenzeit konventioneller CFD-Solver, die einen breiten Einsatz im Rahmen von Parameteruntersuchungen oder Echtzeit-Anwendungen verhindert. Als Alternative werden datengetriebene Surrogatmodelle auf Basis konvolutionaler neuronaler Netze vorgeschlagen.
+
+\subsubsection*{Datensatz und Problemstellung}
+
+Der Datensatz besteht aus 12.000 zufällig generierten zweidimensionalen Körpergeometrien, die mithilfe kubischer Bézier-Kurven erzeugt werden. Für jede Geometrie werden stationäre Geschwindigkeits- und Druckfelder bei $Re = 10$ durch Lösung der inkompressiblen Navier-Stokes-Gleichungen mit einem Immersed-Boundary-Verfahren und einem variationellen Multiskalenansatz (VMS) berechnet. Der Datensatz wird im Verhältnis 80:10:10 in Trainings-, Validierungs- und Testmenge aufgeteilt. Als Eingabe erhält das Netzwerk ein binäres Bild der Körpergeometrie im Strömungsgebiet; die Ausgabe sind die vorhergesagten Geschwindigkeits- und Druckfelder. Die Bilder werden auf eine einheitliche Auflösung von $107 \times 78$ Pixeln skaliert.
+
+\subsubsection*{Architekturvarianten}
+
+Neben einem Standard-U-Net (Baseline) werden drei erweiterte Architekturen verglichen:
+
+\begin{itemize}
+    \item \textbf{Stacked U-Net (SU-Net):} Mehrere U-Nets werden hintereinander geschaltet, wobei die Ausgabe eines Netzes als Eingabe des nächsten dient. Dies soll die Erfassung komplexerer räumlicher Zusammenhänge ermöglichen und Merkmale iterativ verfeinern.
+    \item \textbf{Coupled U-Net (CU-Net):} Ergänzt das gestapelte Konzept um zusätzliche Skip-Connections zwischen gleichrangigen Schichten verschiedener U-Nets, um den Informationsfluss zu verbessern und den Gradienten während des Trainings effizienter zu propagieren.
+    \item \textbf{Parallel U-Net (PU-Net):} Das Eingabebild wird zwei unabhängigen, gleichzeitig trainierten U-Nets zugeführt; die Ausgaben werden durch Mittelwertbildung kombiniert. Dies entspricht einem Ensemble-Ansatz und soll Overfitting reduzieren.
+\end{itemize}
+
+Das Baseline-U-Net besitzt 4 Auflösungsebenen, beginnend mit 32 Filtern und einer Verdopplung bei jeder Downsampling-Operation bis zu 512 Filtern im Bottleneck. Es enthält ca. 7,7 Millionen Parameter; die erweiterten Architekturen liegen zwischen 15 und 18 Millionen Parametern.
+
+\subsubsection*{Trainingsstrategie und Verlustfunktion}
+
+Das Training erfolgt mit dem mittleren quadratischen Fehler (MSE) als Verlustfunktion und einem stochastischen Gradientenabstieg mit Minibatches der Größe 8. Training wird frühzeitig abgebrochen, sobald die Validierungsgenauigkeit nicht mehr steigt. Zur Bewertung der Vorhersagequalität werden zwei komplementäre Metriken eingesetzt: (i) der pixelweise MSE, der proportional zur Lösungsamplitude ist, und (ii) ein pixelweiser relativer Fehler $\varepsilon_\alpha$, der den Anteil der Pixel angibt, deren relative Vorhersageabweichung einen Schwellenwert $\alpha \in \{0.01, 0.05\}$ überschreitet.
+
+\subsubsection*{Ergebnisse}
+
+Für die \textbf{Geschwindigkeitsfelder} zeigen alle erweiterten Architekturen Verbesserungen gegenüber dem Baseline-U-Net: Der PU-Net erzielt im MSE-Sinne bis zu 45\,\% niedrigere Fehler, während der SU-Net besonders bei Ausreißern überzeugt und Standardabweichung sowie Maximalfehler um bis zu 40--50\,\% reduziert. Für die \textbf{Druckfelder} kehrt sich dieses Bild um: Hier übertrifft das Baseline-U-Net die komplexeren Architekturen konsistent, was die Autoren auf eine potenziell unzureichende Vorverarbeitung der Zieldaten zurückführen. Insgesamt kommen die Autoren zu dem Schluss, dass der Mehraufwand erweiterter Architekturen -- sowohl in Bezug auf Parameterzahl als auch Trainingszeit (Faktor 2) -- für Regressionsaufgaben wie die Feldvorhersage nicht zwingend gerechtfertigt ist. Darüber hinaus werden Vorhersagen auf ungesehenen Geometrien (NACA-Profile, Zylinder, Quadrat, Kreuz) getestet, die MSE-Werte in derselben Größenordnung wie auf dem Testdatensatz ($10^{-5}$ bis $5 \times 10^{-5}$) liefern und physikalisch sinnvolle Felder ergeben.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Diese Arbeit stellt einen der direktesten Vergleichspunkte zur vorliegenden Masterarbeit dar und wird in Kapitel~2 (Stand der Forschung) explizit als Grundlage für die Wahl der CNN-basierten Surrogatmodellierung zitiert. Die Parallelen und Unterschiede sind auf mehreren Ebenen relevant:
+
+\paragraph{Gemeinsame Architekturgrundlage.} Beide Arbeiten verwenden U-Net-Architekturen mit Encoder-Decoder-Struktur und Skip-Connections zur Vorhersage strukturierter Strömungsfelder auf regulären Gittern. Die in der vorliegenden Arbeit eingesetzte U-Net-Konfiguration (4 Auflösungsebenen, Basisbreite 32, Strided Convolutions statt Max-Pooling) orientiert sich konzeptionell an den hier erprobten Architekturen.
+
+\paragraph{Unterschiedliche Strömungsregime.} Chen et al. arbeiten im laminaren Regime mit $Re = 10$ und lösen die vollen Navier-Stokes-Gleichungen. Die vorliegende Masterarbeit konzentriert sich hingegen auf das Stokes-Regime ($Re \to 0$), das für magmatische Systeme charakteristisch ist. In diesem Grenzfall entfallen Trägheitseffekte vollständig, was einerseits die Strömungsfelder glatter macht, andererseits aber langreichweitige hydrodynamische Wechselwirkungen zwischen mehreren Kristallen besonders ausgeprägt hervortreten lässt.
+
+\paragraph{Lernziel: Stromfunktion statt Geschwindigkeitskomponenten.} Während Chen et al. Geschwindigkeit und Druck direkt als mehrkanalige Ausgabe vorhersagen, prognostiziert die vorliegende Arbeit die skalare Stromfunktion $\psi$. Dieser Ansatz garantiert Inkompressibilität analytisch durch $u_x = \partial\psi/\partial z$, $u_z = -\partial\psi/\partial x$ und reduziert das Regressionsproblem auf eine einzelne skalare Zielgröße. Die Beobachtung von Chen et al., dass Druckvorhersagen mit komplexeren Architekturen nicht verbessert werden konnten, unterstützt die Designentscheidung der Masterarbeit, auf eine physikalisch motivierte Zielgröße auszuweichen, die das Lernproblem besser konditioniert.
+
+\paragraph{Verallgemeinerung auf variable Konfigurationen.} Der zentrale Beitrag der vorliegenden Arbeit -- die Generalisierung von Modellen, die auf $N$ Kristallen trainiert wurden, auf Konfigurationen mit abweichender Kristallanzahl -- geht weit über den Rahmen von Chen et al. hinaus. Dort werden lediglich verschiedene Geometrien einer einzelnen Körperform getestet; die topologische Komplexität des Eingabefeldes (Anzahl der Einschlüsse) bleibt konstant bei Eins. Die Frage, ob ein Surrogatmodell auch auf Konfigurationen mit einer abweichenden Anzahl interagierender Objekte generalisieren kann, wird von Chen et al. nicht adressiert und stellt das originäre wissenschaftliche Alleinstellungsmerkmal der vorliegenden Masterarbeit dar.
+
+\paragraph{Fehlerlokalisation und Grenzflächeneffekte.} Die Beobachtung von Chen et al., dass die größten Vorhersagefehler typischerweise in unmittelbarer Nähe der Körperoberflächen auftreten -- also dort, wo steile Geschwindigkeitsgradienten und Grenzschichtstrukturen vorliegen -- ist auch für die Kristall-Magma-Strömung in der vorliegenden Arbeit unmittelbar relevant. Diese systematische Schwäche konvolutionaler Surrogate motiviert die Verwendung eines signed distance fields als Eingabekanal, um dem Netzwerk eine explizite, geometrisch informierte Darstellung der Abstände zu Kristalloberflächen bereitzustellen.
+
+\paragraph{Vergleich von Architekturvarianten.} Die Schlussfolgerung von Chen et al., dass komplexere U-Net-Varianten (SU-Net, CU-Net, PU-Net) für Regressionsaufgaben keine eindeutigen Vorteile gegenüber dem Baseline-U-Net bieten, rechtfertigt rückblickend die Designentscheidung der vorliegenden Arbeit, den Vergleich nicht auf verschiedene U-Net-Varianten zu beschränken, sondern stattdessen einen Architekturvergleich zwischen grundlegend verschiedenen Paradigmen -- U-Net (räumlich-hierarchisch) und Fourier Neural Operator (spektral-global) -- durchzuführen.
+
+\end{document}

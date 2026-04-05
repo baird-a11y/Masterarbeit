@@ -1,0 +1,149 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Crystal Settling in a Vigorously Convecting Magma Chamber}
+
+\textbf{Autoren:} Daniel Martin \& Roger Nokes\\
+\textbf{Erschienen in:} Nature, Vol.~332, 7.~April 1988, S.~534--536\\
+\textbf{DOI:} 10.1038/332534a0
+
+% -----------------------------------------------------------------------
+\subsection*{Wissenschaftlicher Kontext und Fragestellung}
+% -----------------------------------------------------------------------
+
+Die Arbeit befasst sich mit einer zentralen Kontroverse der Magmenphysik: Ob
+Kristalle in einer aktiv konvektierenden Magmakammer sedimentieren können oder
+ob die Konvektion die Sedimentation vollständig unterdrückt. Bis zum Erscheinen
+dieser Arbeit galt die klassische Hypothese der Kristallsedimentation als
+weitgehend widerlegt, da konvektive Geschwindigkeiten in Magmakammern die nach
+dem Stokes'schen Gesetz berechneten Sinkgeschwindigkeiten typischer Kristalle um
+mehrere Größenordnungen übersteigen können. Stattdessen wurde die \textit{in
+situ}-Kristallisation in Verbindung mit kompositioneller Konvektion als
+dominanter Differenzierungsmechanismus favorisiert. Beobachtungen aus
+geschichteten Intrusionen lieferten jedoch widersprüchliche Befunde, sodass die
+Frage nach der Effizienz der Kristallsedimentation ungeklärt blieb.
+
+% -----------------------------------------------------------------------
+\subsection*{Theoretischer Ansatz}
+% -----------------------------------------------------------------------
+
+Martin \& Nokes (1988) stellen eine einfache, aber wirkungsvolle theoretische
+Überlegung an: Obwohl konvektive Geschwindigkeiten im Inneren des Fluids die
+Stokes-Sinkgeschwindigkeit~$v_s$ weit überschreiten, müssen sie an den Rändern
+des Fluids -- insbesondere am Boden -- zwangsläufig gegen Null gehen. Genau an
+dieser Grenzschicht können die Partikel daher mit ihrer vollen
+Stokes-Geschwindigkeit sedimentieren, ungehindert von der Konvektion.
+
+Unter der Annahme, dass die turbulente Konvektion die Partikelverteilung im
+Inneren des Fluids nahezu uniform hält (d.\,h.\ die Partikel verhalten sich wie
+passive Tracer), ergibt sich für die zeitliche Änderung der Partikelanzahl~$N$
+in Suspension:
+\begin{equation}
+    \frac{dN}{dt} = -\frac{v_s}{h}\,N,
+\end{equation}
+wobei $h$ die Tiefe des Fluids bezeichnet. Integration liefert ein exponentielles
+Abklinggesetz:
+\begin{equation}
+    N(t) = N_0 \exp\!\left(-\frac{v_s\,t}{h}\right).
+\end{equation}
+Die charakteristische Abklingkonstante ist damit ausschließlich durch die
+Stokes-Sinkgeschwindigkeit und die Kammertiefe bestimmt -- vollkommen
+\emph{unabhängig} von der konvektiven Geschwindigkeit, solange der
+Geschwindigkeitsverhältnis $S = v_s / w_\mathrm{rms} < 0{,}5$ erfüllt ist. Dies
+gilt auch dann noch, wenn die Sinkgeschwindigkeit überall im Fluid kleiner als
+die konvektive Geschwindigkeit ist.
+
+% -----------------------------------------------------------------------
+\subsection*{Laborexperimente}
+% -----------------------------------------------------------------------
+
+Die theoretischen Vorhersagen wurden in einem Labortank ($15 \times 30 \times
+20\,\text{cm}$) mit Polystyrolpartikeln (Dichte $1{,}033\,\text{g\,cm}^{-3}$,
+Durchmesser $0{,}21$--$0{,}50\,\text{mm}$) in Flüssigkeiten verschiedener
+Viskositäten und Dichten überprüft. Die Konvektion wurde von oben durch Kühlung
+angetrieben, wobei Rayleigh-Zahlen im Bereich $10^7$ bis $5 \times 10^8$
+erreicht wurden -- deutlich im Bereich unsteadiger, quasi-turbulenter Konvektion.
+Die photographische Auswertung der Partikelanzahl bestätigte das exponentielle
+Abklinggesetz über mehrere Größenordnungen. Für $S > 0{,}5$ wurde eine
+Abweichung festgestellt, da Partikel bevorzugt in aufsteigende Strömungsbereiche
+transportiert werden und die Annahme einer uniformen Verteilung bricht zusammen.
+
+% -----------------------------------------------------------------------
+\subsection*{Anwendung auf Magmakammern}
+% -----------------------------------------------------------------------
+
+Aus dem exponentiellen Abklinggesetz lässt sich eine Verweilzeit (Halbwertszeit)
+$\tau_{1/2} = \ln 2 \cdot h / v_s$ ableiten. Für eine $1\,\text{km}$-tiefe
+Kammer ergibt sich:
+\begin{itemize}
+    \item \textbf{Olivinkristalle in basaltischen Magmen}: Verweilzeiten von
+    wenigen Tagen bis einigen Jahren -- sehr kurz im Vergleich zur
+    Erstarrungszeit von $10^4$ Jahren.
+    \item \textbf{Plagioklaskristalle}: Verweilzeiten bis zu 100 Jahren, ebenfalls
+    gering gegenüber der Kammerlebensdauer.
+    \item \textbf{Granitische Magmen}: Verweilzeiten von $10^2$ bis $10^7$
+    Jahren -- Sedimentation nur in wenig viskosen granitischen Schmelzen
+    relevant.
+\end{itemize}
+Die Autoren schlussfolgern, dass Kristallsedimentation in basaltischen
+Magmakammern ein effizienter Differenzierungsmechanismus sein kann, trotz großer
+konvektiver Geschwindigkeiten.
+
+% -----------------------------------------------------------------------
+\subsection*{Bezug zur Masterarbeit}
+% -----------------------------------------------------------------------
+
+Diese Arbeit bildet eine der zentralen physikalischen Grundlagen der
+Masterarbeit auf mehreren Ebenen:
+
+\paragraph{Physikalische Motivation des Stokes-Regimes.}
+Das Stokes'sche Sinkgesetz (Gleichung~2) definiert in der Masterarbeit die
+Referenz-Sinkgeschwindigkeit und bildet die Basis der analytischen
+Stokes-Lösung, die als \emph{Residual-Lerntarget} für das neuronale Netz
+eingesetzt wird. Im Residual-Lernansatz wird die Nettostromfunktion als
+$\psi_\mathrm{total} = \psi_\mathrm{Stokes} + \Delta\psi_\mathrm{learned}$
+zerlegt, wobei $\psi_\mathrm{Stokes}$ direkt auf dem Stokes-Gesetz basiert.
+Martin \& Nokes (1988) belegen, dass dieses Regime -- sehr kleine
+Reynolds-Zahlen, dominante Viskosität -- der physikalisch relevante
+Parameterraum für kristallführende Magmensysteme ist.
+
+\paragraph{Mehrkristall-Wechselwirkungen als Forschungsmotivation.}
+Die Autoren weisen explizit darauf hin, dass bei hohen Partikelkonzentrationen
+hydrodynamische Wechselwirkungen die Sinkgeschwindigkeit und Partikelverteilung
+modifizieren. Genau diese Kollektiveffekte -- Nachlaufströmungen, asymmetrische
+Strömungsfelder, Clustering -- sind das zentrale Untersuchungsobjekt der
+Masterarbeit. Das Ziel, Strömungsfelder um $N$-Kristall-Konfigurationen durch
+U-Net und FNO vorherzusagen und auf $N{+}m$-Konfigurationen zu generalisieren,
+adressiert direkt die von Martin \& Nokes angesprochene Limitation der
+Einzel\-partikel-Näherung.
+
+\paragraph{Validierungsmaßstab für Surrogatmodelle.}
+Die aus dem Stokes-Gesetz abgeleiteten Sinkgeschwindigkeiten dienen in der
+Masterarbeit als Referenzgröße für die physikalische Konsistenzprüfung der
+Netzwerkvorhersagen. Abweichungen der vorhergesagten Strömungsfelder von der
+analytischen Stokes-Lösung werden über den Residual-Lernansatz quantifiziert
+und zur Bewertung der Generalisierungsfähigkeit herangezogen.
+
+\paragraph{Geophysikalischer Anwendungsfall.}
+Martin \& Nokes (1988) liefern den geophysikalischen Anwendungsfall, der die
+Entwicklung schneller Surrogatmodelle überhaupt motiviert: Weil klassische
+CFD-Simulationen (LaMEM) für Parameterstudien zu rechenintensiv sind, werden
+neuronale Netze als Ersatzmodelle entwickelt, die physikalisch konsistente
+Strömungsfelder bei einem Bruchteil der Rechenzeit vorhersagen können. Die in
+dieser Arbeit gezeigten Verweilzeiten und die Abhängigkeit der kollektiven
+Sedimentation von Kristallanzahl, -größe und -verteilung verdeutlichen
+unmittelbar, warum solche Parameterstudien für das Verständnis magmatischer
+Differenzierungsprozesse notwendig sind.
+
+\bigskip
+\noindent\textbf{BibTeX-Schlüssel:} \texttt{martin\_crystal\_1988}
+
+\end{document}

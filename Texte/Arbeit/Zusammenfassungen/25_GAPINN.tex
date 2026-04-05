@@ -1,0 +1,216 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Geometry Aware Physics Informed Neural Network Surrogate for Solving
+Navier--Stokes Equation (GAPINN)}
+
+\textbf{Autoren:} Jan Oldenburg, Finja Borowski, Alper \"Oner, Klaus-Peter Schmitz,
+Michael Stiehm \\
+\textbf{Journal:} Advanced Modeling and Simulation in Engineering Sciences \\
+\textbf{Jahr:} 2022 \quad DOI: \texttt{10.1186/s40323-022-00221-z}
+
+% -------------------------------------------------------------------
+\subsection*{Motivation und Problemstellung}
+
+Die Simulation von Str\"omungsph\"anomenen in komplexen, irregul\"aren Geometrien
+stellt ein zentrales Problem in vielen Ingenieur- und Naturwissenschaften dar.
+Klassische numerische L\"oser wie die Finite-Volumen-Methode (FVM), implementiert
+etwa in OpenFOAM, liefern zwar pr\"azise Ergebnisse, erfordern jedoch f\"ur jede
+neue Geometrie eine aufwendige Vernetzung (Meshing) sowie eine separate,
+rechenintensive Simulation. Dies macht sie f\"ur zeitkritische Anwendungen --
+etwa die intraoperative Str\"omungssimulation in der Kardiologie -- praktisch
+ungeeignet.
+
+Surrogate-Modelle bieten hier einen vielversprechenden Ausweg: Ein einmal
+trainiertes Modell kann f\"ur neue Eingaben innerhalb von Millisekunden eine
+N\"aherungsl\"osung liefern. W\"ahrend datengetriebene Surrogate-Modelle
+(z.\,B.\ auf Basis von U-Nets oder Fourier Neural Operators) gro\ss{}e
+Trainingsmengen an Simulationsdaten ben\"otigen, verfolgen Physics-Informed
+Neural Networks (PINNs) einen anderen Ansatz: Sie ersetzen oder erg\"anzen
+Trainingsdaten durch die direkten Residuen der zugrundeliegenden
+partiellen Differentialgleichungen (PDEs) in der Verlustfunktion.
+
+Eine wesentliche offene Frage war bisher, ob PINNs auch f\"ur \emph{nicht
+parametrisierte, irregul\"are Geometrien} trainiert werden k\"onnen -- also
+f\"ur Formen, die sich nicht durch wenige Parameter (z.\,B.\ Radius einer
+Engstelle) beschreiben lassen. Genau diese L\"ucke adressiert GAPINN.
+
+% -------------------------------------------------------------------
+\subsection*{Methodik: Das GAPINN-Framework}
+
+GAPINN besteht aus drei separat trainierten Teilnetzen, die sequenziell
+zusammenarbeiten:
+
+\paragraph{1. Shape Encoding Network (SEN).}
+Das SEN komprimiert die hochdimensionale Geometrieinformation -- repr\"asentiert
+als Punktwolke der Randpunkte $\mathbf{X}_{j,b}$ -- in einen niedrigdimensionalen
+Latentvektor $\mathbf{k} \in \mathbb{R}^{n_k}$ (hier: $n_k = 60$). Als
+Architektur wird ein Variational Autoencoder (VAE) mit einer PointNet-artigen
+Encoder-Struktur eingesetzt: vier 1D-Faltungsschichten (128, 128, 256, 512
+Kan\"ale), gefolgt von einem kanalweisen Max-Pooling und zwei vollverkn\"upften
+Netzwerken, die Mittelwert und Varianz der Posteriorverteilung sch\"atzen.
+Die Verwendung eines VAE statt eines gew\"ohnlichen Autoencoders sorgt daf\"ur,
+dass geometrisch \"ahnliche Formen auch im Latentraum nah beieinander liegen
+(Regularisierung via KL-Divergenz), was die Interpolationsf\"ahigkeit verbessert.
+Die PointNet-Architektur gew\"ahrleistet Permutationsinvarianz bez\"uglich der
+Reihenfolge der Eingabepunkte. Nach dem Training des SEN werden dessen Gewichte
+eingefroren.
+
+\paragraph{2. Boundary Constraining Network (BCN).}
+Das BCN sch\"atzt f\"ur jeden Raumpunkt $\mathbf{X}_{j,(i,b)}$ den minimalen
+euklidischen Abstand zur n\"achsten Wand mit Haftbedingung ($U_\text{wall} = 0$).
+Dieser Abstand dient als stetig differenzierbare ``Abstandsfunktion'', die im
+dritten Netz genutzt wird, um Randbedingungen \emph{hart} zu erzwingen -- im
+Gegensatz zu weichen Randbedingungen, die lediglich als zus\"atzlicher
+Strafterm in die Verlustfunktion eingehen. Der entscheidende Vorteil: Da das BCN
+differenzierbar ist, kann w\"ahrend des PINN-Trainings automatisches
+Differenzieren durch die Randbedingungsenforcierung hindurch angewendet werden.
+
+\paragraph{3. Physics Informed Neural Network (PINN).}
+Das PINN ist ein vollverkn\"upftes Feedforward-Netzwerk, das als Eingabe die
+Raumkoordinaten $\mathbf{X}_{j,(i,b)}$ und den Latentvektor $\mathbf{k}$
+erh\"alt. Es gibt Geschwindigkeit $\mathbf{U}$ und Druck $p$ aus. Die
+Verlustfunktion enth\"alt \emph{ausschlie\ss{}lich} die Residuen der
+station\"aren, inkompressiblen Navier-Stokes-Gleichungen:
+\begin{equation}
+  \mathcal{L}_\text{phy}(\mathbf{W}, \mathbf{b}) =
+  \bigl\|\nabla \mathbf{U}\bigr\|^2 +
+  \Bigl\|(\mathbf{U} \cdot \nabla)\mathbf{U}
+  + \tfrac{1}{\rho}\nabla p - \nu\nabla^2 \mathbf{U}\Bigr\|^2,
+\end{equation}
+berechnet mittels automatischer Differentiation. Es werden \emph{keine}
+Referenzsimulationen als Trainingsziel verwendet (datenfreies Training).
+
+\paragraph{Randbedingungsenforcierung.}
+Die Ausgaben des PINN werden durch die harten Randbedingungsfunktionen des BCN
+transformiert, sodass der endg\"ultige Output $\mathbf{U}_{j,(i,b)}$ die
+Haftbedingung an W\"anden und das parabolische Einstr\"omprofil am Einlass
+exakt erf\"ullt. Die Autoren zeigen, dass diese harte Enforcierung gegen\"uber
+dem weichen Strafterm zu deutlich schnellerer Konvergenz und niedrigeren
+Verlusten f\"uhrt.
+
+\paragraph{Experimente und Ergebnisse.}
+Das Framework wird auf 1000 synthetisch erzeugte 2D-Gef\"a\ss{}geometrien mit
+Stenosen und Aneurysmen trainiert ($Re = 500$, station\"ar, laminar).
+Validierung erfolgt an Geometrien, die nicht im Training enthalten waren.
+Der Vergleich mit CFD-Simulationen (OpenFOAM, ANSYS Fluent) zeigt gute
+qualitative \"Ubereinstimmung: MSE$_u = 3{,}61 \times 10^{-3}$,
+MSE$_v = 2{,}30 \times 10^{-4}$, MSE$_p = 1{,}6 \times 10^{-2}$.
+Die Inferenz f\"ur eine neue Geometrie dauert $0{,}32$ GPU-Sekunden,
+verglichen mit 210 CPU-Sekunden f\"ur eine einzelne CFD-Simulation.
+Ein Vanilla-PINN (ohne SEN/BCN) scheitert auf dieser Aufgabe vollst\"andig.
+
+% -------------------------------------------------------------------
+\subsection*{Bezug zur Masterarbeit}
+
+GAPINN und die vorliegende Masterarbeit teilen dieselbe grundlegende Motivation:
+Rechenintensive CFD-Simulationen f\"ur physikalische Systeme mit
+\emph{wechselnden Geometrien} durch schnelle, neuronale Surrogate zu ersetzen.
+Dennoch unterscheiden sich beide Arbeiten in Ansatz, Architektur und
+Problemstellung erheblich. Die folgende Gegen\"uberstellung verdeutlicht
+Gemeinsamkeiten und Unterschiede:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Aspekt} & \textbf{GAPINN} & \textbf{Masterarbeit} \\
+\midrule
+Physikalisches Regime & Navier-Stokes ($Re = 500$) & Stokes-Str\"omung ($Re \ll 1$) \\
+Geometrievariabilit\"at & Unterschiedliche Kanalgeometrien & $1$ bis $N$ Kristalle \\
+Architekturtyp & PINN (kein Trainingsdatensatz) & U-Net, FNO (datengetrieben) \\
+Trainingsstrategie & Datenfreies, physik-getriebenes Training & LaMEM-Simulationsdaten \\
+Geometrierepr\"asentation & Latentvektor via VAE/SEN & Bin\"armaske / SDF auf Grid \\
+Ausgangs\-gr\"o\ss{}e & Geschwindigkeit + Druck & Stromfunktion $\psi$ \\
+Randbedingungen & Hart erzwungen via BCN & Soft (Verlustterm) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+
+Konkret lassen sich folgende inhaltliche Bez\"uge identifizieren:
+
+\begin{enumerate}
+
+\item \textbf{Geometrierepresentation als Schl\"usselherausforderung.}
+GAPINN l\"ost das Problem der variablen Geometrie durch einen gelernten
+Latentvektor (VAE/SEN), der die Kanalform in $\mathbb{R}^{60}$ komprimiert.
+In der Masterarbeit wird ein komplementarer, gitterbasierter Ansatz verfolgt:
+Die Kristallpositionen werden als Bin\"armaske oder Signed Distance Function
+(SDF) auf dem $256 \times 256$-Grid kodiert und direkt als Eingabekanal
+in das Netzwerk eingespeist. Beide Strategien adressieren dasselbe
+grundlegende Problem -- wie vermittelt man dem Netzwerk effizient die
+raumabh\"angige geometrische Struktur? --, verfolgen jedoch fundamental
+verschiedene Wege: GAPINN abstrahiert die Geometrie global in einen
+Vektor, w\"ahrend U-Net und FNO die geometrische Information lokal bzw.\
+spektral auf dem vollen Grid verarbeiten.
+
+\item \textbf{Generalisierung auf ungesehene Konfigurationen.}
+GAPINN demonstriert Generalisierung auf neue Kanalgeometrien (Validierungsset),
+die nicht im Training enthalten waren, sofern diese geometrisch \"ahnlich zu
+Trainingsgeometrien sind. Die Masterarbeit stellt eine anspruchsvollere
+Variante dieser Generalisierungsaufgabe: Die Modelle sollen nicht nur auf
+neue \emph{Anordnungen} einer fixen Anzahl von Kristallen generalisieren,
+sondern auf eine \emph{variable Anzahl} von Kristallen -- von 1 bis $N+m$.
+Dies stellt h\"ohere Anforderungen an die Generalit\"at der gelernten
+Repr\"asentation, da sich die Komplexit\"at des Str\"omungsfelds mit der
+Kristallzahl qualitativ ver\"andert.
+
+\item \textbf{Physikalische Konsistenz als Trainingsziel.}
+GAPINN erzwingt physikalische Konsistenz durch die explizite Minimierung
+der PDE-Residuen und die harte Randbedingungsenforcierung. In der Masterarbeit
+wird ein alternativer, aber verwandter Weg beschritten: Die Vorhersage der
+Stromfunktion $\psi$ gew\"ahrleistet die Inkompressibilit\"at
+($\nabla \cdot \mathbf{u} = 0$) \emph{analytisch durch die mathematische
+Konstruktion} des Ausgabefelds, da $\mathbf{u} = \nabla \times \psi$.
+Dies entspricht dem Konzept der harten physikalischen Constraint-Enforcierung
+bei GAPINN, wird aber durch die Wahl der Ausgabegr\"o\ss{}e statt durch ein
+zus\"atzliches Netzwerk realisiert.
+
+\item \textbf{Grenzen des PINN-Ansatzes und Motivation f\"ur datengetriebene
+Modelle.}
+GAPINN zeigt, dass das datenfreie Training auf Basis der PDE-Residuen auch
+bei hoher geometrischer Variabilit\"at prinzipiell funktioniert, jedoch
+sehr langen Trainingszeiten (ca.\ 13 h f\"ur 1000 Geometrien auf einer GPU)
+erfordert und bisher nur f\"ur relativ einfache laminare Regime validiert
+wurde. F\"ur die Masterarbeit -- in der Dutzende von Architekturen, Eingabe-
+repr\"asentationen und Trainingsstrategien systematisch verglichen werden
+sollen -- ist ein datengetriebener Ansatz praktikabler, da LaMEM-Simulationen
+parallelisierbar erzeugt werden k\"onnen und das Training der Surrogate
+wesentlich effizienter konvergiert. Dies zeigt, dass GAPINN und der Ansatz
+der Masterarbeit als komplement\"are Strategien f\"ur \"ahnliche Probleme
+zu verstehen sind.
+
+\item \textbf{Relevanz f\"ur die Netzwerkarchitektur-Diskussion.}
+GAPINN basiert auf vollverkn\"upften Netzwerken (FCNN) und ist damit
+grunds\"atzlich verschieden von den konvolutionalen U-Net- und
+spektralen FNO-Architekturen der Masterarbeit. Die Autoren selbst
+diskutieren, dass f\"ur gitterbasierte Repr\"asentationen -- wie sie in
+der Masterarbeit verwendet werden -- 2D-CNNs eine nat\"urliche Alternative
+w\"aren. Dies best\"atigt retrospektiv die Architekturwahl der Masterarbeit:
+U-Net und FNO k\"onnen geometrische Information effizienter verarbeiten,
+wenn sie bereits auf einem strukturierten Gitter kodiert vorliegt.
+
+\end{enumerate}
+
+\subsection*{Einordnung in die Literatur}
+
+GAPINN ist in Kapitel~2 der Masterarbeit im Abschnitt zu geometrie-bewussten
+PINNs zu zitieren (zusammen mit Sun et al.\ 2020, PhyGeoNet von Gao et al.\
+2021). Es belegt, dass das Problem der Generalisierung \"uber variable
+Geometrien aktiv erforscht wird und dass verschiedene Strategien zur
+Geometrierepr\"asentation -- von Latentvektoren bis zu gitterbasierten Masken
+-- prinzipiell geeignet sind. Gegen\"uber der Masterarbeit fehlt GAPINN
+jedoch die Untersuchung der \emph{skalaren Anzahlvariabilit\"at} von Objekten
+sowie ein direkter Vergleich konkurrierender Netzwerkparadigmen (U-Net vs.\
+FNO), was die Originalit\"at der Masterarbeit unterstreicht.
+
+\end{document}

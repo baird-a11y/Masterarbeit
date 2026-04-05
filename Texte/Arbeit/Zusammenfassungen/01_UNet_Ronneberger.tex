@@ -1,0 +1,45 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{U-Net: Convolutional Networks for Biomedical Image Segmentation}
+
+\textbf{Autoren:} Olaf Ronneberger, Philipp Fischer, Thomas Brox \\
+\textbf{Institution:} Computer Science Department and BIOSS Centre for Biological Signalling Studies, University of Freiburg \\
+\textbf{Jahr:} 2015
+
+\subsection*{Zusammenfassung}
+
+Die Arbeit präsentiert die U-Net-Architektur, ein vollständig faltungsbasiertes neuronales Netz, das speziell für Bild-zu-Bild-Aufgaben mit limitierten Trainingsdaten entwickelt wurde. Die namensgebende U-förmige Struktur besteht aus zwei symmetrischen Pfaden: einem kontrahierenden Encoder-Pfad, der durch wiederholte Anwendung von $3 \times 3$-Faltungen und $2 \times 2$-Max-Pooling-Operationen schrittweise die räumliche Auflösung reduziert und dabei die Anzahl der Feature-Kanäle verdoppelt ($64 \rightarrow 128 \rightarrow 256 \rightarrow 512 \rightarrow 1024$), sowie einem expandierenden Decoder-Pfad, der durch Upsampling-Operationen die Auflösung wiederherstellt.
+
+Das zentrale architektonische Element sind die Skip-Connections, die Feature-Maps aus dem Encoder direkt mit den entsprechenden Decoder-Stufen konkatenieren. Diese Verbindungen ermöglichen es dem Netzwerk, hochaufgelöste räumliche Informationen zu bewahren, die während des Downsampling verloren gehen würden, und gleichzeitig den globalen Kontext aus den tieferen Schichten zu nutzen. Das resultierende Netzwerk umfasst 23 Faltungsschichten und verzichtet vollständig auf Fully-Connected-Layer.
+
+Ein wesentlicher Beitrag der Arbeit ist die Demonstration, dass durch extensive Datenaugmentierung -- insbesondere elastische Deformationen -- auch mit sehr wenigen annotierten Bildern (30 Trainingsbilder beim EM-Segmentierungsdatensatz) eine herausragende Leistung erzielt werden kann. Die Autoren führen zudem eine gewichtete Verlustfunktion ein, die Grenzregionen zwischen benachbarten Objekten stärker betont:
+\begin{equation}
+    w(\mathbf{x}) = w_c(\mathbf{x}) + w_0 \cdot \exp\left(-\frac{(d_1(\mathbf{x}) + d_2(\mathbf{x}))^2}{2\sigma^2}\right)
+\end{equation}
+wobei $d_1$ und $d_2$ die Abstände zu den beiden nächstgelegenen Zellgrenzen bezeichnen. Die Gewichtsinitialisierung erfolgt nach He-Initialisierung mit Standardabweichung $\sqrt{2/N}$, wobei $N$ die Anzahl der eingehenden Knoten eines Neurons bezeichnet.
+
+Das Netzwerk erreichte bei der ISBI EM Segmentation Challenge den ersten Platz mit einem Warping Error von 0.000353 und gewann die ISBI Cell Tracking Challenge 2015 mit deutlichem Vorsprung (IOU von 92.03\% bei PhC-U373 gegenüber 83\% des zweitbesten Algorithmus).
+
+\subsection*{Bezug zur Masterarbeit}
+
+Die U-Net-Architektur bildet eines der beiden zentralen Surrogat-Modelle in der vorliegenden Masterarbeit zur Vorhersage von Strömungsfeldern um sedimentierende Kristalle in Magmakammern. Der Transfer von biomedizinischer Bildsegmentierung zur Strömungsfeldvorhersage ist konzeptionell naheliegend, da beide Aufgaben eine strukturierte Abbildung von räumlichen Eingaben auf räumliche Ausgaben auf regulären Gittern erfordern.
+
+Die hierarchische Encoder-Decoder-Struktur ist für die Modellierung von Multi-Kristall-Stokes-Strömungen besonders geeignet, da sie die inhärent multiskalige Natur des Problems widerspiegelt: Während die tiefen Schichten mit großem rezeptivem Feld die langreichweitigen hydrodynamischen Wechselwirkungen zwischen entfernten Kristallen erfassen -- eine direkte Konsequenz des elliptischen Charakters der Stokes-Gleichungen --, kodieren die flachen Schichten die scharfen Grenzschichten und lokalen Geschwindigkeitsgradienten in unmittelbarer Nähe der Kristalloberflächen. Die Skip-Connections stellen sicher, dass beide Informationsebenen in der finalen Vorhersage der Stromfunktion $\psi$ integriert werden.
+
+In der Masterarbeit wird das U-Net mit einer fünfkanaligen Eingabe auf einem $256 \times 256$-Gitter betrieben: Kristallmaske, Signed-Distance-Feld, kürzester Abstand zum nächsten Kristall, sowie normalisierte $x$- und $z$-Koordinaten. Der zusätzliche Abstandskanal liefert dem Netzwerk explizite Information über die räumliche Nähe zwischen Kristallen, was für die Modellierung hydrodynamischer Wechselwirkungen in dichten Kristallanordnungen besonders relevant ist. Die Ausgabe ist die normalisierte Stromfunktion $\psi_{\text{norm}}$, aus der das Geschwindigkeitsfeld über
+\begin{equation}
+    \mathbf{u} = \left(\frac{\partial \psi}{\partial z}, -\frac{\partial \psi}{\partial x}\right)
+\end{equation}
+analytisch abgeleitet wird, wodurch die Inkompressibilitätsbedingung $\nabla \cdot \mathbf{u} = 0$ konstruktionsbedingt erfüllt ist. Diese Konfiguration erlaubt eine geometrie-agnostische Verarbeitung variabler Kristallzahlen ($1 \ldots N_{\text{max}}$) ohne architektonische Anpassungen.
+
+Der systematische Vergleich mit dem Fourier Neural Operator (FNO) -- der im Spektralraum operiert und globale Abhängigkeiten in einer einzigen Schicht erfasst -- ermöglicht die Untersuchung der zentralen Forschungsfrage: Ob räumlich-hierarchische Merkmalsextraktion (U-Net) oder spektral-globale Verarbeitung (FNO) für die Approximation elliptischer Stokes-Lösungen mit multiplen Inklusionen vorteilhafter ist. Während das U-Net durch seine Skip-Connections hochfrequente Informationen an Kristallgrenzen bewahrt, bietet der FNO durch seine spektrale Darstellung einen natürlichen Zugang zu den langreichweitigen Korrelationen der Stokes-Strömung.
+
+\end{document}

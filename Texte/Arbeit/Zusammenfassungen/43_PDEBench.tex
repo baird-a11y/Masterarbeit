@@ -1,0 +1,118 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{PDEBench: An Extensive Benchmark for Scientific Machine Learning}
+
+\textbf{Autoren:} Makoto Takamoto, Timothy Praditia, Raphael Leiteritz, Dan MacKinlay,
+Francesco Alesiani, Dirk Pflüger, Mathias Niepert \\
+\textbf{Jahr:} 2022 \\
+\textbf{Konferenz:} NeurIPS 2022 Track on Datasets and Benchmarks
+
+\subsection*{Zusammenfassung}
+
+PDEBench stellt einen umfassenden und öffentlich zugänglichen Benchmark für maschinelles
+Lernen im Bereich partieller Differentialgleichungen (PDEs) bereit. Motivation des Werkes
+ist die Feststellung, dass trotz erheblicher Fortschritte im wissenschaftlichen maschinellen
+Lernen (Scientific ML) ein standardisierter, gleichzeitig praktikabler und ausreichend
+anspruchsvoller Benchmark fehlt, der eine faire und reproduzierbare Vergleichsbasis für
+neue Methoden bietet.
+
+\subsubsection*{Datensätze und abgedeckte PDEs}
+
+Der Benchmark umfasst insgesamt 11 verschiedene PDE-Typen in ein-, zwei- und
+dreidimensionalen Raumgebieten, die sowohl zeitabhängige als auch stationäre Probleme
+abdecken. Zu den grundlegenderen Gleichungen zählen die 1D-Advektionsgleichung, die
+Burgers-Gleichung, Diffusions-Reaktions-Gleichungen sowie die Diffusions-Sorptions-Gleichung
+und der 2D-Darcy-Fluss. Als anspruchsvollere, praxisnahe Probleme werden zudem die
+kompressible und inkompressible Navier-Stokes-Gleichung sowie die Flachwassergleichungen
+berücksichtigt. Diese Auswahl umfasst eine breite Palette physikalischer Phänomene,
+darunter Schockwellenbildung, turbulente Dynamik, sensitiv von Anfangsbedingungen
+abhängige Systeme sowie verschiedene Randbedingungen (periodisch, Dirichlet, Neumann,
+Cauchy). Die bereitgestellten Datensätze wurden durch hochauflösende numerische Simulationen
+erzeugt und im HDF5-Format gespeichert; sie sind über das DaRUS-Datenrepositorium der
+Universität Stuttgart dauerhaft unter einem DOI zugänglich.
+
+\subsubsection*{Baseline-Modelle}
+
+Die Autoren evaluieren drei etablierte ML-Architekturen als Baselines:
+\begin{itemize}
+    \item \textbf{Fourier Neural Operator (FNO):} Ein neuronaler Operator, der im
+    Fourierraum arbeitet und dadurch auflösungsunabhängige Vorhersagen ermöglicht.
+    FNO erzielt auf den meisten betrachteten Problemen die besten Ergebnisse, insbesondere
+    bei glatten Strömungsfeldern, da er differentielle Operatoren im Spektralraum effizient
+    approximiert.
+    \item \textbf{U-Net:} Eine Encoder-Decoder-Architektur mit Skip-Connections, die
+    ursprünglich für medizinische Bildsegmentierung entwickelt wurde und hier für
+    PDE-Surrogate eingesetzt wird. U-Net eignet sich besonders für lokal geprägte
+    Strukturen und diffusionsartige Aufgaben, zeigt jedoch Instabilitäten im vollständig
+    autoregressiven Betrieb. Die Autoren empfehlen daher das Training mit dem sogenannten
+    \emph{Pushforward Trick}, der die Langzeitstabilität deutlich verbessert.
+    \item \textbf{Physics-Informed Neural Networks (PINNs):} Netze, die den PDE-Residual
+    direkt in der Verlustfunktion minimieren und damit physikalische Konsistenz erzwingen.
+    PINNs sind jedoch auf einzelne Anfangs- und Randbedingungen beschränkt und erfordern
+    für jede neue Konfiguration ein vollständiges Neutraining.
+\end{itemize}
+
+\subsubsection*{Evaluierungsmetriken}
+
+Ein wesentlicher Beitrag von PDEBench liegt in der Einführung erweiterter Bewertungsmetriken,
+die über den klassischen RMSE hinausgehen. Neben dem normierten RMSE (nRMSE) und dem
+maximalen Fehler werden physikalisch motivierte Metriken verwendet: der \texttt{cRMSE}
+misst die Abweichung von erhaltenen physikalischen Größen, der \texttt{bRMSE} bewertet
+die Einhaltung von Randbedingungen, und der \texttt{fRMSE} analysiert den Fehler im
+Fourierraum getrennt nach niedrigen, mittleren und hohen Frequenzen. Diese Differenzierung
+ist insbesondere in turbulenten oder unstetigen Strömungsregimen notwendig, da ein globaler
+RMSE lokale Fehlerstrukturen verschleiert.
+
+\subsubsection*{Zentrale Ergebnisse}
+
+Die Auswertungen zeigen, dass keine einzelne Architektur auf allen Problemen dominiert:
+FNO übertrifft U-Net bei den meisten Metriken, während U-Net bei diffusionsähnlichen
+Aufgaben wie dem Darcy-Fluss konsistent bessere Ergebnisse liefert. Bei hochgradig
+nichtlinearen oder inviskosen Strömungen versagen beide Methoden in erheblichem Maße,
+was auf fundamentale Limitierungen der aktuellen Surrogatmodelle hinweist. Darüber hinaus
+zeigt FNO bei abnehmenden Diffusionskoeffizienten stark erhöhte Fehler im hochfrequenten
+Bereich, was auf das Gibbs-Phänomen zurückgeführt wird. Hinsichtlich der Recheneffizienz
+ist die Inferenzzeit der ML-Modelle bis zu drei Größenordnungen geringer als die der
+klassischen numerischen Löser, wobei die Trainingszeit erheblich ist.
+
+\subsection*{Bezug zur Masterarbeit}
+
+PDEBench ist für die vorliegende Masterarbeit aus mehreren Perspektiven relevant.
+Erstens bietet es eine methodische Orientierung für den systematischen Vergleich von
+U-Net und FNO als Surrogatmodelle, der auch in dieser Arbeit im Zentrum steht.
+Die in PDEBench beobachtete komplementäre Stärkenverteilung beider Architekturen ---
+FNO für globale Muster im Spektralraum, U-Net für lokale Randeffekte --- motiviert
+die differenzierte Betrachtung im Kontext von Stokes-Strömungen um sedimentierende
+Kristalle, wo sowohl fernfeldige Wechselwirkungen als auch lokale Störungen durch
+Kristallränder eine wesentliche Rolle spielen.
+
+Zweitens liefert PDEBench eine Vorlage für das Evaluierungsframework: Die Verwendung
+physikalisch motivierter Metriken, insbesondere die Überprüfung der Divergenzfreiheit
+des Geschwindigkeitsfeldes (analog zu \texttt{cRMSE}) und die Frequenzraumanalyse über
+\texttt{fRMSE}, findet eine direkte Entsprechung in den 47 Metriken der Masterarbeit,
+die ebenfalls über den reinen MAE hinausgehen und Größen wie Divergenzverletzungen,
+Wirbelstärkeerhaltung und Randbedingungserfüllung einschließen.
+
+Drittens unterstreicht die in PDEBench dokumentierte Schwäche beider Architekturen bei
+der zeitlichen Extrapolation und bei stark nichtlinearen Regimen die Bedeutung des in
+der Masterarbeit gewählten Ansatzes des \emph{Residual Learning}: Statt die gesamte
+Strömung direkt zu lernen, wird das neuronale Netz auf die Abweichung von einer
+analytischen Stokes-Lösung trainiert, was die Aufgabe erheblich vereinfacht und die
+physikalische Konsistenz durch den analytischen Anteil absichert. Dieser Ansatz ist
+in PDEBench nicht vertreten und stellt damit einen originären Beitrag der Masterarbeit
+dar.
+
+Schließlich bestätigt PDEBench die grundsätzliche Machbarkeit des Einsatzes von
+FNO und U-Net als Surrogatmodelle für Strömungssimulationen, während die
+beobachteten Schwächen bei der Generalisierung auf ungesehene Parameterregionen ---
+insbesondere auf unterschiedliche Kristallanzahlen --- die zentrale Forschungsfrage
+der Masterarbeit motivieren und deren Relevanz unterstreichen.
+
+\end{document}

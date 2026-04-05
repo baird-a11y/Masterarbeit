@@ -1,0 +1,138 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{hyperref}
+
+\begin{document}
+
+\section*{Physics-Informed Neural Operator for Learning Partial Differential Equations}
+
+\textbf{Autoren:} Zongyi Li, Hongkai Zheng, Nikola Kovachki, David Jin, Haoxuan Chen,
+Burigede Liu, Kamyar Azizzadenesheli, Anima Anandkumar \\
+\textbf{Journal:} ACM/IMS Journal of Data Science, Vol.~1, No.~3, Article~9 \\
+\textbf{Jahr:} 2024 \\
+\textbf{DOI:} \href{https://doi.org/10.1145/3648506}{10.1145/3648506}
+
+\subsection*{Motivation und Problemstellung}
+
+Maschinenlernen-Methoden zur Lösung partieller Differentialgleichungen (PDEs) lassen sich
+grob in zwei Kategorien einteilen: solche, die eine Lösungsfunktion approximieren (z.\,B.
+Physics-Informed Neural Networks, PINNs), und solche, die den Lösungsoperator lernen
+(z.\,B. Fourier Neural Operators, FNO). Beide Ansätze haben charakteristische Schwächen:
+PINNs leiden unter einer schwierigen Optimierungslandschaft, die bei multiskaligen oder
+zeitabhängigen Systemen häufig zu Konvergenzproblemen führt. FNOs hingegen sind rein
+datengetrieben und benötigen ausreichend hochwertige Trainingsdaten, deren Erzeugung
+mittels numerischer Löser teuer oder in manchen Szenarien sogar unmöglich sein kann.
+
+\subsection*{Methodik}
+
+Die Arbeit schlägt den \textit{Physics-Informed Neural Operator} (PINO) vor, der beide
+Paradigmen kombiniert: PINO nutzt sowohl Trainingsdaten als auch physikalische
+Verlustfunktionen in Form von PDE-Residuen, um den Lösungsoperator einer parametrischen
+PDE-Familie zu erlernen. Das Training gliedert sich in zwei Phasen:
+
+\begin{enumerate}
+    \item \textbf{Operator-Lernphase:} PINO lernt den Lösungsoperator über mehrere
+    Instanzen der PDE-Familie unter Verwendung von Trainingsdaten \emph{und}
+    physikalischen Nebenbedingungen. Dabei wird gezielt eine Kombination aus
+    niedrigauflösenden Trainingsdaten mit hochauflösenden PDE-Residuen eingesetzt.
+    Dies ermöglicht eine hochauflösende Rekonstruktion des wahren Operators, selbst
+    wenn nur grobe Trainingsdaten vorliegen.
+
+    \item \textbf{Instanzweises Finetuning:} Der vortrainierte Operator wird als
+    Ansatzfunktion genutzt und für eine spezifische PDE-Instanz anhand der
+    physikalischen Verlustfunktion weiter optimiert. Ein optionaler Ankerverlust
+    ($\mathcal{L}_{\mathrm{op}}$) verhindert dabei, dass das Modell zu weit vom
+    vortrainierten Zustand abweicht, was die Optimierung stabilisiert.
+\end{enumerate}
+
+Die Ableitungen für den PDE-Verlust werden effizient im Fourier-Raum berechnet, was
+gegenüber punktweiser automatischer Differentiation (wie bei PINNs) erhebliche
+Rechenvorteile bietet. Für nicht-periodische Randbedingungen wird die
+\textit{Fourier-Continuation}-Technik eingesetzt, bei der die Eingabe durch Zero-Padding
+in einen periodischen Bereich eingebettet wird.
+
+\subsection*{Ergebnisse}
+
+PINO wird auf mehreren Standard-Benchmarks evaluiert, darunter die Burgers-Gleichung,
+die Darcy-Strömung und die Navier-Stokes-Gleichungen (inkl. des chaotischen
+Kolmogorov-Flows). Die zentralen Ergebnisse lassen sich wie folgt zusammenfassen:
+
+\begin{itemize}
+    \item \textbf{Zero-Shot-Superresolution:} PINO zeigt keine signifikante
+    Genauigkeitseinbuße, wenn es bei höheren Auflösungen als im Training evaluiert
+    wird -- ein Vorteil gegenüber UNet-basierten Modellen, die ohne explizite
+    Interpolation keine Superresolution leisten können.
+
+    \item \textbf{Datensparsamkeit:} Mit physikalischen Verlustfunktionen kann PINO
+    bei einfacheren PDEs (Burgers, Darcy) auch gänzlich ohne gelabelte Daten trainiert
+    werden. Beim Burgers-Problem erzielt PINO 0,38\,\% relativen $L_2$-Fehler,
+    verglichen mit 1,38\,\% für PI-DeepONet.
+
+    \item \textbf{Chaotische Strömungen:} Bei Kolmogorov-Flows (Re\,=\,500) übertrifft
+    PINO klassische PINN-Varianten um den Faktor 20 (kleinerer Fehler) bei gleichzeitig
+    25-facher Beschleunigung.
+
+    \item \textbf{Transferlernen:} Ein auf einem Reynolds-Zahl-Regime trainierter Operator
+    lässt sich durch instanzweises Finetuning effizient auf andere Reynolds-Zahlen
+    (100--500) übertragen.
+
+    \item \textbf{Inverse Probleme:} Das PDE-Residuum schränkt die Lösung auf die
+    physikalisch zulässige Mannigfaltigkeit ein, was die Qualität der Inversion
+    gegenüber rein datengetriebenen Methoden deutlich verbessert. PINO ist dabei
+    ca.\ 3000-mal schneller als eine MCMC-basierte Referenzlösung.
+\end{itemize}
+
+\subsection*{Bezug zur Masterarbeit}
+
+Diese Arbeit ist in mehrfacher Hinsicht relevant für die vorliegende Masterarbeit, die
+sich mit physikalisch-informiertem maschinellen Lernen zur Vorhersage von Strömungsfeldern
+um sedimentierende Kristalle in magmatischen Systemen beschäftigt.
+
+\paragraph{FNO als Architekturkandidat.}
+Die Masterarbeit vergleicht UNet- und FNO-Architekturen als gleichwertige Hauptbeiträge.
+PINO baut auf dem FNO-Rahmen auf und zeigt dessen universelle Approximationseigenschaften
+sowie Diskretisierungskonvergenz -- beides sind theoretische Grundlagen, die die Wahl von
+FNO als Vergleichsarchitektur in der Masterarbeit motivieren. Insbesondere die
+Superresolution-Eigenschaften des FNO stehen in direktem Kontrast zu den Limitierungen
+von UNets, die ohne Interpolation nicht auf ungesehene Gitterauflösungen generalisieren
+können.
+
+\paragraph{Physikalisch-informierte Verlustfunktionen.}
+In der Masterarbeit werden bereits Kontinuitätsbedingungen ($\nabla \cdot \mathbf{v} = 0$)
+als physikalische Verlustterme implementiert. Der PINO-Ansatz motiviert, diese
+Physikterme systematischer zu nutzen: Die Stokes-Gleichungen, die das
+Strömungsregime bei sehr kleinen Reynolds-Zahlen beschreiben, könnten analog zum
+PINO-Framework als PDE-Residuum in die Verlustfunktion integriert werden. Dies würde
+über die reine Divergenzfreiheitsbedingung hinausgehen und die Impulserhaltung direkt
+berücksichtigen.
+
+\paragraph{Residuallernansatz.}
+Der in der Masterarbeit verwendete Residuallernansatz ($\mathbf{v}_{\mathrm{total}} =
+\mathbf{v}_{\mathrm{Stokes}} + \Delta\mathbf{v}_{\mathrm{learned}}$) ist konzeptuell
+verwandt mit dem PINO-Finetuning: Beide Methoden nutzen eine analytische oder
+vortrainierte Anfangslösung als Ausgangspunkt und lernen Korrekturen dazu. PINO
+formalisiert diesen Gedanken durch den Ankerverlust $\mathcal{L}_{\mathrm{op}}$, der
+das Modell in der Nähe der Ausgangslösung hält.
+
+\paragraph{Generalisierung auf neue Kristallkonfigurationen.}
+Die zentrale Forschungsfrage der Masterarbeit -- ob ein auf $N$ Kristallen trainiertes
+Modell auf $N{+}m$ Kristalle generalisiert -- ist direkt mit der in PINO untersuchten
+Fähigkeit zur Generalisierung jenseits der Trainingsverteilung verwandt. PINOs Ansatz,
+PDE-Residuen als Regularisierung zu nutzen, zeigt, dass physikalische Nebenbedingungen
+die Generalisierung signifikant verbessern können. Dies legt nahe, dass eine stärkere
+Gewichtung des Divergenz- oder Stokes-Residuums in der Masterarbeit die
+Generalisierungsfähigkeit auf unbekannte Kristallanzahlen verbessern könnte.
+
+\paragraph{Abgrenzung.}
+PINO ist primär für zeitabhängige oder räumlich kontinuierliche PDE-Familien ausgelegt
+und setzt periodische oder einfach strukturierte Randbedingungen voraus. Die in der
+Masterarbeit betrachteten Strömungsfelder um Kristalle weisen komplexe,
+geometrieabhängige Randbedingungen auf, die eine direkte Übertragung des PINO-Frameworks
+erschweren. Dennoch liefert PINO wichtige methodische Impulse, insbesondere für zukünftige
+Arbeiten, die über den datengetriebenen Vergleich von UNet und FNO hinausgehen.
+
+\end{document}

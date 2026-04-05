@@ -1,0 +1,46 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{hyperref}
+
+\begin{document}
+
+\section*{Coupled DEM-LBM Method for the Free-Surface Simulation of Heterogeneous Suspensions}
+\textbf{Autoren:} Alessandro Leonardi, Falk K. Wittel, Miller Mendoza, Hans J. Herrmann \\
+\textbf{Journal:} Computational Particle Mechanics \\
+\textbf{Jahr:} 2014 \\
+\textbf{DOI:} \href{https://doi.org/10.1007/s40571-014-0001-z}{10.1007/s40571-014-0001-z}
+
+\subsection*{Zusammenfassung}
+
+Diese Arbeit stellt einen hybriden numerischen Rahmen zur Simulation von Suspensionen mit freier Oberfläche vor, der die Diskrete-Elemente-Methode (DEM) für die granulare Phase mit der Lattice-Boltzmann-Methode (LBM) für die Fluidphase koppelt. Die Motivation für diesen hybriden Ansatz liegt in der multiskaligen Natur von Suspensionen: Unterschiedliche Wechselwirkungsmechanismen zwischen Flüssigkeit und Feststoffpartikeln erfordern je nach Partikelgröße unterschiedliche Beschreibungsebenen.
+
+\paragraph{Klassifikation der Partikelgrößen und Interaktionsmechanismen.}
+Die Autoren klassifizieren Partikel anhand der Bagnold-Zahl in drei Regime: Im viskosen Regime (Ba $< 40$) dominieren hydrodynamische Kräfte, im kollisionalen Regime (Ba $\geq 450$) überwiegen Stoßkräfte, und ein Übergangsbereich existiert dazwischen. Kleine und mittelgroße Partikel werden in die Fluidphase homogenisiert und durch ein nicht-Newtonsches Bingham-Plastizitätsmodell beschrieben. Große Partikel im kollisionalen Regime werden dagegen explizit durch die DEM aufgelöst, wobei Hertz'sche Kontaktkräfte und Coulomb-Reibung berücksichtigt werden. Nicht-sphärische Partikelformen werden durch zusammengesetzte Kugelaggregate approximiert, um das unphysikalische Rollverhalten reiner Kugelmodelle zu vermeiden.
+
+\paragraph{Lattice-Boltzmann-Methode.}
+Die Fluidphase wird durch die LBM auf einem D3Q19-Gitter gelöst. Die Verteilungsfunktion $f_i(\mathbf{x}, t)$ entwickelt sich gemäß der Lattice-Boltzmann-Gleichung mit BGK-Kollisionsoperator, wobei die Relaxationszeit $\tau$ über die Viskosität des Fluids mit lokalen Scherratentensoren verknüpft ist. Für das Bingham-Modell wird $\tau$ als ortsabhängige Größe behandelt, mit Ober- und Untergrenzen zur Gewährleistung numerischer Stabilität. Die Kopplung an die DEM erfolgt über die Bounce-Back-Regel für bewegliche Randbedingungen, die den Impulsaustausch zwischen Partikeln und Fluid vollständig erfasst. Freie Oberflächen werden mit einem Massentracking-Algorithmus simuliert, der Gitterknoten in Flüssigkeits-, Grenzflächen- und Gasknoten unterteilt.
+
+\paragraph{Validierung.}
+Die Methode wird anhand des schwerkraftgetriebenen Flusses einer Frischbetonprobe auf einer geneigten Ebene validiert. Die Rheologie der Zementpaste wird mit einem Rotationsviskosimeter gemessen und durch ein Bingham-Modell ($\mu_{pl} = 0{,}15\,\text{Pa\,s}$, $\sigma_y = 62\,\text{Pa}$) approximiert. Der Vergleich der finalen Ablagerungsform zwischen Experiment und Simulation zeigt eine sehr gute Übereinstimmung, was die Leistungsfähigkeit des Ansatzes demonstriert.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Die in dieser Arbeit vorgestellte DEM-LBM-Kopplung ist aus mehreren Gründen für die vorliegende Masterarbeit relevant:
+
+\paragraph{Numerische Grundlage für Trainingsdaten.}
+Die Masterarbeit verwendet LaMEM (Lithosphere and Mantle Evolution Model) als Referenzsimulator für Stokes-Strömungen um sedimentierende Kristalle. Ähnlich wie die LBM löst LaMEM die Impuls- und Massenerhaltungsgleichungen für viskose Strömungen bei sehr niedrigen Reynolds-Zahlen (Stokes-Regime). Das Verständnis der numerischen Methoden, aus denen die Trainingsdaten stammen -- insbesondere die vollständige Kopplung von Partikel- und Fluidphase -- ist essenziell für die Interpretation der Netzwerkausgaben und die physikalisch motivierte Wahl der Verlustfunktionen.
+
+\paragraph{Motivation für ML-Surrogatmodelle.}
+Der hohe Rechenaufwand der DEM-LBM-Simulation (63 Stunden auf 4 Kernen für ein vergleichsweise kleines System) verdeutlicht exemplarisch, warum datengetriebene Surrogatmodelle als effizientere Alternative angestrebt werden. In der Masterarbeit sollen neuronale Netze (U-Net und Fourier Neural Operator) diesen Berechnungsaufwand drastisch reduzieren, indem sie Strömungsfelder direkt aus geometrischen Eingaben vorhersagen, ohne die zugrunde liegenden Differentialgleichungen iterativ zu lösen.
+
+\paragraph{Physikalische Randbedingungen und Generalisierung.}
+Ein zentrales Thema beider Arbeiten ist die korrekte Behandlung von Partikel-Fluid-Wechselwirkungen in Mehrpartikelsystemen. Während Leonardi et al.\ diese Wechselwirkungen explizit auflösen, besteht die Kernfrage der Masterarbeit darin, ob ein neuronales Netz, das auf $N$-Kristall-Konfigurationen trainiert wurde, auf Konfigurationen mit $N+m$ Kristallen generalisieren kann. Die Komplexität der Mehr\-teilchen-Wechselwirkungen -- die sich in der Viskositätsverteilung und im Strömungsfeld manifestieren -- stellt dabei die wesentliche Lernaufgabe für die Surrogatmodelle dar.
+
+\paragraph{Residuales Lernen und analytische Lösungen.}
+Die in der Masterarbeit verfolgte Strategie des residualen Lernens ($v_\text{total} = v_\text{Stokes,analytisch} + \Delta v_\text{gelernt}$) ist konzeptionell verwandt mit dem Ansatz von Leonardi et al., die bekannte analytische Grundstrukturen (Bingham-Rheologie, Bounce-Back-Regeln) mit einer numerischen Lösung für die komplexen Wechselwirkungsanteile kombinieren. In beiden Fällen wird das Wissen über die physikalischen Grundgleichungen genutzt, um den verbleibenden zu modellierenden Anteil zu minimieren.
+
+\end{document}

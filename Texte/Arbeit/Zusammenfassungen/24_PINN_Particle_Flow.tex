@@ -1,0 +1,140 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\begin{document}
+
+\section*{Applying Physics-Informed Neural Networks to Solve Navier--Stokes
+Equations for Laminar Flow around a Particle}
+
+\textbf{Autoren:} Beichao Hu, Dwayne McDaniel \\
+\textbf{Jahr:} 2023 \\
+\textbf{Zeitschrift:} Mathematical and Computational Applications, 28(5), 102 \\
+\textbf{DOI:} \texttt{https://doi.org/10.3390/mca28050102}
+
+% ------------------------------------------------------------------
+\subsection*{Zusammenfassung}
+% ------------------------------------------------------------------
+
+Diese Arbeit entwickelt ein Physics-Informed Neural Network (PINN) zur Lösung
+der zweidimensionalen, stationären, inkompressiblen Navier-Stokes-Gleichungen
+für laminare Umströmungen einfacher Partikelgeometrien. Als Benchmark dient
+die Umströmung eines kreisförmigen Partikels; zusätzlich wird ein elliptischer
+Partikel untersucht, um die Robustheit des Ansatzes gegenüber veränderten
+Geometrien zu evaluieren. Die Simulationen werden bei Reynolds-Zahlen von
+$Re = 5$, $20$ und $50$ durchgeführt, also im laminaren Regime, in dem
+Viskositätskräfte und Trägheitskräfte von vergleichbarer Größenordnung sind.
+
+Das verwendete Netzwerk ist ein vollständig verbundenes (Fully Connected) PINN
+mit zwei Eingangsneuronen ($x$- und $y$-Koordinate), acht versteckten Schichten
+mit je 60 Neuronen und drei Ausgangsneuronen ($u$, $v$, $p$). Die physikalischen
+Gesetze -- Massenerhaltung sowie Impulserhaltung in $x$- und $y$-Richtung --
+werden direkt in die Verlustfunktion eingebettet, sodass kein beschriftetes
+Trainingsdaten\-set erforderlich ist. Randbedingungen (Einströmrand, Ausströmrand,
+Wände) werden als zusätzliche Terme in der Verlustfunktion weich erzwungen und
+mit Strafgewichten $\alpha$ versehen, um die Balance zwischen den einzelnen
+Verlustbeiträgen zu steuern. Das Training erfolgt zunächst mit dem Adam-Optimizer
+(10\,000 Iterationen) und anschließend mit L-BFGS zur Feinoptimierung; die
+Konvergenz wird durch einen Gradienten-Schwellenwert von $10^{-7}$ definiert.
+
+Die Ergebnisse zeigen, dass das PINN die wesentlichen Strömungsmerkmale --
+Staupunkt, Venturi-Effekt, Nachlaufgebiet und Grenzschicht -- bei allen
+untersuchten Reynolds-Zahlen qualitativ korrekt reproduziert. Quantitativ
+liegt der Fehler im berechneten Widerstandsbeiwert $C_d$ in allen Szenarien
+unter 10\,\% gegenüber CFD-Referenzlösungen (ANSYS Fluent 2020R2). Der
+gesamte Widerstandsbeiwert ergibt sich aus einem Druckanteil und einem
+viskosen Anteil, die jeweils über Oberflächenintegrale bestimmt werden, da
+das punktbasierte PINN-Verfahren keine Gittervolumina bereitstellt. Mit
+zunehmender Reynolds-Zahl steigen die Abweichungen leicht an, was die Autoren
+auf das weiche Erzwingen der Randbedingungen und eine dadurch bedingte
+unvollständige Massenerhaltung zurückführen.
+
+Ein praktisch bedeutsames Ergebnis betrifft die Rechenzeit: Das Training
+benötigt auf einer Nvidia Tesla P100 GPU etwa 1{,}5 Stunden, während die
+Inferenz für das gesamte Berechnungsgebiet in 0{,}07 Sekunden abgeschlossen
+ist. CFD (CPU) benötigt für denselben Fall 2 Minuten. Damit ist das PINN
+in der Trainingsphase deutlich teurer, bietet aber in der Anwendungsphase
+einen erheblichen Geschwindigkeitsvorteil.
+
+% ------------------------------------------------------------------
+\subsection*{Methodische Kernpunkte}
+% ------------------------------------------------------------------
+
+\begin{itemize}
+    \item \textbf{Verlustfunktion:} Summe aus PDE-Residuen (Kontinuität,
+    $x$- und $y$-Impuls) und Randbedingungsresiduen; Strafgewichte $\alpha$
+    kompensieren die ungleiche Verteilung der Trainingspunkte.
+    \item \textbf{Automatische Differentiation (AD):} Ableitungen werden
+    exakt auf dem Berechnungsgraphen berechnet, ohne Diskretisierungsfehler
+    wie bei klassischen FVM- oder FDM-Verfahren.
+    \item \textbf{Widerstandsbeiwert:} Berechnung durch numerische Integration
+    von Druckfeld und viskosem Spannungstensor entlang der Partikeloberfläche
+    (Trapezregel).
+    \item \textbf{Trainingsstrategie:} Adam + L-BFGS in Kombination; L-BFGS
+    erhöht die Konvergenzstabilität in der Feinoptimierungsphase erheblich.
+\end{itemize}
+
+% ------------------------------------------------------------------
+\subsection*{Kritische Einschätzung}
+% ------------------------------------------------------------------
+
+Die Arbeit demonstriert die grundsätzliche Eignung von PINNs für die
+Partikelumströmung bei niedrigen Reynolds-Zahlen, weist aber auch auf
+inhärente Schwächen des Ansatzes hin. Das weiche Erzwingen der
+Randbedingungen führt zu leichten Massenerhaltungsfehlern, die mit
+steigender Reynolds-Zahl zunehmen. Die Trainingszeit ist im Vergleich zu
+klassischer CFD deutlich höher, was die Einsatzfähigkeit als schnellen
+Ersatzmodel einschränkt -- insbesondere wenn das Netzwerk für jede neue
+Geometrie erneut trainiert werden muss. Darüber hinaus beschränkt sich die
+Arbeit auf einen einzelnen Partikel in einem kanalförmigen Gebiet; eine
+Generalisierung auf variable Partikelanzahlen oder -positionen wird nicht
+untersucht. Die Autoren selbst benennen dies als offenen Forschungsbedarf
+für zukünftige Arbeiten.
+
+% ------------------------------------------------------------------
+\subsection*{Bezug zur Masterarbeit}
+% ------------------------------------------------------------------
+
+Diese Arbeit ist für die vorliegende Masterarbeit aus mehreren Gründen
+relevant, unterscheidet sich aber in grundlegenden Punkten von deren Ansatz.
+
+\textbf{Gemeinsamkeiten:} Das physikalische Setting ist eng verwandt. Die
+Umströmung eines einzelnen Partikels bei kleinen Reynolds-Zahlen entspricht
+dem Stokes-Strömungsregime, das für die Kristallsedimentation in Magmakammern
+charakteristisch ist ($Re \ll 1$). Beide Arbeiten zielen darauf ab, den
+rechenintensiven Einsatz klassischer CFD-Verfahren durch datengestützte
+Modelle zu beschleunigen, und nutzen physikalisch motivierte Verlustterme
+zur Verbesserung der Lösungsqualität. Die in dieser Arbeit diskutierte
+Herausforderung, Massenerhaltung durch weiches Erzwingen der
+Randbedingungen zu gewährleisten, ist direkt mit der Verwendung der
+Stromfunktions-Formulierung in der Masterarbeit verknüpft: Durch die
+Vorhersage der Stromfunktion $\psi$ anstelle der Geschwindigkeitskomponenten
+wird Inkompressibilität in der Masterarbeit mathematisch garantiert, was die
+in Hu \& McDaniel beschriebenen Massenerhaltungsfehler grundsätzlich vermeidet.
+
+\textbf{Wesentliche Unterschiede:} Während Hu \& McDaniel ein einzelnes
+PINN verwenden, das für eine fixe Geometrie trainiert wird und keine
+Trainingsdaten benötigt, verfolgt die Masterarbeit einen datenbasierten
+Surrogatmodell-Ansatz (U-Net, FNO), der auf LaMEM-Simulationen als
+Grundwahrheit trainiert wird. Der zentrale Beitrag der Masterarbeit --
+die Generalisierung über variable Kristallanzahlen (1 bis $N$) und
+räumliche Anordnungen -- ist in Hu \& McDaniel nicht adressiert. Das PINN
+in dieser Arbeit ist auf eine Instanz beschränkt und müsste für jede neue
+Konfiguration von Grund auf neu trainiert werden, was es für den angestrebten
+Einsatz in geowissenschaftlichen Parameterstudien ungeeignet macht. Die
+gitterbasierten Architekturen der Masterarbeit (U-Net, FNO auf einem
+$256 \times 256$-Gitter) ermöglichen demgegenüber eine einmalige
+Trainingsphase mit anschließender instantaner Inferenz für beliebige
+Kristallkonfigurationen innerhalb des Trainingsbereichs.
+
+\textbf{Einordnung in den Literaturkontext:} Die vorliegende Arbeit belegt,
+dass PINNs für die Umströmung einfacher Partikelgeometrien prinzipiell
+geeignet sind, verdeutlicht aber zugleich deren Limitierungen hinsichtlich
+Trainingsaufwand und Generalisierungsfähigkeit. Dies motiviert den in der
+Masterarbeit gewählten Ansatz, auf diskrete Simula\-tionsdaten und
+skalierbare neuronale Operatoren zu setzen, um die Anforderungen variabler
+Mehr\-partikelkonfigurationen zu erfüllen.
+
+\end{document}

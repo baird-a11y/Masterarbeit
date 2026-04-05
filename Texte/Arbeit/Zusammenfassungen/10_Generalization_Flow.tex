@@ -1,0 +1,86 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{parskip}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Literaturzusammenfassung}
+
+\noindent\textbf{Titel:} Generalization techniques of neural networks for fluid flow estimation \\
+\textbf{Autoren:} Masaki Morimoto, Kai Fukami, Kai Zhang, Koji Fukagata \\
+\textbf{Zeitschrift:} Neural Computing and Applications, Vol.\ 34, S.\ 3647--3669 \\
+\textbf{Jahr:} 2022 \\
+\textbf{DOI:} \href{https://doi.org/10.1007/s00521-021-06633-z}{10.1007/s00521-021-06633-z}
+
+\subsection*{Kernbeitrag und Motivation}
+
+Die Arbeit von Morimoto et al.\ adressiert drei zentrale Herausforderungen beim praxistauglichen Einsatz neuronaler Netze in der numerischen Strömungsmechanik: die \textit{Interpretierbarkeit} maschinengelernter Ergebnisse, den Umgang mit \textit{begrenzten Trainingsdaten} sowie die \textit{Generalisierbarkeit} auf ungesehene Strömungskonfigurationen. Diese drei Aspekte sind eng miteinander verknüpft und bilden gemeinsam den Flaschenhals für eine breitere Anwendbarkeit datengetriebener Strömungssurrogate.
+
+Als Testfälle dienen kanonische Strömungsszenarien unterschiedlicher Komplexität: der periodische Nachlauf eines Kreiszylinders bei $Re_D = 100$, ein dreidimensionaler Quadratzylindernachlauf, NOAA-Meeresoberflächentemperaturdaten sowie das besonders relevante Szenario des Nachlaufs zweier paralleler Zylinder mit variierendem Spaltabstandsverhältnis~$g$.
+
+\subsection*{Visualisierung neuronaler Netze (Interpretierbarkeit)}
+
+Im ersten Teil demonstrieren die Autoren zwei Methoden zur Inspektion trainierter CNN-Modelle: die Visualisierung der Ausgaben einzelner versteckter Schichten sowie die \textit{Gradient-weighted Class Activation Mapping} (Grad-CAM)-Technik nach Selvaraju et al.\ (2017). Grad-CAM berechnet gewichtete Gradienten der Netzwerkausgabe bezüglich der letzten Faltungsschicht,
+\begin{equation}
+    L_{ij} = \mathrm{ReLU}\!\left(\sum_k \alpha^k A^k_{ij}\right), \quad \alpha^k = \frac{1}{Z}\sum_i\sum_j \frac{\partial y}{\partial A^k_{ij}},
+\end{equation}
+und erzeugt so eine räumliche Aktivierungskarte, die anzeigt, welche Bereiche des Eingabefeldes für die Vorhersage entscheidend sind. Für die Widerstandsbeiwertschätzung ($C_D$) identifiziert Grad-CAM klar den zylindernahen Bereich als dominante Einflusszone -- physikalisch plausibel, da $C_D$ durch die Druckverteilung auf der Körperoberfläche bestimmt wird. Bei der PIV-Geschwindigkeitsschätzung zeigen frühe Schichten vorrangig Körperausrichtung, spätere Schichten hingegen die Wirbelstrukturen im Nachlauf.
+
+\subsection*{Datenaugmentierungstechniken}
+
+Der zweite Schwerpunkt liegt auf Verfahren zur künstlichen Datenvermehrung, die besonders bei kleinen Trainingsdatensätzen von Bedeutung sind. Drei Methoden werden systematisch verglichen:
+
+\begin{itemize}
+    \item \textbf{Horizontales Spiegeln (Flip UD):} Da der Zylindernachlauf statistisch symmetrisch zur Horizontalachse ist, verdoppelt das Spiegeln den effektiven Datensatz ($n_\text{flip} = 2 n_\text{DNS}$). Die Methode ist einfach umzusetzen, setzt aber \textit{Ergodizität} voraus -- d.\,h.\ die statistischen Eigenschaften der gespiegelten und der originalen Daten müssen übereinstimmen.
+    
+    \item \textbf{Rauschaddition:} Dem Trainingsdatensatz wird gleichverteiltes Rauschen im Bereich $[-0.1, 0.1]$ überlagert ($n_\text{noise} = \gamma n_\text{DNS}$, typisch $\gamma = 8$). Bei kleinen Trainingsdatensätzen verbessert diese Methode die Generalisierung erheblich; bei großen Datensätzen wirkt sie hingegen als störender Regularisierungsterm und kann die Vorhersagegüte verschlechtern.
+    
+    \item \textbf{Transferlernen mit lokalen Subdomänen:} Das Modell wird zunächst auf räumlich beschränkten Teilbereichen vortrainiert ($\mathcal{F}_\text{pre}$), bevor die erlernten Gewichte als Initialisierung für das Training auf dem vollständigen globalen Feld verwendet werden ($\mathcal{F}_\text{post}$, mit $w_\text{post,init} = w_\text{pre}$). Diese Methode erzielt unter allen verglichenen Verfahren konsistent die stabilsten und genauesten Ergebnisse, insbesondere bei großen Trainingsdatensätzen.
+\end{itemize}
+
+Ein zentrales Ergebnis ist, dass die Wirksamkeit der einzelnen Techniken stark vom konkreten Problem, der Datenmenge und den statistischen Eigenschaften der Strömung abhängt. Es gibt keine universell überlegene Methode.
+
+\subsection*{Generalisierung auf ungesehene Daten}
+
+Der dritte und für die vorliegende Masterarbeit relevanteste Abschnitt untersucht die Generalisierbarkeit trainierter Modelle auf ungesehene Strömungskonfigurationen. Als Testfall dient der Nachlauf zweier paralleler Zylinder mit variierendem Spaltabstandsverhältnis $g \in [0.5, 2.5]$, das eine breite Palette dynamisch verschiedener Strömungsregime erzeugt -- von chaotischen Wechselwirkungen bei kleinen Werten ($g = 0.5$) über frequenzgekoppelte Ablösung ($g = 1.5$) bis hin zu quasi-periodischer unabhängiger Ablösung ($g = 2.5$).
+
+Modelle werden jeweils nur auf einem einzigen Spaltabstandsverhältnis trainiert und anschließend auf allen Werten getestet. Die Hauptbefunde sind:
+
+\begin{enumerate}
+    \item Modelle generalisieren besser auf Konfigurationen, die dynamisch ähnlich zur Trainingsdomäne sind. Dies lässt sich quantitativ durch den Singulärwertspektrum und das Amplitudenspektrum der Auftriebsbeiwerte erklären.
+    \item Strömungen mit komplex-chaotischer Dynamik (z.\,B.\ $g = 0.5$) stellen einen reichhaltigeren Trainingsdatensatz bereit und ermöglichen eine bessere Generalisierung auf strukturell ähnliche Fälle.
+    \item Einfachere Strömungen (z.\,B.\ $g = 1.5$, synchronisierte Ablösung) erlauben keine gute Verallgemeinerung auf komplexere Regimes, da das Modell auf zu wenige räumliche Moden konditioniert wird.
+    \item Bei grober Eingangsauflösung (1/16 statt 1/8) nimmt die Vorhersagegüte, insbesondere in Körpernähe, deutlich ab.
+\end{enumerate}
+
+\subsection*{Bezug zur Masterarbeit}
+
+Die Arbeit von Morimoto et al.\ ist in mehrfacher Hinsicht direkt relevant für die vorliegende Masterarbeit über die Generalisierungsfähigkeit von UNet- und FNO-Architekturen für die Vorhersage von Stokes-Strömungsfeldern um sedierende Kristalle.
+
+\paragraph{Generalisierung als Kernfrage.}
+Beide Arbeiten stellen die Frage in den Mittelpunkt, ob ein auf einer Klasse von Geometrien trainiertes Modell auf qualitativ neue Konfigurationen generalisieren kann. Während Morimoto et al.\ den Einfluss des Spaltabstandsverhältnisses zwischen zwei Zylindern untersuchen, fokussiert die Masterarbeit auf die deutlich anspruchsvollere Frage der Generalisierung über \textit{variierende Kristallanzahlen} (1 bis $N_\text{max}$). Dies entspricht einer Generalisierung nicht nur über Parametervariationen, sondern über topologisch verschiedene Eingabefelder -- ein Aspekt, der in der bestehenden Literatur kaum systematisch untersucht wurde.
+
+\paragraph{Datenaugmentierung durch Spiegeln.}
+Die in der Masterarbeit implementierte horizontale Spiegelung des Geschwindigkeitsfeldes mit entsprechender Vorzeichenkorrektur der Vertikalkomponente ($u_z \to -u_z$) basiert direkt auf der Methodik aus Abschnitt~5.1.1 des vorliegenden Papers. Morimoto et al.\ betonen jedoch, dass Ergodizität der gespiegelten Daten sichergestellt sein muss -- eine Bedingung, die für die Stokes-Strömungen in der Masterarbeit aufgrund der Linearität der Gleichungen und der Symmetrieeigenschaften des Strömungsregimes erfüllt ist. Die Implementierung in der Masterarbeit erweitert diesen Ansatz auf eine Datensatzgröße von bis zu 1800 Samples.
+
+\paragraph{Transferlernen als Ausblick.}
+Das Transferlernparadigma von Morimoto et al.\ -- Vortraining auf lokalen Subdomänen, Feinabstimmung auf dem globalen Feld -- bietet eine interessante Perspektive für zukünftige Erweiterungen der Masterarbeit. Da die Stokes-Strömung skalenunabhängige Eigenschaften aufweist (keine Trägheitsterme), ist zu erwarten, dass lokal auf Einzelkristall-Konfigurationen vortrainierte Modelle eine gute Initialisierung für das globale Multi-Kristall-Problem liefern könnten.
+
+\paragraph{Einflussfaktoren für die Generalisierung.}
+Die Beobachtung von Morimoto et al., dass die Qualität der Trainingsdaten -- insbesondere deren dynamische Reichhaltigkeit gemessen am Singulärwertspektrum -- entscheidend für die Generalisierungsfähigkeit ist, unterstreicht die Designentscheidungen in der Masterarbeit. Die Strategie, Trainingsdaten aus Konfigurationen mit zufälligen Kristallanzahlen und -positionen zu generieren, zielt genau darauf ab, den Konfigurationsraum möglichst breit abzudecken und damit einen diversitätsreichen Trainingsdatensatz analog zu den dynamisch reichhaltigen Konfigurationen ($g = 0.5$ oder $g = 2.5$) in der vorliegenden Arbeit zu erzeugen.
+
+\paragraph{Interpretierbarkeit durch Grad-CAM.}
+Die in dieser Arbeit vorgestellten Grad-CAM-Visualisierungen könnten als Werkzeug zur Fehleranalyse in der Masterarbeit eingesetzt werden. Insbesondere die Frage, ob das UNet-Modell bei der Vorhersage von Multi-Kristall-Feldern die kristallnahen Grenzschichtbereiche und die Fernfeld-Wechselwirkungen korrekt gewichtet, ließe sich durch entsprechende Aktivierungskarten beantworten.
+
+\subsection*{Kritische Einordnung}
+
+Ein wesentlicher Unterschied zur Masterarbeit liegt im physikalischen Regime: Morimoto et al.\ arbeiten überwiegend im Bereich instationärer Navier-Stokes-Strömungen mit periodischer Wirbelablösung ($Re_D = 100$), während die Masterarbeit ausschließlich den stationären Stokes-Grenzfall ($Re \ll 1$) betrachtet. Das Stokes-Regime ist physikalisch einfacher (linear, kein instationärer Charakter), aber die Generalisierungsaufgabe der Masterarbeit ist durch die Variation der Partikelanzahl strukturell anspruchsvoller. Zudem verwenden Morimoto et al.\ keine physikalisch motivierten Ausgaberepräsentationen wie die Stromfunktion, was in der Masterarbeit durch die Wahl von $\psi$ als Lernziel -- mit der garantierten Divergenzfreiheit der abgeleiteten Geschwindigkeitsfelder -- gezielt adressiert wird.
+
+\end{document}

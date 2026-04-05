@@ -1,0 +1,79 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Convolutional Neural Networks for Steady Flow Approximation}
+\textbf{Autoren:} Xiaoxiao Guo, Wei Li, Francesco Iorio \\
+\textbf{Konferenz:} KDD '16, San Francisco, CA, USA \\
+\textbf{Jahr:} 2016
+
+\subsection*{Zusammenfassung}
+
+Diese Pionierarbeit demonstriert erstmals die systematische Anwendung von Convolutional Neural Networks (CNNs) als Surrogat-Modelle für die Vorhersage stationärer laminarer Strömungsfelder. Die zentrale Motivation der Autoren entspringt dem praktischen Problem, dass klassische CFD-Simulationen (Computational Fluid Dynamics) zwar hochpräzise Ergebnisse liefern, jedoch rechenintensiv und zeitaufwändig sind -- typische Simulationszeiten liegen im Bereich von Stunden bis Tagen. Dies limitiert insbesondere iterative Designprozesse und Parameterexploration in frühen Entwicklungsphasen.
+
+\subsubsection*{Geometrierepräsentation}
+
+Ein wesentlicher methodischer Beitrag der Arbeit ist die Verwendung von \textbf{Signed Distance Functions (SDF)} als Geometrierepräsentation. Die SDF ordnet jedem Gitterpunkt den vorzeichenbehafteten Abstand zur nächsten Geometriegrenze zu:
+\begin{equation}
+D(i,j) = \min_{(i',j') \in Z} \left| (i,j) - (i',j') \right| \cdot \text{sign}(f(i,j))
+\end{equation}
+wobei $Z$ die Menge der Randpunkte (Zero Level Set) bezeichnet und das Vorzeichen angibt, ob sich der Punkt innerhalb (negativ) oder außerhalb (positiv) der Geometrie befindet. Die Autoren zeigen empirisch, dass SDF-Repräsentationen signifikant bessere Ergebnisse liefern als einfache binäre Masken (Fehlerraten von ca.\ 2\% vs.\ 55--80\%), da sie neben lokalen Geometriedetails auch globale Strukturinformation kodieren.
+
+\subsubsection*{Netzwerkarchitektur}
+
+Das vorgeschlagene CNN-Modell folgt einer \textbf{Encoder-Decoder-Architektur} mit gemeinsamer Kodierung und separater Dekodierung für die verschiedenen Geschwindigkeitskomponenten. Der Encoder extrahiert durch gestapelte Faltungsschichten zunehmend abstrakte Geometriemerkmale aus der SDF-Eingabe. Der Decoder verwendet Dekonvolutionsoperationen, um aus der komprimierten Repräsentation die hochaufgelösten Geschwindigkeitsfelder zu rekonstruieren. Für 2D-Geometrien werden zwei separate Decoder-Pfade für die $x$- und $y$-Komponenten des Geschwindigkeitsfeldes verwendet, für 3D-Geometrien entsprechend drei Pfade.
+
+Ein wichtiges Detail ist die \textbf{Konditionierung der Vorhersage} auf die SDF: Da die Geschwindigkeit innerhalb und auf der Grenze fester Körper per Definition null ist, wird die Netzwerkausgabe mit einer binären Maske $\mathbbm{1}\{s > 0\}$ multipliziert, die nur Werte außerhalb der Geometrie durchlässt. Diese physikalisch motivierte Maskierung vereinfacht das Lernproblem und verbessert die Vorhersagegenauigkeit.
+
+\subsubsection*{Datengenerierung und Validierung}
+
+Die Trainingsdaten werden mittels \textbf{Lattice Boltzmann Method (LBM)} generiert, einem gitterbasierten CFD-Verfahren, das sich besonders für parallele Implementierungen eignet. Der Trainingsdatensatz umfasst 100.000 2D-Proben verschiedener geometrischer Primitive (Dreiecke, Vierecke, Fünfecke, Sechsecke, Zwölfecke) auf einem $256 \times 128$-Gitter sowie 400.000 3D-Proben mit Kugel-Quader-Paaren auf einem $32 \times 32 \times 32$-Gitter. Die Experimente werden bei einer Reynolds-Zahl von 20 durchgeführt, entsprechend dem laminaren Strömungsregime.
+
+Besonders hervorzuheben ist die Evaluation der \textbf{Generalisierungsfähigkeit}: Das auf geometrischen Primitiven trainierte 2D-Modell wird auf einem separaten Testdatensatz mit Autoformen evaluiert, die während des Trainings nicht gesehen wurden. Trotz der morphologischen Unterschiede zwischen Trainings- und Testgeometrien erreicht das Modell akzeptable Fehlerraten (9--16\%), was die grundsätzliche Transferfähigkeit gelernter Strömungsrepräsentationen demonstriert.
+
+\subsubsection*{Ergebnisse}
+
+Die CNN-basierten Surrogat-Modelle erreichen \textbf{Geschwindigkeitsgewinne von zwei bis vier Größenordnungen} gegenüber traditionellen LBM-Solvern -- etwa 0,007 Sekunden pro Vorhersage (bei Batch-Größe 100) verglichen mit 82 Sekunden für CPU-basierte und 2 Sekunden für GPU-beschleunigte LBM-Simulation. Der durchschnittliche relative Fehler liegt bei 2--3\% für die Validierungsdaten und 9--16\% für die out-of-distribution Testdaten (Autoformen).
+
+\subsection*{Bezug zur Masterarbeit}
+
+Die Arbeit von Guo et al.\ (2016) stellt eine wichtige methodische Grundlage für die vorliegende Masterarbeit dar, wobei sowohl konzeptionelle Parallelen als auch wesentliche Unterschiede und Erweiterungen bestehen.
+
+\subsubsection*{Gemeinsame methodische Grundlagen}
+
+\begin{itemize}
+    \item \textbf{Surrogat-Modellierung für Strömungsfelder:} Beide Arbeiten verfolgen das Ziel, rechenintensive numerische Strömungssimulationen durch trainierte neuronale Netze zu approximieren. Die fundamentale Idee -- geometrische Konfigurationen auf regulären Gittern als Eingabe zu verwenden und daraus Strömungsfelder vorherzusagen -- ist direkt übertragbar.
+    
+    \item \textbf{Geometrierepräsentation:} Die Masterarbeit verwendet ebenfalls eine SDF-basierte Eingaberepräsentation (als ``Signed Distance Field Proxy'' bezeichnet), ergänzt um eine binäre Kristallmaske und normalisierte Koordinatenkanäle. Dies folgt der von Guo et al.\ etablierten Erkenntnis, dass Distanzfelder gegenüber rein binären Masken Vorteile bieten.
+    
+    \item \textbf{Encoder-Decoder-Architektur:} Das U-Net der Masterarbeit basiert auf dem gleichen Encoder-Decoder-Prinzip mit der charakteristischen Kombination aus räumlicher Kompression im Encoder und progressiver Rekonstruktion im Decoder. Die Skip-Connections des U-Net erweitern dieses Konzept, indem sie hochaufgelöste Merkmale direkt an den Decoder weiterleiten.
+    
+    \item \textbf{Generalisierung auf ungesehene Geometrien:} Die zentrale Forschungsfrage beider Arbeiten betrifft die Fähigkeit gelernter Modelle, auf geometrische Konfigurationen zu generalisieren, die während des Trainings nicht gesehen wurden. Guo et al.\ testen dies durch Training auf Primitiven und Evaluation auf Autoformen; die Masterarbeit untersucht die Generalisierung über variierende Kristallanzahlen und räumliche Anordnungen.
+\end{itemize}
+
+\subsubsection*{Unterschiede und Erweiterungen}
+
+\begin{itemize}
+    \item \textbf{Physikalischer Kontext:} Während Guo et al.\ allgemeine aerodynamische Anwendungen bei moderaten Reynolds-Zahlen (Re $= 20$) betrachten, fokussiert die Masterarbeit auf das geowissenschaftlich relevante Regime der Stokes-Strömung (Re $\ll 1$), wie es bei der Kristallsedimentation in magmatischen Systemen auftritt. Die Linearität der Stokes-Gleichungen und die damit verbundenen langreichweitigen hydrodynamischen Wechselwirkungen stellen spezifische Anforderungen an die Modellarchitektur.
+    
+    \item \textbf{Lernziel:} Ein fundamentaler methodischer Unterschied besteht in der Wahl des Lernziels. Guo et al.\ trainieren ihre Netze zur direkten Vorhersage der Geschwindigkeitskomponenten $(u_x, u_y)$ bzw.\ $(u_x, u_y, u_z)$. Die Masterarbeit wählt stattdessen die \textbf{Stromfunktion} $\psi$ als Lernziel, aus der die Geschwindigkeit via $u_x = \partial\psi/\partial z$, $u_z = -\partial\psi/\partial x$ abgeleitet wird. Diese Wahl garantiert Inkompressibilität ($\nabla \cdot \mathbf{u} = 0$) konstruktionsbedingt und reduziert das Lernproblem von einem vektorwertigen auf ein skalares Regressionsproblem. Dies entspricht einem stärkeren \textit{inductive bias}, der physikalische Struktur analytisch erzwingt statt sie aus Daten lernen zu müssen.
+    
+    \item \textbf{Architekturvergleich:} Die Masterarbeit erweitert den methodischen Rahmen durch einen systematischen Vergleich zweier fundamental verschiedener Architekturparadigmen: das räumlich-hierarchische U-Net und den spektral-globalen Fourier Neural Operator (FNO). Dieser Vergleich adressiert die Frage, ob lokale Faltungsoperationen oder globale Spektraloperationen besser geeignet sind, die elliptische Struktur der Stokes-Gleichungen zu erfassen -- eine Fragestellung, die 2016 noch nicht im Fokus stand.
+    
+    \item \textbf{Komplexität der Eingabekonfigurationen:} Während Guo et al.\ im 3D-Fall maximal zwei interagierende Objekte (Kugel-Quader-Paare) betrachten, untersucht die Masterarbeit Systeme mit bis zu 100 Kristallen. Die Generalisierung über variierende Partikelanzahlen -- von Einzelkristall-Konfigurationen bis zu stark wechselwirkenden Clustern -- stellt ein komplexeres Szenario dar, bei dem sich topologische Komplexität und Interaktionsstärke systematisch ändern.
+    
+    \item \textbf{Datengenerierung:} Anstelle der Lattice Boltzmann Method verwendet die Masterarbeit den geodynamischen Finite-Elemente-Code LaMEM, der speziell für Stokes-Strömungen mit großen Viskositätskontrasten optimiert ist und im geowissenschaftlichen Kontext etabliert ist.
+\end{itemize}
+
+\subsubsection*{Einordnung in den Forschungskontext}
+
+Die Arbeit von Guo et al.\ (2016) markiert einen Wendepunkt in der Anwendung von Deep Learning auf Strömungsprobleme und hat eine umfangreiche Folgeliteratur inspiriert. Die in der Masterarbeit zitierten neueren Arbeiten -- darunter DeepCFD (Ribeiro et al.), U-Net-Architekturen für Strömungsvorhersage (Chen et al., Thuerey et al.) und Fourier Neural Operators (Li et al., 2021) -- bauen konzeptionell auf den hier etablierten Grundlagen auf. Die Masterarbeit positioniert sich in diesem Forschungsfeld, indem sie (1) die Stromfunktion als physikalisch strukturiertes Lernziel einführt, (2) einen kontrollierten Architekturvergleich zwischen räumlichen und spektralen Ansätzen durchführt, und (3) die Generalisierung über variable Partikelanzahlen in Mehrphasen-Stokes-Strömungen systematisch untersucht -- Aspekte, die in der existierenden Literatur bisher nicht adressiert wurden.
+
+\end{document}

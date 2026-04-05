@@ -1,0 +1,130 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\begin{document}
+
+\section*{Imaging and Seismic Modelling Inside Volcanoes Using Machine Learning}
+\textbf{Autoren:} Gareth Shane O'Brien, Christopher J. Bean, Hugo Meiland, Philipp Witte \\
+\textbf{Journal:} Scientific Reports, 13:630 \\
+\textbf{Jahr:} 2023
+
+\subsection*{Zusammenfassung}
+
+Die Arbeit adressiert die grundlegende Herausforderung der seismischen Bildgebung in vulkanischen 
+Umgebungen, wo starke strukturelle Heterogenitäten seismische Wellen stark streuen und konventionelle 
+tomographische Methoden scheitern. Passive Erdbebentomographie liefert lediglich niederfrequente, 
+geglättete Geschwindigkeitsmodelle, die die feinskaligen geologischen Strukturen nicht auflösen können, 
+welche für die starken Streupfadeffekte verantwortlich sind. Als neuartiger Ansatz wird ein 
+\textit{Fourier Neural Operator} (FNO) eingesetzt, der sowohl das Vorwärtsproblem der 
+Wellenfeldsimulation als auch das inverse Problem der Geschwindigkeitsinversion löst.
+
+\subsubsection*{Datengenerierung und Trainingsaufbau}
+
+Da keine physikalischen Datensätze mit bekanntem Untergrundmodell für das Training geeignet sind, 
+werden synthetische Trainingsdaten durch numerische Simulation erzeugt. Als Simulator wird eine 
+2D-Gittermethode für elastische Wellenausbreitung verwendet, die breitbandige Heterogenitäten und 
+starke Geschwindigkeitsgradienten korrekt behandelt. Zwei verschiedene Populationen von 
+Geschwindigkeitsmodellen werden definiert: Population~L mit geschichteten Modellen und 
+Population~T mit tomographieartig geglätteten Perturbationen. Jede Population umfasst 20.000 
+individuelle Modelle mit zufälligen Quellpositionen und Quellmechanismen, was zu insgesamt 
+über 40.000 Simulationen für das FNO-Training führt. Eine unabhängige Validierungspopulation~V 
+mit stärkeren Perturbationen dient zur Überprüfung der Generalisierungsfähigkeit.
+
+\subsubsection*{FNO-Architektur und Training}
+
+Der FNO ist eine neuartige Netzwerkarchitektur, die partielle Differentialgleichungen als Operatoren 
+auffasst und lernt, diese Operatoren -- sowie ihre Inversen -- auf Funktionenräumen abzubilden. 
+Im Gegensatz zu klassischen Faltungsnetzwerken (CNN) arbeitet der FNO im Fourierraum, was 
+drei wesentliche Vorteile bietet: (1) globale Erfassung der Kontinuität von PDEs gegenüber 
+lokalen Faltungskernen, (2) Auflösungs- und Gitterinvarianz, sodass mit niedrig aufgelösten 
+Trainingsdaten höher aufgelöste Vorhersagen möglich sind, und (3) erhöhte Recheneffizienz 
+durch Trunkierung hoher Frequenzen. Das Netzwerk ist vier Schichten tief, in PyTorch implementiert 
+und wird mit AdamW-Optimierer über 200 Epochen mit variabler Lernrate trainiert.
+
+Für das \textit{Vorwärtsproblem} erhält der FNO das Geschwindigkeitsmodell, die Quellposition 
+und den Quellmechanismus als Eingabe und gibt das elastische Wellenfeld bzw. synthetische 
+Seismogramme aus. Für das \textit{inverse Problem} werden Eingaben und Ausgaben vertauscht: 
+zehn zufällig ausgewählte zweikomponentige Seismogramme (x- und z-Komponente) dienen als 
+Eingabe, während das vorhergesagte Geschwindigkeitsmodell und die Quellposition als Ausgabe 
+geliefert werden. Dem Training werden 15\,\% weißes Rauschen auf den Eingabespuren hinzugefügt, 
+um die Robustheit gegenüber realen Messbedingungen zu erhöhen.
+
+\subsubsection*{Ergebnisse}
+
+Das trainierte Vorwärtsmodell reproduziert die dominanten Phasen des elastischen Wellenfelds -- 
+inklusive P- und S-Wellen -- mit hoher Genauigkeit, wenngleich kleinamplitudigere 
+Streuereignisse teilweise nicht vollständig erfasst werden. Die Inversionsresultate zeigen, 
+dass der FNO aus lediglich einem Schussexperiment (10 Oberflächen-Empfänger) ein 
+hochaufgelöstes Geschwindigkeitsmodell rekonstruieren kann, das weit über die 
+Auflösungsfähigkeiten konventioneller Tomographie hinausgeht. Quantifiziert anhand des 
+normierten RMS-Fehlers über 20 ungesehene Testmodelle aus beiden Populationen zeigen die 
+Geschwindigkeitsmodelle eine hohe Vorhersagegenauigkeit, während die Quelllokalisation 
+empfindlicher gegenüber Rauschen reagiert. Die Generalisierung auf die abweichende 
+Population~V gelingt durch Stapelung von Vorhersagen aus 100 Schussexperimenten, was 
+die Konvergenz zum wahren Modell klar demonstriert.
+
+\subsubsection*{Diskussion und Ausblick}
+
+Die Autoren betonen, dass der FNO keine traditionellen PDE-Löser ersetzen soll -- diese 
+werden für die Trainingsdatengenerierung benötigt -- sondern als schnelles Surrogat-Modell 
+für Vorwärts- und Inversionsaufgaben dient. Die Skalierung auf 3D wird als technisch 
+machbar, jedoch rechenintensiv eingestuft, wobei die Auflösungsinvarianz des FNO durch 
+Verwendung niedrig aufgelöster Trainingsdaten helfen kann. Die zentrale offene Frage 
+bleibt, wie eine Trainingsmodellpopulation konstruiert werden muss, die hinreichend 
+repräsentativ für die reale vulkanische Struktur ist, um eine Inversion mit echten 
+Felddaten zu ermöglichen.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Diese Arbeit weist mehrere direkte Parallelen zur vorliegenden Masterarbeit über 
+physik-basiertes maschinelles Lernen zur Vorhersage von Strömungsfeldern um sinkende 
+Kristalle auf.
+
+\paragraph{Gemeinsame Architektur.}
+Beide Arbeiten setzen den FNO als zentrale Netzwerkarchitektur ein. Während O'Brien 
+et al.\ den FNO zur Lösung der elastischen Wellengleichung nutzen, wird er in der 
+Masterarbeit als Surrogat-Modell für die Stokes-Gleichungen in magmatischen 
+Sedimentationssystemen eingesetzt. Die strukturellen Vorteile des FNO -- globale 
+Spektralverarbeitung, Auflösungsinvarianz und Recheneffizienz -- sind in beiden 
+Domänen gleichermaßen relevant.
+
+\paragraph{Surrogat-Modellierung physikalischer Simulationen.}
+In beiden Fällen dienen numerische PDE-Löser als Ground-Truth-Datengeneratoren 
+(elastische Gittermethode bzw. LaMEM), und das neuronale Netz lernt, diese Löser 
+mit drastisch reduziertem Rechenaufwand zu approximieren. Die Masterarbeit folgt 
+damit demselben Paradigma: Das trainierte Netz ist nicht dazu gedacht, den Simulator 
+zu ersetzen, sondern ermöglicht schnelle Vorhersagen für Konfigurationen, die ohne 
+Surrogat-Modell prohibitiv teuer wären.
+
+\paragraph{Generalisierung als zentrale Herausforderung.}
+O'Brien et al.\ identifizieren die Generalisierung auf Modellpopulationen außerhalb 
+der Trainingsverteilung als Schlüsselproblem und lösen es partiell durch Stapelung 
+von Vorhersagen. Dies entspricht direkt der zentralen Forschungsfrage der Masterarbeit: 
+Kann ein auf $N$-Kristall-Konfigurationen trainiertes Netzwerk auf Konfigurationen 
+mit $N{+}m$ Kristallen generalisieren? Beide Arbeiten thematisieren damit die 
+fundamentale Extrapolationsschwäche neuronaler Netze und entwickeln Strategien, 
+um diese zu überwinden.
+
+\paragraph{Physikalisch motivierte Trainingsdatenstrategie.}
+Beide Arbeiten verwenden statistisch parametrisierte Modellpopulationen, um den 
+Trainingsraum zu definieren. O'Brien et al.\ schlagen vor, geologisches Vorwissen 
+(Topographie, Petrophysik, Bohrlochsdaten) zur Einschränkung der Trainingsverteilung 
+zu nutzen -- ein Prinzip, das in der Masterarbeit durch physikalisch motivierte 
+Normierungsstrategien und Curriculum-Learning (von Einzel- zu Mehrkristall-Konfigurationen) 
+umgesetzt wird.
+
+\paragraph{Abgrenzung.}
+Im Unterschied zur vorliegenden Masterarbeit behandelt O'Brien et al.\ ein 
+Wellenpropagationsproblem mit zeitabhängigen, transienten Lösungen. Die Masterarbeit 
+hingegen fokussiert auf stationäre Stokes-Strömungen, was die Verwendung von 
+Stromfunktionsansätzen ermöglicht, die die Divergenzfreiheit der Strömung 
+mathematisch garantieren -- ein Aspekt, der in der seismischen FNO-Anwendung 
+keine Entsprechung findet. Zudem wird in der Masterarbeit explizit der Residuallernansatz 
+$\mathbf{v}_\mathrm{total} = \mathbf{v}_\mathrm{Stokes,analytisch} + \Delta\mathbf{v}_\mathrm{gelernt}$ 
+verfolgt, der durch Ausnutzung analytischer Einzelkristalllösungen die zu lernende 
+Funktion vereinfacht.
+
+\end{document}

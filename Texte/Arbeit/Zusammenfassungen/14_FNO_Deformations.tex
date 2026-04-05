@@ -1,0 +1,31 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\begin{document}
+\section*{Fourier Neural Operator with Learned Deformations for PDEs on General Geometries}
+\textbf{Autoren:} Zongyi Li, Daniel Zhengyu Huang, Burigede Liu, Anima Anandkumar \\
+\textbf{Veröffentlicht in:} Journal of Machine Learning Research 24 (2023), S.~1--26
+
+\subsection*{Zusammenfassung}
+
+Diese Arbeit adressiert eine wesentliche strukturelle Einschränkung des Standard-Fourier-Neuronalen-Operators (FNO): die Beschränkung auf rechteckige Gebiete mit gleichmäßigen Gittern, die aus der Verwendung der schnellen Fourier-Transformation (FFT) resultiert. Bisherige Ansätze zur Behandlung irregulärer Geometrien -- etwa die einfache Einbettung in ein größeres rechteckiges Rechengebiet oder die bilineare Interpolation auf ein uniformes Gitter -- führen zu erheblichen Interpolationsfehlern und sind rechnerisch ineffizient.
+
+Die Autoren schlagen daher \emph{Geo-FNO} vor, ein geometriebewusstes FNO-Framework, das das physikalische (möglicherweise irreguläre) Eingabegebiet $D_a$ durch eine diffeomorphe Koordinatentransformation $\varphi_a: D_c \to D_a$ auf ein uniformes, rechtwinkliges latentes Rechengebiet $D_c$ abbildet. Im latenten Raum können die Standard-Fourier-Schichten mit FFT effizient angewendet werden; anschließend wird die Lösung zurück in den physikalischen Raum transformiert. Die Deformationsabbildung $\varphi_a^{-1}$ wird dabei entweder analytisch aus der Gitterstruktur abgeleitet (für strukturierte Netze) oder durch ein kleines neuronales Netz end-to-end mitgelernt. Letzteres ermöglicht die Anwendung auf vollständig unstrukturierte Eingaben wie Punktwolken oder Dreiecksnetze.
+
+Das Framework wird an einer Reihe von PDE-Problemen validiert: elastische Verformungen von Körpern mit Hohlräumen, plastische Umformung, Advektion auf der Kugeloberfläche sowie Euler- und Navier-Stokes-Strömungen um Tragflächenprofile und in Rohren mit variabler Geometrie. In allen Fällen übertrifft Geo-FNO sowohl interpolationsbasierte Methoden (FNO mit Vorinterpolation, UNet mit Vorinterpolation) als auch gitterfreie Ansätze wie Graph-Neuronale-Operatoren (GNO) und DeepONet, bei vergleichbarer oder geringerer Rechenzeit. Gegenüber klassischen numerischen Lösern wird eine Beschleunigung von bis zu $10^5$ berichtet. Darüber hinaus demonstrieren die Autoren die Diskretisierungsinvarianz von Geo-FNO: ein auf niedrig aufgelösten Daten trainiertes Modell kann ohne Nachtraining auf höher aufgelösten Gittern ausgewertet werden.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Die Masterarbeit betrachtet die Vorhersage des Stromfunktionsfeldes $\psi$ für Konfigurationen mit einer variablen Anzahl kreisförmiger Kristalle in einem zweidimensionalen Stokes-Strömungsfeld, kodiert auf einem festen $256 \times 256$-Gitter. Die Kristallgeometrien werden durch eine Binärmaske sowie ein Distanzfeld als Eingangsfelder repräsentiert, anstatt durch explizite Gitterdeformationen. Dieser Ansatz und der Geo-FNO-Ansatz lösen dasselbe grundlegende Problem -- die Behandlung veränderlicher Geometrien mit FNO-basierten Architekturen -- mit komplementären Strategien:
+
+\begin{itemize}
+    \item \textbf{Geo-FNO} deformiert das physikalische Gitter explizit und lernt eine geometrieabhängige Koordinatentransformation. Dies ist besonders vorteilhaft, wenn die Geometrie des Lösungsgebiets selbst die primäre Eingabevariable ist (z.\,B.\ Tragflächenoptimierung, Rohre mit variabler Mittelachse).
+    \item \textbf{Die Masterarbeit} verwendet ein festes, reguläres Gitter und kodiert die Kristallgeometrie implizit über Eingangsfelder (Maske, Distanzfeld, Koordinatenkanäle). Da alle Konfigurationen auf demselben $256 \times 256$-Gitter leben, entfällt die Notwendigkeit einer expliziten Gitterdeformation; der FNO kann direkt in seiner Standardform angewendet werden.
+\end{itemize}
+
+Für die vorliegende Arbeit ist der Geo-FNO-Ansatz aus zwei Gründen konzeptionell relevant. Erstens bestätigen die Benchmarks in Li et al.\ (2023), dass der Standard-FNO bei strukturierten Eingabegittern -- wie dem hier verwendeten kartesischen $256 \times 256$-Gitter -- direkt und ohne Deformationsschicht anwendbar ist, da die Gitterindizierung eine kanonische Koordinatentransformation induziert. Zweitens zeigen die Ergebnisse der Geo-FNO-Arbeit, dass die globale Spektralrepräsentation des FNO gegenüber interpolationsbasierten UNet-Varianten sowohl hinsichtlich Genauigkeit als auch Recheneffizienz Vorteile bietet -- eine Beobachtung, die direkt auf den in dieser Masterarbeit durchgeführten Architekturvergleich zwischen UNet und FNO übertragbar ist. Insbesondere unterstreicht die Diskretisierungsinvarianz des FNO seine potenzielle Überlegenheit beim Transfer auf Konfigurationen mit bisher ungesehenen Kristallanzahlen, was einer der zentralen Evaluationsdimensionen dieser Arbeit entspricht.
+
+\end{document}

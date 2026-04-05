@@ -1,0 +1,70 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{APEBench: A Benchmark for Autoregressive Neural Emulators of PDEs}
+\textbf{Autoren:} Felix Koehler, Simon Niedermayr, Rüdiger Westermann, Nils Thuerey \\
+\textbf{Konferenz:} NeurIPS 2024 (Datasets and Benchmarks Track) \\
+\textbf{Code:} \texttt{https://github.com/tum-pbs/apebench}
+
+\subsection*{Zusammenfassung}
+
+APEBench ist ein umfassendes Benchmark-Framework zur systematischen Evaluierung autoregressiver neuronaler Emulatoren für zeitabhängige partielle Differentialgleichungen (PDEs). Das Framework basiert auf JAX und integriert einen hocheffizienten, differenzierbaren Pseudo-Spektral-Löser auf Basis von Exponential Time Differencing Runge-Kutta (ETDRK) Methoden, der 46 verschiedene PDE-Dynamiken in ein, zwei und drei räumlichen Dimensionen abdeckt.
+
+\paragraph{Lösungsansatz und Solver-Integration.}
+Ein zentrales Alleinstellungsmerkmal von APEBench gegenüber bestehenden Benchmarks wie PDEBench oder PDEArena ist die enge Integration des numerischen Referenzlösers direkt in den Trainings- und Evaluierungsprozess. Die unterstützten semi-linearen PDEs besitzen die Form
+\[
+\partial_t u = \mathcal{L}u + \mathcal{N}(u),
+\]
+wobei der lineare Anteil $\mathcal{L}$ im Fourier-Raum diagonalisiert und damit exakt über eine Matrix-Exponentialfunktion integriert werden kann, während der nichtlineare Anteil $\mathcal{N}(u)$ durch Runge-Kutta-Stufen approximiert wird. Dies ermöglicht für lineare PDEs eine nahezu fehlerfreie Datengenerierung, was die Qualität der Trainingsgrundlage erheblich verbessert. Für nichtlineare Terme wird ein Pseudo-Spektral-Ansatz mit De-Aliasing nach Orszag (2/3-Regel) verwendet.
+
+\paragraph{Schwierigkeitsidentifikatoren.}
+Ein weiterer wichtiger Beitrag ist die Einführung standardisierter Schwierigkeitskennzahlen $\gamma_j$ für jede PDE-Dynamik, die direkt an klassische numerische Stabilitätskriterien geknüpft sind. Für Ableitungen $s$-ter Ordnung mit Koeffizient $a_s$ werden diese definiert als
+\[
+\gamma_s = \alpha_s N^s 2^{s-1} D, \quad \text{mit} \quad \alpha_s = \frac{a_s \Delta t}{L^s},
+\]
+wobei $N$ die Auflösung, $D$ die Raumdimension und $L$ der Domänenumfang sind. Für $s=1$ entspricht $\gamma_1$ genau der CFL-Zahl der Advektionsgleichung. Durch diese Parametrisierung lässt sich eine PDE-Konfiguration eindeutig identifizieren und ihre Emulierschwierigkeit intuitiv einschätzen.
+
+\paragraph{Architekturvergleich.}
+APEBench evaluiert fünf repräsentative neuronale Architekturen: einfache Faltungsnetzwerke (Conv), Residualnetzwerke (ResNet), U-Nets, Dilated ResNets und den Fourier Neural Operator (FNO). Zentrale Erkenntnisse sind:
+\begin{itemize}
+  \item \textbf{ResNets} erweisen sich über nahezu alle PDE-Typen und räumliche Dimensionen hinweg als konsistent stärkste Architektur, insbesondere durch ihre Skip-Connections, die mit steigender Dimensionalität immer wichtiger werden.
+  \item \textbf{Lokale Faltungsarchitekturen} (Conv, ResNet) sind auf Probleme mit begrenztem Einflussbereich gut geeignet, scheitern jedoch, wenn die effektive Rezeptivfeldgröße die physikalisch notwendige unterschreitet.
+  \item \textbf{FNO} profitiert von seiner globalen Rezeptivfeldstruktur und zeigt besonders bei Navier-Stokes-Strömungen (Kolmogorov-Flow) starke Ergebnisse. Bei Reaktions-Diffusions-Gleichungen hingegen leidet er unter einem Low-Frequency-Bias, da er hochfrequente Muster nur indirekt über Nichtlinearitäten repräsentieren kann.
+  \item \textbf{U-Net} zeigt in höheren Dimensionen (3D) gute Leistung dank seines globalen Rezeptivfeldes auf grober Skala.
+\end{itemize}
+
+\paragraph{Trainingsstrategien und Unrolling.}
+APEBench legt besonderen Wert auf die systematische Untersuchung des sogenannten \textit{Unrolled Training}, bei dem das Netzwerk während des Trainings mehrere Zeitschritte autoregressiv vorwärts rolliert und der Fehler über die gesamte Rollout-Länge akkumuliert. Die Autoren formalisieren verschiedene Trainingsparadigmen durch eine einheitliche Taxonomie:
+\begin{itemize}
+  \item \textbf{One-Step Supervised Training} ($T = B = 1$): Klassisches Ein-Schritt-Training, das keine differenzierbare Simulation erfordert.
+  \item \textbf{Supervised Unrolling} ($T = B$): Alle Referenztrajektorien werden vorab berechnet.
+  \item \textbf{Diverted-Chain Unrolling} ($T > B = 1$): Der Referenzlöser wird bei jedem Schritt auf die aktuelle Netzwerkausgabe angewandt und muss daher differenzierbar sein.
+\end{itemize}
+Die Experimente belegen, dass längeres Unrolling die Langzeitstabilität der Emulatoren systematisch verbessert, allerdings auf Kosten der Kurzzeitgenauigkeit. Die Diverted-Chain-Methode kombiniert dabei die Vorteile beider Extrema: Sie erreicht hohe Langzeitgenauigkeit ohne signifikante Einbußen in der Kurzzeitleistung.
+
+\paragraph{Neuronale Hybrid-Emulatoren.}
+Schließlich unterstützt APEBench auch Korrektur-Tasks, bei denen ein grobes numerisches Verfahren $\tilde{\mathcal{P}}_h$ als Prädiktor fungiert und ein neuronales Netz die verbleibenden Fehler korrigiert. Diese Konfiguration entspricht konzeptuell dem Residuallern-Ansatz und zeigt, dass insbesondere ResNets von einer solchen Arbeitsteilung profitieren: Wenn der grobe Löser bereits 50\,\% der Schwierigkeit abdeckt ($\tilde{\gamma}_1 = 0.5\,\gamma_1$), reduziert sich der Rollout-Fehler erheblich.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Die Ergebnisse von APEBench sind für die vorliegende Masterarbeit in mehrfacher Hinsicht relevant, auch wenn sich die Problemstellung grundlegend unterscheidet: Während APEBench zeitabhängige PDE-Dynamiken emuliert, befasst sich die Masterarbeit mit der stationären Vorhersage von Stokes-Strömungsfeldern um sedimentierende Kristalle in magmatischen Systemen.
+
+\paragraph{Architekturwahl: U-Net vs.\ FNO.}
+Die in APEBench beobachteten Stärken und Schwächen der untersuchten Architekturen sind direkt auf den Anwendungsfall der Masterarbeit übertragbar. Der Befund, dass U-Nets in höherdimensionalen Szenarien durch ihr hierarchisches Rezeptivfeld gut abschneiden, unterstützt deren Einsatz für die Vorhersage räumlich ausgedehnter Geschwindigkeitsfelder. Gleichzeitig bestätigt APEBench die Stärke des FNO für globale Strömungsmuster -- eine Eigenschaft, die für die langreichweitigen Wechselwirkungen in Mehrpartikel-Stokes-Strömungen relevant ist. Dass ResNets durchweg kompetitiv bleiben und besonders dateneffizient sind (Konvergenz bereits mit wenigen Trainingsfällen), ist mit Blick auf die begrenzte Datenbasis von LaMEM-Simulationen in der Masterarbeit wichtig.
+
+\paragraph{Residuallern-Ansatz und Hybrid-Emulatoren.}
+Der in APEBench untersuchte Korrektur-Ansatz -- bei dem ein neuronales Netz Abweichungen von einem groben Hintergrundfeld korrigiert -- entspricht konzeptuell dem in der Masterarbeit implementierten Residuallernverfahren, bei dem analytische Stokes-Einzelpartikellösungen als Prädiktor dienen und das Netzwerk nur die Mehrpartikel-Wechselwirkungskorrekturen $\Delta v_\text{learned}$ erlernen muss. Die APEBench-Ergebnisse bestätigen, dass eine solche Hybridstrategie den Lernaufwand signifikant reduziert.
+
+\paragraph{Physikalische Konsistenz und Divergenzfreiheit.}
+APEBench betont explizit die Analogie zwischen neuronalen Emulatoren und klassischen numerischen Verfahren. Der Befund, dass Emulat\-oren bei zunehmend längerem Unrolling numerisch stabileren Differenzschemata ähneln, spiegelt die in der Masterarbeit verfolgte Stream-Function-Strategie wider: Durch die explizite Parameterisierung über eine Stromfunktion $\psi$ ist die Bedingung $\nabla \cdot \mathbf{v} = 0$ per Konstruktion exakt erfüllt -- eine im Sinne der APEBench-Ergebnisse elegante Möglichkeit, physikalische Konsistenz ohne Soft-Constraint-Verlustterme zu garantieren.
+
+\paragraph{Generalisierung und Skalierung.}
+Das zentrale Forschungsziel der Masterarbeit -- die Generalisierung von einem auf $N$ Kristalle trainierten Modell auf $N+m$ Kristalle -- findet im APEBench-Rahmen eine Analogie in der Generalisierung über unterschiedliche PDE-Schwierigkeiten $\gamma$. APEBench zeigt, dass Architekturen mit unzureichendem Rezeptivfeld bei steigender Schwierigkeit versagen, was die Bedeutung geeigneter Normierungsstrategien und der Wahl einer physikalisch motivierten Eingabedarstellung für die Generalisierung in der Masterarbeit unterstreicht.
+
+\end{document}

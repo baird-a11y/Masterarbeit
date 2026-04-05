@@ -1,0 +1,163 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+% ================================================================
+\section*{Scalable Transformer for PDE Surrogate Modeling}
+
+\textbf{Autoren:} Zijie Li, Dule Shu, Amir Barati Farimani \\
+\textbf{Institution:} Carnegie Mellon University, Department of Mechanical Engineering \\
+\textbf{Konferenz:} NeurIPS 2023 \\
+\textbf{arXiv:} 2305.17560
+
+% ================================================================
+\subsection*{1\quad Problemstellung und Motivation}
+
+Transformer-basierte Operatorlerner haben vielversprechende Ergebnisse für PDE-Surrogat-Modellierung
+gezeigt. Die Standardvariante des skalierten Skalarprodukts besitzt jedoch quadratische Komplexität
+$\mathcal{O}(N^2 d)$ in der Anzahl der Gitterpunkte $N$. Für 2D-Gitter mit $256 \times 256 = 65\,536$
+Punkten oder 3D-Gitter erzeugt dies eine extrem große Aufmerksamkeitsmatrix, was den
+Einsatz auf hochauflösenden Gittern praktisch unmöglich macht.
+
+Sofmax-freie linearisierte Aufmerksamkeit (z.B.\ Galerkin-Transformer, Cao~2021) reduziert
+die Komplexität auf $\mathcal{O}(Nd^2)$, bleibt aber quadratisch im Kanalparameter $d$
+und kann bei tiefen gestapelten Schichten numerisch instabil werden.
+
+Das Paper schlägt den \textbf{FactFormer} vor -- einen Transformer mit faktorisiertem
+Kernintegral, der die Fluch der Dimensionalität gezielt durch eine axiale Faktorisierung
+des Kernintegrals bekämpft.
+
+% ================================================================
+\subsection*{2\quad Methodik: Faktorisiertes Kernintegral}
+
+\paragraph{Kernintegral-Perspektive der Aufmerksamkeit.}
+Unter dem Kernel-Integralrahmen entspricht der softmax-freie Aufmerksamkeitsmechanismus
+einer numerischen Quadratur:
+\begin{equation}
+    (\mathbf{z}_i)^l \approx \int_\Omega \kappa(x_i, \xi)\, v_l(\xi)\,\mathrm{d}\xi,
+\end{equation}
+wobei $\kappa(x, \xi) = \sum_l q_l(x) k_l(\xi)$ ein instanzabhängiger lernbarer Kern ist.
+Für hochdimensionale Gebiete ist die Auswertung dieses vollen Kernintegrals über alle
+$N$ Gitterpunktpaare rechnerisch prohibitiv.
+
+\paragraph{Lernbare Projektion.}
+Der erste Kernbaustein von FactFormer ist ein Satz lernbarer Integraloperatoren
+$\{\mathcal{G}^{(1)}, \ldots, \mathcal{G}^{(n)}\}$, der die Eingabefunktion
+$u : \mathbb{R}^n \to \mathbb{R}^d$ auf $n$ Funktionen mit
+\emph{eindimensionalem} Definitionsbereich projiziert:
+\begin{equation}
+    \phi^{(m)}(x_i^{(m)}) = \mathcal{G}^{(m)}(u)(x_i^{(m)})
+    \approx h^{(m)}\!\left(w \int_{\Omega_{-m}} \gamma^{(m)}\!\left(u(\xi_1, \ldots, x_i^{(m)}, \ldots, \xi_n)\right) \mathrm{d}\xi_{-m}\right),
+\end{equation}
+d.h.\ durch Mean-Pooling über alle Achsen außer der $m$-ten und anschließender nichtlinearer
+Abbildung. In der Praxis ist $\gamma^{(m)}$ eine lineare Transformation, $h^{(m)}$ ein
+dreischichtiges MLP.
+
+\paragraph{Faktorisiertes Kernintegral.}
+Das faktorisierte Kernintegral ersetzt das volle $n$-dimensionale Integral durch ein
+Produkt von $n$ eindimensionalen Kernintegralen:
+\begin{equation}
+    z\!\left(x_{i_1}^{(1)}, \ldots, x_{i_n}^{(n)}\right)
+    = \int_{\Omega_1} \kappa^{(1)}(x_{i_1}^{(1)}, \xi_1) \cdots
+      \int_{\Omega_n} \kappa^{(n)}(x_{i_n}^{(n)}, \xi_n)\,
+      v(\xi_1, \ldots, \xi_n)\,\mathrm{d}\xi_1 \cdots \mathrm{d}\xi_n.
+\end{equation}
+Jeder Achsenkern $\kappa^{(m)}$ hat die Komplexität $\mathcal{O}(S_m^2 d)$,
+wobei $S_m$ die Gittergröße entlang der $m$-ten Achse ist. Die Gesamtkomplexität
+beträgt $\mathcal{O}(S_1^2 d + S_2^2 d + \ldots + S_n^2 d)$, also
+$\mathcal{O}(n S_m^2 d)$ statt $\mathcal{O}(N^2 d)$ für das vollständige Integral
+mit $N = S_1 \cdots S_n$.
+
+Als Positionskodierung wird \emph{Rotary Positional Encoding} (RoPE) eingesetzt,
+das das Skalarprodukt im Kernintegral mit der relativen Position moduliert:
+\begin{equation}
+    Z = w\,\widetilde{Q}\widetilde{K}^\top V, \quad
+    \text{wobei } \widetilde{Q}_i = g(\mathbf{q}_i, x_i) = \mathbf{q}_i\,\boldsymbol{\Theta}(x_i).
+\end{equation}
+
+% ================================================================
+\subsection*{3\quad Experimente und Ergebnisse}
+
+Die Modelle werden mit \emph{Latent Marching} (LM) und \emph{Autoregressive} (AR) Rollout
+trainiert. FactFormer wird gegen FNO2D/3D, F-FNO, Dil-ResNet und Galerkin-Transformer verglichen.
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Modell} & \textbf{2D KF avg $\omega$} & \textbf{3D Rauch $d$ avg} & \textbf{Inf.-Zeit (s)} \\
+\midrule
+FNO2D/3D & 0.2978 & 0.1344 & 0.73/3.19 \\
+F-FNO & 0.2811 & 0.1038 & 0.81/2.75 \\
+Dil-ResNet & 0.1655 & 0.0999 & 1.78/6.94 \\
+FactFormer & 0.3017 & 0.0942 & 1.38/2.62 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Für 2D-Kolmogorov-Strömung ($256\times256$) ist FactFormer mit Dil-ResNet vergleichbar
+und deutlich besser als FNO. Für 3D-Rauchauftrieb ($64\times64\times64$) ist FactFormer
+das effizienteste Modell (2.62\,s) bei kompetitiver Genauigkeit. Bei 3D-isotroper
+Turbulenz zeigt Dil-ResNet kurzfristig bessere Leistung, FactFormer profitiert aber
+von geringerem Speicherbedarf (4.6\,M vs.\ 509\,M Parameter bei FNO3D).
+
+Ein wichtiges Ergebnis ist die \textbf{Auflösungsinvarianz}: Transformer-basierte
+Modelle (FNO, FactFormer) zeigen nahezu konstante Genauigkeit über verschiedene
+Trainings-Diskretisierungen, während Dil-ResNet (CNN) stark an die Trainingsgröße gebunden ist.
+
+% ================================================================
+\subsection*{4\quad Bezug zur Masterarbeit}
+
+\paragraph{4.1\quad Skalierbarkeit als strukturelle Herausforderung.}
+In der Masterarbeit werden Stokes-Strömungen auf einem fixen $256 \times 256$-Gitter
+modelliert -- einer Auflösung, bei der standard quadratische Aufmerksamkeit
+($N = 65\,536$ Punkte) praktisch nicht anwendbar ist. FactFormer demonstriert
+einen Weg, wie Transformer auch auf solchen Gittern einsetzbar werden, indem
+die axiale Faktorisierung die effektive Sequenzlänge pro Achse auf $S_m = 256$ reduziert.
+Dies unterstreicht indirekt die Designentscheidung in der Masterarbeit, auf
+konvolutionsbasierte Architekturen (U-Net, FNO) zu setzen, die auf regulären
+Gittern besonders effizient sind.
+
+\paragraph{4.2\quad Elliptische Probleme: stationäre Darcy-Strömung.}
+FactFormer wird auch auf stationäre Darcy-Strömung (2D) getestet und erzielt dort
+mit dem Galerkin-Transformer vergleichbare Ergebnisse. Da die Stokes-Gleichungen
+ebenfalls ein elliptischer Operator sind, spricht dieser Befund dafür, dass
+faktorisierte Aufmerksamkeit grundsätzlich für das in der Masterarbeit betrachtete
+Problem geeignet wäre -- mit dem Vorteil einer besseren Skalierbarkeit als
+das Galerkin-Modell bei hochauflösenden Gittern.
+
+\paragraph{4.3\quad Auflösungsinvarianz als Vorteil gegenüber U-Net.}
+Die beobachtete Auflösungsinvarianz von Transformer-Modellen gegenüber
+CNN-basierten Methoden wie Dil-ResNet ist ein konzeptuell bedeutsames Ergebnis.
+Das U-Net in der Masterarbeit ist ebenfalls ein CNN-basiertes Modell und somit
+prinzipiell an die Trainingsgröße $256 \times 256$ gebunden. FactFormer liefert
+damit ein Argument für die Überlegenheit spektral- oder aufmerksamkeitsbasierter
+Methoden (zu denen auch FNO zählt) hinsichtlich Auflösungstransfer -- ein Aspekt,
+der im Ausblick der Masterarbeit als zukünftige Forschungsrichtung relevant ist.
+
+\paragraph{4.4\quad Faktorisierung vs.\ Spektral-Trunkierung: komplementäre Stärken.}
+FNO trunkiert hohe Fourier-Moden, um globale Abhängigkeiten effizient zu erfassen,
+büßt dabei aber Hochfrequenzgenauigkeit an Kristallgrenzen ein. FactFormer
+faktorisiert das Kernintegral axial und behält prinzipiell Zugang zu allen
+Ortsfrequenzen (sofern die Achsenkerne ausreichend ausdrucksstark sind).
+Diese komplementäre Stärke motiviert FactFormer als potenzielle Architektur,
+die die FNO-Schwäche an Kristallgrenzen überwindet, ohne die globale Reichweite
+zu verlieren -- ein konkreter Forschungsausblick für Folgearbeiten zur Masterarbeit.
+
+\paragraph{4.5\quad Abgrenzung.}
+FactFormer wurde primär für zeitabhängige Strömungssimulationen entwickelt und
+verwendet spezielle Trainingsstrategien (Latent Marching, Pushforward). Die
+Masterarbeit behandelt ausschließlich stationäre Zustandsfelder, sodass diese
+Trainingsaspekte nicht direkt übertragbar sind. Zudem variiert FactFormer die
+geometrische Topologie nicht (feste Gitterstruktur ohne eingebettete Festkörper),
+was die zentrale Generalisierungsfrage der Masterarbeit -- variierende Kristallzahlen
+-- nicht adressiert.
+
+\end{document}

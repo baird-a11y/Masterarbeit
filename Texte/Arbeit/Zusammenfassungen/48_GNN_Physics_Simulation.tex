@@ -1,0 +1,190 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{hyperref}
+\usepackage{parskip}
+\setlength{\parskip}{6pt}
+
+\begin{document}
+
+\section*{Learning to Simulate Complex Physics with Graph Networks}
+
+\textbf{Autoren:} Alvaro Sanchez-Gonzalez, Jonathan Godwin, Tobias Pfaff, Rex Ying,
+Jure Leskovec, Peter W.\ Battaglia \\
+\textbf{Venue:} International Conference on Machine Learning (ICML), PMLR 119, 2020 \\
+\textbf{Quelle:} \href{https://arxiv.org/abs/2002.09405}{arXiv:2002.09405}
+
+% ------------------------------------------------------------------
+\subsection*{1.\quad Kernidee und Motivation}
+% ------------------------------------------------------------------
+
+Traditionelle numerische Simulatoren physikalischer Systeme sind rechenintensiv,
+schwer zu generalisieren und erfordern erheblichen Implementierungsaufwand. Die Arbeit
+von Sanchez-Gonzalez et al.\ (2020) verfolgt daher den Ansatz, einen Simulator
+\emph{direkt aus Daten zu erlernen}, anstatt explizite physikalische Gleichungen
+numerisch zu lösen. Das vorgestellte Framework -- \emph{Graph Network-based Simulators}
+(GNS) -- repräsentiert den Zustand eines physikalischen Systems durch Partikel als
+Knoten eines Graphen und berechnet die zeitliche Dynamik mittels \emph{gelerntem
+Message-Passing}.
+
+Die zentrale Motivation liegt dabei in der Verallgemeinerungsfähigkeit: Ein einmal
+trainiertes GNS-Modell soll auf Konfigurationen generalisieren, die während des
+Trainings nicht gesehen wurden -- insbesondere auf größere Systeme mit einer deutlich
+höheren Partikelanzahl sowie auf längere Zeithorizonte. Diese Eigenschaft rückt die
+Arbeit in direkten Bezug zur Fragestellung der vorliegenden Masterarbeit.
+
+% ------------------------------------------------------------------
+\subsection*{2.\quad Architektur: Encode-Process-Decode}
+% ------------------------------------------------------------------
+
+Das GNS-Framework folgt einem dreistufigen \emph{Encode-Process-Decode}-Schema:
+
+\begin{description}
+  \item[Encoder] Der Encoder bildet den partikelbasierten Zustandsvektor $X$ auf
+    einen latenten Graphen $G^0$ ab. Knotenmerkmale kodieren Positionen, eine
+    Sequenz vergangener Geschwindigkeiten ($C = 5$ Zeitschritte) sowie
+    materialspezifische Eigenschaften (Wasser, Sand, verformbares Material,
+    Randbedingung). Kantenmerkmale kodieren relative Verschiebungsvektoren zwischen
+    benachbarten Partikeln innerhalb eines Verbindungsradius $R$ -- eine Designwahl,
+    die Translationsinvarianz erzwingt und sich als wesentlich für die
+    Generalisierungsfähigkeit erweist.
+
+  \item[Processor] Der Processor führt $M$ Schritte von gelernetem Message-Passing
+    durch, wobei jeder Schritt durch ein eigenes Graph-Netzwerk mit ungeteilten
+    Parametern realisiert wird. Residualverbindungen zwischen Ein- und Ausgabe jedes
+    Message-Passing-Schritts stabilisieren das Training. Die Anzahl der Schritte $M$
+    bestimmt maßgeblich die Modellkapazität, da größere $M$ die Kommunikation über
+    größere räumliche Reichweiten ermöglichen.
+
+  \item[Decoder] Der Decoder extrahiert aus den finalen Knotenrepräsentationen
+    $v_i^M$ die vorhergesagten Beschleunigungen $\ddot{p}_i$, aus denen mittels
+    semi-implizitem Euler-Integrator die nächsten Positionen und Geschwindigkeiten
+    berechnet werden.
+\end{description}
+
+Das Training erfolgt auf einem \emph{Ein-Schritt-Verlust} (L2-Norm der
+Beschleunigungen), ergänzt durch eine entscheidende Regularisierungsmaßnahme:
+Trainingseingaben werden mit \emph{Random-Walk-Rauschen} korrupt, um die
+Verteilungsverschiebung zwischen dem Training (saubere Eingaben) und dem
+Rollout-Betrieb (akkumulierte Modellfehler als Eingaben) zu überbrücken.
+
+% ------------------------------------------------------------------
+\subsection*{3.\quad Zentrale Ergebnisse}
+% ------------------------------------------------------------------
+
+\paragraph{Generalisierung über Partikelzahlen.}
+Ein auf dem WATERRAMPS-Datensatz (ca.\ 2500 Partikel pro Trajektorie) trainiertes
+Modell generalisiert erfolgreich auf Szenen mit bis zu 85\,000 Partikeln -- eine
+Steigerung um den Faktor 34 gegenüber dem Training. Rollouts über 5000 Zeitschritte
+(8-fach länger als die Trainingstrajektorien) bleiben physikalisch plausibel. Dieses
+Ergebnis demonstriert, dass der Einsatz \emph{relativer Positionen} als
+Kantenmerkmal eine starke Transferfähigkeit auf nie gesehene Systemgrößen ermöglicht.
+
+\paragraph{Materialübergreifendes Lernen.}
+Ein einzelnes GNS-Modell kann simultan Wasser, Sand und viskoplastisches Material
+(,,Goop``) simulieren, einschließlich ihrer Wechselwirkungen untereinander. Dabei
+wird das Materialmerkmal lediglich als Eingangsfeature übergeben -- keine
+architektonischen Anpassungen sind erforderlich.
+
+\paragraph{Einfluss architektonischer Entscheidungen.}
+Systematische Ablationen zeigen, dass folgende Faktoren die Modellperformance
+signifikant beeinflussen: (i) die Anzahl der Message-Passing-Schritte $M$ (mehr
+Schritte verbessern Langzeitrollouts durch längere Reichweite), (ii) ungeteilte
+Gewichte im Processor (im Vergleich zu geteilten Gewichten), (iii) der
+Verbindungsradius $R$ sowie (iv) die Verwendung relativer statt absoluter
+Positionen. Hyperparameter wie MLP-Tiefe, Latentgröße und das Vorhandensein von
+Selbstkanten haben hingegen nur geringen Einfluss.
+
+\paragraph{Vergleich mit Baseline-Modellen.}
+GNS übertrifft Continuous Convolution (CConv, Ummenhofer et al.\ 2020) und DPI
+(Li et al.\ 2018) auf allen getesteten Datensätzen, obwohl CConv speziell für
+Fluidsimulationen entwickelt wurde. GNS benötigt dabei keine materialspezifischen
+Anpassungen.
+
+% ------------------------------------------------------------------
+\subsection*{4.\quad Kritische Einordnung}
+% ------------------------------------------------------------------
+
+Ein konzeptionell wichtiger Aspekt des GNS-Ansatzes ist die \emph{Markov-Annahme}:
+Das Modell wird auf dem Ein-Schritt-Verlust optimiert, ohne explizit die
+langfristige Trajektorie zu berücksichtigen. Die Autoren argumentieren, dass
+diese Vereinfachung die Generalisierbarkeit gegenüber einer Optimierung auf
+Rollout-Verlust sogar verbessern kann, da Rollout-Training das Modell dazu
+verleiten kann, Bias-Korrekturen in den Voraussagen zu kodieren, die auf
+spezifische Anfangsbedingungen zugeschnitten sind.
+
+Darüber hinaus operiert GNS im \emph{zeitabhängigen} Regime (Navier-Stokes bei
+moderaten Reynoldszahlen, sowie MPM-Simulationen), während die vorliegende
+Masterarbeit \emph{stationäre} Stokes-Strömung ($Re \ll 1$) betrachtet. Dieser
+Unterschied im physikalischen Regime hat fundamentale Konsequenzen für die
+Wahl des Ausgabe-Targets, der Netzwerkarchitektur und des Trainingsverfahrens.
+
+% ------------------------------------------------------------------
+\subsection*{5.\quad Bezug zur Masterarbeit}
+% ------------------------------------------------------------------
+
+Das GNS-Paper berührt mehrere Kernfragen der vorliegenden Masterarbeit, obwohl
+beide Arbeiten grundlegend unterschiedliche Paradigmen verfolgen:
+
+\paragraph{Partikelbasiert vs.\ gitterbasiert.}
+GNS kodiert physikalische Zustände partikelbasiert als Knoten eines variabel
+aufgebauten Graphen. Dieser Ansatz ist natürlicherweise invariant gegenüber der
+Anzahl und Anordnung von Kristallen -- eine Eigenschaft, die in der Masterarbeit
+durch gitterbasierte Architekturen (U-Net, FNO) erreicht werden muss, indem
+Kristallpositionen als Eingangsfeature auf ein festes $256 \times 256$-Gitter
+kodiert werden. GNS bietet hierfür eine konzeptionell elegantere Lösung, allerdings
+um den Preis eines erhöhten Implementierungsaufwands und der Schwierigkeit, auf
+Gittergrößen direkt zu interpolieren.
+
+\paragraph{Generalisierung über Konfigurationsanzahl.}
+Die von GNS demonstrierte Generalisierung auf eine um den Faktor 34 höhere
+Partikelzahl ist direkt relevant für die Hauptforschungsfrage der Masterarbeit:
+Können Surrogat-Modelle, die auf Konfigurationen mit bis zu $N$ Kristallen
+trainiert wurden, auf Konfigurationen mit $N + m$ Kristallen übertragen werden?
+GNS löst dieses Problem durch die Wahl \emph{relativer Positionsrepräsentationen},
+die invariant gegenüber der absoluten räumlichen Anordnung sind. In der Masterarbeit
+entspricht dies der Wahl physikalisch motivierter Normalisierungsstrategien sowie
+der Verwendung der Stromfunktion $\psi$ als Ausgabe-Target, da diese durch
+Konstruktion Inkompressibilität garantiert.
+
+\paragraph{Rauschen zur Fehlerakkumulierungskompensation.}
+Die im GNS eingesetzte Strategie der Trainingsrauschkorruption (Random Walk) ist
+konzeptionell verwandt mit der Datenaugmentierungsstrategie der Masterarbeit, mit der
+die geometrische Variabilität des Trainingsdatensatzes von ca.\ 300 auf bis zu 1800
+Samples erweitert werden soll. Beide Ansätze verfolgen das Ziel, die Verallgemeinerung
+auf Verteilungen außerhalb der Trainingsdaten zu verbessern.
+
+\paragraph{Physikalische Konsistenz vs.\ rein datengetriebene Vorhersage.}
+GNS lernt keine physikalischen Erhaltungsgrößen explizit -- weder Divergenzfreiheit
+noch Massenerhaltung sind architektonisch erzwungen. In der Masterarbeit wird
+hingegen die Stromfunktionsformulierung gewählt, die Divergenzfreiheit ($\nabla
+\cdot \mathbf{v} = 0$) durch mathematische Konstruktion auf Maschinengenauigkeit
+($\approx 10^{-6}$) garantiert. Dies stellt einen wesentlichen Vorteil gegenüber
+dem GNS-Ansatz für das Stokes-Strömungsregime dar, in dem Inkompressibilität eine
+fundamentale physikalische Randbedingung ist.
+
+\paragraph{Spektrale vs.\ räumliche Verarbeitung.}
+Die im GNS identifizierte Schlüsselrolle der \emph{Reichweite} der
+Partikel-Partikel-Interaktion -- quantifiziert durch den Verbindungsradius $R$ und
+die Anzahl der Message-Passing-Schritte $M$ -- korrespondiert direkt mit einem
+zentralen Vergleichsaspekt der Masterarbeit: Während der U-Net-Encoder lokale
+räumliche Merkmale hierarchisch extrahiert, erlaubt das FNO in einem einzigen
+Fourier-Layer den Zugriff auf globale Korrelationen über die gesamte Domäne.
+Für elliptische Probleme wie Stokes-Strömung, bei denen lokale Störungen global
+propagieren, ist diese globale Reichweite des FNO strukturell vorteilhaft --
+ein Argument, das durch die GNS-Ablationsstudie zu $M$ und $R$ untermauert wird.
+
+\paragraph{Mögliche Erweiterung: Graph-basierte Surrogat-Modelle.}
+GNS eröffnet eine perspektivisch interessante Erweiterungsrichtung für zukünftige
+Arbeiten: Ein partikelbasiertes Graph-Netzwerk, in dem Kristalle als Knoten eines
+variablen Graphen kodiert werden, wäre von Natur aus in der Lage, auf beliebige
+Kristallzahlen zu generalisieren -- ohne die Einschränkung einer festen Gittergröße.
+Der vorliegende gitterbasierte Ansatz (U-Net / FNO) ist jedoch für die gestellte
+Forschungsfrage geeigneter, da er eine direkte Vergleichbarkeit mit LaMEM-Referenzdaten
+auf einem regulären Gitter ermöglicht und keine Interpolation zwischen Partikel-
+und Gitterdarstellungen erfordert.
+
+\end{document}

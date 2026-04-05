@@ -1,0 +1,167 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Domain Agnostic Fourier Neural Operators}
+\textbf{Autoren:} Ning Liu, Siavash Jafarzadeh, Yue Yu \\
+\textbf{Konferenz:} NeurIPS 2023 \\
+\textbf{Code:} \url{https://github.com/ningliu-iga/DAFNO}
+
+% -------------------------------------------------------------------
+\subsection*{Problemstellung und Motivation}
+
+Standard-Fourier Neural Operators (FNOs) sind leistungsf\"ahige Surrogat\-modelle
+f\"ur partielle Differentialgleichungen, die durch Lernen im Spektralbereich mittels
+der Fast Fourier Transform (FFT) hohe Recheneffizienz erreichen. Ihre zentrale
+Schwachstelle liegt jedoch in der Anforderung an die Eingabegeometrie: Die FFT
+setzt ein rechteckiges Rechengebiet mit gleichm\"a\ss{}igem Gitter voraus. In der
+Praxis sind physikalische Gebiete aber h\"aufig unregelm\"a\ss{}ig geformt -- zum
+Beispiel Materialproben mit Hohlr\"aumen, Fl\"ugelprofilen oder sich ausbreitenden
+Rissen. Der ga\"ngige Ausweg, das Gebiet durch Nullauff\"ullung auf ein Rechteck zu
+erweitern, f\"uhrt zu numerischen Instabilit\"aten (Gibbs-Ph\"anomen) und versagt
+v\"ollig bei Gebieten mit topologischen \"Anderungen, etwa wachsenden Rissen.
+
+% -------------------------------------------------------------------
+\subsection*{Kernidee: Domain Agnostic FNO (DAFNO)}
+
+Die Autoren schlagen vor, die Gebietsinformation explizit in die Architektur der
+FNO-Schichten einzubetten, anstatt sie als nachgelagerte Korrektur zu behandeln.
+Konkret wird eine \emph{charakteristische Funktion} des Rechengebiets~$\Omega$
+definiert:
+\[
+    \chi(\mathbf{x}) =
+    \begin{cases}
+        1 & \mathbf{x} \in \Omega \\
+        0 & \mathbf{x} \in \mathbb{T} \setminus \Omega
+    \end{cases}
+\]
+Dabei ist $\mathbb{T}$ eine das Gebiet~$\Omega$ umschlie\ss{}ende rechteckige
+Box. Diese Funktion wird in den Faltungskern der FNO-Schicht eingebaut, so dass
+die Aktualisierungsregel eines DAFNO-Layers lautet:
+\[
+    \mathcal{J}^l[\mathbf{h}]
+    = \sigma\!\left(
+        \chi(\mathbf{x})\!\left[
+            \mathcal{I}\!\left(\chi(\cdot)\mathbf{h}(\cdot);\mathbf{v}^l\right)
+            - \mathbf{h}(\mathbf{x})\,\mathcal{I}\!\left(\chi(\cdot);\mathbf{v}^l\right)
+            + W^l \mathbf{h}(\mathbf{x}) + \mathbf{c}^l
+        \right]
+    \right),
+\]
+wobei $\mathcal{I}(\circ;\mathbf{v}^l) := \mathcal{F}^{-1}[\mathcal{F}[\kappa(\cdot;\mathbf{v}^l)]
+\cdot \mathcal{F}[\circ]]$ den \"ublichen Faltungsoperator mit FFT bezeichnet.
+Da der Integrationsbereich weiterhin die rechteckige Box~$\mathbb{T}$ umfasst,
+bleibt die FFT anwendbar und die Effizienz erhalten. Das Produkt
+$\chi(\mathbf{x})\chi(\mathbf{y})$ sorgt daf\"ur, dass Interaktionen zwischen
+Punkten innerhalb und au\ss{}erhalb des physikalischen Gebiets unterdr\"uckt werden.
+
+Da die scharfe charakteristische Funktion~$\chi$ nicht stetig ist und damit das
+Gibbs-Ph\"anomen hervorruft, wird sie durch eine gegl\"attete Variante ersetzt:
+\[
+    \tilde{\chi}(\mathbf{x})
+    := \tanh\!\left(\beta \cdot \mathrm{dist}(\mathbf{x}, \partial\Omega)\right)
+       \left(\chi(\mathbf{x}) - 0{,}5\right) + 0{,}5.
+\]
+Der Parameter~$\beta$ steuert den \"Ubergang zwischen Gebiet und Rand. Diese
+Gl\"attung verbessert die spektrale Repr\"asentation erheblich und reduziert
+numerische Artefakte nahe der Gebietsgrenze deutlich.
+
+% -------------------------------------------------------------------
+\subsection*{Architekturvarianten}
+
+Die Autoren stellen zwei Varianten vor:
+\begin{itemize}
+    \item \textbf{eDAFNO} (explicit): basierend auf dem Standard-FNO mit
+          schichtabh\"angigen Parametern; leicht genauer, h\"oherer
+          Speicherbedarf.
+    \item \textbf{iDAFNO} (implicit): basierend auf dem IFNO mit
+          schichtunabh\"angigen Parametern; deutlich kompakter (nur ein Viertel
+          der Parameter), weniger anf\"allig f\"ur \"Uberanpassung bei kleinen
+          Datens\"atzen.
+\end{itemize}
+
+% -------------------------------------------------------------------
+\subsection*{Experimente und Ergebnisse}
+
+Die Methode wird an drei unterschiedlichen Benchmarks validiert:
+
+\paragraph{Hyperelastizit\"at.}
+Vorhersage von Spannungsfeldern in Materialproben mit zuf\"allig geformten
+Hohlr\"aumen. DAFNO erzielt bei 1000~Trainingssamples einen relativen
+$L_2$-Fehler von 1,094\,\%, w\"ahrend das beste nicht-DAFNO-Baseline-Modell
+(Geo-FNO) 2,316\,\% erreicht -- eine Verbesserung um \"uber 100\,\%.
+
+\paragraph{Fl\"ugelprofil-Design.}
+Vorhersage des Mach-Zahlen-Felds um NACA-0012-Varianten. eDAFNO erreicht
+0,596\,\% Testfehler und \"ubertrifft Geo-FNO (1,650\,\%) um 63,9\,\%.
+
+\paragraph{Rissausbreitung.}
+In diesem Experiment wird die besondere St\"arke des DAFNO deutlich:
+Mit nur einem einzigen Trainingsszenario ($\sigma = 4\,\mathrm{MPa}$) kann
+das Modell Rissverl\"aufe unter v\"ollig verschiedenen Lasten ($\sigma = 2$ und
+$6\,\mathrm{MPa}$) -- inklusive Rissver\"astelung und Mehrfachrissen -- korrekt
+vorhersagen. Standard-FNO mit Maske scheitert hier bereits nach kurzer Simulationszeit,
+da die entstehenden Geometrien au\ss{}erhalb der Trainingsverteilung liegen.
+
+% -------------------------------------------------------------------
+\subsection*{Grenzen}
+
+In der aktuellen Implementierung setzt DAFNO gleichm\"a\ss{}ige Gitter voraus.
+F\"ur unregelm\"a\ss{}ige Gitter ben\"otigt man eine zus\"atzliche analytische
+oder trainierbare Koordinatentransformation, wie im Fl\"ugelprofil-Experiment
+gezeigt. Dar\"uber hinaus ist der Transfer zwischen verschiedenen Typen von
+Randbedingungen (z.\,B. Dirichlet vs.\ Neumann) noch nicht untersucht.
+
+% -------------------------------------------------------------------
+\subsection*{Bezug zur Masterarbeit}
+
+Die Kernintuition von DAFNO -- explizite geometrische Information durch eine
+masken\"ahnliche Funktion in die Netzwerkarchitektur einzubetten -- findet sich
+in der vorliegenden Masterarbeit in analoger Form wieder. Der in dieser Arbeit
+verwendete vierkan\"alige Eingabetensor enth\"alt als ersten Kanal eine bin\"are
+Kristallmaske $M(\mathbf{x},z) \in \{0,1\}$, die genauso wie~$\chi$ die
+Positionen der festen Einschl\"usse (Kristalle) auf dem regelm\"a\ss{}igen
+$256\times256$-Gitter markiert. Erg\"anzt wird diese durch ein vorzeichenbehaftetes
+Distanzfeld als zweiten Kanal, das einer gegl\"atteten Version von~$\chi$
+konzeptionell verwandt ist: beide Repr\"asentationen \"uberf\"uhren die scharfe
+bin\"are Geometriebeschreibung in eine stetigere, f\"ur die Spektralanalyse
+g\"unstigere Form.
+
+Der zentrale Unterschied liegt in der \emph{Tiefe der Einbettung}: W\"ahrend
+DAFNO die Gebietsinformation durch Multiplikation mit~$\chi$ direkt in jeden
+Fourier-Layer integriert und damit die Interaktion zwischen Punkten innerhalb
+und au\ss{}erhalb des Gebiets auf Architekturebene kontrolliert, flie\ss{}t die
+Maske in der vorliegenden Arbeit als zus\"atzlicher Eingabekanal in das Netzwerk
+ein und wird durch das Training implizit ber\"ucksichtigt. Die DAFNO-Methode
+stellt damit eine architekturelle Versch\"arfung des in dieser Arbeit genutzten
+Ansatzes dar, die potenziell pr\"azisere Randbedingungen an den Kristalloberfl\"achen
+erm\"oglichen k\"onnte.
+
+F\"ur das spezifische Problem der vorliegenden Arbeit -- station\"are Stokes-Str\"omung
+um starre, kreisf\"ormige Kristalle auf einem festen Gitter -- ist der einfachere
+Eingabekanal-Ansatz gut motiviert: Da sich die Kristallgeometrie selbst nicht \"andert
+und die Netzwerke ausschlie\ss{}lich auf \"aquidistanten Gittern trainiert und ausgewertet
+werden, entfallen die topologischen \"Anderungen und die Probleme mit Gitterirregularit\"aten,
+f\"ur die DAFNO prim\"ar konzipiert wurde. Die Ergebnisse des DAFNO-Papers best\"atigen
+dennoch die grunds\"atzliche Herangehensweise: Die explizite geometrische Kodierung
+der Einschl\"usse ist ein entscheidender Baustein f\"ur gute Generalisierung \"uber
+verschiedene r\"aumliche Konfigurationen hinweg.
+
+Dar\"uber hinaus ist die in DAFNO gezeigte F\"ahigkeit zur Generalisierung \"uber
+topologisch verschiedene Gebiete -- mit nur wenigen Trainingssimulationen -- direkt
+relevant f\"ur die Forschungsfrage der Masterarbeit: Kann ein auf $N$ Kristallen
+trainiertes Modell auf Konfigurationen mit $1$ bis $N+m$ Kristallen generalisieren?
+Die DAFNO-Ergebnisse legen nahe, dass eine explizite geometrische Kodierung die
+Out-of-distribution-Generalisierung erheblich verbessert -- eine Beobachtung, die
+die Nutzung der Kristallmaske als zentralen Eingabekanal in der vorliegenden
+Arbeit nachtr\"aglich st\"utzt und als Motivation f\"ur zuk\"unftige Erweiterungen
+in Richtung DAFNO-artiger Integrationsstrategien dienen kann.
+
+\end{document}

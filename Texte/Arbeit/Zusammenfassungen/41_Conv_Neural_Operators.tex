@@ -1,0 +1,278 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+
+\begin{document}
+
+% =========================================================
+\section*{Convolutional Neural Operators for Robust and Accurate
+          Learning of PDEs}
+% =========================================================
+
+\noindent\textbf{Autoren:} Bogdan Raoni\'c, Roberto Molinaro, Tim De Ryck,
+Tobias Rohner, Francesca Bartolucci, Rima Alaifari, Siddhartha Mishra,
+Emmanuel de B\'ezenac\\[2pt]
+\textbf{Institution:} Seminar for Applied Mathematics, ETH Z\"urich;
+Delft University of Technology\\[2pt]
+\textbf{Ver\"offentlicht:} NeurIPS 2023 (arXiv:2302.01178v3, Dezember 2023)\\[2pt]
+\textbf{Code:} \url{https://github.com/bogdanraonic3/ConvolutionalNeuralOperator}
+
+% =========================================================
+\subsection*{Motivation und Problemstellung}
+% =========================================================
+
+Klassische faltungsbasierte Netzwerke (CNNs) gelten im Kontext des
+Operator"=Lernens bislang als konzeptionell problematisch, da ihre naive
+Anwendung zu sogenannten Aliasing-Fehlern f\"uhrt: Die diskrete
+Implementierung eines CNNs entspricht nicht konsistent einer kontinuierlichen
+Abbildung zwischen Funktionenr\"aumen. Dies steht im Widerspruch zur
+Kernaufgabe des Operator"=Lernens, n\"amlich der Approximation von
+L\"osungsoperatoren partieller Differentialgleichungen (PDEs) der Form
+$\mathcal{G}^\dagger\colon \mathcal{X} \to \mathcal{Y}$, die von einem
+Eingaberaum (z.\,B.\ Anfangsbedingungen, Koeffizienten) in einen
+L\"osungsraum abbilden.
+
+Im Gegensatz dazu arbeitet der weit verbreitete \emph{Fourier Neural Operator}
+(FNO) im Spektralraum und nutzt globale Faltungen in der Fourierbasis.
+Obwohl der FNO starke theoretische Garantien besitzt, weist er in der Praxis
+Schwachstellen auf: mangelnde Translationsäquivarianz, Aliasing-Artefakte bei
+h\"oheren Frequenzen sowie Schwierigkeiten bei der Darstellung lokaler Strukturen.
+
+Die vorliegende Arbeit reagiert auf diesen Zustand mit der Entwicklung des
+\textbf{Convolutional Neural Operator (CNO)}, der die Ausdruckskraft und
+rechentechnische Effizienz von CNNs mit rigorosen theoretischen Garantien
+f\"ur das Operator"=Lernen verbindet.
+
+% =========================================================
+\subsection*{Kernbeitrag: Der Convolutional Neural Operator (CNO)}
+% =========================================================
+
+Der CNO ist eine modifizierte U-Net-Architektur, die so konstruiert ist, dass
+sie \emph{bandlimitierte Funktionen} als Ein- und Ausgaben verarbeitet. Die
+zentrale theoretische Grundlage ist das Konzept der
+\textbf{kontinuierlich-diskreten \"Aquivalenz} (Continuous-Discrete Equivalence,
+CDE): Die Architektur gew\"ahrleistet, dass ihre diskrete Computerimplementierung
+exakt der zugrundeliegenden kontinuierlichen Operatorabbildung entspricht.
+
+Der CNO ist formell definiert als eine Komposition
+\[
+  \mathcal{G}\colon u \;\mapsto\; P(u) = v_0 \mapsto v_1 \mapsto \cdots
+  \mapsto v_L \mapsto Q(v_L),
+\]
+wobei jede Zwischenschicht die Form $v_{\ell+1} = P_\ell \circ \Sigma_\ell \circ
+K_\ell(v_\ell)$ hat. Die drei Grundbausteine unterscheiden sich fundamental von
+denen eines standard CNNs:
+
+\begin{itemize}
+  \item \textbf{Faltungsoperator $K_\ell$:} Faltung mit kompakten Kernen im
+    \emph{Ortsraum} auf einem gleichm\"a\ss igen Gitter, das die
+    Nyquist-Bedingung erf\"ullt. Dies steht im direkten Kontrast zum FNO, der
+    im Fourier-Raum faltet und damit \emph{global} (nicht lokal) operiert.
+
+  \item \textbf{Up- und Downsampling ($U_{w,\tilde{w}}$, $D_{w,\tilde{w}}$):}
+    Anstelle von bilinearer Interpolation oder Average Pooling werden
+    \emph{Sinc-Filter} verwendet, die die Bandlimitierung der verarbeiteten
+    Funktion strikt einhalten. In der Praxis werden fensterbasierte Sinc-Filter
+    (Windowed-Sinc-Filter) mit $N_\text{tap} = 12$ Taps eingesetzt, um das
+    Gibbs-Ph\"anomen zu begrenzen.
+
+  \item \textbf{Alias-freie Aktivierungsschicht $\Sigma_{w,\tilde{w}}$:}
+    Statt der punktweisen Anwendung einer Aktivierungsfunktion -- die zwangsl\"aufig
+    Frequenzinhalte \"uber die Bandgrenze hinaus erzeugt -- wird zun\"achst auf eine
+    h\"ohere Bandbreite $\tilde{w} > w$ hochgesampelt, dann die Aktivierung
+    angewendet, und anschlie\ss end auf die Ursprungsbandbreite $w$
+    zur\"uckgesampelt. Mit \"Ubersamplingfaktor $N_\sigma = 2$ ist dies in der
+    Praxis ausreichend und rechentechnisch effizient.
+\end{itemize}
+
+Die Gesamtarchitektur folgt dem U-Net-Prinzip: Ein Encoder komprimiert die
+r\"aumliche Aufl\"osung bei gleichzeitiger Vergr\"o\ss erung der Kanalbreite,
+ein Decoder expandiert die Aufl\"osung zur\"uck, und Skip-Connections
+zwischen symmetrischen Ebenen \"ubertragen Hochfrequenzanteile direkt. Zus\"atzlich
+werden ResNet-Bl\"ocke zwischen Encoder- und Decoder-Ebenen eingef\"ugt, die sich
+in Ablationsstudien als essenziell f\"ur gute Generalisierungsleistung erweisen.
+
+% =========================================================
+\subsection*{Theoretische Garantien}
+% =========================================================
+
+Die Autoren beweisen zwei zentrale theoretische Resultate:
+
+\begin{enumerate}
+  \item \textbf{Repr\"asentations\"aquivalenz (Proposition 2.1):} Der CNO ist
+    ein \emph{Representation Equivalent Neural Operator} (ReNO) im Sinne von
+    Bartolucci et al.\ (2023). Das bedeutet, er erf\"ullt die
+    CDE-Eigenschaft exakt und ist damit resolutionsinvariant: Ein auf einer
+    bestimmten Gitteraufl\"osung trainiertes Modell kann ohne Neutraining auf
+    beliebige andere Aufl\"osungen angewendet werden, ohne Aliasing-Fehler
+    einzuf\"uhren.
+
+  \item \textbf{Universeller Approximationssatz (Theorem 3.1):} F\"ur jeden
+    stetigen PDE-L\"osungsoperator $\mathcal{G}^\dagger$ und jedes
+    $\varepsilon > 0$ existiert ein CNO $\mathcal{G}$, sodass
+    $\|\mathcal{G}^\dagger(a) - \mathcal{G}(a)\|_{L^p} < \varepsilon$ f\"ur
+    alle zul\"assigen Eingaben $a$. Der Beweis nutzt das universelle
+    Approximationstheorem f\"ur feedforward-Netze sowie trigonometrische
+    Polynominterpolation und gilt f\"ur eine breite Klasse von PDEs,
+    einschlie\ss lich elliptischer, hyperbolischer und parabolischer Gleichungen.
+\end{enumerate}
+
+% =========================================================
+\subsection*{Experimentelle Ergebnisse}
+% =========================================================
+
+Der CNO wird auf acht repr\"asentativen PDE-Benchmarks (RPB) evaluiert, die
+bewusst gew\"ahlt wurden, um Probleme mit mehreren r\"aumlichen Skalen zu
+umfassen -- Probleme also, bei denen klassische numerische L\"oser auf feinen
+Gittern kostspielig sind und ML-Surrogate einen echten Vorteil bieten.
+Die wichtigsten Resultate im Vergleich zu den Baselines (U-Net, FNO,
+DeepONet, ResNet, FFNN, Galerkin Transformer) lassen sich wie folgt
+zusammenfassen:
+
+\begin{itemize}
+  \item \textbf{In-distribution Genauigkeit:} Der CNO \"ubertrifft alle
+    Baselines auf sieben von acht Benchmarks. Besonders ausgepr\"agt ist der
+    Vorsprung gegen\"uber dem FNO bei der Poisson-Gleichung (Faktor~20) und
+    den Navier-Stokes-Gleichungen.
+
+  \item \textbf{Out-of-distribution Generalisierung:} Auf Transportprobleme
+    (Smooth und Discontinuous Transport) generalisiert der FNO schlecht, da er
+    keine Translationsäquivarianz besitzt. CNO und U-Net, die r\"aumlich
+    lokal operieren, generalisieren deutlich robuster.
+
+  \item \textbf{Resolutionsinvarianz:} W\"ahrend der Testfehler des FNO bei
+    Ver\"anderung der Gitteraufl\"osung um bis zu 25\,\% schwankt und der
+    Fehler des Standard-U-Net sogar um den Faktor~3 ansteigt, bleibt der
+    CNO-Fehler \"uber alle getesteten Aufl\"osungen nahezu konstant.
+
+  \item \textbf{Recheneffizienz und Datenskalierung:} F\"ur denselben
+    Modellumfang liefert der CNO kleinere Validierungsfehler als der FNO und
+    ist dabei fast doppelt so schnell zu trainieren. Die Datenskalierung folgt
+    einem Potenzgesetz mit Exponent $r = 0.37$ (CNO) gegen\"uber $r = 0.28$
+    (FNO), was bedeutet, dass der CNO etwa viermal weniger Trainingsdaten
+    ben\"otigt, um denselben Fehler von 1\,\% zu erreichen.
+
+  \item \textbf{Stabilit\"at:} \"Uber zehn verschiedene Zufallsinitialisierungen
+    zeigt der CNO sehr geringe Standardabweichungen des Testfehlers, was auf
+    ein robustes Trainingsverhalten hindeutet.
+\end{itemize}
+
+% =========================================================
+\subsection*{Bezug zur Masterarbeit}
+% =========================================================
+
+Die CNO-Arbeit ist in mehrfacher Hinsicht von hoher Relevanz f\"ur die
+vorliegende Masterarbeit, die U-Net und FNO als Surrogatmodelle f\"ur
+Str\"omungsfelder in Systemen mit sinkenden Kristallen im Stokes-Regime
+vergleicht.
+
+\subsubsection*{1.\ Theoretische Einordnung des U-Net/FNO-Vergleichs}
+
+Ein zentrales Ergebnis der CNO-Arbeit ist, dass das standard U-Net -- trotz
+seiner guten empirischen Leistung -- kein ReNO ist und daher keine CDE
+erf\"ullt. Es ist also streng genommen kein konsistenter Operatorlerner,
+sondern ein diskretisierungsabh\"angiges Modell. Der FNO erfüllt die CDE
+in der Theorie, zeigt aber in der Praxis aufgrund von Implementierungsdetails
+(z.\,B.\ Gitterinterpolation) ebenfalls Aufl\"osungsabh\"angigkeiten.
+
+F\"ur die Masterarbeit bedeutet dies: Die beobachteten Leistungsunterschiede
+zwischen U-Net und FNO lassen sich nicht allein auf Hyperparameter
+zur\"uckf\"uhren, sondern reflektieren fundamentale Unterschiede in den
+\emph{Induktiven Biases} beider Architekturen. Das U-Net bevorzugt lokal
+konsistente, r\"aumlich hierarchische Repr\"asentationen, der FNO globale
+spektrale Abbildungen. Im Stokes-Regime, das durch elliptische Fernwirkung
+gepr\"agt ist, lautet die relevante Frage: Welcher Bias passt besser zum
+physikalischen Problem?
+
+\subsubsection*{2.\ Lokale vs.\ globale Verarbeitung bei Kristallgeometrien}
+
+Die CNO-Arbeit zeigt, dass lokal operierende Architekturen (U-Net, CNO)
+bei Transportproblemen und Problemen mit lokalen Strukturen -- Diskontinuit\"aten,
+scharfen Grenzfl\"achen -- klare Vorteile gegen\"uber dem FNO haben. Dieses
+Ergebnis ist f\"ur die Masterarbeit von direkter Bedeutung:
+\begin{itemize}
+  \item Die Str\"omungsfelder um Kristallgrenzen herum weisen steile
+    Geschwindigkeitsgradienten auf, die hohe Frequenzinhalte erfordern und
+    vom FNO mit begrenzten Fourier-Moden nur unzureichend aufgel\"ost werden
+    k\"onnen (vgl.\ Spektralverzerrungen in Figure~2 der CNO-Arbeit).
+  \item Das U-Net hingegen \"ubertr\"agt Hochfrequenzanteile \"uber
+    Skip-Connections direkt zwischen Encoder- und Decoder-Ebenen, was es
+    strukturell besser f\"ur die Darstellung scharfer Kristallgrenzen geeignet
+    macht.
+  \item Gleichzeitig profitiert der FNO von der globalen elliptischen Natur
+    der Stokes-Gleichungen ($\nabla \cdot \mathbf{v} = 0$, Inkompressibilit\"at
+    als Fernwirkung), die spektrale Repr\"asentationen beg\"unstigt.
+\end{itemize}
+Diese komplementären St\"arken motivieren direkt den systematischen
+Vergleich in der Masterarbeit.
+
+\subsubsection*{3.\ Alias-freie Aktivierungen und der Kontinuit\"atsverlust}
+
+Ein kritischer Befund der CNO-Arbeit ist, dass naiv eingesetzte Aktivierungsfunktionen -- auch in einer U-Net-Architektur -- Aliasing-Fehler
+erzeugen, die die Str\"omungsrekonstruktion bei hohen Frequenzen verschlechtern.
+Dies ist besonders relevant f\"ur die Stream-Funktion-Repr\"asentation in der
+Masterarbeit: Die Divergenzfreiheit ($\nabla \cdot \mathbf{v} = 0$) wird durch
+die Stromfunktionformulierung zwar mathematisch garantiert, aber die Aktivierungsschichten k\"onnen bei der Rekonstruktion von $\psi$ nichtphysikalische
+Hochfrequenzinhalte einf\"uhren. Der CNO-Ansatz -- Upsampling vor der
+Aktivierung, Downsampling danach -- k\"onnte als zus\"atzliche Regularisierungsma\ss nahme in k\"unftigen Modellversionen der Masterarbeit in Betracht
+gezogen werden.
+
+\subsubsection*{4.\ Generalisierung \"uber Konfigurationen}
+
+Die CNO-Arbeit untersucht out-of-distribution Generalisierung (z.\,B.\ training
+mit $K{=}16$ Fourier-Moden, Test mit $K{=}20$) und zeigt, dass der CNO dabei
+deutlich robuster als der FNO ist. Die Kernfrage der Masterarbeit -- ob ein auf
+Konfigurationen mit bis zu $N$ Kristallen trainiertes Modell auf Konfigurationen
+mit $N + m$ Kristallen generalisiert -- ist eine direkte Analogie zu diesem
+out-of-distribution Problem. Die Erkenntnisse der CNO-Arbeit legen nahe, dass
+Translationsäquivarianz (wie sie sowohl CNO als auch U-Net besitzen) ein
+wichtiger Faktor f\"ur solche Generalisierungsleistungen ist: Ein Modell, das
+gelernt hat, die Str\"omungswechselwirkung von zwei Kristallen in beliebigen
+r\"aumlichen Konfigurationen zu beschreiben, kann dieses Wissen leichter
+auf drei oder mehr Kristalle \"ubertragen, wenn die Verarbeitung
+positionsinvariant ist.
+
+\subsubsection*{5.\ CNO als m\"ogliche Hybridarchitektur f\"ur zuk\"unftige Arbeit}
+
+Die CNO-Architektur stellt konzeptionell eine direkte Synthese der beiden
+in der Masterarbeit verglichenen Ans\"atze dar: Sie nutzt die r\"aumlich-lokale
+Verarbeitung des U-Net (Ortsfaltungen, hierarchische Encoder-Decoder-Struktur)
+und erg\"anzt sie um theoretisch fundierte Aliasing-Freiheit, die im FNO
+durch die Fourier-Repr\"asentation erreicht wird. Sollte keiner der beiden
+Ans\"atze -- reines U-Net oder reines FNO -- die Zielschwelle von
+MAE $< 0.05$ f\"ur eine exzellente Bewertung erreichen, bietet der CNO
+eine nat\"urliche Erweiterung. Die Open-Source-Implementierung der Autoren
+(PyTorch, GitHub) erm\"oglicht eine direkte Adaption auf die
+Julia/Flux.jl-Umgebung der Masterarbeit, wenngleich eine Portierung der
+Sinc-Filter-Implementierung (CUDA-basiert in der Originalarbeit) zus\"atzlichen
+Aufwand erfordert.
+
+% =========================================================
+\subsection*{Kritische Einsch\"atzung}
+% =========================================================
+
+Die CNO-Arbeit pr\"asentiert \"uberzeugende Ergebnisse, weist jedoch einige
+Einschr\"ankungen auf, die f\"ur die Masterarbeit relevant sind:
+
+\begin{itemize}
+  \item Alle Benchmarks sind zweidimensional; die Erweiterung auf 3D wird als
+    konzeptionell straightforward, aber rechenaufw\"andig beschrieben. F\"ur
+    die 3D-Komponente der Masterarbeit ($32^3$ Aufl\"osung) k\"onnte der
+    Rechenaufwand der Sinc-Filter prohibitiv sein.
+  \item Die Benchmarks umfassen ausschlie\ss lich kartesische Dom\"anen. Nicht-kartesische
+    Geometrien (z.\,B.\ k\"unstliche Randgeometrien um Kristalle) erfordern
+    weitere Transformationen.
+  \item Die Trainingsmengen (512--1024 Samples) liegen in einer vergleichbaren
+    Gr\"o\ss enordnung wie die Masterarbeit (200--300 Samples), sodass die
+    Datenskalierungsergebnisse (Potenzgesetz-Exponent $r = 0.37$) direkt
+    \"ubertragbar sind.
+\end{itemize}
+
+\end{document}

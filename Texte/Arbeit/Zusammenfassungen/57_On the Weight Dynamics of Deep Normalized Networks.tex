@@ -1,0 +1,123 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{On the Weight Dynamics of Deep Normalized Networks}
+
+\textbf{Autoren:} Christian H.X. Ali Mehmeti-Göpel, Michael Wand \\
+\textbf{Institution:} Department of Computer Science, Johannes Gutenberg University Mainz \\
+\textbf{Konferenz/Jahr:} ICML 2024 (Proceedings of the 41st International Conference on Machine Learning, PMLR 235)
+
+\subsection*{Zusammenfassung}
+
+Diese Arbeit formalisiert, wie Disparitäten in den effektiven Lernraten (Effective Learning Rates, ELRs) zwischen verschiedenen Schichten tiefer neuronaler Netze mit Normalisierungsschichten (z.\,B. BatchNorm) über die Trainingszeit hinweg evolvieren. Die Autoren modellieren die Gewichtsdynamik -- d.\,h. die zeitliche Entwicklung erwarteter Gradienten- und Gewichtsnormen -- und leiten daraus Vorhersagen über die Entwicklung der schichtweisen ELR-Verhältnisse ab. Ein zentrales Ergebnis ist der Nachweis, dass bei Training mit beliebiger konstanter Lernrate alle ELR-Verhältnisse asymptotisch gegen~1 konvergieren (Auto-Rate-Tuning-Effekt), trotz anfänglich exponentiell explodierender Gradienten. Darüber hinaus identifizieren die Autoren eine \emph{kritische Lernrate}, oberhalb derer ELR-Disparitäten temporär anwachsen können.
+
+\subsubsection*{Theoretisches Modell}
+
+Das Modell basiert auf zwei fundamentalen Eigenschaften von Normalisierungsschichten:
+\begin{enumerate}
+    \item \textbf{Inverse Skalierung:} Für eine normalisierungsinvariante Schicht $N$ mit $N(\gamma \cdot x) = N(x)$ gilt $\frac{dN}{d(\gamma x)}(\gamma x) = \frac{1}{\gamma} \frac{dN}{dx}(x)$. Gradienten skalieren also invers mit der Eingabegröße.
+    \item \textbf{Orthogonalität:} Gewichtsupdates stehen orthogonal zu den Gewichten selbst: $\langle \nabla W, W \rangle = 0$.
+\end{enumerate}
+Unter der Annahme konstanter \emph{Basisgradienten} (Gradientennorm ohne Normalisierungseffekte) leiten die Autoren eine diskrete Rekursion für die erwartete Gewichtsnorm ab:
+\[
+\sigma^2(t_{i+1}) = \sigma^2(t_i) + \lambda^2 \frac{c^2}{\sigma^2(t_i)},
+\]
+wobei $\sigma^2$ die erwartete quadrierte Gewichtsnorm, $\lambda$ die Lernrate und $c$ der Basisgradient ist. Im Gradientenfluss ($\lambda \to 0$) besitzt diese Gleichung die geschlossene Lösung $\sigma^2(t) = \sqrt{2c^2 t + k_0}$.
+
+\subsubsection*{Effektive Lernrate und kritische Lernrate}
+
+Die \emph{effektive Lernrate} einer Schicht wird definiert als:
+\[
+E(t_i) := \frac{c}{\sigma^2(t_i)},
+\]
+und das Verhältnis zweier Schichten $j, k$ als $R_{jk} = E_j / E_k$. Im Gradientenfluss konvergiert $R_{jk} \to 1$ für alle Schichtpaare. Für endliche Lernraten identifizieren die Autoren die \emph{kritische Lernrate}:
+\[
+\kappa_{jk}(t_i) = \frac{\sigma_j \sigma_k}{\sqrt{c_j c_k}}(t_i),
+\]
+oberhalb derer das ELR-Verhältnis zweier Schichten \emph{flippt}, d.\,h. die zuvor schnellere Schicht wird langsamer als die langsamere, was den ELR-Spread temporär vergrößert.
+
+\subsubsection*{Subkritisches Warm-Up}
+
+Basierend auf der Analyse wird ein hyperparameterfreies Warm-Up-Schema vorgeschlagen: In jedem Schritt wird die Lernrate auf die \emph{subkritische} Lernrate $\kappa_{hh'}$ der beiden Schichten mit den höchsten ELRs gesetzt. Dieses Schema konvergiert garantiert in $L$ Schritten (Anzahl der Schichten) und vermeidet jedes Flippen von ELR-Verhältnissen.
+
+\subsubsection*{Gradientenexplosion bei Initialisierung}
+
+Für Feedforward-Netze mit BatchNorm und ReLU wächst die Gradientennorm bei Initialisierung exponentiell mit der Tiefe:
+\[
+c_i \sim \alpha^{L-i}, \quad \alpha = \sqrt{\frac{\pi}{\pi - 1}} \approx 1{,}21.
+\]
+Bei ResNets mit Residualverbindungen reduziert sich dies zu einem linearen Wachstum. Die Stärke des beobachteten Effekts hängt also direkt von der Architekturtiefe und dem Vorhandensein von Skip-Connections ab.
+
+\subsubsection*{Experimentelle Validierung}
+
+Die Autoren validieren ihr Modell an ResNet-Varianten (56 und 110 Schichten, mit und ohne Skip-Connections) auf CIFAR-10, CIFAR-100 und ImageNet:
+\begin{itemize}
+    \item Im \emph{Random-Walk}-Szenario (Gradienten durch zufällige orthogonale Vektoren ersetzt) stimmt das Modell langfristig sehr gut mit den gemessenen Gewichts- und Gradientennormen überein.
+    \item Bei realem Training sind die Gradienten kleiner als vorhergesagt (da Basisgradienten im Verlauf des Trainings abnehmen), aber das qualitative Verhalten bleibt erhalten.
+    \item Ein ResNet-110 ohne Skip-Connections ist mit Standard-Training untrainierbar (hoher ELR-Spread). Durch subkritisches Warm-Up oder ELR-Constraining wird das Netz trainierbar und erreicht auf ImageNet 41{,}8\% (Warm-Up) bzw. 48{,}0\% (Constrain) Top-1-Genauigkeit.
+\end{itemize}
+
+\subsubsection*{Gültigkeitsbereich und Einschränkungen}
+
+Die Analyse gilt für alle normalisierten Netze, bei denen die Netzfunktion invariant unter Skalierung der Gewichtsmatrizen ist. Nicht direkt anwendbar ist das Modell auf:
+\begin{itemize}
+    \item Attention-Blöcke in Transformern (Gewichtsmatrizen sind nicht skalierungsinvariant)
+    \item Architekturen mit nicht-homogenen Nichtlinearitäten (z.\,B. Sigmoid, Tanh)
+    \item Training mit Momentum oder Weight Decay (beeinflusst Gewichtsdynamik, wird aber nicht modelliert)
+\end{itemize}
+
+\subsection*{Bezug zur Masterarbeit}
+
+\subsubsection*{Direkte Relevanz: Trainingsstabilität des U-Net}
+
+Die in der Masterarbeit beobachtete Trainingsinstabilität des U-Net -- insbesondere die starken Oszillationen der Validierungsfehler bei höheren Lernraten (Exp-1.1, Exp-1.2 bei Batch-Größe 16, Abschnitt 7.1.4) und die insgesamt schlechtere Konvergenz bei Batch-Größe 16 im Vergleich zu Batch-Größe 8 -- lässt sich im Rahmen der ELR-Spread-Theorie interpretieren:
+\begin{itemize}
+    \item Das U-Net der Masterarbeit verwendet BatchNorm nach jeder Faltungsschicht (Abschnitt 4.5.1), wodurch die Auto-Rate-Tuning-Dynamik direkt greift.
+    \item Bei zu hoher Lernrate (relativ zur kritischen Lernrate $\kappa$) können ELR-Verhältnisse flippen, was den effektiven Lernraten-Spread vergrößert und die Konvergenz destabilisiert.
+    \item Die Beobachtung, dass Batch-Größe 8 konsistent besser abschneidet als Batch-Größe 16, könnte damit zusammenhängen, dass kleinere Batches stochastischere Gradienten erzeugen, die die effektive Lernrate implizit reduzieren und damit eher subkritisch bleiben.
+\end{itemize}
+
+\subsubsection*{Kontrastierung mit dem FNO}
+
+Der Fourier Neural Operator der Masterarbeit zeigt durchweg stabilere Konvergenz als das U-Net (vgl. Abschnitt 7.1.1 vs. 7.1.4, Abschnitt 7.2.4 vs. 7.2.1). Diese Beobachtung ist konsistent mit der Theorie von Ali Mehmeti-Göpel \& Wand:
+\begin{itemize}
+    \item Der FNO verwendet \emph{keine} klassischen Normalisierungsschichten (kein BatchNorm). Die spektralen Faltungen operieren in einem anderen Regime, in dem die beschriebene ELR-Dynamik nicht auftritt.
+    \item Die FNO-spezifische Regularisierung durch Modentrunkierung ($k_{\max} = 16$) wirkt als impliziter Glätter und vermeidet die für BatchNorm-Architekturen typischen Gradientenexplosionen.
+    \item Das explizite Gradient-Clipping (ClipNorm mit Schwelle 1.0) im FNO-Training adressiert ein ähnliches Problem wie die kritische Lernrate, jedoch auf direkte Weise.
+\end{itemize}
+
+\subsubsection*{Relevanz des Composite Loss}
+
+Die Masterarbeit führt in Experiment~1 einen Composite Loss ein, der neben dem MSE auch Gradienten- und Randbedingungsterme enthält (Abschnitt 6.5). Die Beobachtung, dass dieser Composite Loss bei Batch-Größe~16 die U-Net-Fehler \emph{verschlechtert} (13{,}5--24\% vs. 8{,}6--11{,}2\% mit reinem MSE, Abschnitt 7.1.5), könnte durch die ELR-Theorie erklärt werden: Zusätzliche Verlustterme modifizieren die Gradientennormen schichtweise unterschiedlich und könnten den ELR-Spread vergrößern, was bei der ohnehin instabileren Batch-Größe~16 besonders problematisch ist.
+
+\subsubsection*{Einordnung in den State of the Art}
+
+Die Arbeit kann in den Literaturüberblick (Kapitel 2) eingeordnet werden, insbesondere:
+\begin{itemize}
+    \item In Abschnitt 2.1 (Deep Learning for Fluid Dynamics) als Verweis auf die Rolle von Normalisierungsschichten jenseits ihrer stabilisierenden Funktion bei der Initialisierung.
+    \item In Abschnitt 3.5 (U-Net Architecture) bei der Diskussion von Batch-Normalisierung als Architekturkomponente.
+    \item In Kapitel 8 (Discussion) als theoretischer Erklärungsrahmen für die unterschiedliche Trainingsstabilität von U-Net und FNO.
+\end{itemize}
+
+\subsubsection*{Einschränkungen der Übertragbarkeit}
+
+Die Übertragbarkeit der Ergebnisse auf die Masterarbeit ist durch folgende Faktoren begrenzt:
+\begin{enumerate}
+    \item Die Masterarbeit verwendet den Adam-Optimierer, der per-Parameter-adaptive Lernraten besitzt und den ELR-Spread teilweise selbst kompensiert. Die Theorie wurde für SGD ohne Momentum entwickelt.
+    \item Das U-Net der Masterarbeit hat nur 4 Encoder-Stufen mit Skip-Connections, was die anfängliche Gradientenexplosion gegenüber den im Paper untersuchten 56--110-schichtigen Netzen erheblich reduziert.
+    \item Die Analyse gilt streng genommen nur für Schichten, die direkt von einer Normalisierungsschicht gefolgt werden. Die finale $1 \times 1$-Faltung des U-Net (ohne nachfolgende Normalisierung) ist davon ausgenommen.
+\end{enumerate}
+
+\subsubsection*{Fazit}
+
+Die Arbeit von Ali Mehmeti-Göpel \& Wand liefert einen wertvollen theoretischen Rahmen zur Interpretation der in der Masterarbeit beobachteten Trainingsunterschiede zwischen U-Net und FNO. Sie erklärt, warum BatchNorm-basierte Architekturen bei ungünstiger Lernratenwahl instabil werden können, und warum der FNO -- der ohne klassische Normalisierungsschichten auskommt -- von diesem Problem nicht betroffen ist. Die Arbeit eignet sich als ergänzende Referenz im Literaturüberblick und in der Diskussion, erfordert jedoch keine Anpassung der experimentellen Methodik.
+
+\end{document}

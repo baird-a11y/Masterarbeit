@@ -1,0 +1,67 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Dynamics of Mass Polar Spheroids During Sedimentation}
+\textbf{Autoren:} Kavinda J. Nissanka, Xiaolei Ma, Justin C. Burton \\
+\textbf{Journal:} Journal of Fluid Mechanics, 2023
+
+\subsection*{Zusammenfassung}
+
+\subsubsection*{Motivation und theoretischer Hintergrund}
+Die Sedimentation von Partikeln unter Schwerkrafteinfluss stellt ein klassisches Problem der Fluiddynamik dar, dessen Komplexität durch die langreichweitigen hydrodynamischen Wechselwirkungen zwischen Partikeln entsteht. Während die meisten bisherigen Studien uniforme, sphärische Partikel betrachten, untersucht diese Arbeit sogenannte \emph{massenpolarisierte} prolate Sphäroide -- Partikel mit einer definierten Symmetrieachse und nicht-uniformer Dichteverteilung, bei denen der Schwerpunkt vom geometrischen Zentrum abweicht.
+
+Die Partikel werden durch zwei dimensionslose Parameter charakterisiert: das Aspektverhältnis $\kappa$ (Verhältnis von Haupt- zu Nebenachse) und die Schwerpunktverschiebung $\chi$ (normalisierter Abstand zwischen Schwerpunkt und geometrischem Zentrum). Theoretische Vorhersagen von Goldfriend et al.\ (2017) legten nahe, dass prolate Objekte ($\kappa > 1$) eine effektive Abstoßung erfahren sollten, während oblate Objekte ($\kappa < 1$) sich schwach anziehen würden.
+
+\subsubsection*{Experimenteller Aufbau}
+Die Experimente wurden sowohl in quasi-zweidimensionalen (19\,cm $\times$ 15\,cm $\times$ 0.4\,cm) als auch in dreidimensionalen zylindrischen Kammern durchgeführt, die mit hochviskosem Silikonöl (10\,000\,cSt) gefüllt waren. Die Composite-Partikel wurden aus 2\,mm-Kugeln verschiedener Materialien (Aluminium, Stahl, Kupfer, Wolframkarbid, Zirkoniumdioxid, Delrin) zusammengeklebt, um verschiedene Werte von $\kappa$ (2 oder 3 für Dimere bzw.\ Trimere) und $\chi$ (0.0--0.43) zu realisieren. Die typische Reynolds-Zahl lag bei $\sim 10^{-4}$, was das System klar im Stokes-Regime positioniert.
+
+\subsubsection*{Einzelpartikel-Dynamik}
+Für einzelne sedimentierende Partikel wurde ein reduziertes Mobilität-Matrix-Modell entwickelt, das die Kopplung zwischen externen Kräften/Drehmomenten und der resultierenden Translation/Rotation beschreibt:
+\begin{equation}
+\begin{pmatrix} v_x \\ v_y \\ \omega_z \end{pmatrix} = \frac{1}{6\pi\eta R} 
+\begin{pmatrix} 
+c_1 - c_2\cos(2\theta) & c_2\sin(2\theta) & 0 \\
+c_2\sin(2\theta) & c_1 + c_2\cos(2\theta) & 0 \\
+0 & 0 & c_3/R^2
+\end{pmatrix}
+\begin{pmatrix} 0 \\ F_y \\ \tau_z \end{pmatrix}
+\end{equation}
+Die resultierenden gekoppelten Differentialgleichungen konnten analytisch gelöst werden, und die Fits zeigten exzellente Übereinstimmung mit den experimentellen Trajektorien. Die Mobilitätskoeffizienten $c_1$, $c_2$ und $c_3$ erwiesen sich als unabhängig von $\chi$ und hängen nur von der äußeren Partikelform ab -- eine wichtige Bestätigung der theoretischen Vorhersagen.
+
+\subsubsection*{Paarweise Wechselwirkungen}
+Bei der Sedimentation von Partikelpaaren zeigte sich das zentrale Ergebnis: Prolate massenpolarisierte Partikel erfahren eine effektive Abstoßung. Die Änderung des horizontalen Abstands $\Delta H$ skaliert gemäß:
+\begin{equation}
+\chi^{\alpha} \frac{\Delta H}{2R} = A(\kappa - 1)
+\end{equation}
+mit $\alpha = 0.39 \pm 0.05$ und $A = 1.28 \pm 0.20$. Bemerkenswert ist, dass die Abstoßung für kleinere Werte von $\chi$ (also geringere Massenpolarisierung) stärker ausgeprägt ist -- ein kontraintuitives Ergebnis, das sich dadurch erklärt, dass Partikel mit kleinem $\chi$ leichter aus der Vertikalen rotieren können und dadurch größere laterale Driftgeschwindigkeiten entwickeln.
+
+\subsubsection*{Ergebnisse in 3D}
+In den 3D-Experimenten mit 100 Partikeln führte die effektive paarweise Abstoßung zu einer deutlich gleichmäßigeren räumlichen Verteilung der Partikel am Boden der Kammer. Partikel mit $\chi = 0$ (uniforme Dichte) zeigten starke Clusterbildung und komplexe Dynamik (Umklappen, Kepler-artige Orbits), während Partikel mit $\chi > 0$ zur Gravitation ausgerichtet blieben und sich gegenseitig abstießen.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Diese experimentelle Arbeit steht in mehrfacher Hinsicht in direktem Bezug zu den Fragestellungen der Masterarbeit:
+
+\subsubsection*{Gemeinsame physikalische Grundlage}
+Beide Arbeiten behandeln die Sedimentation von Partikeln/Kristallen in viskosen Fluiden im Stokes-Regime. Die grundlegenden Gleichungen -- die inkompressiblen Stokes-Gleichungen mit Dichtekontrasten als treibender Kraft -- sind identisch. Die Masterarbeit verwendet LaMEM zur Lösung dieser Gleichungen für multiple kreisförmige Kristalle, während Nissanka et al.\ das Problem experimentell mit Composite-Partikeln untersuchen.
+
+\subsubsection*{Hydrodynamische Wechselwirkungen als zentrales Thema}
+Ein Kernaspekt beider Arbeiten ist die Frage, wie hydrodynamische Wechselwirkungen zwischen mehreren sedimentierenden Objekten das kollektive Verhalten beeinflussen. Die experimentell beobachteten effektiven Abstoßungen und Anziehungen zwischen Partikelpaaren manifestieren sich in den Strömungsfeldern als komplexe Wake-Strukturen und Rezirkulationszonen -- genau jene Phänomene, die die Surrogat-Modelle der Masterarbeit aus den geometrischen Eingaben (Masken, Distanzfelder) vorhersagen sollen.
+
+\subsubsection*{Relevanz für die Generalisierungsfrage}
+Die zentrale Forschungsfrage der Masterarbeit -- ob neuronale Netze, die auf $N$ Kristallen trainiert wurden, auf $1$ bis $N$ Kristalle generalisieren können -- wird durch die experimentellen Befunde von Nissanka et al.\ physikalisch motiviert: Die Wechselwirkungen zwischen Partikeln sind stark konfigurationsabhängig und können qualitativ unterschiedliche Dynamiken erzeugen (z.B.\ Abstoßung vs.\ periodische Orbits vs.\ Clusterbildung). Ein erfolgreiches Surrogat-Modell muss diese Vielfalt an Wechselwirkungsregimen aus den Trainingsdaten lernen.
+
+\subsubsection*{Geometrische Komplexität jenseits von Kugeln}
+Während die Masterarbeit kreisförmige Kristalle als Idealisierung verwendet, zeigt die Arbeit von Nissanka et al., dass Form und Massenverteilung der Partikel qualitativ neue Effekte einführen (Selbstausrichtung, rotationsinduzierte Drift). Dies unterstreicht, dass die in der Masterarbeit entwickelten Methoden perspektivisch auf komplexere Kristallgeometrien erweitert werden könnten -- eine natürliche Richtung für zukünftige Arbeiten.
+
+\subsubsection*{Validierung physikalischer Intuition}
+Die analytischen Lösungen für die Einzelpartikel-Dynamik und die experimentell bestätigten Skalierungsgesetze für Paarwechselwirkungen liefern wertvolle physikalische Einsichten, die bei der Interpretation der Surrogat-Modell-Ergebnisse helfen können. Insbesondere die Beobachtung, dass die Mobilitätskoeffizienten nur von der äußeren Form abhängen, stützt die Annahme der Masterarbeit, dass geometrische Eingaben (Masken, SDFs) ausreichende Information für die Strömungsfeldvorhersage enthalten.
+
+\end{document}

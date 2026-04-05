@@ -1,0 +1,53 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\begin{document}
+
+\section*{IBM-LBM-DEM Study of Two-Particle Sedimentation: Drafting-Kissing-Tumbling and Effects of Particle Reynolds Number and Initial Positions of Particles}
+\textbf{Autoren:} Xiaohui Li, Guodong Liu, Junnan Zhao, Xiaolong Yin, Huilin Lu \\
+\textbf{Journal:} \emph{Energies}, 15, 3297 \\
+\textbf{Jahr:} 2022
+
+\subsection*{Zusammenfassung}
+
+Diese Arbeit untersucht mittels einer gekoppelten Immersed-Boundary-Lattice-Boltzmann-Discrete-Element-Methode (IBM-LBM-DEM) die Sedimentation zweier kugelförmiger Partikel in einem viskosen Fluid sowie das damit verbundene Drafting-Kissing-Tumbling-Phänomen (DKT). Die numerische Methode kombiniert das Gitter-Boltzmann-Verfahren (LBM) zur Simulation der Fluidströmung, die Diskrete-Elemente-Methode (DEM) zur Beschreibung der Partikeldynamik sowie die Immersed-Boundary-Methode (IBM) zur Kopplung von Fluid und Partikeln an deren gemeinsamer Grenzfläche.
+
+Die Validierung erfolgt durch Vergleich mit den Experimenten von Ten Cate et al.\ (2002) für die Sedimentation eines einzelnen dreidimensionalen Partikels bei terminalen Reynolds-Zahlen zwischen Re~$= 1{,}5$ und Re~$= 31{,}9$. Beide Varianten -- LBM mit Bounce-Back-Randbedingung (LBM-BB) sowie IBM-LBM-DEM -- reproduzieren die gemessenen Sedimentationsgeschwindigkeiten in guter Übereinstimmung mit den Experimenten.
+
+Im Hauptteil der Arbeit wird das DKT-Phänomen systematisch in Abhängigkeit von drei Parametern untersucht: der Reynolds-Zahl (Re~$= 1{,}82$, $18{,}18$ und $180{,}18$), dem Anfangsabstand der Partikel (1,5 bis $4\,D_p$) sowie dem Anfangswinkel zur Schwerkraftrichtung (0° bis 90°). Insgesamt werden 72 Konfigurationen simuliert. Die Ergebnisse zeigen:
+
+\begin{itemize}
+    \item \textbf{DKT nur bei nahezu vertikaler Ausrichtung:} Das vollständige DKT -- mit Annäherung (Drafting), Kollision (Kissing) und Rotation (Tumbling) -- tritt nur bei kleinen Anfangswinkeln (unter ca.\ 15°--20°) auf. Bei größeren Winkeln dominieren repulsive hydrodynamische Wechselwirkungen.
+
+    \item \textbf{Kinematische DKT-Definition:} Die Autoren schlagen vor, DKT anhand von drei messbaren Größen zu identifizieren: dem zeitlichen Verlauf des Partikelabstands (Kissing), der zweiten zeitlichen Ableitung dieses Abstands (Drafting) und den Winkelgeschwindigkeiten der Partikel (Tumbling). Diese Definition ermöglicht eine differenzierte Klassifikation auch bei nichttrivialen Anfangsbedingungen.
+
+    \item \textbf{Einfluss der Reynolds-Zahl:} Bei niedrigen Reynolds-Zahlen (Re~$\sim 1{,}82$) ist die Anziehungsdomäne auf kleine Anfangswinkel (unter 55°) beschränkt. Bei hohen Reynolds-Zahlen (Re~$\sim 181{,}8$) weitet sich diese Domain erheblich aus -- Partikelpaare mit Winkeln zwischen 40° und 70° zeigen bei größeren Anfangsabständen starke Anziehung, vermutlich durch reibungsfreie Potentialströmungseffekte.
+
+    \item \textbf{Kollisionsbedingung:} Kollisionen treten bevorzugt bei hoher Reynolds-Zahl und kleinem Anfangswinkel (unter 20°) auf, weitgehend unabhängig vom Anfangsabstand.
+
+    \item \textbf{Unterschiede zwischen 2D und 3D:} In 3D-Simulationen trennen sich die Partikel nach dem Tumbling deutlich weniger weit als in 2D, da hydrodynamische Wechselwirkungen in drei Dimensionen schneller mit dem Abstand abklingen.
+\end{itemize}
+
+\subsection*{Bezug zur Masterarbeit}
+
+Diese Arbeit ist aus mehreren Gründen für die Masterarbeit \emph{„Physics-Based Machine Learning for Predicting Flow Fields Around Settling Crystals"} relevant.
+
+\paragraph{Physikalisches Verständnis der Mehrpartikelströmung.}
+Die detaillierte Analyse der Partikel-Partikel-Wechselwirkungen -- insbesondere die Druckfelder, Wirbelstrukturen und Anziehungs-/Abstoßungsregimes -- liefert ein tiefes physikalisches Verständnis der Strömungsphänomene, die das neuronale Netz in der Masterarbeit erlernen soll. Insbesondere die nichtlinearen Abhängigkeiten von Partikelkonfiguration und Reynolds-Zahl veranschaulichen, warum einfache Superpositionsansätze für Mehrpartikelfelder scheitern und warum ein datengetriebener Ansatz mit physikalischer Einbettung vielversprechend ist.
+
+\paragraph{Generalisierungsproblem als Kernthema.}
+Die Arbeit zeigt eindrücklich, dass das Strömungsverhalten zweier Partikel qualitativ von deren relativer Position abhängt -- eine Konfiguration mit kleinem Winkel führt zu DKT, während dieselben Partikel bei großem Winkel ein vollständig anderes Regime (Repulsion) zeigen. Dies spiegelt direkt die zentrale Forschungsfrage der Masterarbeit wider: Kann ein auf wenige Konfigurationen (z.\,B.\ $N$ Kristalle) trainiertes Modell auf neue, ungesehene Anordnungen generalisieren? Die starke Konfigurationsabhängigkeit der Strömung legt nahe, dass für gute Generalisierung eine breite Abdeckung des Konfigurationsraums in den Trainingsdaten notwendig ist.
+
+\paragraph{Niedrige Reynolds-Zahl / Stokes-Regime.}
+Die Arbeit umfasst auch den Bereich sehr kleiner Reynolds-Zahlen (Re~$= 1{,}82$), der dem in der Masterarbeit betrachteten Stokes-Strömungsregime (Re~$\ll 1$) nahekommt. Im Stokes-Regime sind die hydrodynamischen Wechselwirkungen durch Linearität und Reversibilität gekennzeichnet, was einerseits analytische Referenzlösungen ermöglicht (wie in der residuellen Lernstrategie der Masterarbeit genutzt), andererseits aber auch besondere Anforderungen an die Divergenzfreiheit der vorhergesagten Felder stellt.
+
+\paragraph{Datengeneration und Parameterraum.}
+Die systematische Variation von Partikelabstand, Winkel und Reynolds-Zahl in 72 Simulationen ist methodisch vergleichbar mit der in der Masterarbeit durchgeführten Parameterstudie, bei der LaMEM-Simulationen mit unterschiedlichen Kristalldichten, Viskositäten und geometrischen Konfigurationen als Trainingsdaten erzeugt werden. Der Ansatz, einen vollständigen Parameterraum abzudecken, unterstreicht die Bedeutung systematischer Datenerzeugung für physikalisch informierte ML-Modelle.
+
+\paragraph{Relevanz für Stream-Function-Ansatz.}
+Die in dieser Arbeit visualisierten Wirbelfelder und die zugehörigen Strömungsstrukturen (z.\,B.\ Sog- und Druckzonen) sind qualitativ genau die Phänomene, die der Stream-Function-Ansatz der Masterarbeit durch mathematische Konstruktion divergenzfrei reproduzieren soll. Die Komplexität der Wirbelinteraktionen zwischen zwei Partikeln -- und die damit verbundene Herausforderung für einfache analytische Modelle -- motiviert den Einsatz von neuronalen Netzen als Surrogatmodelle.
+
+\end{document}

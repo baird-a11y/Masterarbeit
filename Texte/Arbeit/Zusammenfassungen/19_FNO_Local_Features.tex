@@ -1,0 +1,38 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\begin{document}
+
+\section*{Enhancing Fourier Neural Operators with Local Spatial Features}
+\textbf{Autoren:} Chaoyu Liu, Davide Murari, Lihao Liu, Yangming Li, Chris Budd, Carola-Bibiane Schönlieb \\
+\textbf{Jahr:} 2025 \\
+\textbf{Institution:} University of Cambridge, University of Bath
+
+\subsection*{Zusammenfassung}
+
+Der Fourier Neural Operator (FNO) hat sich als leistungsfähige Methode zur Lösung partieller Differentialgleichungen (PDEs) etabliert, indem er Eingabedaten in den Frequenzraum transformiert und dort globale Abhängigkeiten effizient parametrisiert. Diese globale Perspektive verleiht dem FNO die wertvolle Eigenschaft der Auflösungsinvarianz, geht jedoch mit einer strukturellen Schwäche einher: Lokale räumliche Strukturen wie scharfe Gradienten, Grenzschichteffekte oder Phaseninterfaces werden durch die Fourier-Transformation systematisch vernachlässigt, da die punktweise Dimensionserweiterung des FNO keine räumlichen Nachbarschaftsbeziehungen berücksichtigt.
+
+Die Autoren adressieren diese Limitation durch die Einführung der \emph{Convolutional Fourier Neural Operator} (Conv-FNO)-Architektur. Der zentrale Beitrag besteht darin, dem FNO einen CNN-basierten Feature-Präextraktor voranzustellen, der lokale räumliche Features (LSFs) direkt aus den Eingabedaten extrahiert. Diese extrahierten Features werden über eine Konkatenationsoperation mit den Originalinputs zusammengeführt und gemeinsam in den FNO eingespeist. Auf diese Weise profitiert das Modell sowohl von der globalen spektralen Verarbeitung des FNO als auch von der lokalen räumlichen Sensitivität der Faltungsschichten, ohne dass die Stärken der einen Komponente zulasten der anderen geopfert werden müssen.
+
+Als besonders leistungsfähige Variante präsentieren die Autoren den \emph{UNet-FNO}, bei dem der CNN-Präextraktor durch eine vollständige UNet-Architektur mit Encoder-Decoder-Struktur ersetzt wird. Das UNet extrahiert hierarchische, mehrskalige räumliche Repräsentationen, die anschließend dem FNO als zusätzliche Eingabekanäle zur Verfügung stehen. In umfangreichen Experimenten auf verschiedenen PDE-Benchmarks -- darunter Darcy-Strömung, Allen-Cahn-Gleichung sowie kompressible und inkompressible Navier-Stokes-Gleichungen -- übertrifft der UNet-FNO konsistent alle verglichenen Architekturen, einschließlich des Standard-FNO, des UNO und des CNO. Besonders bemerkenswert ist die Überlegenheit des UNet-FNO in datenlimitierten Szenarien: Mit nur 1000 Trainingsbeispielen erzielt er vergleichbare oder bessere Ergebnisse als konkurrierende Methoden, die auf 10000 Beispielen trainiert wurden.
+
+Um die für den FNO charakteristische Auflösungsinvarianz trotz der eingeführten Faltungsoperatoren zu erhalten, werden zwei Resizing-Schemata vorgeschlagen und theoretisch analysiert. Schema~1 skaliert die Eingabe vor der CNN-Verarbeitung auf die Trainingsauflösung und interpoliert die Ausgabe zurück; Schema~2 übergibt dem FNO weiterhin die Originalauflösung und skaliert nur die extrahierten CNN-Features entsprechend. Beide Schemata werden durch Lipschitz-basierte Fehleranalysen untermauert, wobei Schema~2 theoretisch stärker ist, da es die inhärente Auflösungsinvarianz des FNO nicht unterbricht.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Die Erkenntnisse dieses Artikels sind in mehrfacher Hinsicht direkt relevant für die vorliegende Masterarbeit zur physikbasierten maschinellen Lernvorhersage von Strömungsfeldern um sedimentierende Kristalle.
+
+\paragraph{Lokale vs.\ globale Strukturen in Stokes-Strömungen.} Die Strömungsfelder um Kristalle weisen genau die Eigenschaftskombination auf, die Conv-FNO adressiert: Einerseits bestimmen weitreichende globale Wechselwirkungen das Fernfeldverhalten der Stokes-Strömung; andererseits treten in unmittelbarer Nähe der Kristalloberflächen starke lokale Gradienten und Grenzschichteffekte auf. Ein reiner FNO, der ausschließlich im Frequenzraum operiert, könnte diese feinen lokalen Strukturen systematisch unterschätzen. Die in dieser Arbeit gezeigten Ergebnisse stützen die Hypothese, dass hybride Architekturen -- wie das in der Masterarbeit verwendete UNet -- gegenüber rein spektralen Ansätzen Vorteile bei der Auflösung solcher lokalen Details besitzen.
+
+\paragraph{UNet als lokaler Feature-Extraktor.} Die Schlussfolgerung der Autoren, dass gerade die UNet-Komponente für den Leistungsgewinn verantwortlich ist und nicht lediglich die zusätzliche Modellkapazität (vgl.\ Tabelle~3 im Artikel), ist ein wichtiges Argument für die Architekturwahl der Masterarbeit. Das in dieser Arbeit implementierte UNet erfüllt eine analoge Funktion: Es extrahiert hierarchische räumliche Repräsentationen auf mehreren Skalen und ist damit konzeptuell dem CNN-Präextraktor des UNet-FNO ähnlich. Der direkte Vergleich von UNet und FNO als gleichrangige Hauptbeiträge der Masterarbeit wird durch diesen Artikel zusätzlich motiviert.
+
+\paragraph{Datenlimitierte Szenarien und Generalisierung.} Die besondere Stärke des UNet-FNO in Szenarien mit wenigen Trainingsbeispielen ist für die Masterarbeit hochrelevant, da die Generierung von LaMEM-Simulationsdaten rechenintensiv ist und der Trainingsdatensatz auf einige hundert bis wenige tausend Samples beschränkt bleibt. Die Ergebnisse legen nahe, dass Architekturen mit starken Induktionsbiases für lokale räumliche Strukturen -- wie UNet-basierte Modelle -- unter solchen Bedingungen besser generalisieren.
+
+\paragraph{Generalisierung auf variierende Kristallkonfigurationen.} Die in diesem Artikel untersuchte Auflösungsinvarianz ist konzeptuell verwandt mit der zentralen Generalisierungsfrage der Masterarbeit, nämlich ob ein auf $N$ Kristallen trainiertes Netzwerk auf Konfigurationen mit $N+m$ Kristallen generalisiert. In beiden Fällen geht es um die Fähigkeit eines Modells, auf Eingaben zu generalisieren, die strukturell von den Trainingsdaten abweichen. Die theoretischen Analysen in diesem Artikel -- insbesondere die Fehlerschranken aus Theorem~4.1 und Theorem~4.3 -- bieten einen methodischen Rahmen, der auch für die Analyse der Generalisierungseigenschaften in der Masterarbeit referenziert werden kann.
+
+\paragraph{Architekturelle Ableitung.} Die Conv-FNO-Architektur könnte als ergänzender Ansatz in Betracht gezogen werden, falls die reine UNet- oder FNO-Architektur die Zielperformanz (MAE $< 0.05$) nicht erreicht. Die Kombination beider Architekturen -- UNet als lokaler Präextraktor gefolgt von FNO-Blöcken für globale Wechselwirkungen -- stellt eine natürliche Erweiterung dar, die in zukünftigen Arbeiten untersucht werden könnte.
+
+\end{document}

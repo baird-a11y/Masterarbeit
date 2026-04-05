@@ -1,0 +1,214 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{parskip}
+\setlength{\parskip}{6pt}
+
+\begin{document}
+
+% ============================================================
+\section*{U-FNO -- An Enhanced Fourier Neural Operator-Based\\
+Deep-Learning Model for Multiphase Flow}
+% ============================================================
+
+\textbf{Autoren:} Gege Wen, Zongyi Li, Kamyar Azizzadenesheli,
+Anima Anandkumar, Sally M.\ Benson \\
+\textbf{Zeitschrift:} \textit{Advances in Water Resources}, 163 (2022), 104180 \\
+\textbf{DOI:} \href{https://doi.org/10.1016/j.advwatres.2022.104180}{10.1016/j.advwatres.2022.104180}
+
+% ============================================================
+\subsection*{Motivation und Problemstellung}
+% ============================================================
+
+Numerische Simulation von Mehrphasenströmungen in porösen Medien ist für
+viele geowissenschaftliche Anwendungen unerlässlich -- darunter CO\textsubscript{2}-Speicherung,
+Grundwasserströmungen und die Extraktion von Erdöl und Erdgas. Diese Simulationen
+erfordern eine feine räumliche und zeitliche Diskretisierung und sind
+entsprechend rechenintensiv. Im Kontext probabilistischer Analysen und inverser
+Modellierung werden häufig tausende Vorwärtssimulationen benötigt, was
+traditionelle Methoden praktisch unerschwinglich macht.
+
+Bestehende datengetriebene Ansätze lassen sich in zwei Kategorien einteilen:
+(1) CNN-basierte finite-dimensionale Operatoren, die raumgebundene
+Euklidische Abbildungen aus Simulationsdaten erlernen, und (2)
+physiksinformierte Ansätze, die Lösungsfunktionen durch neuronale Netze
+parametrisieren. Beide Kategorien haben Schwächen: CNN-basierte Modelle
+neigen zu Overfitting und benötigen sehr große Trainingsdatensätze, während
+physiksinformierte Ansätze für jeden neuen Parametersatz erneut trainiert
+werden müssen.
+
+Der Fourier Neural Operator (FNO) von Li et al.\ (2020) adressiert diese
+Nachteile durch das Erlernen von Abbildungen in unendlich-dimensionalen
+Funktionenräumen via Fast Fourier Transform. FNO-Modelle werden nur einmal
+trainiert, sind gitterunabhängig, und weisen eine hervorragende
+Generalisierungsfähigkeit auf. Dennoch hat der Standard-FNO eine vergleichsweise
+niedrigere Trainingsgenauigkeit als CNN-basierte Modelle, da die Beschränkung
+auf wenige Fourier-Moden hochfrequente, lokale Strukturen nicht vollständig
+erfassen kann.
+
+% ============================================================
+\subsection*{Architektur: Der U-FNO-Ansatz}
+% ============================================================
+
+U-FNO kombiniert die Stärken des FNO mit den lokalen Merkmalsextraktions\-fähigkeiten
+eines U-Net und adressiert damit die komplementären Schwächen beider Architekturen.
+Die Architektur besteht aus drei Schritten:
+
+\begin{enumerate}
+    \item \textbf{Lifting:} Die Eingabe $a(x)$ wird über ein vollständig verbundenes
+    Netzwerk $P$ auf einen höherdimensionalen Repräsentationsraum angehoben.
+
+    \item \textbf{Iterative Schichten:} Es werden zunächst $L$ Standard-Fourier-Schichten
+    angewendet, gefolgt von $M$ neuartigen \emph{U-Fourier-Schichten}. Jede
+    U-Fourier-Schicht berechnet:
+    \[
+        v^{m}_{k+1}(x) := \sigma\!\left(
+            \mathcal{K}(v^{m}_{k})(x)
+            + \mathcal{U}(v^{m}_{k})(x)
+            + W(v^{m}_{k}(x))
+        \right),
+    \]
+    wobei $\mathcal{K}$ der spektrale Kernintegral-Operator (Fourier-Pfad),
+    $\mathcal{U}$ ein zweistufiger U-Net-Operator (lokaler CNN-Pfad) und $W$
+    eine lineare Biaskorrektur ist.
+
+    \item \textbf{Projektion:} Die gelernte Repräsentation wird über ein weiteres
+    vollständiges Netzwerk $Q$ auf den Ausgaberaum projiziert.
+\end{enumerate}
+
+Die Autoren zeigen, dass eine hälftige Aufteilung -- gleich viele Fourier- und
+U-Fourier-Schichten -- die beste Leistung erzielt. Das resultierende Modell
+hat ca.\ 33 Millionen Parameter und ist damit in derselben Größenordnung wie
+Standard-FNO und CNN-Benchmark.
+
+% ============================================================
+\subsection*{Anwendungsfall und Experimente}
+% ============================================================
+
+Das Modell wird auf ein hochkomplexes CO\textsubscript{2}-Wasser-Mehrphasenströmungsproblem
+im Kontext geologischer CO\textsubscript{2}-Speicherung angewendet. Simuliert werden
+30 Jahre CO\textsubscript{2}-Injektion in heterogene, anisotrope Reservoirs mit weiten
+Parameterräumen (u.a.\ Permeabilität, Porosität, Injektionsrate, Reservoirtemperatur).
+Die Simulationsdaten werden mit dem kommerziellen Simulator ECLIPSE (e300) generiert.
+Der Datensatz umfasst 5\,500 Fälle (4\,500 Training, 500 Validierung, 500 Test).
+
+Als Verlustfunktion wird ein relativer $\ell_p$-Verlust auf das Ausgangsfeld
+und seinen Gradienten in radialer Richtung eingesetzt:
+\[
+    \mathcal{L}(y, \hat{y}) =
+    \frac{\|y - \hat{y}\|_p}{\|y\|_p}
+    + \beta\,\frac{\|\partial y/\partial r - \partial\hat{y}/\partial r\|_p}{\|\partial y/\partial r\|_p}.
+\]
+Der Gradiententerm verbessert insbesondere die Vorhersage scharfer Phasengrenzen
+(\emph{fronts}) -- ähnlich der Idee, durch physikalische Zusatzterme im Verlust die
+Qualität der Lösung in relevanten Bereichen zu steigern.
+
+% ============================================================
+\subsection*{Ergebnisse}
+% ============================================================
+
+U-FNO übertrifft konsequent alle Vergleichsarchitekturen -- Standard-FNO,
+Conv-FNO und CNN-Benchmark -- sowohl für Gassättigung als auch für
+Druckaufbau:
+
+\begin{itemize}
+    \item \textbf{Gassättigung:} Mittlerer absoluter Fehler im Plume
+    (MPE) von 1{,}61\,\% gegenüber 2{,}99\,\% beim CNN ($-46\,\%$);
+    $R^2_\mathrm{plume} = 0{,}981$ gegenüber $0{,}955$ beim CNN.
+
+    \item \textbf{Druckaufbau:} Mittlerer relativer Fehler (MRE) von
+    0{,}68\,\% gegenüber 0{,}89\,\% beim CNN ($-24\,\%$);
+    $R^2 = 0{,}992$ gegenüber $0{,}987$ beim CNN.
+
+    \item \textbf{Dateneffizienz:} U-FNO benötigt nur ein Drittel der
+    Trainingsdaten des CNN, um die gleiche Genauigkeit zu erzielen.
+
+    \item \textbf{Rechengeschwindigkeit:} Das trainierte Modell ist
+    $6 \times 10^4$-mal schneller als der traditionelle Simulator.
+
+    \item \textbf{Scharfe Phasengrenzen:} U-FNO ist 2{,}7-mal genauer
+    als CNN bei der Vorhersage der Gassättigungs-Front und 1{,}8-mal
+    genauer bei der Druckaufbau-Front.
+
+    \item \textbf{Heterogene Formationen:} In stark heterogenen Permeabilitätsfeldern
+    ist U-FNO 1{,}7-mal genauer als CNN.
+\end{itemize}
+
+Bemerkenswert ist weiterhin, dass alle FNO-basierten Modelle ein geringeres
+Overfitting aufweisen als der CNN-Benchmark, was die strukturelle
+Regularisierungswirkung der Fourier-Schichten bestätigt.
+
+% ============================================================
+\subsection*{Bezug zur Masterarbeit}
+% ============================================================
+
+Die Arbeit von Wen et al.\ ist aus mehreren Gründen direkt relevant für die
+vorliegende Masterarbeit.
+
+\textbf{Architektonische Motivation.}
+U-FNO kombiniert exakt die beiden Architekturen, die in dieser Masterarbeit
+separat verglichen werden: U-Net und FNO. Die zentrale Erkenntnis der
+Arbeit -- dass globale spektrale Merkmalsextraktion (Fourier-Pfad) und lokale
+räumliche Verarbeitung (U-Net-Pfad) komplementäre Stärken besitzen -- liefert
+eine theoretische Grundlage für die in dieser Masterarbeit durchgeführten
+Experimente. Während Wen et al.\ eine hybride Architektur vorschlagen, ist
+das primäre Ziel dieser Masterarbeit, die komplementären Eigenschaften beider
+Paradigmen durch einen systematischen, kontrollierten Vergleich auf identischen
+Datensätzen zu quantifizieren.
+
+\textbf{Komplementäre Stärken der Architekturen.}
+U-FNO demonstriert, dass FNO-basierte Modelle besonders bei der Erfassung
+großräumiger, elliptischer Strukturen stark sind -- eine Eigenschaft, die
+auch im Stokes-Strömungsregime der Masterarbeit von Bedeutung ist, wo lokale
+Störungen durch Kristalle sich global im Strömungsfeld auswirken. Die
+U-Net-Komponente verbessert hingegen die Auflösung scharfer Phasengrenzen
+und lokaler Phänomene. In der Masterarbeit entsprechen diese Rollen der
+Erfassung langreichweitiger hydrodynamischer Wechselwirkungen (FNO-Stärke)
+versus der präzisen Auflösung von Grenzschichten an Kristalloberflächen
+(U-Net-Stärke).
+
+\textbf{Gitterunabhängigkeit und Skalierbarkeit.}
+Wen et al.\ diskutieren explizit den Kompromiss zwischen Gitterunabhängigkeit
+(eine Stärke des reinen FNO) und Trainingsgenauigkeit (verbessert durch den
+U-Net-Pfad). Für die Masterarbeit ist dieser Kompromiss relevant, da alle
+Simulationen auf einem festen $256 \times 256$-Gitter durchgeführt werden,
+was den Verzicht auf Gitterunabhängigkeit zugunsten höherer Genauigkeit
+rechtfertigt.
+
+\textbf{Verlustfunktionsdesign.}
+Die Einbeziehung eines Gradiententerms in der Verlustfunktion von Wen et al.\
+ist konzeptuell verwandt mit dem in der Masterarbeit eingesetzten
+physiksinformierten Ansatz, der über die Strom\-funktion $\psi$ die
+Inkompressibilitätsbedingung strukturell erzwingt und über Randterme die
+Genauigkeit an Kristalloberflächen erhöht. Beide Ansätze adressieren das
+Problem, dass reine Datenverlustfunktionen physikalisch relevante Strukturen
+-- scharfe Fronten bzw.\ Grenzschichten -- systematisch unterschätzen.
+
+\textbf{Datensatz und Generalisierung.}
+Die Arbeit demonstriert die hervorragende Dateneffizienz FNO-basierter Modelle:
+U-FNO benötigt nur ein Drittel der CNN-Trainingsdaten für vergleichbare
+Leistung. In der Masterarbeit, wo Trainingsdaten durch rechenintensive
+LaMEM-Simulationen begrenzt sind, ist diese Eigenschaft besonders
+wertvoll. Die in dieser Masterarbeit untersuchte Generalisierung von
+$N$ auf $N+m$ Kristalle stellt zudem eine konzeptuell anspruchsvollere Form
+der Out-of-distribution-Generalisierung dar als jene in Wen et al., da sich
+nicht nur die Parameterwerte ändern, sondern die topologische Komplexität
+des Problems selbst.
+
+\textbf{Verortung im Forschungsfeld.}
+U-FNO belegt, dass hybride Architekturen -- die das Beste aus spektraler und
+räumlicher Verarbeitung kombinieren -- state-of-the-art Leistung erbringen.
+Diese Erkenntnis legt nahe, dass die Diskussion der Ergebnisse der Masterarbeit
+explizit auf mögliche Synergiepotenziale zwischen U-Net und FNO eingehen
+sollte: Falls die empirischen Experimente zeigen, dass beide Architekturen
+komplementäre Stärken aufweisen -- etwa FNO bei großen Kristallzahlen und
+globalem Strömungsmuster, U-Net bei lokalen Grenzschichten -- wäre U-FNO
+eine natürliche Richtung für zukünftige Arbeit.
+
+\end{document}

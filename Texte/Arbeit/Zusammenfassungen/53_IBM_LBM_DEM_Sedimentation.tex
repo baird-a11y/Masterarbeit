@@ -1,0 +1,67 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{IBM-LBM-DEM Study of Two-Particle Sedimentation: Drafting-Kissing-Tumbling and Effects of Particle Reynolds Number and Initial Positions of Particles}
+
+\textbf{Autoren:} Xiaohui Li, Guodong Liu, Junnan Zhao, Xiaolong Yin, Huilin Lu \\
+\textbf{Journal:} Energies 2022, 15, 3297 \\
+\textbf{DOI:} 10.3390/en15093297
+
+%------------------------------------------------------------------------------
+\subsection*{Zusammenfassung}
+%------------------------------------------------------------------------------
+
+Die Arbeit von Li et al.\ (2022) untersucht die Sedimentation zweier sph\"arischer Partikel in einem viskosen Fluid mittels einer gekoppelten numerischen Methode, die drei Komponenten vereint: Die \textbf{Lattice-Boltzmann-Methode (LBM)} l\"ost die Fluidstr\"omung auf einem diskreten Gitter, die \textbf{Diskrete-Elemente-Methode (DEM)} beschreibt die Partikeldynamik einschlie{\ss}lich Kontaktkr\"aften bei Kollisionen, und die \textbf{Immersed-Boundary-Methode (IBM)} vermittelt die Kopplung zwischen Fluid und Partikeln durch Impulsaustausch an der Partikeloberfl\"ache.
+
+Ein zentrales Ph\"anomen, das die Autoren reproduzieren und charakterisieren, ist das sogenannte \textbf{Drafting-Kissing-Tumbling (DKT)}: Wenn zwei Partikel nahezu vertikal \"ubereinander angeordnet sind, wird das obere Partikel durch den Nachlauf des unteren Partikels beschleunigt (\textit{Drafting}), holt dieses ein und kollidiert (\textit{Kissing}), woraufhin beide Partikel rotieren und sich horizontal voneinander trennen (\textit{Tumbling}). Die Autoren zeigen, dass dieser charakteristische Ablauf nur bei kleinen Anfangswinkeln (typischerweise $< 15$--$20°$) vollst\"andig auftritt.
+
+Die systematische Parameterstudie variiert drei Gr\"o{\ss}en:
+\begin{itemize}
+    \item \textbf{Reynolds-Zahl} ($\mathrm{Re} = 1{,}82$ bis $181{,}8$): Bei niedrigen Re dominieren viskose Effekte, bei hohen Re gewinnen Tr\"agheitseffekte an Bedeutung.
+    \item \textbf{Anfangswinkel} ($0°$ bis $90°$): Bestimmt, ob die Wechselwirkung prim\"ar anziehend (kleine Winkel) oder absto{\ss}end (gro{\ss}e Winkel) ist.
+    \item \textbf{Anfangsabstand} ($1{,}5$ bis $4$ Partikeldurchmesser): Beeinflusst die St\"arke der hydrodynamischen Kopplung.
+\end{itemize}
+
+Die Ergebnisse zeigen komplexe Wechselwirkungsregime: Bei kleinen Winkeln und moderaten Reynolds-Zahlen tritt DKT auf, w\"ahrend bei gr\"o{\ss}eren Winkeln die Partikel sich gegenseitig absto{\ss}en und nebeneinander sedimentieren. Bei hohen Reynolds-Zahlen ($\mathrm{Re} \approx 180$) erweitert sich der Bereich anziehender Wechselwirkungen, was auf inviskose Potentialstr\"omungseffekte zur\"uckgef\"uhrt wird.
+
+Die numerische Methode wird zun\"achst anhand von Einzelpartikel-Sedimentationsexperimenten validiert, wobei gute \"Ubereinstimmung mit experimentellen Daten von Cate et al.\ (2002) erzielt wird. F\"ur die Zwei-Partikel-Sedimentation werden detaillierte Analysen der Wirbelfelder, Druckverteilungen und Partikeltrajektorien pr\"asentiert.
+
+%------------------------------------------------------------------------------
+\subsection*{Bezug zur Masterarbeit}
+%------------------------------------------------------------------------------
+
+Diese Arbeit ist f\"ur meine Masterarbeit in mehrfacher Hinsicht relevant:
+
+\subsubsection*{1. Physikalisches Verst\"andnis der Zielgr\"o{\ss}en}
+
+Die detaillierte Analyse der Str\"omungsfelder um sedimentierende Partikel verdeutlicht die Komplexit\"at, die meine ML-Modelle (UNet und FNO) erfassen m\"ussen. Die Wirbelstrukturen, Druckfelder und Geschwindigkeitsverteilungen, die Li et al.\ visualisieren, entsprechen qualitativ den Str\"omungsfeldern, die meine Modelle aus der Kristallkonfiguration vorhersagen sollen. Insbesondere die langreichweitigen hydrodynamischen Wechselwirkungen -- die bei Stokes-Str\"omung durch den elliptischen Charakter der Gleichungen bedingt sind -- stellen eine zentrale Herausforderung f\"ur die Generalisierung auf variable Kristallzahlen dar.
+
+\subsubsection*{2. Motivation f\"ur Surrogat-Modellierung}
+
+Li et al.\ berichten, dass ihre aufgel\"osten Simulationen eine Gitteraufl\"osung von 10--20 Gitterpunkten pro Partikeldurchmesser erfordern und selbst f\"ur zwei Partikel erhebliche Rechenzeit ben\"otigen. Meine Masterarbeit adressiert genau dieses Problem: Die Entwicklung von ML-basierten Surrogat-Modellen, die Str\"omungsfelder um multiple Kristalle um Gr\"o{\ss}enordnungen schneller approximieren als klassische L\"oser wie LaMEM.
+
+\subsubsection*{3. Relevanz der Konfigurationsvielfalt}
+
+Die Parameterstudie von Li et al.\ zeigt, dass das Str\"omungsverhalten stark von der relativen Position der Partikel abh\"angt. Dies unterstreicht die Notwendigkeit, meine Trainingsdaten \"uber einen breiten Konfigurationsraum zu generieren -- variable Kristallzahlen, Positionen und Abst\"ande -- um die Generalisierungsf\"ahigkeit der Modelle sicherzustellen. Die Beobachtung, dass qualitativ unterschiedliche Interaktionsregime (anziehend vs.\ absto{\ss}end, DKT vs.\ parallele Sedimentation) existieren, deutet darauf hin, dass ein erfolgreiches Surrogat-Modell diese verschiedenen physikalischen Regime intern repr\"asentieren muss.
+
+\subsubsection*{4. Methodischer Kontrast}
+
+W\"ahrend Li et al.\ IBM-LBM-DEM verwenden, nutze ich LaMEM (Finite-Elemente-Methode f\"ur Stokes-Str\"omung) zur Datengenerierung. Beide Ans\"atze l\"osen das gleiche physikalische Problem -- inkompressible viskose Str\"omung um starre Einschl\"usse -- aber mit unterschiedlichen numerischen Diskretisierungen. Der Vergleich zeigt, dass verschiedene numerische Methoden konsistente Ergebnisse f\"ur Partikelsedimentationsph\"anomene liefern, was die physikalische Validit\"at meiner LaMEM-generierten Trainingsdaten st\"utzt.
+
+\subsubsection*{5. Stream-Funktion als Lernziel}
+
+Die Wirbelverteilungen in Li et al.\ sind direkt mit der Stromfunktion $\psi$ verkn\"upft \"uber die Poisson-Gleichung $\Delta\psi = -\omega$. Meine Entscheidung, die Stromfunktion als Lernziel zu verwenden, erm\"oglicht es, die Inkompressibilit\"at konstruktionsbedingt zu erf\"ullen und gleichzeitig ein skalares Feld statt eines Vektorfeldes zu approximieren -- eine Vereinfachung, die das Lernproblem konditioniert.
+
+\subsubsection*{6. Reynolds-Zahl-Regime}
+
+Die Arbeit untersucht Reynolds-Zahlen von $\mathrm{Re} \approx 1{,}8$ bis $180$. F\"ur magmatische Systeme, wie sie in meiner Masterarbeit betrachtet werden, sind typischerweise sehr niedrige Reynolds-Zahlen relevant ($\mathrm{Re} \ll 1$), sodass die Stokes-Approximation g\"ultig ist. Die Ergebnisse von Li et al.\ bei niedrigen Re (dominante viskose Effekte, langreichweitige Wechselwirkungen) sind daher besonders relevant f\"ur das Verst\"andnis der Kristallsedimentation in Magmakammern.
+
+\end{document}

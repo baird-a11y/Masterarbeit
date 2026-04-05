@@ -1,0 +1,114 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\begin{document}
+
+\section*{Deep Fluids: A Generative Network for Parameterized Fluid Simulations}
+
+\textbf{Autoren:} Byungsoo Kim, Vinicius C.\ Azevedo, Nils Thuerey, Theodore Kim,
+Markus Gross, Barbara Solenthaler \\
+\textbf{Journal:} Computer Graphics Forum (Eurographics 2019), Vol.~38, Nr.~2 \\
+\textbf{DOI:} 10.1111/cgf.13619
+
+\subsection*{Zusammenfassung}
+
+Kim et al.\ präsentieren ein generatives neuronales Netz, das in der Lage ist,
+parametrisierte Fluidsimulationen direkt aus einem kompakten Satz von Steuerparametern
+zu synthetisieren. Kernidee ist es, eine Kollektion von diskreten, parametrisierbaren
+Strömungssimulationen zu nutzen, um ein faltendes neuronales Netz (CNN) zu trainieren,
+das den zugrundeliegenden Parameterraum als nichtlinearen latenten Raum repräsentiert.
+
+\paragraph{Architektur.}
+Das Modell besteht aus einem generativen Netzwerk $G(\mathbf{c})$, das einen
+Parametervektor $\mathbf{c} \in \mathbb{R}^n$ auf ein vollständiges Geschwindigkeitsfeld
+$\hat{\mathbf{u}}_\mathbf{c}$ abbildet. Das Netzwerk beginnt mit vollständig verbundenen
+Schichten, die die Eingangsparameter in einen kompakten Gewichtsvektor projizieren,
+welcher anschließend durch eine Folge von Faltungsblöcken mit Upsampling-Operationen
+und residualen Skip-Connections auf die volle Gitterauflösung expandiert wird. Für
+erweiterte Parametrisierungen wird das Generatornetz durch einen symmetrischen
+Encoder $G^\dagger(\mathbf{u})$ zu einem Autoencoder ergänzt, der beliebige
+Geschwindigkeitsfelder in den latenten Raum $\mathbf{c} = [\mathbf{z}, \mathbf{p}]$
+einbettet -- bestehend aus einem unüberwachten Teil~$\mathbf{z}$ und einem überwachten
+Teil~$\mathbf{p}$.
+
+\paragraph{Verlustfunktion und Divergenzfreiheit.}
+Eine zentrale Neuerung der Arbeit ist eine strömungsfunktionsbasierte Verlustfunktion,
+die Divergenzfreiheit der erzeugten Geschwindigkeitsfelder \emph{by construction}
+garantiert:
+\[
+  L_G(\mathbf{c}) = \|\mathbf{u}_\mathbf{c} - \nabla \times G(\mathbf{c})\|_1.
+\]
+Da die Rotation eines beliebigen Vektorfelds stets divergenzfrei ist
+($\nabla \cdot (\nabla \times G) = 0$), lernt das Netzwerk implizit eine
+Stromfunktion~$\Psi_\mathbf{c}$. Zusätzlich wird ein Gradiententerm eingeführt,
+der sicherstellt, dass auch die räumlichen Ableitungen des Geschwindigkeitsfeldes
+korrekt approximiert werden -- ein Aspekt, der beim reinen $L_1$-Training im Nullraum
+des Fehlermaßes verschwinden kann.
+
+\paragraph{Latente Raumintegration.}
+Für zeitlich veränderliche Szenarien, deren Parametrisierung über die Simulationsdauer
+wächst, wird ein separates Integrationsnetzwerk $T(\mathbf{x}_t)$ eingeführt, das
+Übergänge im latenten Raum erlernt und so eine Vorhersage neuer Zeitschritte direkt
+im komprimierten Raum ermöglicht, ohne die vollständige Simulation erneut durchführen
+zu müssen.
+
+\paragraph{Ergebnisse.}
+Das Verfahren wird an 2D- und 3D-Rauchsimulationen sowie an Flüssigkeitsszenarien
+(Viskositätsvariationen, Kugelsedimentierung) demonstriert. Gegenüber dem zugrundeliegenden
+CPU-Solver werden Beschleunigungen von bis zu $700\times$ erreicht, bei gleichzeitiger
+Datenkompression von bis zu $1300\times$. Darüber hinaus zeigt das Modell plausible
+Interpolationen für Parameterkombinationen, die nicht Teil des Trainingsdatensatzes waren.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Die Arbeit von Kim et al.\ ist aus mehreren Perspektiven für die vorliegende Masterarbeit
+relevant.
+
+\paragraph{Gemeinsames Grundprinzip: Surrogatmodellierung für Strömungsfelder.}
+Beide Arbeiten verfolgen das Ziel, rechenintensive numerische Strömungssimulationen
+durch schnelle neuronale Netze zu ersetzen. Während Deep Fluids auf Navier-Stokes-Strömungen
+mit inertialem Charakter (Rauch, Flüssigkeiten) fokussiert, adressiert die vorliegende
+Masterarbeit Stokes-Strömungen im Niedrig-Reynolds-Regime, wie sie für magmatische Systeme
+charakteristisch sind. In beiden Fällen ist das Trainingsziel ein physikalisch konsistentes
+Geschwindigkeitsfeld auf einem regulären Gitter.
+
+\paragraph{Divergenzfreiheit durch Stromfunktion.}
+Die Kernidee von Deep Fluids, Divergenzfreiheit durch die Vorhersage einer Stromfunktion
+$\Psi$ anstelle direkter Geschwindigkeitskomponenten zu erzwingen, ist ein zentrales
+Strukturmerkmal der vorliegenden Masterarbeit. Das hier verwendete Lernziel ist
+ebenfalls $\psi(x,z)$, die skalare Stromfunktion der zweidimensionalen Stokes-Gleichungen,
+aus der die Geschwindigkeitskomponenten analytisch als $u_x = \partial_z\psi$ und
+$u_z = -\partial_x\psi$ gewonnen werden. Diese Wahl der Ausgaberepräsentation
+reduziert die effektiven Freiheitsgrade des Lernproblems und garantiert
+Inkompressibilität ohne explizite Straffterme -- analog zu dem von Kim et al.\
+motivierten Ansatz.
+
+\paragraph{Unterschiede in Problemstellung und Architektur.}
+Ein wesentlicher Unterschied besteht in der Problemstruktur: Deep Fluids lernt einen
+\emph{parametrisierten} Lösungsraum, in dem Szenarien durch einen festen, niedrigdimensionalen
+Parametervektor (z.\,B.\ Quellposition, Einstromgeschwindigkeit) beschrieben werden.
+Im Gegensatz dazu ist das zentrale Generalisierungsproblem der vorliegenden Masterarbeit
+die \emph{geometrische Variabilität}: Das Netz soll auf Konfigurationen mit variierender
+Kristallanzahl und räumlicher Anordnung generalisieren -- also auf topologisch verschiedene
+Eingaben. Diese Aufgabe ist nicht durch einen kompakten Parametervektor beschreibbar
+und erfordert eine geometriegerechte Eingaberepräsentation (Kristallmaske, Distanzfeld,
+Koordinatenkanäle) auf einem festen $256 \times 256$-Gitter.
+
+Als Surrogatarchitekturen werden hier U-Net und Fourier Neural Operator (FNO) eingesetzt
+und systematisch verglichen -- statt des in Deep Fluids genutzten generativen Decoder-Netzes
+mit vollständig verbundenen Projektionsschichten. Der Fokus liegt nicht auf Interpolation
+im latenten Raum, sondern auf der direkten Bild-zu-Bild-Abbildung von Geometrieinformation
+auf das Stromfunktionsfeld.
+
+\paragraph{Einordnung in die Literatur.}
+Deep Fluids ist ein wichtiger Vorläufer datengetriebener Strömungssurrogate und motiviert
+die physikalisch strukturierte Ausgaberepräsentation, die in der vorliegenden Arbeit
+konsequent weiterverfolgt wird. Die hier untersuchte Frage der Generalisierung über
+variable Partikelanzahlen -- also die Übertragung eines auf $N$ Kristallen trainierten
+Modells auf Konfigurationen mit $N+m$ Kristallen -- ist in Deep Fluids nicht adressiert
+und stellt einen eigenständigen Beitrag dieser Masterarbeit dar.
+
+\end{document}

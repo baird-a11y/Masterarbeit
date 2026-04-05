@@ -1,0 +1,170 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{hyperref}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Physics-based Machine Learning for Mantle Convection Simulations}
+\textbf{Autoren:} Siddhant Agarwal, Ali Can Bekar, Christian H\"uttig,
+David S.\ Greenberg, Nicola Tosi \\
+\textbf{Erscheinungsjahr:} 2025 (arXiv:2505.16041) \\
+\textbf{Institution:} DLR Berlin \& Helmholtz-Zentrum Hereon, Geesthacht
+
+\subsection*{Problemstellung und Motivation}
+
+Mantelkonvektionssimulationen sind ein zentrales Werkzeug zur Untersuchung
+der thermischen Evolution von Gesteinsplaneten wie Erde, Mars und Venus.
+Die zugrundeliegenden partiellen Differentialgleichungen -- Massen-, Impuls-
+und Energieerhaltung -- beschreiben ein tr\"ages, hochviskoses Fluid im sog.
+\emph{Stokes-Regime} ($Re \ll 1$), bei dem Tr\"agheitskr\"afte vernachl\"assigbar
+sind. Der numerisch aufwendigste Schritt jeder Zeitintegration ist dabei die
+L\"osung des Stokes-Problems (Massen- und Impulserhaltung), das einen direkten
+Gleichungsl\"oser erfordert und den Gro{\ss}teil der Rechenzeit verbraucht.
+Erschwerend kommen schlecht bekannte Eingangsparameter sowie stark nichtlineare
+Viskosit\"atsabh\"angigkeiten von Druck und Temperatur hinzu, die ausgedehnte
+Parameterstudien erforderlich machen. Die Autoren stellen daher die Frage, ob
+ein physik-basiertes ML-Modell den Stokes-L\"oser ersetzen und damit die
+Simulation erheblich beschleunigen kann.
+
+\subsection*{Methodik}
+
+\paragraph{Hybrides Simulations-Framework.}
+Der Kernansatz ist eine hybride Kopplung: Ein trainiertes konvolutionales
+neuronales Netz (CNN) ersetzt den Stokes-L\"oser und sagt aus dem Temperaturfeld
+$T^t$ die Str\"omungsgeschwindigkeiten $(u^t, v^t)$ vorher. Diese werden
+anschlie{\ss}end an den numerischen Finite-Volumen-L\"oser GAIA \"ubergeben,
+der daraus das Temperaturfeld $T^{t+1}$ per Advektions-Diffusions-Schritt
+bestimmt. Auf diese Weise wird die Zeitintegration \emph{ohne} zeitliches
+Lernen des Netzes durchgef\"uhrt, was die physikalische Kausali\"at der Stokes-
+Gleichungen ausnutzt: Die Geschwindigkeit zu einem gegebenen Zeitschritt h\"angt
+nicht von der Geschwindigkeit des vorherigen Zeitschritts ab, sondern
+ausschlie{\ss}lich vom aktuellen Temperatur- und Viskosit\"atsfeld.
+
+\paragraph{CNN-Architektur.}
+Die Architektur folgt Tompson et al.\ (2017) und verwendet f\"unf Aufl\"osungsebenen
+mit Average-Pooling und bikubischem Upsampling. Im Gegensatz zum klassischen
+U-Net werden die Merkmale der Encoder- und Decoderst\"ufen durch
+Konkatenation statt durch Skip-Connections summiert, was dem Netz mehr
+Flexibilit\"at bei der Kombination von Information unterschiedlicher Skalen
+gibt. Als Aktivierungsfunktion wird GELU mit Group Normalisation eingesetzt.
+Das Netz verarbeitet neben dem Temperaturfeld auch das Viskosit\"atsfeld sowie
+Gitterkoordinaten und Simulationsparameter als Eingaben.
+
+\paragraph{Massenerhaltung durch Vektorpotential (Stromfunktion).}
+Um Divergenzfreiheit der vorhergesagten Geschwindigkeitsfelder
+mathematisch zu gew\"ahrleisten, sagt das Netz nicht $(u, v)$ direkt
+vorher, sondern ein skalares Vektorpotential $a$ (die
+zweidimensionale Stromfunktion). Die divergenzfreien Geschwindigkeitskomponenten
+ergeben sich dann durch:
+\[
+  u = \frac{\partial a}{\partial y}, \qquad v = -\frac{\partial a}{\partial x},
+\]
+wobei die Ableitungen \"uber feste Finite-Differenzen-Faltungskerne berechnet
+werden. Dieser \emph{Hard Constraint} garantiert Massenerhaltung im Innern
+des Gebiets bis auf Maschinengenauigkeit (double precision).
+
+\paragraph{Gelernte Randauff\"ullungen.}
+Standardm\"a{\ss}ige Padding-Strategien (Zero- oder Replicate-Padding) f\"uhren
+an den Gebietsstr\"andern zu erheblichen Fehlern, die sich im autoregressiven
+Rollout aufw\"urfen und die L\"osung destabilisieren. Die Autoren setzen
+stattdessen \emph{Boundary Learned Convolutions} ein (Innamorati et al.\ 2020):
+Ein separater Satz von Faltungsfiltern wird f\"ur jede der 8 Randregionen
+(4 Kanten, 4 Ecken) sowie das Innere trainiert. Dies reduziert den MAE an
+den R\"andern um bis zu Faktor~8 gegen\"uber Zero-Padding.
+
+\paragraph{Geschwindigkeitsskalierung und Verlustfunktion.}
+Die Trainingsdaten umfassen Str\"omungsgeschwindigkeiten, die \"uber mehrere
+Gr\"o{\ss}enordnungen variieren -- je nach Simulationsparametern ($Q$, $\gamma$,
+$\beta$). Standardnormierungen wie Min-Max-Skalierung versagen hier.
+Stattdessen wird ein parametrisch angepasster Skalierungsfaktor
+\[
+  s = 5\,e^{0.18\,Q}\,\gamma^{0.43}\,\beta^{-0.46}
+\]
+genutzt, der die Geschwindigkeitsfelder verschiedener Simulationen in
+einen homogeneren Bereich bringt. Die Verlustfunktion kombiniert MAE
+auf Geschwindigkeiten und deren Ableitungen, einen Randstrafterm sowie
+eine dynamische Verlustgewichtung, die kleinen Geschwindigkeitsamplituden
+mehr Aufmerksamkeit schenkt.
+
+\subsection*{Ergebnisse}
+
+Mit nur 94 Trainingssimulationen erreicht das Modell eine bis zu
+\textbf{89-fache Beschleunigung} gegen\"uber dem direkten CPU-L\"oser und
+\"ubertrifft damit auch alternative Baselines (Momentum-Skips, iterativer
+GPU-L\"oser) sowohl in Genauigkeit als auch in Geschwindigkeit.
+Stabile autoreg\-ressive Rollouts \"uber Zehntausende von Zeitschritten
+sind in nahezu allen Testf\"allen m\"oglich. Im Gegensatz dazu divergiert
+ein reines U-Net, das direkt in der Zeit lernt (\emph{Learning in Time}),
+bereits nach 16 Schritten -- trotz besserer Einzel-Schritt-Vorhersagegenauigkeit.
+Dies unterstreicht, dass physikalische Strukturen (Stokes-Kausalit\"at)
+fundamentaler f\"ur die Rollout-Stabilit\"at sind als eine niedrige
+Validierungs-Loss. Schw\"achen zeigen sich bei Extrapolation im Parameterraum
+sowie bei stark au{\ss}erhalb der Trainingsverteilung liegenden
+Anfangsbedingungen (\emph{Out-of-Distribution}-F\"alle).
+
+\subsection*{Bezug zur Masterarbeit}
+
+Diese Arbeit ist in mehrfacher Hinsicht unmittelbar relevant f\"ur die
+Masterarbeit zur physik-basierten ML-Vorhersage von Str\"omungsfeldern
+um sedimentierende Kristalle.
+
+\paragraph{Gemeinsames physikalisches Regime.}
+Beide Arbeiten operieren im Stokes-Str\"omungsregime ($Re \ll 1$), in dem
+Tr\"agheitskr\"afte vernachl\"assigt werden k\"onnen und das Stokes-Problem
+den Rechenengpass darstellt. Die hier entwickelten methodischen L\"osungen
+sind daher direkt \"ubertragbar.
+
+\paragraph{Stromfunktions-Ansatz zur Gew\"ahrleistung von Divergenzfreiheit.}
+Der Vektorpotential-Ansatz in Gl.\ (5) entspricht exakt der Stromfunktions-
+Formulierung ($v = \nabla \times \psi$), die in der Masterarbeit als Alternative
+zur direkten Geschwindigkeitsvorhersage untersucht wird. Diese Arbeit
+best\"atigt empirisch, dass der Hard Constraint deutlich robustere
+Rollout-Eigenschaften liefert als ein Soft Constraint in der Verlustfunktion --
+ein wichtiger Befund f\"ur die Designentscheidung der Masterarbeit.
+
+\paragraph{Residuelles Lernen und physikalische Vorkenntnisse.}
+Der hybride Ansatz -- Netz lernt Korrektur zum physikalisch motivierten
+Hintergrundfeld -- ist konzeptuell verwandt mit dem in der Masterarbeit
+implementierten Residuallernen ($v_\text{total} = v_\text{Stokes} + \Delta v_\text{gelernt}$).
+Beide Ans\"atze nutzen analytische L\"osungen als starke induktive Vorannahme
+und lernen nur die verbleibende Abweichung, was den Lernproblem erheblich
+vereinfacht.
+
+\paragraph{Herausforderung der Geschwindigkeitsskalierung.}
+Die parametrisch motivierte Skalierungsstrategie in Gl.\ (4) adressiert
+dasselbe Problem, das auch in der Masterarbeit auftritt: Geschwindigkeitsfelder
+verschiedener Konfigurationen (hier: Simulationsparameter; dort: Kristallanzahl
+und -positionen) k\"onnen stark in ihrer Amplitude variieren. Die hier
+vorgeschlagene Regressionsanpassung an Systemparameter bietet eine
+\"ubertragbare Strategie f\"ur die Normierung in der Masterarbeit.
+
+\paragraph{Vergleich UNet vs.\ CNN-Architekturen.}
+Die systematische Gegen\"uberstellung von reinem U-Net (Learning in Time)
+und dem Stokes-Surrogat-CNN liefert wichtige Argumente f\"ur die
+Architekturwahl in der Masterarbeit. Die \"Uberlegenheit des physikalisch
+strukturierten Ansatzes -- trotz schlechterer Einzelschritt-Genauigkeit --
+unterst\"utzt die These, dass physikalische Nebenbedingungen wichtiger sind
+als Modellkapazit\"at allein.
+
+\paragraph{Gelernte Randbehandlung.}
+Die starke Sensitivit\"at des autoregressiven Rollouts gegen\"uber
+Randfehlern und der deutliche Vorteil gelernter Randauff\"ullungen
+(Faktor~8 genauer) sind auch f\"ur die UNet-basierte Kristallsedimentations-
+vorhersage relevant, da Randeffekte um einzelne Kristalle \"ahnliche
+Instabilit\"aten hervorrufen k\"onnen.
+
+\paragraph{Grenzen der Generalisierung.}
+Das klare Scheitern des Modells bei Out-of-Distribution-Bedingungen (neue
+Energiegleichung, kalte Startwerte) spiegelt die zentrale Forschungsfrage der
+Masterarbeit wider: Kann ein auf $N$ Kristalle trainiertes Modell auf
+$N + m$ Kristalle generalisieren? Diese Arbeit zeigt, dass auch physik-
+informierte ML-Modelle empfindlich auf Verteilungsverschiebungen reagieren
+und betont die Notwendigkeit eines repr\"asentativen Trainingsdatensatzes --
+ein Argument f\"ur die in der Masterarbeit implementierte Datenerweiterung
+durch Spiegelungen und Translationen.
+
+\end{document}

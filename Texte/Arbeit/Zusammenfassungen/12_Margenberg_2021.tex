@@ -1,0 +1,145 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{A Neural Network Multigrid Solver for the Navier--Stokes Equations}
+
+\textbf{Autoren:} Nils Margenberg, Dirk Hartmann, Christian Lessig, Thomas Richter \\
+\textbf{Zeitschrift:} Journal of Computational Physics, Band 460, 2022 \\
+\textbf{DOI:} \texttt{10.1016/j.jcp.2022.110983}
+
+% ----------------------------------------------------------------
+\subsection*{Zusammenfassung}
+
+Margenberg et al.\ entwickeln den \emph{Deep Neural Network Multigrid Solver}
+(DNN-MG), einen hybriden Ansatz zur effizienten Lösung der instationären
+Navier-Stokes-Gleichungen, der klassische geometrische Mehrgitterverfahren mit
+einem rekurrenten neuronalen Netz kombiniert.
+
+\paragraph{Grundidee.}
+Das klassische geometrische Mehrgitterverfahren löst das lineare Gleichungssystem
+auf einer Hierarchie von Gittern $\mathcal{T}_0 \subset \mathcal{T}_1 \subset
+\cdots \subset \mathcal{T}_L$, wobei hochfrequente Fehler auf feinen Ebenen
+geglättet und niederfrequente Anteile auf groben Gittern behandelt werden.
+Dieser Ansatz erreicht eine optimale Komplexität von $\mathcal{O}(N)$, ist aber
+auf jeder Gitterebene rechenaufwendig. DNN-MG ersetzt die
+teuren Berechnungen auf den feinsten Gitterebenen $L+1$ (bzw.\ $L+2$) durch
+ein neuronales Netz, das auf der groben Mehrgitterlösung aufbaut und eine
+Korrektur des prolongierten Geschwindigkeitsfeldes vorhersagt:
+\begin{equation}
+    \tilde{v}^{L+1}_n = P(v^L_n) + d^{L+1}_n,
+\end{equation}
+wobei $P$ der Prolongationsoperator, $v^L_n$ die Mehrgitterlösung auf Ebene $L$
+und $d^{L+1}_n$ die vom Netz vorhergesagte Korrektur ist.
+Diese Korrektur fließt durch die rechte Seite der Gleichung in den nächsten
+Zeitschritt zurück, sodass das neuronale Netz die zeitliche Entwicklung der
+Strömung direkt beeinflusst.
+
+\paragraph{Netzwerkarchitektur.}
+Das neuronale Netz ist bewusst kompakt gehalten und arbeitet
+\emph{patch-basiert}: Es verarbeitet nur kleine lokale Ausschnitte
+(Patches) des Rechengebiets unabhängig voneinander. Als Eingang dienen die
+prolongierte Grobgitterlösung, nichtlineare Residuen auf Ebene $L+1$,
+Péclet-Zahlen sowie geometrische Informationen (Kantenlängen, Seitenverhältnisse,
+Winkel). Als Kernbaustein wird eine \emph{Gated Recurrent Unit} (GRU) verwendet,
+die zeitliche Abhängigkeiten zwischen aufeinanderfolgenden Zeitschritten
+modelliert und so eine zeitlich kohärente Korrektur erzeugt. Das Gesamtmodell
+umfasst lediglich rund 8\,600 trainierbare Parameter, was Training auf einem
+einzigen Mehrgitter-Datensatz ermöglicht.
+
+\paragraph{Ergebnisse.}
+Die Methode wird am Benchmark-Problem der laminaren Kanalströmung um einen
+elliptischen Zylinder bei $Re = 100$--$200$ getestet. DNN-MG erzielt dabei
+deutlich bessere Genauigkeit als eine reine Grobgitterlösung auf Ebene $L$ und
+benötigt gleichzeitig nur etwa die Hälfte der Rechenzeit gegenüber einer vollen
+Mehrgitterlösung auf Ebene $L+1$. Lift- und Widerstandsfunktionale werden
+erheblich verbessert. Darüber hinaus zeigen Generalisierungsexperimente, dass
+ein auf \emph{einer} Hindernisgeometrie trainiertes Netz auf Kanalströmungen mit
+keinem oder mit zwei Hindernissen übertragbar ist -- ohne erneutes Training
+auf diesen Geometrien.
+
+% ----------------------------------------------------------------
+\subsection*{Bezug zur Masterarbeit}
+
+Die Arbeit von Margenberg et al.\ ist aus mehreren Perspektiven direkt relevant
+für die vorliegende Masterarbeit.
+
+\paragraph{1.\ Residuelles Lernen als gemeinsames Prinzip.}
+DNN-MG lernt explizit eine \emph{Korrektur} zur prolongierten Grobgitterlösung,
+anstatt das vollständige Geschwindigkeitsfeld aus dem Nichts zu rekonstruieren.
+Dieses residuelle Lernprinzip ($v_\text{gesamt} = v_\text{grob} + \Delta v$)
+ist strukturell analog zum in der vorliegenden Arbeit verfolgten Ansatz, bei
+dem eine analytische Stokes-Lösung als physikalisch motivierte Basislösung
+dient und das neuronale Netz nur die verbleibende Abweichung lernt.
+Beiden Ansätzen liegt die Erkenntnis zugrunde, dass das Lernen von
+Restfeldern numerisch stabiler ist und eine stärkere physikalische
+Regularisierung bewirkt als das direkte Schätzen der vollen Lösung.
+
+\paragraph{2.\ Mehrskalenstruktur und U-Net-Architektur.}
+Die hierarchische Gitterstruktur des Mehrgitterverfahrens -- mit sukzessiver
+Vergröberung, Glättung auf jeder Ebene und anschließender Prolongation --
+ist strukturell äquivalent zur Encoder-Decoder-Architektur des U-Nets, das
+in der vorliegenden Masterarbeit als zentrale Surrogatarchitektur eingesetzt
+wird. Beide Verfahren kombinieren Informationen aus verschiedenen räumlichen
+Auflösungen: Das Mehrgitterverfahren durch Restriktion und Prolongation,
+das U-Net durch Skip-Connections zwischen Encoder- und Decoderkanälen.
+DNN-MG liefert damit eine numerisch fundierte Motivation für die Wahl einer
+U-Net-basierten Architektur zur Vorhersage von Stokes-Strömungsfeldern.
+
+\paragraph{3.\ Generalisierung auf veränderte Geometrien.}
+Ein zentrales Ergebnis von Margenberg et al.\ ist die Fähigkeit des DNN-MG,
+auf Konfigurationen zu generalisieren, die nicht im Training enthalten waren:
+Ein auf einem Hindernis trainiertes Netz erzielt akzeptable Ergebnisse für
+Strömungen mit null oder zwei Hindernissen. Dies steht in direkter Analogie
+zur Kernfrage der vorliegenden Masterarbeit, nämlich ob ein auf $N$ Kristallen
+trainiertes Modell auf Konfigurationen mit $1$ bis $N+m$ Kristallen
+generalisiert werden kann. Margenberg et al.\ zeigen, dass die patch-basierte,
+\emph{lokale} Verarbeitung entscheidend für diese Generalisierbarkeit ist, da
+das Netz globale Gitterstrukturen nicht einlernt und somit geometrieagnostisch
+bleibt. Für die vorliegende Arbeit ergibt sich daraus die Hypothese, dass eine
+auf binären Masken und Abstandsfeldern basierende Eingabekodierung eine
+vergleichbare Geometrieagnostizität bei variierenden Kristallzahlen ermöglicht.
+
+\paragraph{4.\ Physikalische Einbettung statt reiner Datenorientierung.}
+DNN-MG integriert physikalische Information explizit in das Netzwerk: Das
+nichtlineare Residuum der Navier-Stokes-Gleichungen auf Ebene $L+1$ dient als
+primäre Eingabe, sodass das Netz auf physikalisch konsistente Korrekturen
+konditioniert wird. In der vorliegenden Masterarbeit wird eine komplementäre
+Strategie verfolgt: Durch die Wahl der Stromfunktion $\psi$ als Lernziel wird
+die Inkompressibilitätsbedingung $\nabla \cdot u = 0$ analytisch erzwungen,
+statt sie durch zusätzliche Verlustterme nur näherungsweise zu erfüllen.
+Beide Strategien illustrieren das Prinzip, physikalisches Vorwissen als
+induktiven Bias in das Lernproblem einzubringen, um Dateneffizienz und
+physikalische Konsistenz zu verbessern.
+
+\paragraph{5.\ Unterschiede und Einschränkungen.}
+DNN-MG ist für den instationären Navier-Stokes-Fall bei moderaten
+Reynolds-Zahlen ($Re \approx 100$--$200$) konzipiert und setzt eine laufende
+Mehrgittersimulation voraus; das neuronale Netz kann nicht eigenständig
+ohne numerischen Löser betrieben werden. Im Gegensatz dazu zielt die
+vorliegende Masterarbeit auf ein vollständiges Surrogat für \emph{stationäre}
+Stokes-Strömungen ($Re \ll 1$) im magmatischen Kontext ab, das vollständig
+ohne begleitende Simulation ausgewertet wird. Ferner arbeitet DNN-MG auf
+einem festen Berechnungsgebiet mit einer geringen Anzahl von Hindernissen,
+während die vorliegende Arbeit die Generalisierung auf bis zu $N_{\max}$
+zufällig angeordnete Kristalle untersucht -- eine wesentlich komplexere
+topologische Vielfalt.
+
+\paragraph{Fazit.}
+Margenberg et al.\ demonstrieren überzeugend, dass die Kombination von
+klassischer numerischer Struktur (Mehrgitterverfahren) mit kompakten,
+lokal operierenden neuronalen Netzen sowohl Effizienzgewinne als auch
+bemerkenswerte Generalisierungsfähigkeiten ermöglicht. Diese Erkenntnisse
+stärken die methodischen Grundlagen der vorliegenden Masterarbeit und
+motivieren insbesondere den Einsatz von multiskaligen Architekturen,
+residuellem Lernen und geometrieagnostischen Eingaberepräsentationen
+für die Surrogatmodellierung von Mehr-Kristall-Sedimentationssystemen.
+
+\end{document}

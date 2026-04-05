@@ -1,0 +1,80 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{DeepCFD: Efficient Steady-State Laminar Flow Approximation with Deep Convolutional Neural Networks}
+
+\textbf{Autoren:} Mateus Dias Ribeiro, Abdul Rehman, Sheraz Ahmed, Andreas Dengel \\
+\textbf{Institution:} German Aerospace Center (DLR), German Research Center for AI (DFKI) \\
+\textbf{Jahr:} 2021 (arXiv:2004.08826v3)
+
+\subsection*{Zusammenfassung}
+
+DeepCFD präsentiert ein Deep-Learning-Framework zur effizienten Approximation stationärer laminarer Strömungen um variable Geometrien. Die zentrale Motivation der Arbeit liegt in der erheblichen Rechenzeit, die klassische CFD-Simulationen durch iterative Lösung der Navier-Stokes-Gleichungen benötigen, was insbesondere bei iterativen Designprozessen und Parameteruntersuchungen zum limitierenden Faktor wird.
+
+\subsubsection*{Methodischer Ansatz}
+
+Die Autoren verwenden eine modifizierte U-Net-Architektur mit Encoder-Decoder-Struktur und Skip-Connections. Als Eingabe dienen zwei Kanäle: eine \textit{Signed Distance Function} (SDF), die den Abstand jedes Gitterpunktes zur nächsten Hindernisoberfläche kodiert, sowie ein Mehrklassen-Kanal zur Kennzeichnung verschiedener Strömungsregionen (Hindernis, freie Strömung, Wände, Ein- und Auslass). Diese Eingaberepräsentation ermöglicht es dem Netzwerk, geometrische Informationen effizient zu verarbeiten.
+
+Das Netzwerk komprimiert die geometrische Information durch Downsampling-Konvolutionen in eine \textit{Latent Geometry Representation} (LGR) und dekodiert diese anschließend durch Upsampling-Dekonvolutionen zu den Zielfeldern. Eine wesentliche architektonische Entscheidung ist die Verwendung separater Decoder für die drei Ausgabegrößen: horizontale Geschwindigkeit $U_x$, vertikale Geschwindigkeit $U_y$ und Druck $p$. Diese Entkopplung ermöglicht es dem Modell, die unterschiedlichen physikalischen Charakteristika der Felder besser zu erfassen.
+
+\subsubsection*{Datengenerierung und Training}
+
+Die Trainingsdaten wurden mit OpenFOAM (simpleFoam-Solver) generiert. Der Datensatz umfasst über 1000 Simulationen von Kanalströmungen um zufällig geformte Hindernisse, die aus fünf Grundformen (Kreis, Quadrat, Dreieck vorwärts/rückwärts, Rhombus) durch stochastische Deformation abgeleitet wurden. Die Simulationsdomäne beträgt 260$\times$120\,mm mit einer mittleren Zellgröße von etwa 1\,mm und ca. 30\,000 Gitterzellen pro Simulation.
+
+Als Verlustfunktion kombinierten die Autoren L2-Norm (MSE) für die Geschwindigkeitskomponenten mit L1-Norm (MAE) für den Druck. Diese Wahl begründen sie mit der besseren Robustheit der L1-Norm gegenüber Ausreißern, was bei der Druck-Geschwindigkeits-Kopplung zu stabilerer Konvergenz führt.
+
+\subsubsection*{Ergebnisse}
+
+Das DeepCFD-Modell (U-Net mit 3 Decodern) übertrifft alle verglichenen Architekturen, einschließlich eines Autoencoder-Baseline-Modells nach Guo et al. (2016). Der Gesamt-MSE des vorgeschlagenen Modells beträgt etwa 62\% des Baseline-Fehlers. Die Arbeit demonstriert Beschleunigungen von bis zu drei Größenordnungen (CPU-CPU-Vergleich) bzw. bis zu fünf Größenordnungen bei GPU-Inferenz, während die relativen Fehler überwiegend unter 10\% bleiben.
+
+\subsection*{Bezug zur Masterarbeit}
+
+DeepCFD ist methodisch eng mit dem in der Masterarbeit verfolgten Ansatz verwandt und dient als wichtige Referenz für die Machbarkeit CNN-basierter Surrogat-Modelle in der Strömungsmechanik. Die wesentlichen Gemeinsamkeiten und Unterschiede lassen sich wie folgt zusammenfassen:
+
+\subsubsection*{Gemeinsamkeiten}
+
+\begin{itemize}
+    \item \textbf{Architekturwahl:} Beide Arbeiten verwenden U-Net-Architekturen mit Encoder-Decoder-Struktur und Skip-Connections zur Erhaltung hochaufgelöster räumlicher Information. Die hierarchische Merkmalextraktion ermöglicht die simultane Erfassung lokaler Grenzschichteffekte und globaler Strömungsstrukturen.
+    
+    \item \textbf{Eingaberepräsentation:} Die Verwendung von Signed Distance Functions als geometrische Eingabe ist ein zentrales gemeinsames Konzept. DeepCFD verwendet zusätzlich einen Flow-Region-Kanal, während die Masterarbeit normalisierte Koordinaten ($x_{\text{norm}}, z_{\text{norm}}$) und eine binäre Kristallmaske einbezieht.
+    
+    \item \textbf{Gitterbasierte Vorhersage:} Beide Ansätze operieren auf strukturierten kartesischen Gittern und nutzen die translationsinvarianten Eigenschaften von Faltungsoperationen.
+    
+    \item \textbf{Stationäre Strömungen:} Beide Arbeiten konzentrieren sich auf zeitunabhängige Strömungsfelder, was die Komplexität der Lernaufgabe reduziert.
+\end{itemize}
+
+\subsubsection*{Wesentliche Unterschiede}
+
+\begin{itemize}
+    \item \textbf{Physikalisches Regime:} DeepCFD behandelt laminare Navier-Stokes-Strömungen bei moderaten Reynolds-Zahlen, während die Masterarbeit sich auf das Stokes-Regime bei sehr niedrigen Reynolds-Zahlen konzentriert, wie es für Kristallsedimentation in viskosen Magmen charakteristisch ist.
+    
+    \item \textbf{Lernziel:} Ein fundamentaler Unterschied liegt in der Wahl des Lernziels. DeepCFD sagt direkt die Geschwindigkeitskomponenten $(U_x, U_y)$ und den Druck $p$ vorher. Die Masterarbeit wählt hingegen die Stromfunktion $\psi$ als Lernziel, aus der die Geschwindigkeit analytisch über
+    \begin{equation*}
+        u_x = \frac{\partial \psi}{\partial z}, \quad u_z = -\frac{\partial \psi}{\partial x}
+    \end{equation*}
+    rekonstruiert wird. Diese Formulierung garantiert Divergenzfreiheit ($\nabla \cdot \mathbf{u} = 0$) per Konstruktion und reduziert die effektiven Freiheitsgrade des Problems.
+    
+    \item \textbf{Geometrische Komplexität:} DeepCFD betrachtet jeweils ein einzelnes Hindernis pro Simulation mit variierender Form. Die Masterarbeit untersucht explizit die Generalisierung über eine variable Anzahl von Kristallen (1 bis $N$), was die Erfassung hydrodynamischer Wechselwirkungen zwischen mehreren Partikeln erfordert.
+    
+    \item \textbf{Architekturvergleich:} Während DeepCFD verschiedene CNN-Varianten (Autoencoder vs. U-Net, 1 vs. 3 Decoder) vergleicht, stellt die Masterarbeit einen systematischen Vergleich zwischen räumlichen (U-Net) und spektralen (Fourier Neural Operator) Architekturparadigmen an.
+    
+    \item \textbf{Physikalisch motivierte Regularisierung:} Die Masterarbeit integriert physikalische Randbedingungen direkt in die Verlustfunktion (Gradienten- und Randterm), während DeepCFD einen rein datengetriebenen Ansatz verfolgt.
+\end{itemize}
+
+\subsubsection*{Einordnung und Relevanz}
+
+DeepCFD demonstriert die grundsätzliche Leistungsfähigkeit von CNN-basierten Surrogat-Modellen für CFD-Anwendungen und etabliert wichtige methodische Standards. Die erreichte Beschleunigung von mehreren Größenordnungen bei akzeptablen Fehlerraten validiert den Surrogat-Modell-Ansatz als praktikable Alternative zu klassischen Solvern für bestimmte Anwendungsfälle.
+
+Für die Masterarbeit liefert DeepCFD wichtige Referenzwerte und methodische Inspiration, insbesondere hinsichtlich der Eingaberepräsentation und Architekturgestaltung. Der in der Masterarbeit gewählte Ansatz erweitert das DeepCFD-Konzept in mehreren Dimensionen: durch die physikalisch motivierte Stromfunktions-Formulierung, durch die Betrachtung von Multi-Partikel-Systemen mit variabler Partikelanzahl, und durch den systematischen Vergleich fundamentell verschiedener Netzwerkparadigmen (räumlich vs. spektral).
+
+Die Forschungslücke, die die Masterarbeit adressiert---nämlich die Generalisierung über variable Partikelanzahlen und die Anwendung auf geowissenschaftlich relevante Stokes-Strömungen---wird von DeepCFD nicht behandelt und stellt somit einen genuinen wissenschaftlichen Beitrag dar.
+
+\end{document}

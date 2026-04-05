@@ -1,0 +1,126 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{U-Net-Based Surrogate Model for Evaluation of Microfluidic Channels}
+
+\textbf{Autoren:} Le Quang Tuyen, Pao-Hsiung Chiu, Chinchun Ooi \\
+\textbf{Institution:} Institute of High Performance Computing, Singapore \\
+\textbf{Konferenz/Jahr:} 2020
+
+\subsection*{Zusammenfassung}
+
+Diese Arbeit präsentiert ein U-Net-basiertes Surrogat-Modell zur schnellen Vorhersage von Strömungsfeldern in mikrofluidischen Kanälen mit periodisch angeordneten Säulenstrukturen. Die Autoren untersuchen zwei komplementäre Anwendungsfälle: erstens die Vorhersage von Druck- und Geschwindigkeitsfeldern aus der Kanalgeometrie allein, und zweitens die Vorhersage von Druckfeldern aus bekannten Geschwindigkeitsfeldern, wie sie etwa durch Particle Image Velocimetry (PIV) gewonnen werden können.
+
+\subsubsection*{Datensatz und Problemstellung}
+
+Der Datensatz umfasst 176 CFD-Simulationen eines mikrofluidischen Kanals mit periodisch wiederholten Säulen. Die geometrische Variation erfolgt über zwei Parameter: die Säulenbreite $S$ (10--30\,µm in Schritten von 2\,µm) und den Säulenabstand $G$ (20--50\,µm in Schritten von 2\,µm). Die Strömung ist durch niedrige Reynolds-Zahlen charakterisiert (kriechende Strömung), wobei ein konstanter Einlassgeschwindigkeit von $V_{\text{in}} = 0{,}001$\,m/s vorgegeben wird.
+
+\subsubsection*{Netzwerkarchitektur}
+
+Das verwendete U-Net folgt der klassischen Encoder-Decoder-Struktur mit Skip-Connections, basierend auf der Arbeit von Thuerey et al. Die Architektur verwendet Leaky-ReLU-Aktivierungen im Encoder und ReLU im Decoder, Batch-Normalisierung nach jeder Faltungsschicht sowie Faltungskerne der Größe $8 \times 8$. Das Training erfolgt über 10\,000 Epochen mit dem Adam-Optimierer bei einer Lernrate von $0{,}0004$ und Mean-Squared-Error (MSE) als Verlustfunktion.
+
+\subsubsection*{Eingaberepräsentation}
+
+Für die reine Geometrie-zu-Feld-Vorhersage (Modelle B1, B2) werden drei Eingabekanäle verwendet:
+\begin{itemize}
+    \item Horizontale Geschwindigkeit $U_{\text{input}}$: überall 0 (Platzhalter für Erweiterbarkeit)
+    \item Vertikale Geschwindigkeit $V_{\text{input}}$: 0 im Festkörper, 1 im Fluid
+    \item Volume-of-Fluid (VOF) Parameter: 1 im Festkörper, 0 im Fluid
+\end{itemize}
+Diese Kodierung ermöglicht eine explizite Trennung von Fluid- und Festkörperdomänen ohne Modifikation der Netzwerkarchitektur bei variierender Geometrie.
+
+\subsubsection*{Normalisierungsstrategien}
+
+Ein zentraler Beitrag der Arbeit ist die systematische Untersuchung verschiedener Normalisierungsstrategien für die Ausgabegrößen. Die Autoren zeigen, dass die Wahl der Normalisierung erheblichen Einfluss auf die Modellgenauigkeit hat:
+
+\textbf{Für Druck aus Geschwindigkeit (Modelle A1--A3):}
+\begin{itemize}
+    \item \textbf{Modell A1:} Skalierung mit $L/(\mu V_{\text{in}})$ und Subtraktion eines mittleren Druckprofils
+    \item \textbf{Modell A2:} Skalierung mit einer geometrieabhängigen Regressionsfunktion $f(S,G)$
+    \item \textbf{Modell A3:} Skalierung mit dem tatsächlichen mittleren Einlassdruck (beste Ergebnisse: $\sim 0{,}7\%$ RMSE)
+\end{itemize}
+
+\textbf{Für vollständige Feld-Vorhersage (Modelle B1, B2):}
+\begin{itemize}
+    \item Geschwindigkeiten werden auf $V_{\text{in}}$ normiert
+    \item Druck wird auf den mittleren Einlassdruck normiert
+    \item Modell B2 erreicht $\sim 0{,}5\%$ RMSE für Druck und $\sim 0{,}7\%$ für Geschwindigkeiten
+\end{itemize}
+
+\subsubsection*{Ergebnisse}
+
+Das U-Net-Surrogat erreicht Vorhersagefehler von unter 1\% (RMSE) für sowohl Geschwindigkeits- als auch Druckfelder. Die Autoren demonstrieren, dass physikalisch motivierte Normalisierungsparameter (wie der tatsächliche Druckgradient) zu deutlich besseren Ergebnissen führen als rein statistische Normalisierung. Die Methode ermöglicht eine schnelle Evaluierung neuer Designs ohne aufwendige CFD-Simulationen.
+
+\subsection*{Bezug zur Masterarbeit}
+
+\subsubsection*{Gemeinsame methodische Grundlagen}
+
+Beide Arbeiten verwenden U-Net-Architekturen als Surrogat-Modelle für Stokes-Strömungen bei niedrigen Reynolds-Zahlen. Die grundlegende Problemstellung ist strukturell ähnlich: Aus einer geometrischen Eingabe (Säulenpositionen bzw. Kristallpositionen) sollen Strömungsfelder vorhergesagt werden. In beiden Fällen ist die Strömung durch die Inkompressibilitätsbedingung $\nabla \cdot \mathbf{u} = 0$ und die Dominanz viskoser Kräfte charakterisiert.
+
+\subsubsection*{Eingaberepräsentation}
+
+Die Arbeit von Tuyen et al. verwendet eine ähnliche Eingabekodierung wie die Masterarbeit:
+\begin{center}
+\begin{tabular}{l|l}
+\textbf{Tuyen et al.} & \textbf{Masterarbeit} \\
+\hline
+VOF-Parameter (binäre Maske) & Kristallmaske $M(x,z) \in \{0,1\}$ \\
+$U_{\text{input}}, V_{\text{input}}$ Kodierung & Signed Distance Field (SDF-Proxy) \\
+-- & Normierte Koordinaten $x_{\text{norm}}, z_{\text{norm}}$ \\
+\end{tabular}
+\end{center}
+Die Masterarbeit erweitert diesen Ansatz durch die Hinzunahme von Distanzfeldern und expliziten Koordinatenkanälen, was die räumliche Kontextualisierung verbessern soll.
+
+\subsubsection*{Ausgaberepräsentation und physikalische Constraints}
+
+Ein wesentlicher Unterschied liegt in der Wahl der Ausgabegröße. Während Tuyen et al. direkt Geschwindigkeits- und Druckfelder vorhersagen, verwendet die Masterarbeit die Stromfunktion $\psi$ als Lernziel:
+\[
+u_x = \frac{\partial \psi}{\partial z}, \quad u_z = -\frac{\partial \psi}{\partial x}
+\]
+Diese Formulierung garantiert die Erfüllung der Inkompressibilitätsbedingung \emph{per Konstruktion} und reduziert das Lernproblem auf ein skalares Regressionsfeld. Tuyen et al. müssen hingegen darauf vertrauen, dass das Netzwerk die divergenzfreie Struktur aus den Trainingsdaten lernt.
+
+\subsubsection*{Normalisierungsstrategien}
+
+Die detaillierte Untersuchung verschiedener Normalisierungsansätze bei Tuyen et al. bestätigt die in der Masterarbeit getroffene Entscheidung für eine probenweise Normalisierung der Stromfunktion:
+\[
+\psi_{\text{norm}} = \psi \cdot 10^{-p_{\text{mean}}}, \quad p_{\text{mean}} = \text{round}(\text{mean}(\log_{10}(|\psi| + \epsilon)))
+\]
+Beide Arbeiten zeigen, dass physikalisch motivierte Skalierungen (bei Tuyen et al. der Druckgradient, in der Masterarbeit die Größenordnung der Stromfunktion) zu besserer numerischer Konditionierung und höherer Vorhersagegenauigkeit führen als rein datengetriebene Standardisierung.
+
+\subsubsection*{Generalisierungsfähigkeit}
+
+Die Fragestellung der Generalisierung unterscheidet sich zwischen beiden Arbeiten:
+\begin{itemize}
+    \item \textbf{Tuyen et al.:} Generalisierung über kontinuierliche Parametervariationen ($S$, $G$) bei fester Topologie (immer gleiche Anzahl an Säulen)
+    \item \textbf{Masterarbeit:} Generalisierung über \emph{variable Kristallanzahlen} ($1 \ldots N$) und \emph{beliebige räumliche Anordnungen}
+\end{itemize}
+Die Masterarbeit adressiert damit ein anspruchsvolleres Generalisierungsproblem, da sich nicht nur die geometrischen Parameter, sondern auch die topologische Komplexität des Problems ändert. Die Frage, ob ein auf $N$ Kristalle trainiertes Modell auf $N+m$ Kristalle generalisieren kann, wird von Tuyen et al. nicht behandelt.
+
+\subsubsection*{Architekturvergleich}
+
+Während Tuyen et al. ausschließlich U-Net-Architekturen untersuchen, erweitert die Masterarbeit den Vergleich um Fourier Neural Operators (FNO). Dies ermöglicht eine systematische Gegenüberstellung von:
+\begin{itemize}
+    \item \textbf{Räumlich-hierarchischer Verarbeitung} (U-Net): Lokale Merkmalsextraktion mit progressiver Aggregation
+    \item \textbf{Spektraler Verarbeitung} (FNO): Globale Korrelationen durch Fourier-Raum-Operationen
+\end{itemize}
+Für elliptische Probleme wie die Stokes-Gleichungen, bei denen lokale Störungen sich global ausbreiten, ist dieser Vergleich von besonderem Interesse.
+
+\subsubsection*{Methodische Erkenntnisse für die Masterarbeit}
+
+Aus der Arbeit von Tuyen et al. lassen sich folgende Erkenntnisse für die Masterarbeit ableiten:
+\begin{enumerate}
+    \item Die Sensitivität der Modellgenauigkeit gegenüber der Normalisierungsstrategie unterstreicht die Wichtigkeit der in der Masterarbeit gewählten probenweisen Normalisierung.
+    \item Die erreichten Fehler von $< 1\%$ bei Tuyen et al. bieten einen Referenzpunkt für die erwartbare Genauigkeit von U-Net-Surrogaten bei Stokes-Strömungen.
+    \item Die Verwendung von Volume-of-Fluid-Parametern zur Geometriekodierung validiert den ähnlichen Masken-basierten Ansatz der Masterarbeit.
+    \item Die Arbeit zeigt, dass U-Nets auch ohne explizite physikalische Verlustterme gute Ergebnisse erzielen können, was den rein datengetriebenen Ansatz der Masterarbeit (ohne PINN-Formulierung) unterstützt.
+\end{enumerate}
+
+\end{document}

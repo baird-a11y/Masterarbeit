@@ -1,0 +1,50 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\geometry{margin=2.5cm}
+\begin{document}
+
+\section*{Physics Informed Deep Learning (Part I): Data-driven Solutions of Nonlinear Partial Differential Equations}
+\textbf{Autoren:} Maziar Raissi, Paris Perdikaris, George Em Karniadakis \\
+\textbf{Jahr:} 2017 \\
+\textbf{Quelle:} arXiv:1711.10561
+
+\subsection*{Zusammenfassung}
+
+Diese Arbeit stellt das Konzept der \textit{Physics-Informed Neural Networks} (PINNs) vor -- eine Klasse neuronaler Netze, die zur datengetriebenen Lösung nichtlinearer partieller Differentialgleichungen (PDEs) eingesetzt werden. Der zentrale Beitrag besteht darin, physikalische Gesetze direkt in den Trainingsprozess zu integrieren, indem das Residuum der jeweiligen PDE als Zusatzterm in die Verlustfunktion aufgenommen wird. Das Netzwerk muss somit gleichzeitig Messdaten approximieren und die zugrunde liegenden physikalischen Gleichungen erfüllen, wodurch es auch bei sehr wenigen Trainingsdaten zu robusten und physikalisch konsistenten Vorhersagen in der Lage ist.
+
+Formal betrachten die Autoren PDEs der allgemeinen Form
+\begin{equation*}
+    u_t + \mathcal{N}[u] = 0, \quad x \in \Omega,\; t \in [0, T],
+\end{equation*}
+wobei $u(t,x)$ die gesuchte Lösungsfunktion und $\mathcal{N}[\cdot]$ ein nichtlinearer Differentialoperator ist. Das neuronale Netz approximiert $u(t,x)$, während die physiksinformierte Komponente $f := u_t + \mathcal{N}[u]$ durch automatische Differentiation berechnet wird. Die Verlustfunktion setzt sich aus einem Datenfehlerterm $\text{MSE}_u$ (Anfangs- und Randbedingungen) und einem Physikterm $\text{MSE}_f$ (Kollokationspunkte im Inneren des Gebiets) zusammen:
+\begin{equation*}
+    \mathcal{L} = \text{MSE}_u + \text{MSE}_f.
+\end{equation*}
+Der Physikterm wirkt dabei als impliziter Regularisierungsterm, der unphysikalische Lösungen aus dem Suchraum ausschließt.
+
+Die Autoren unterscheiden zwei Modellklassen: \textit{kontinuierliche Zeitmodelle}, bei denen das Netzwerk über das gesamte Raum-Zeit-Gebiet trainiert wird, und \textit{diskrete Zeitmodelle}, die auf impliziten Runge-Kutta-Verfahren mit einer beliebig großen Anzahl von Stufen basieren. Letztere erlauben sehr große Zeitschritte bei gleichzeitig hoher Genauigkeit und numerischer Stabilität. Die Methode wird anhand klassischer Benchmarkprobleme validiert, darunter die Burgers-Gleichung, die nichtlineare Schrödinger-Gleichung und die Allen-Cahn-Gleichung. In allen Fällen werden relative $L_2$-Fehler in der Größenordnung von $10^{-3}$ bis $10^{-4}$ mit nur wenigen hundert Trainingspunkten erzielt.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Obwohl in der vorliegenden Masterarbeit keine PINNs im engeren Sinne eingesetzt werden, bildet dieses Paper eine wichtige konzeptionelle Grundlage für das Verständnis physik-informierter Ansätze im maschinellen Lernen und lässt sich auf mehreren Ebenen mit der eigenen Arbeit in Beziehung setzen.
+
+\paragraph{Physikalische Konsistenz als Trainingsziel.}
+Der PINN-Ansatz zeigt exemplarisch, wie physikalische Gesetze -- in diesem Fall Erhaltungsgleichungen und Differentialoperatoren -- direkt in die Verlustfunktion eingebettet werden können. In der Masterarbeit wird ein analoges Prinzip verfolgt: Die Kontinuitätsbedingung $\nabla \cdot \mathbf{v} = 0$ für inkompressible Stokes-Strömungen wird als physiksinformierter Verlustterm in das Training des U-Net bzw. FNO integriert. Die von Raissi et al. berichteten Erfahrungen -- insbesondere die stabilisierende Wirkung des Physikterms auf das Training bei geringen Datemengen -- unterstützen die Entscheidung, Divergenzfreiheit als weiches Constraint zu verwenden.
+
+\paragraph{Surrogatmodellierung für Strömungsfelder.}
+Beide Arbeiten verfolgen das übergeordnete Ziel, rechenzeitintensive numerische Simulationen durch schnelle neuronale Netzwerke zu ersetzen. Während PINNs direkt die PDE lösen, approximieren die in dieser Masterarbeit verwendeten Architekturen (U-Net, FNO) eine Abbildung von Geometrie- und Konfigurationsinformation auf das resultierende Geschwindigkeitsfeld -- also eine \textit{operator-level} Approximation auf Basis von LaMEM-Simulationsdaten. Dies entspricht einem datengetriebenen Surrogatmodell, das im Gegensatz zu PINNs nicht auf einzelne Probleminstanzen zugeschnitten ist, sondern über verschiedene Kristallkonfigurationen generalisieren soll.
+
+\paragraph{Stokes-Strömung und physikalischer Kontext.}
+Die in der Masterarbeit behandelten Strömungsfelder um sedimentierende Kristalle in magmatischen Systemen gehorchen den Stokes-Gleichungen im Regime sehr kleiner Reynolds-Zahlen ($Re \ll 1$). Raissi et al. diskutieren den engen Zusammenhang zwischen der Burgers-Gleichung und den Navier-Stokes-Gleichungen und zeigen, dass neuronale Netze in der Lage sind, die charakteristischen Strukturen solcher Strömungsfelder -- einschließlich scharfer Gradienten -- korrekt zu approximieren. Diese Evidenz motiviert den Einsatz datengetriebener Methoden auch für das in der Masterarbeit betrachtete Stokes-Regime.
+
+\paragraph{Residuelles Lernen als Brücke zwischen den Ansätzen.}
+Ein zentrales Designprinzip der Masterarbeit ist das residuelle Lernen, bei dem das neuronale Netz nicht das vollständige Geschwindigkeitsfeld $\mathbf{v}$ vorhersagt, sondern die Korrektur $\Delta\mathbf{v}$ gegenüber der analytischen Einzel-Stokes-Lösung: $\mathbf{v}_\mathrm{total} = \mathbf{v}_\mathrm{Stokes} + \Delta\mathbf{v}_\mathrm{learned}$. Dieses Vorgehen lässt sich konzeptuell als Hybridstrategie verstehen, die -- ähnlich wie PINNs -- physikalisches Vorwissen explizit in die Modellstruktur einbettet, anstatt es ausschließlich über die Verlustfunktion zu vermitteln.
+
+\paragraph{Limitation und Abgrenzung.}
+Ein wesentlicher Unterschied besteht in der Generaliserungsfähigkeit: PINNs werden für jede neue Geometrie oder Randbedingung neu trainiert und sind daher keine Surrogatmodelle im klassischen Sinne. Die Masterarbeit adressiert explizit die Frage, ob ein einmal trainiertes Netzwerk auf neue Kristallanzahlen ($N \to N{+}m$) generalisieren kann -- eine Fragestellung, die im PINN-Framework konzeptionell nicht vorgesehen ist und den spezifischen wissenschaftlichen Beitrag der vorliegenden Arbeit unterstreicht.
+
+\end{document}

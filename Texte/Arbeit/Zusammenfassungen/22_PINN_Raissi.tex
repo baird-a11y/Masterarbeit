@@ -1,0 +1,38 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\begin{document}
+
+\section*{Physics-informed neural networks: A deep learning framework for solving forward
+and inverse problems involving nonlinear partial differential equations}
+
+\textbf{Autoren:} M. Raissi, P. Perdikaris, G. E. Karniadakis \\
+\textbf{Jahr:} 2019 \\
+\textbf{Journal:} Journal of Computational Physics, 378, 686--707
+
+\subsection*{Zusammenfassung}
+
+Diese Arbeit formalisiert das Konzept der physik-informierten neuronalen Netze (PINNs) als allgemeines Deep-Learning-Werkzeug zur Lösung von Vorwärts- und Inversproblemen nichtlinearer partieller Differentialgleichungen (PDGLn). Der zentrale Ansatz besteht darin, bekannte physikalische Gesetze nicht als externe Einschränkung, sondern als integralen Bestandteil der Verlustfunktion zu behandeln: Die physikalische Gleichung wird mittels automatischer Differentiation am Netzwerk ausgewertet, sodass ihre Residuen direkt in den Trainings\-prozess einfließen. Das Netzwerk approximiert dabei die gesuchte Lösung als stetige, raum-zeitliche Funktion ohne explizite Gitter\-dis\-kre\-ti\-sie\-rung.
+
+Die Autoren präsentieren zwei grundlegend verschiedene Formulierungen. Im \textit{kontinuierlichen Zeitmodell} werden sogenannte Kollokationspunkte im gesamten Raum-Zeit-Gebiet verteilt, an denen die PDGL als Verlustterm ausgewertet wird. Diese Formulierung ist konzeptionell einfach und flexibel, kann jedoch bei hochdimensionalen Problemen aufgrund der exponentiell wachsenden Zahl benötigter Kollokationspunkte an seine Grenzen stoßen. Das \textit{diskrete Zeitmodell} umgeht dieses Problem durch die Integration impliziter Runge-Kutta-Schemata beliebig hoher Ordnung in die Netzwerkarchitektur, was extrem große Zeitschritte bei gleichzeitig hoher Genauigkeit ermöglicht.
+
+Die Methode wird an einer Reihe von Benchmark-Problemen validiert: der nichtlinearen Schrödinger-Gleichung, der Allen-Cahn-Gleichung, der Burgers-Gleichung sowie den zweidimensionalen inkompressiblen Navier-Stokes-Gleichungen. Besonders bemerkenswert ist die demonstrierte Fähigkeit, Inversprobleme zu lösen, das heißt unbekannte Parameter eines Differentialoperators -- etwa Viskositätskoeffizienten -- allein aus verrauschten Beobachtungsdaten zu rekonstruieren. Im Navier-Stokes-Experiment gelingt es dem PINN, das gesamte Druckfeld zu rekonstruieren, obwohl keinerlei Druckmessungen in den Trainingsdaten enthalten sind. Die eingebetteten physikalischen Gesetze übernehmen dabei die Rolle eines Regularisierungsoperators, der das Netz auch bei geringer Datenmenge in physikalisch sinnvolle Lösungsräume lenkt.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Dieses Paper ist der primäre Referenzpunkt für alle physik-informierten Ansätze in der Strömungsmechanik und damit von zentraler Bedeutung für die Einordnung der in dieser Masterarbeit entwickelten Methoden. Mehrere konzeptionelle Parallelen sind direkt relevant:
+
+\textbf{Physikalische Verlustterme.} In der vorliegenden Masterarbeit werden Kontinuitätsverluste -- also die Verletzung der Divergenzfreiheit des Geschwindigkeitsfeldes ($\nabla \cdot \mathbf{v} = 0$) -- als zusätzlicher Physikterm in die UNet-Verlustfunktion integriert. Dieser Ansatz ist direkt von der in Raissi et al. beschriebenen MSE$_f$-Formulierung inspiriert, die die Einhaltung der PDGL an Kollokationspunkten erzwingt. Beide Methoden nutzen physikalische Gesetze als Regularisierung statt als harte Nebenbedingung.
+
+\textbf{Inkompressible Stokes-Strömung.} Die Demonstration an den Navier-Stokes-Gleichungen ist besonders relevant, da die Masterarbeit ebenfalls inkompressible Strömungsfelder um absinkende Kristalle behandelt -- allerdings im Regime sehr niedriger Reynolds-Zahlen (Stokes-Strömung, $Re \ll 1$), in dem Trägheitsterme vernachlässigt werden. Während Raissi et al. die volle Navier-Stokes-Dynamik modellieren, ist das vereinfachte Stokes-Regime eine günstige Voraussetzung für die Generalisierbarkeit des Surrogat-Modells, da die Lösung keine chaotischen oder instabilen Dynamiken aufweist.
+
+\textbf{Stream-Function-Formulierung.} Die in Raissi et al. eingeführte Stromfunktions-Darstellung ($u = \psi_y$, $v = -\psi_x$), durch die die Kontinuitätsgleichung automatisch erfüllt wird, entspricht konzeptionell dem in dieser Masterarbeit untersuchten Stromfunktions-Ansatz. Beide Formulierungen erzwingen Divergenzfreiheit durch die mathematische Struktur des Ansatzes selbst, anstatt sie als Soft-Constraint über die Verlustfunktion anzunähern.
+
+\textbf{Surrogate Modeling vs. PDE-Solving.} Ein wesentlicher Unterschied zu Raissi et al. besteht im Anwendungsparadigma: PINNs lösen PDGLn für eine spezifische Randbedingungskonfiguration, während die in dieser Masterarbeit entwickelten UNet- und FNO-basierten Surrogate-Modelle darauf ausgelegt sind, Strömungsfelder für eine \textit{Vielzahl verschiedener Kristallkonfigurationen} zu generalisieren. Diese Generalisierungsfähigkeit über unterschiedliche Geometrien hinweg -- insbesondere die Übertragung von $N$-Kristall-Konfigurationen auf $N+m$-Kristall-Systeme -- stellt einen neuartigen Beitrag dar, der über den klassischen PINN-Ansatz hinausgeht.
+
+\textbf{Datenbedarf und Effizienz.} Die Beobachtung von Raissi et al., dass physik-informierte Netze mit deutlich weniger Trainingsdaten auskommen als rein datengetriebene Methoden, motiviert den Einsatz physik-informierter Verlustterme auch in der vorliegenden Arbeit -- insbesondere angesichts der begrenzten Anzahl verfügbarer LaMEM-Simulationen als Trainingsdaten.
+
+\end{document}

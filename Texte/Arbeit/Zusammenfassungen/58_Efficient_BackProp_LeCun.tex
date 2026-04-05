@@ -1,0 +1,94 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Efficient BackProp}
+
+\textbf{Autoren:} Yann A. LeCun, Léon Bottou, Genevieve B. Orr, Klaus-Robert Müller \\
+\textbf{Institution:} AT\&T Labs, Willamette University, GMD FIRST \\
+\textbf{Erschienen in:} Montavon, G., Orr, G.B., Müller, K.-R. (Eds.): Neural Networks: Tricks of the Trade, 2nd edn. LNCS, vol. 7700, pp. 9--48. Springer, Heidelberg (2012). \\
+\textit{(Erstmals erschienen in der 1.~Auflage, LNCS 1524, 1998.)}
+
+\subsection*{Zusammenfassung}
+
+Das Kapitel analysiert die Konvergenz des Backpropagation-Algorithmus und gibt praktische Empfehlungen, um häufige Fehler zu vermeiden und das Training neuronaler Netze erheblich zu beschleunigen. Die Autoren behandeln sowohl einfach implementierbare heuristische Tricks als auch deren theoretische Grundlagen im Rahmen der Hessian-Matrix-Analyse.
+
+\subsubsection*{Praktische Tricks (Abschnitt 1.4)}
+
+\paragraph{Stochastisches vs. Batch-Lernen.}
+Stochastisches (Online-)Lernen ist Batch-Lernen in den meisten Fällen vorzuziehen: Es ist erheblich schneller auf redundanten Datensätzen, entkontert bessere Lösungen durch rauschen im Gradientenschritt (``Sprünge'' in tiefere Minima) und ermöglicht Tracking nicht-stationärer Datenverteilungen. Die Varianz der Gewichtsfluktuationen skaliert mit der Lernrate $\eta$; die optimale Annealingrate ist $\eta \sim c/t$.
+
+\paragraph{Reihenfolge der Trainingsbeispiele.}
+Netzwerke lernen am schnellsten von den informationsreichsten Beispielen. Empfohlen wird, Trainingsbeispiele zu shufflen, sodass aufeinanderfolgende Beispiele verschiedenen Klassen angehören, und Beispiele mit großem Fehler häufiger zu präsentieren.
+
+\paragraph{Normalisierung der Eingaben (Abschnitt 1.4.3).}
+Dies ist der für die Masterarbeit zentrale Trick. Konvergenz ist wesentlich schneller, wenn:
+\begin{enumerate}
+    \item der Mittelwert jeder Eingabevariable über den Trainingssatz nahe null liegt,
+    \item alle Eingabevariablen etwa gleiche Kovarianz besitzen,
+    \item die Eingabevariablen möglichst dekorreliert sind.
+\end{enumerate}
+Die theoretische Begründung (Abschnitt 1.5.3): Ein von null verschiedener Mittelwert erzeugt einen sehr großen Eigenwert der Hessematrix. Dies führt zu einer hohen Konditionszahl $\kappa = \lambda_{\max}/\lambda_{\min}$, sodass die Fehlerfläche in einigen Richtungen sehr steil und in anderen sehr flach ist. Die Folge sind ineffiziente Zickzack-Gradienten\-schritte und langsame Konvergenz. Mathematisch gilt für einen einzelnen linearen Neuron, dass die Hessematrix der Kovarianzmatrix der Eingaben entspricht:
+\[
+    H = \frac{1}{P} \sum_p x^p x^{p\top}.
+\]
+Damit ein skalarer Lernrate $\eta$ konvergiert, muss $\eta < 2/\lambda_{\max}$ gelten. Haben die Eingaben unterschiedliche Varianzen, ist $\lambda_{\max}$ sehr groß und die erlaubte Lernrate sehr klein, was die Konvergenz in den anderen (flacheren) Richtungen verlangsamt.
+
+\paragraph{Aktivierungsfunktion (Sigmoid).}
+Symmetrische Aktivierungsfunktionen wie der Tangens hyperbolicus konvergieren schneller als die Standard-Logistikfunktion, da ihre Ausgaben um null zentriert sind -- d.\,h. die Ausgaben einer Schicht (= Eingaben der nächsten Schicht) erfüllen automatisch die Normalisierungsbedingung. Empfohlen wird:
+\[
+    f(x) = 1{,}7159 \tanh\!\left(\tfrac{2}{3}x\right),
+\]
+da diese Funktion $f(\pm 1) = \pm 1$ und ein maximales zweites Ableitungsmaximum bei $\pm 1$ besitzt.
+
+\paragraph{Zielwerte.}
+Zielwerte sollten nicht bei den Asymptoten der Sigmoid-Funktion gesetzt werden, da dies die Gewichte gegen unendlich treibt (Sättigung). Stattdessen empfehlen die Autoren, Zielwerte am Punkt der maximalen zweiten Ableitung zu setzen (für den o.\,g.\ Sigmoid also bei $\pm 1$).
+
+\paragraph{Gewichtsinitialisierung.}
+Gewichte sollten aus einer Verteilung mit Mittelwert null und Standardabweichung
+\[
+    \sigma_w = m^{-1/2}
+\]
+gezogen werden, wobei $m$ die Fan-In-Zahl (Anzahl der eingehenden Verbindungen) der jeweiligen Einheit ist. Dies stellt sicher, dass die Standardabweichung der gewichteten Summe nahe 1 ist und die Sigmoid-Aktivierung im linearen Bereich arbeitet.
+
+\paragraph{Lernraten.}
+Jedes Gewicht sollte idealerweise eine eigene Lernrate erhalten, da die optimale Rate proportional zum Kehrwert des zugehörigen Hessian-Eigenwerts ist ($\eta_{\text{opt},i} = 1/\lambda_i$). Gewichte in unteren Schichten benötigen tendenziell größere Lernraten als die in höheren Schichten. Bei Netzen mit geteilten Gewichten (z.\,B. CNNs) sollte $\eta$ proportional zur Wurzel der Anzahl der teilenden Verbindungen gewählt werden.
+
+\subsubsection*{Konvergenztheorie (Abschnitt 1.5)}
+
+Die Autoren liefern eine theoretische Rechtfertigung aller Tricks im Rahmen der quadratischen Approximation der Fehlerfläche. Für eine quadratische Verlustfunktion gilt, dass die optimale Lernrate
+\[
+    \eta_{\text{opt}} = \left(\frac{\partial^2 E}{\partial W^2}\right)^{-1} = H^{-1}
+\]
+und die maximale stabile Lernrate $\eta_{\max} = 2/\lambda_{\max}$ beträgt. Das Verhältnis $\kappa = \lambda_{\max}/\lambda_{\min}$ bestimmt die Konvergenzzeit: Je größer $\kappa$, desto langsamer die Konvergenz. Input-Normalisierung und -Dekorrelation reduzieren $\kappa$ direkt und sind daher die effektivsten Maßnahmen zur Konvergenzbeschleunigung.
+
+\subsubsection*{Klassische Methoden zweiter Ordnung (Abschnitt 1.6)}
+
+Das Kapitel gibt einen Überblick über Newton-Verfahren ($O(N^3)$, unpraktisch für große Netze), konjugierte Gradienten ($O(N)$, nur Batch-Modus), Gauss-Newton und BFGS. Diese Methoden sind für große neuronale Netze größtenteils impraktikabel. Als praktikable Alternative werden stochastische diagonale Levenberg-Marquardt-Methoden und Hessian-Vektor-Produkt-Methoden diskutiert, die die Vorteile zweiter Ordnung ohne vollständige Hessian-Speicherung bieten.
+
+\subsection*{Bezug zur Masterarbeit}
+
+\subsubsection*{Direkte Relevanz: Input-Normalisierung}
+
+Die in der Masterarbeit implementierte Eingabenormalisierung (Abschnitt~4.3.2) stützt sich direkt auf die Empfehlungen dieses Kapitels. Die Eingabekanäle des U-Net und FNO -- insbesondere die Stromfunktion $\psi$ (Ausgabe des Poisson-Lösers) sowie die geometrischen Eingaben (SDF, Koordinaten) -- werden vor dem Training normalisiert, sodass Mittelwert $\approx 0$ und Standardabweichung $\approx 1$. Die theoretische Begründung findet sich exakt in Abschnitt~1.4.3 und~1.5.3: Ohne Normalisierung würde die dominierende Skala der Stromfunktion ($|\psi| \gg 1$ für physikalisch sinnvolle Strömungsfelder) einen sehr großen Hessian-Eigenwert erzeugen, die Konditionszahl drastisch erhöhen und die Konvergenz des Adam-Optimierers stark verlangsamen.
+
+\subsubsection*{Stochastisches Lernen und Batch-Größe}
+
+Die Diskussion stochastisches vs.\ Batch-Lernen (Abschnitt~1.4.1) ist relevant für die Wahl der Batch-Größen in den Experimenten der Masterarbeit (Exp-1: $B \in \{8, 16\}$). Die beobachtete bessere Performance bei $B=8$ gegenüber $B=16$ (z.\,B. U-Net Exp-1.1: 5{,}2\% vs.\ 8{,}6\%) ist konsistent mit der Aussage, dass kleinere Batches stochastischerer Gradienten und damit implizit kleinere effektive Lernraten erzeugen, was bei nicht-konvexen Fehlerflächen vorteilhaft sein kann.
+
+\subsubsection*{Gewichtsinitialisierung}
+
+Die Empfehlung $\sigma_w = m^{-1/2}$ (Fan-In-Initialisierung) ist der direkte Vorläufer der He-Initialisierung ($\sigma_w = \sqrt{2/m}$ für ReLU-Netze), die in der Masterarbeit implizit durch Flux.jl verwendet wird. Der konzeptionelle Zusammenhang ist direkt: Beide Methoden zielen auf eine Standardabweichung der Vorwärtsaktivierungen nahe~1.
+
+\subsubsection*{Einordnung in den State of the Art}
+
+Das Kapitel ist ein Klassiker der neuronalen Netz-Literatur und bildet die Grundlage für viele moderne Trainingstricks. Es eignet sich als primäre Referenz für alle normbezogenen Aussagen in Kapitel~4 (Methodik), insbesondere in Abschnitt~4.3.2 (Input-Normalisierung), sowie als historische Einordnung in den Literaturüberblick (Kapitel~2).
+
+\end{document}

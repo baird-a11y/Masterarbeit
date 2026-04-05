@@ -1,0 +1,77 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{Settling of Inertial Particles in Turbulent Rayleigh-B\'enard Convection}
+\textbf{Autoren:} Vojtech Pato\v{c}ka, Enrico Calzavarini, Nicola Tosi \\
+\textbf{Jahr:} 2020 \\
+\textbf{Zeitschrift:} Physical Review Fluids (eingereicht) \\
+\textbf{DOI/arXiv:} arXiv:2005.05448
+
+\subsection*{Hintergrund und Motivation}
+
+Die Arbeit untersucht ein fundamentales geophysikalisches Problem: die Sedimentationsrate kleiner tr\"ager Partikel in turbulenter thermischer Konvektion. Der geophysikalische Kontext ist die Kristallisation von Magmaozeanen und Magmakammern in planetaren K\"orpern. Ob neu gebildete Kristalle in einem Magmaozean sedimentieren oder in Suspension gehalten werden, bestimmt die initiale Zusammensetzung des silikatischen Mantels und damit die langfristige thermochemische Entwicklung ganzer Planeten. Trotz dieser Relevanz fehlte bislang eine systematische numerische Studie, die Partikel mit nicht-verschwindender Stokes-Geschwindigkeit in turbulenter, thermisch getriebener Konvektion untersucht.
+
+\subsection*{Methodik}
+
+Die Autoren verwenden einen Eulerian-Lagrangianschen Ansatz: Die Fl\"ussigkeitsdynamik wird durch die Boussinesq-Gleichungen beschrieben und mit einem Lattice-Boltzmann-Algorithmus (Code \textit{ch4-project}) gel\"ost, w\"ahrend die Partikeltrajektorien individuell nach der (verk\"urzten) Maxey-Riley-Gleichung
+\begin{equation}
+    \frac{d\mathbf{v}}{dt} = \beta \frac{D\mathbf{u}}{Dt} + \frac{1}{St}(\mathbf{u} - \mathbf{v}) + \Lambda\hat{z}
+\end{equation}
+verfolgt werden. Dabei sind $St$ die Stokes-Zahl (dimensionslose Relaxationszeit), $\Lambda$ das Auftriebsverh\"altnis und $\beta = 3\rho_f/(\rho_f + 2\rho_p)$ das modifizierte Dichteverh\"altnis. Das Modell verwendet ein 2D-Rechteckgebiet mit periodischen Seitenwänden und Aspektverhältnis~2. Es werden systematisch Rayleigh-Zahlen bis $Ra = 10^{12}$ und Prandtl-Zahlen $Pr \in \{10, 50\}$ untersucht. Pro Simulation werden bis zu $10^6$ Partikel mit 301 verschiedenen Typen injiziert, was eine umfassende Abdeckung des $(St, \Lambda, \beta)$-Parameterraums erm\"oglicht.
+
+\subsection*{Zentrale Ergebnisse}
+
+\subsubsection*{Vier Sedimentationsregime}
+
+Die Sedimentationsverhalten lassen sich durch den dimensionslosen Parameter $|v_t|/u_\mathrm{rms}$ -- dem Verh\"altnis von Stokes-Geschwindigkeit zur mittleren Str\"omungsgeschwindigkeit -- klassifizieren. Die Autoren identifizieren vier klar unterscheidbare Regime:
+
+\begin{enumerate}
+    \item \textbf{Stone-like-Regime} ($|v_t|/u_\mathrm{rms} \gtrsim 2$): Die Konvektion ist zu langsam, um die Partikel signifikant abzulenken. Die Sedimentation folgt n\"aherungsweise dem Stokes'schen Gesetz $N_s/N_0 \approx |v_t|t$.
+
+    \item \textbf{Bi-lineares Regime} ($0{,}3 \lesssim |v_t|/u_\mathrm{rms} \lesssim 2$): Die Sedimentationskurve zeigt zwei charakteristische lineare Abschnitte. Im ersten Stadium sedimentieren Partikel gem\"a\ss{} dem Stokes-Gesetz. Im zweiten Stadium f\"uhrt die Wechselwirkung mit gro\ss{}skaligen Aufstr\"omen zu einer deutlich reduzierten Sedimentationsrate. Schwere Partikel akkumulieren charakteristischerweise unterhalb von Auftriebszellen.
+
+    \item \textbf{\"Ubergangsregime} ($0{,}02 \lesssim |v_t|/u_\mathrm{rms} \lesssim 0{,}3$): Flie\ss{}ender \"Ubergang zwischen bi-linearem und staubähnlichem Verhalten.
+
+    \item \textbf{Dust-like-Regime} ($|v_t|/u_\mathrm{rms} \lesssim 0{,}02$): Partikel verhalten sich nahezu wie Fluid-Tracer und sedimentieren exponentiell gem\"a\ss{} dem Modell von Martin \& Nokes (1989): $N = N_0 \exp(-v_t t)$.
+\end{enumerate}
+
+\subsubsection*{Sedimentation als stochastischer Prozess}
+
+Das zentrale theoretische Beitrag der Arbeit ist ein neues Modell, das alle vier Regime in einer einheitlichen Gleichung zusammenfasst:
+\begin{equation}
+    N(t) = N_0 \exp\!\left(-\frac{v_t\, t}{f(|v_t|/u_\mathrm{rms})}\right),
+\end{equation}
+wobei $f$ eine angepasste schiefe Normalverteilung ist, die das Verh\"altnis aus mittlerer Zeit zwischen Partikeleintr\"agen in Niedriggeschwindigkeitsbereiche ($t_c$) und Nicht-Fluchtwahrscheinlichkeit $(1-\mathcal{P}_e)$ beschreibt. Der Faktor $f$ ist relativ robust gegen\"uber $Ra$ und $Pr$; er erreicht sein Maximum bei $|v_t|/u_\mathrm{rms} \approx 0{,}4$ mit Werten zwischen $1{,}5$ und $9{,}6$, was einer bis zu 13-fachen Verlangsamung gegen\"uber dem Stokes-Gesetz entspricht.
+
+\subsubsection*{$\beta$-Effekt bei hohen Reynolds-Zahlen}
+
+Bei hohen Rayleigh-Zahlen ($Ra = 10^{12}$, $Re \approx 22.000$) tritt ein zus\"atzlicher Effekt auf: Leichte Partikel ($\beta > 1$) wandern infolge des $\beta D\mathbf{u}/Dt$-Terms auf Wirbel zu und werden dort gefangen, was ihre Sedimentation erheblich verzögert (maximale Verlangsamung um Faktor $\approx 30$). Schwere Partikel ($\beta < 1$) werden hingegen aus Wirbeln herausgedr\"angt, was ihre Sedimentation geringf\"ugig beschleunigt.
+
+\subsubsection*{Anwendung auf Magmaozeane}
+
+Die Ergebnisse werden auf einen globalen Magmaozean extrapoliert ($Ra \sim 10^{27}$). F\"ur typische Kristallgr\"o\ss{}en von $0{,}5$--$10\,\mathrm{mm}$ und realistischen Dichtekontrastenwird fractional crystallization vorhergesagt, d.h.\ eine effiziente Trennung von Kristallen und Schmelze.
+
+\subsection*{Bezug zur Masterarbeit}
+
+Diese Arbeit liefert den physikalischen und geophysikalischen Hintergrund, in den sich die vorliegende Masterarbeit einbettet, und ist in mehrfacher Hinsicht direkt relevant:
+
+\begin{enumerate}
+    \item \textbf{Geophysikalische Motivation:} Die vorliegende Masterarbeit entwickelt Surrogat-Modelle zur Vorhersage von Str\"omungsfeldern um sedimentierende Kristalle in Stokes-Str\"omungen. Patocka et al.\ (2020) liefern die physikalische Grundlage und zeigen, welche Regime (Stone-like bis Dust-like) f\"ur Magmakammer-Systeme relevant sind -- direkt anwendbar auf die Parameterbereiche, die in den LaMEM-Simulationen der Masterarbeit erzeugt werden.
+
+    \item \textbf{Stokes-Str\"omung als Grenzfall:} Patocka et al.\ operieren im Regime kleiner Reynolds-Zahlen auf Partikelskala, was direkt dem Stokes-Str\"omungsregime der Masterarbeit entspricht. Die analytische Stokes-L\"osung -- die in der Masterarbeit als physikalische Basislinie im Residual-Lernansatz ($\mathbf{v}_\mathrm{total} = \mathbf{v}_\mathrm{Stokes} + \Delta \mathbf{v}_\mathrm{gelernt}$) verwendet wird -- ist hier physikalisch als Grenzfall des Stone-like-Regimes eingebettet.
+
+    \item \textbf{Mehrkristall-Konfigurationen:} W\"ahrend Patocka et al.\ die statistische Sedimentation vieler Partikel in einer turbulenten Hintergrundstr\"omung untersuchen, fokussiert sich die Masterarbeit auf die lokale Str\"omungsstruktur um einzelne und mehrere Kristalle. Die in Patocka et al.\ beobachteten nicht-uniformen Ablagerungsverteilungen -- bedingt durch Kristallwechselwirkungen mit der Gro\ss{}strukturzirkulation -- motivieren direkt die Untersuchung der Generalisierbarkeit neuronaler Netze von $N$- auf $(N{+}m)$-Kristall-Konfigurationen als zentrales Forschungsziel der Masterarbeit.
+
+    \item \textbf{Effizienz von Surrogat-Modellen:} Patocka et al.\ weisen auf den enormen Rechenaufwand hin, der f\"ur realistische Parameterr\"aume ben\"otigt wird (bis zu einem Jahr auf Hunderten von CPU-Kernen f\"ur einen Teil des Parameterraums). Dies unterstreicht die Notwendigkeit schneller Surrogat-Modelle, wie sie die Masterarbeit durch UNet- und FNO-Architekturen bereitstellt: Statt teurer CFD-Simulationen f\"ur jeden Parameterpunkt sollen neuronale Netzwerke die Str\"omungsfelder in Millisekunden vorhersagen.
+
+    \item \textbf{2D-Geometrie:} Beide Studien verwenden 2D-Str\"omungssimulationen, was die direkte methodische Vergleichbarkeit sicherstellt und den Transfer von Erkenntnissen erleichtert.
+\end{enumerate}
+
+\end{document}
