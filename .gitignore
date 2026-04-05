@@ -5,8 +5,6 @@ Texte/Arbeit/Bilder
 Texte/Arbeit/Zusammenfassungen
 data_train
 data_train_exp4
-
-data_eval_n01_n25
 Ergebnisse/FNO_*
 Ergebnisse/UNET_*
 .claude
