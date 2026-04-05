@@ -28,7 +28,7 @@ dependencies are:
     \item \textbf{JLD2.jl} for efficient storage and loading of multi-channel
           training samples.
     \item \textbf{BSON.jl} for serializing and restoring model checkpoints.
-    \item \textbf{PyPlot.jl / CairoMakie.jl} for visualization of predicted
+    \item \textbf{Plots.jl / CairoMakie.jl} for visualization of predicted
           and reference fields during evaluation.
 \end{itemize}
 
@@ -66,7 +66,7 @@ The FNO implementation consists of two custom layer types and a model constructo
 
 \paragraph{SpectralConv2D.}
 The spectral convolution layer implements the frequency-space multiplication described in Chapter~\ref{ch:theory}. It uses a real-valued FFT (\texttt{rfft}) instead of a full complex FFT, reducing memory consumption by
-approximately 50\%. Two sets of complex-valued weight matrices $W_1, W_2 \in \mathbb{C}^{k_{\max} \times d_v \times d_v}$ are learned for positive and negative frequency components along the vertical axis. The forward pass applies a batched matrix multiplication in Fourier space via \texttt{NNlib.batched\_mul}, which is compatible with Zygote's automatic differentiation (no in-place array mutations). Weights are initialized with small magnitude ($\sigma = 0.02$), which keeps the initial outputs near zero and produces small early gradients—providing an implicit warmup effect that stabilizes the first training steps without requiring an explicit learning-rate schedule.
+approximately 50\%. Two sets of complex weight tensors $W_1, W_2 \in \mathbb{C}^{d_v \times d_v \times k_{\max} \times k_{\max}}$ are learned for positive and negative frequency components along the vertical axis, one per spatial-frequency pair $(k_x, k_z) \in \{1,\ldots,k_{\max}\}^2$. The forward pass applies a batched matrix multiplication in Fourier space via \texttt{NNlib.batched\_mul}, which is compatible with Zygote's automatic differentiation (no in-place array mutations). Weights are initialized with small magnitude ($\sigma = 0.02$), which keeps the initial outputs near zero and produces small early gradients—providing an implicit warmup effect that stabilizes the first training steps without requiring an explicit learning-rate schedule.
 
 \paragraph{FNOBlock.}
 Each FNO block combines the spectral convolution path with a pointwise $1\times1$ convolution (local bias path). Both outputs are added element-wise and passed through a GELU activation function. This parallel-path design
