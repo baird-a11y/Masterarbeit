@@ -305,6 +305,8 @@ function evaluate_dataset(; data_dir::String,
     # pro Kristallanzahl: Vector von NamedTuples mit allen Metriken
     errors_by_n = Dict{Int, Vector{NamedTuple}}()
 
+    inference_times = Float64[]
+
     for (i, filepath) in enumerate(ds.files)
         # --- Daten als (nx,nz,Channels) laden ---
         x, y_true = get_sample(ds, i)
@@ -315,7 +317,8 @@ function evaluate_dataset(; data_dir::String,
         x_dev = move(x_batch)
 
         # Vorhersage (normalisierter Raum) auf Gerät
-        y_pred_batch_dev = model(x_dev)
+        t_pred = @elapsed y_pred_batch_dev = model(x_dev)
+        push!(inference_times, t_pred)
 
         # zurück auf CPU, Shape (nx,nz)
         y_pred_norm = dropdims(Array(y_pred_batch_dev)[:, :, :, 1], dims=3)
@@ -399,8 +402,8 @@ function evaluate_dataset(; data_dir::String,
 
         # Progress-Logging (wie FNO: alle ~10%)
         if i % max(1, n_samples ÷ 10) == 0 || i == n_samples
-            @info @sprintf("  [%d/%d] n=%d  rel_l2=%.4f  mse=%.4e  ε>1%%=%.1f%%",
-                           i, n_samples, n, rel_l2_psi, mse_psi, 100 * eps01_psi)
+            @info @sprintf("  [%d/%d] n=%d  rel_l2=%.4f  mse=%.4e  ε>1%%=%.1f%%  t_pred=%.1f ms",
+                           i, n_samples, n, rel_l2_psi, mse_psi, 100 * eps01_psi, t_pred * 1000)
         end
 
         # --- Optional: Plots speichern ---
@@ -598,6 +601,18 @@ function evaluate_dataset(; data_dir::String,
 
     # Gesamt-Summary (wie FNO print_eval_summary)
     print_eval_summary(all_results)
+
+    if !isempty(inference_times)
+        println("=" ^ 60)
+        @printf("Inferenzzeiten pro Sample (%d Samples)\n", length(inference_times))
+        println("=" ^ 60)
+        @printf("  mean:    %7.2f ms\n", mean(inference_times) * 1000)
+        @printf("  median:  %7.2f ms\n", median(inference_times) * 1000)
+        @printf("  min:     %7.2f ms\n", minimum(inference_times) * 1000)
+        @printf("  max:     %7.2f ms\n", maximum(inference_times) * 1000)
+        @printf("  std:     %7.2f ms\n", std(inference_times) * 1000)
+        println("=" ^ 60)
+    end
 
     return errors_by_n, all_results
 end

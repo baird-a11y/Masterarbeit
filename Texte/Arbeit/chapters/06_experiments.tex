@@ -155,3 +155,6 @@ Checkpoint format        & BSON                        & JLD2                   
 \end{tabular}
 \end{table}
 
+\paragraph{Training duration.}
+The U-Net is trained for 180 epochs and the FNO for 100 epochs in Experiment~1. This asymmetry reflects the different convergence behaviors observed during preliminary runs: the FNO converges smoothly and its validation loss plateaus well within 100 epochs, while the U-Net requires more epochs to stabilize due to the oscillatory training dynamics induced by batch normalization at higher learning rates (discussed in Section~\ref{ch:discussion}). All reported results use the best-validation-loss checkpoint for both architectures (Section~\ref{ch:implementation}), so the comparison is not confounded by differences in final-epoch performance.
+

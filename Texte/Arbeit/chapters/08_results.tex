@@ -518,7 +518,7 @@ Figure~\ref{fig:fno_exp23_scaling} (left panel) shows the full metric profile fo
 
 Figures~\ref{fig:fno_exp2_qual_bs16} and~\ref{fig:fno_exp2_qual_bs8} (following pages) show representative evaluation plots for the two FNO configurations in Experiment~2, both for an in-distribution sample with $n = 5$ crystals. The predicted stream function~$\psi$ reproduces the global flow structure faithfully: the large-scale circulation pattern, the saddle regions between adjacent crystals, and the overall shape of the streamlines agree closely with the numerical reference. Residuals are largest in the near-field regions immediately surrounding individual crystals, where steep velocity gradients require high-frequency spectral content that the FNO's truncation at $k_{\max} = 16$ modes cannot fully represent. The derived velocity magnitude~$|\mathbf{u}|$ reflects these near-boundary residuals: the wakes behind each crystal are reproduced in their general form, but their peak intensities are slightly underestimated. Both configurations (bs\,16 and bs\,8) produce qualitatively similar results, consistent with the small numerical difference in their evaluation errors ($4.22\%$ vs.\ $4.22\%$ on~$\psi$ for $n = 5$).
 
-The qualitative match confirms that the FNO has generalized successfully from the single-crystal setting to multi-crystal configurations: it recovers the collective flow structure from the sparse crystal position input alone, without explicit knowledge of superposition. The systematic near-boundary underestimation is a characteristic consequence of spectral truncation — increasing $k_{\max}$ beyond 16 would reduce these near-field residuals, but at a proportional increase in computational cost. The robustness of the qualitative output across both batch size configurations further supports the conclusion that the learned spectral representation is insensitive to moderate changes in training hyperparameters.
+The qualitative match confirms that the FNO has generalized successfully from the single-crystal setting to multi-crystal configurations: it recovers the collective flow structure from the sparse crystal position input alone, without explicit knowledge of superposition. The systematic near-boundary underestimation is a characteristic consequence of spectral truncation—increasing $k_{\max}$ beyond 16 would reduce these near-field residuals, but at a proportional increase in computational cost. The robustness of the qualitative output across both batch size configurations further supports the conclusion that the learned spectral representation is insensitive to moderate changes in training hyperparameters.
 
 \begin{sidewaysfigure}[p]
     \centering
@@ -579,7 +579,7 @@ U-Net & $\sim 22.1$ & $\sim 26.8$ & $26.8$ \\
 \end{tabular}
 \end{table}
 
-The FNO outperforms the U-Net by a factor of roughly $4\times$ within the training distribution. For OOD counts ($n = 25$, $2.5\times$ beyond the training maximum), the FNO ($13.8\%$) still outperforms the U-Net ($26.8\%$) by a factor of approximately $2\times$, underscoring that the FNO retains a generalization advantage even at this level of distribution shift — though this margin narrows further as crystal counts increase beyond the training range (see Section~\ref{ssec:results:exp3:comparison}).
+The FNO outperforms the U-Net by a factor of roughly $4\times$ within the training distribution. For OOD counts ($n = 25$, $2.5\times$ beyond the training maximum), the FNO ($13.8\%$) still outperforms the U-Net ($26.8\%$) by a factor of approximately $2\times$, underscoring that the FNO retains a generalization advantage even at this level of distribution shift—though this margin narrows further as crystal counts increase beyond the training range (see Section~\ref{ssec:results:exp3:comparison}).
 
 % ============================================================================
 \section{Experiment~3: Stress-Testing Generalization Limits}
@@ -732,7 +732,7 @@ Within the training distribution ($n \leq 25$), the FNO achieves $\psi$ errors o
 
 Figure~\ref{fig:fno_exp3_qual_indist} (following page) shows a representative in-distribution evaluation sample for the best FNO configuration in Experiment~3 (bs\,16, lr~$=5\times10^{-4}$) with $n = 20$ crystals. The predicted stream function~$\psi$ and derived velocity magnitude agree closely with the numerical reference across the full domain, including the more densely packed near-crystal regions that did not appear at this frequency in Experiment~2.
 
-The qualitative accuracy at $n = 20$ is consistent with the low quantitative error ($8.5\%$) reported in Table~\ref{tab:fno_metrics_exp3} for this count. Compared to the Experiment~2 qualitative example ($n = 5$, Figure~\ref{fig:fno_exp2_qual_bs16}), the prediction here must resolve more complex multi-body interactions, yet the residual structure remains confined to the immediate near-crystal boundary layer — the same spectral truncation artifact, now distributed across more crystals. This confirms that the FNO's generalization in Experiment~3 is not merely a consequence of the easier single-body case but extends robustly to dense configurations within the training distribution.
+The qualitative accuracy at $n = 20$ is consistent with the low quantitative error ($8.5\%$) reported in Table~\ref{tab:fno_metrics_exp3} for this count. Compared to the Experiment~2 qualitative example ($n = 5$, Figure~\ref{fig:fno_exp2_qual_bs16}), the prediction here must resolve more complex multi-body interactions, yet the residual structure remains confined to the immediate near-crystal boundary layer—the same spectral truncation artifact, now distributed across more crystals. This confirms that the FNO's generalization in Experiment~3 is not merely a consequence of the easier single-body case but extends robustly to dense configurations within the training distribution.
 
 \begin{sidewaysfigure}[p]
     \centering
@@ -965,7 +965,7 @@ The variable-radius FNO achieves a mean $\psi$ error of $10.4\%$ across all eval
 \label{ssec:results:exp4:conditioning}
 % ----------------------------------------------------------------------------
 
-Compared to the fixed-radius baseline (FNO Exp-1.4, trained on $r = 0.05$ only; Table~\ref{tab:metrics_exp4}), the variable-radius model avoids the catastrophic failure observed for large crystals ($71.3\%$ on $\psi$), demonstrating that including size variability in training data substantially improves robustness to geometric scale changes. The radius input channel, which encodes crystal size explicitly at each grid point, enables the model to condition its predictions on the local crystal geometry and generalize across the evaluated size range — including radii not seen during training.
+Compared to the fixed-radius baseline (FNO Exp-1.4, trained on $r = 0.05$ only; Table~\ref{tab:metrics_exp4}), the variable-radius model avoids the catastrophic failure observed for large crystals ($71.3\%$ on $\psi$), demonstrating that including size variability in training data substantially improves robustness to geometric scale changes. The radius input channel, which encodes crystal size explicitly at each grid point, enables the model to condition its predictions on the local crystal geometry and generalize across the evaluated size range—including radii not seen during training.
 
 % ----------------------------------------------------------------------------
 \section{Spectral Analysis of FNO Prediction Errors}
@@ -1000,4 +1000,30 @@ Figure~\ref{fig:freq_error_ratio} quantifies this observation through the relati
 \end{figure}
 
 The same analysis applied to Experiment~3 samples grouped by crystal count ($n \leq 5$, $6$–$10$, $11$–$15$, $16$–$25$) yields indistinguishable curves, indicating that the spectral error distribution is not sensitive to the number of crystals present in the scene.
+
+% ----------------------------------------------------------------------------
+\section{Computational Efficiency}
+\label{sec:results:efficiency}
+% ----------------------------------------------------------------------------
+
+A primary motivation for surrogate modeling is the reduction of computational cost relative to a classical solver. Table~\ref{tab:inference_time} compares the per-sample inference time of both architectures against the runtime of the LaMEM Stokes solver for a representative single-crystal configuration.
+
+\begin{table}[htbp]
+\centering
+\caption{\textbf{Per-sample inference time of both surrogate models compared to the LaMEM solver.}
+         All measurements are reported as medians over 10 samples to suppress JIT-compilation
+         artifacts on the first call. See text for a note on measurement scope.}
+\label{tab:inference_time}
+\begin{tabular}{llr}
+\toprule
+\textbf{Method} & \textbf{Measurement scope} & \textbf{Median time} \\
+\midrule
+LaMEM (FD Stokes solver) & Full simulation, single crystal & ${\approx}\,8$–$9\,\text{s}$ \\
+FNO (forward pass)       & CPU$\to$GPU transfer + inference + GPU$\to$CPU transfer & $687\,\text{ms}$ \\
+U-Net (forward pass)     & Pure model inference, data pre-loaded on device & $5.5\,\text{ms}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The FNO end-to-end prediction—measured from a CPU-resident input array through GPU execution and back to a CPU-resident output—takes a median of $687\,\text{ms}$, yielding a speedup of approximately $12\times$ over LaMEM. The U-Net forward pass, measured with data already resident on the GPU device and the output remaining on device, takes a median of $5.5\,\text{ms}$, corresponding to a speedup of over $1\,500\times$. Because the two timings differ in scope—the FNO time includes device transfer overhead in both directions while the U-Net time excludes it—they cannot be compared directly as architecture-level inference costs. In a deployment scenario where input data are pre-loaded and outputs remain on device (e.g., batch inference), per-sample costs for both architectures would be substantially lower than the end-to-end figures reported here. Both numbers nonetheless confirm the primary goal of surrogate modeling: a reduction of computational cost by at least one order of magnitude relative to the numerical solver, enabling systematic parameter studies that would be computationally prohibitive with LaMEM alone.
 

@@ -134,7 +134,7 @@ where $\mathcal{L}_{\mathrm{grad}}$ penalizes errors in the spatial derivatives 
 
 \subsection*{Checkpointing}
 
-U-Net checkpoints are written in BSON format, which ensures CPU-compatible portability; the best-performing checkpoint (lowest validation loss) and the final checkpoint are retained. FNO checkpoints use JLD2 and additionally store the optimizer state and epoch index, enabling training to be resumed from any saved checkpoint. In both cases, model parameters are explicitly transferred to CPU before saving.
+U-Net checkpoints are written in BSON format, which ensures CPU-compatible portability; the best-performing checkpoint (lowest validation loss) and the final checkpoint are retained. FNO checkpoints use JLD2 and additionally store the optimizer state and epoch index, enabling training to be resumed from any saved checkpoint. In both cases, model parameters are explicitly transferred to CPU before saving. All evaluation results reported in Chapter~\ref{ch:results} are obtained from the best-validation-loss checkpoint for both architectures, ensuring a consistent and comparable model selection criterion across the two models.
 
 % ----------------------------------------------------------------------------
 \section{Evaluation Utilities}

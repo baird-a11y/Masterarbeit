@@ -183,7 +183,7 @@
 
 /opt/julia/bin/julia run_eval.jl \
     --checkpoint checkpoints_exp4_16/best_model.jld2 \
-    --data_dir /local/home/baselt/src/Ansatz/data_eval \
+    --data_dir /local/home/baselt/src/Ansatz/data_eval_exp4 \
     --out eval_output_exp4_16 \
     --history_csv eval_output_exp4_16/history_exp4_16.csv \
     --denorm

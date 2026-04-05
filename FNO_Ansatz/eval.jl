@@ -179,16 +179,20 @@ function evaluate_dataset(model, ds::PsiDataset;
     n = length(ds)
     verbose && @info "Evaluiere $n Samples..."
 
+    inference_times = Float64[]
+
     for i in 1:n
         X, Y, smeta = get_sample(ds, i)
         ψ_norm = dropdims(Y; dims=3)  # (nx, nz)
 
-        ψ̂_norm = predict_sample(model, X; use_gpu=use_gpu)
+        t_pred = @elapsed ψ̂_norm = predict_sample(model, X; use_gpu=use_gpu)
+        push!(inference_times, t_pred)
 
         metrics = compute_eval_metrics(ψ̂_norm, ψ_norm, smeta;
                                        dx=dx, dz=dz, mask_width=mask_width)
 
-        row = merge(metrics, (sample_idx=i, filepath=smeta.filepath))
+        row = merge(metrics, (sample_idx=i, filepath=smeta.filepath,
+                               inference_time_s=t_pred))
         push!(results, row)
 
         # Optional: Prediction speichern
@@ -200,9 +204,21 @@ function evaluate_dataset(model, ds::PsiDataset;
         end
 
         if verbose && i % max(1, n ÷ 10) == 0
-            @info @sprintf("  [%d/%d] rel_l2=%.4f max_err=%.4e",
-                           i, n, metrics.psi_rel_l2, metrics.psi_max_err)
+            @info @sprintf("  [%d/%d] rel_l2=%.4f max_err=%.4e  t_pred=%.1f ms",
+                           i, n, metrics.psi_rel_l2, metrics.psi_max_err, t_pred * 1000)
         end
+    end
+
+    if verbose && !isempty(inference_times)
+        println("=" ^ 60)
+        @printf("Inferenzzeiten pro Sample (%d Samples)\n", length(inference_times))
+        println("=" ^ 60)
+        @printf("  mean:    %7.2f ms\n", mean(inference_times) * 1000)
+        @printf("  median:  %7.2f ms\n", median(inference_times) * 1000)
+        @printf("  min:     %7.2f ms\n", minimum(inference_times) * 1000)
+        @printf("  max:     %7.2f ms\n", maximum(inference_times) * 1000)
+        @printf("  std:     %7.2f ms\n", std(inference_times) * 1000)
+        println("=" ^ 60)
     end
 
     return results

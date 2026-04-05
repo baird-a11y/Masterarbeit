@@ -26,8 +26,9 @@ Each simulation represents a steady (quasi-static) configuration of $1\ldots N_{
 
 The computational domain is a rectangular box discretized on a fixed $256\times256$ grid with uniform spacing $\Delta x=\Delta z$. This resolution is sufficient to resolve boundary layers and wake structures around individual crystals while remaining computationally tractable for dataset generation and training; finer grids such as $512\times512$ would increase storage and runtime costs substantially without providing meaningful additional information for the surrogate modeling task \parencite{guo_convolutional_2016,thuerey_deep_2020}. The surrogate models operate on fields represented on this grid, and the fixed discretization provides a controlled benchmark for comparing output representations.
 
-Crystals are modeled as rigid circular inclusions with prescribed radii and randomized positions. The number of crystals $N$ is drawn uniformly from $\{1,\ldots,N_{\max}\}$ to expose the surrogate to a broad range of interaction regimes, from isolated single-crystal wakes to strongly interacting clusters. Such multi-particle interaction effects are well documented in classical sedimentation studies \parencite{ladd_numerical_nodate} and
-motivate an explicit evaluation of generalization across particle number. Randomization is performed independently for each simulation run, such that the training distribution samples a diverse subset of the configuration space.
+Crystals are modeled as rigid circular inclusions with prescribed radii and randomized positions. The number of crystals $N$ is drawn uniformly from $\{1,\ldots,N_{\max}\}$ to expose the surrogate to a broad range of interaction regimes, from isolated single-crystal wakes to strongly interacting clusters. Such multi-particle interaction effects are well documented in classical sedimentation studies \parencite{ladd_numerical_nodate} and motivate an explicit evaluation of generalization across particle number.
+
+Crystal positions are sampled via rejection sampling: each crystal center is drawn uniformly at random from the subdomain $[-0.8+r,\, 0.8-r]^2$, ensuring that crystals remain fully inside the active simulation region. A candidate placement is accepted only if the surface-to-surface distance to every already-placed crystal exceeds a minimum gap of $\delta = 0.02$ (in normalized domain units). If no valid position is found within $2\times10^5$ attempts, a warning is issued and the crystal is omitted. Randomization is performed independently for each simulation run, such that the training distribution samples a diverse subset of the configuration space.
 
 \subsection{Material Properties and Governing Equations}
 
@@ -142,17 +143,17 @@ of both architectures were introduced in Chapter~\ref{ch:theory}; this section d
 
 The U-Net follows the encoder--decoder principle of the original architecture \parencite{ronneberger_u-net_2015} and common adaptations for laminar flow-field prediction on Cartesian grids \parencite{thuerey_deep_2020,chen_u-net_nodate}.
 
-\paragraph{Encoder—}
+\paragraph{Encoder.}
 The encoder consists of five resolution levels. Spatial resolution is reduced by a factor of two at each level, while feature widths increase as $32 \rightarrow 64 \rightarrow 128 \rightarrow 256 \rightarrow 512$. Each level contains two
 $3\times3$ convolutions with batch normalization \parencite{ioffe2015batchnormalizationacceleratingdeep} and Rectified Linear Unit (ReLU) activations, followed by downsampling via a strided convolution (stride~2, meaning the kernel advances two pixels at a time, halving the spatial resolution). Strided downsampling is used instead of max pooling to keep the operation learnable and to reduce grid-aligned artifacts in smooth Stokes-flow targets.
 
-\paragraph{Bottleneck—}
+\paragraph{Bottleneck.}
 At the coarsest resolution, a bottleneck block with two $3\times3$ convolutions encodes global flow structure conditioned on the entire crystal configuration. This compressed representation provides the long-range context required to model hydrodynamic interactions between distant inclusions.
 
-\paragraph{Decoder—}
+\paragraph{Decoder.}
 The decoder mirrors the encoder: spatial resolution is restored by bilinear interpolation, followed by a two-layer $3\times3$ convolutional block with batch normalization and ReLU activation. Bilinear interpolation is used instead of transposed convolutions to avoid checkerboard artifacts that arise from the periodic zero-insertion pattern of deconvolution \parencite{odena_deconvolution_2016}. Encoder feature maps are concatenated with decoder feature maps at matching resolutions through skip connections, preserving high-resolution geometric detail essential for reconstructing sharp structures near crystal boundaries while maintaining global consistency.
 
-\paragraph{Output layer—}
+\paragraph{Output layer.}
 A final $1\times1$ convolution projects the decoder features onto a single output channel ($\psi_{\mathrm{norm}}$). No activation is applied in the final layer, as the task is a continuous regression problem.
 
 \subsection{Fourier Neural Operator}
@@ -170,7 +171,7 @@ Each Fourier layer applies the operation defined in Equation~\eqref{eq:fourier_l
 A pointwise linear layer maps the learned feature representation to the single output channel $\psi_{\mathrm{norm}}$.
 
 \paragraph{Hyperparameters—}
-The specific values of $d_v$, $k_{\max}$, and $L$ are reported together with the experimental results in Chapter~\ref{ch:results}, where they are chosen to yield a model with comparable parameter count to the U-Net to ensure a fair comparison.
+All experiments use $k_{\max} = 16$ retained Fourier modes, a channel width of $d_v = 64$, and $L = 4$ Fourier layers. This yields approximately $8.4$ million trainable parameters (spectral weight tensors are stored as \texttt{ComplexF32}; each complex element is counted as a single parameter in Flux.jl). The U-Net with base channel width 32 has approximately $9.4$ million trainable parameters, making the two architectures broadly comparable in model size.
 
 \subsection{Regularization and Practical Considerations}
 
