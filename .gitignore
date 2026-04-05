@@ -3,9 +3,12 @@ Texte/Notizen
 Texte/Arbeit/Paper
 Texte/Arbeit/Bilder
 Texte/Arbeit/Zusammenfassungen
-data_*
+data_eval_*
+data_train
+data_train_exp4
+data_val
 Ergebnisse/FNO_*
 Ergebnisse/UNET_*
 .claude
-Texte/Arbeit/20262103_Masterarbeit.pdf
 Texte/Arbeit/Anmerkungen
+data_.zip
