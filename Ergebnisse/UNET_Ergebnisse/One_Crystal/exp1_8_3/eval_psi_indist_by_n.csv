@@ -1,0 +1,2 @@
+n_crystals,N,psi_mse_mean,psi_mse_std,psi_rel_l2_mean,psi_rel_l2_std,v_rel_l2_mean,v_rel_l2_std,div_rms_mean,div_rms_std,eps01_psi_mean,eps01_psi_std,eps05_psi_mean,eps05_psi_std,eps10_psi_mean,eps10_psi_std
+1,10,1.291509e-26,1.374261e-26,6.539525e-02,2.118719e-02,1.269370e-01,7.204182e-02,2.879791e-32,8.715705e-33,9.231262e-01,4.193325e-02,5.797699e-01,1.793593e-01,2.828033e-01,1.416367e-01
