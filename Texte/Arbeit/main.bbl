@@ -2812,7 +2812,6 @@
       \field{labeldatesource}{}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
-      \field{eprintclass}{physics.comp-ph}
       \field{eprinttype}{arXiv}
       \field{title}{{DeepCFD}: {Efficient} {Steady}-{State} {Laminar} {Flow} {Approximation} with {Deep} {Convolutional} {Neural} {Networks}}
       \field{year}{2021}

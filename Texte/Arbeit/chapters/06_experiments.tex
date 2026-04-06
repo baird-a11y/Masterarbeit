@@ -50,19 +50,19 @@ Experiment~4 uses a different stratification: training and validation samples ar
 Four experiments are conducted to systematically evaluate and compare both models.
 The same standard architecture configurations are used across all experiments; key hyperparameters are summarized in Table~\ref{tab:hyperparams} in Section~\ref{sec:experiments:setup}.
 
-\paragraph{Experiment 1 – Single-crystal baseline.}
+\paragraph{Experiment 1: Single-crystal baseline}
 Both models are trained and evaluated on configurations with exactly one crystal ($n = 1$). This experiment establishes a baseline for each architecture under the simplest geometric setting and provides a controlled comparison of their accuracy and training behavior.
 Four learning rates are evaluated ($1 \times 10^{-3}$, $5 \times 10^{-3}$, $1 \times 10^{-4}$, $5 \times 10^{-4}$), each combined with batch sizes of 8 and 16, and results are compared systematically.
 
-\paragraph{Experiment 2 – Multi-crystal generalization.}
+\paragraph{Experiment 2: Multi-crystal generalization}
 Models are trained on samples with $n \in \{1, \ldots, 10\}$ crystals and evaluated separately for each crystal count, including unseen higher counts ($n = 11, \ldots, 25$). This experiment assesses the ability of each architecture to generalize to geometric configurations more complex than those encountered during training—a capability that is critical for practical applications in geodynamics, where the number of crystals can vary widely. OOD evaluation is performed at $n \in \{11, 12, 15, 20, 25\}$: counts close to the training boundary ($n = 11$, $12$) probe near-OOD behavior, while larger values ($n = 15$, $20$, $25$) test generalization to increasingly complex configurations; intermediate counts are omitted as differences between adjacent strata would be statistically unreliable at the evaluation sample size of ten.
 
-\paragraph{Experiment 3 – Stress-testing generalization limits.}
+\paragraph{Experiment 3: Stress-testing generalization limits}
 Models are trained on configurations with up to $n = 25$ crystals and subsequently evaluated on substantially more complex scenes with up to $n = 84$ crystals. This experiment probes whether the models can capture the interactions arising from a large number of obstacles or whether their generalization capability breaks down beyond a critical level of geometric complexity.
 
 The hyperparameter configurations follow the same rationale as Experiment~2: the learning rates identified as best-performing for each architecture and batch size in Experiment~1 are used without modification. For the FNO, this means lr~$= 5\times10^{-4}$ with batch size~16 and lr~$= 5\times10^{-3}$ with batch size~8. For the U-Net, lr~$= 10^{-3}$ is used with batch size~8 and lr~$= 10^{-4}$ with batch size~16. The extended training distribution ($n \leq 25$ instead of $n \leq 10$) increases the complexity of each training batch but does not change the reasoning behind the choice of learning rate and batch size.
 
-\paragraph{Experiment 4 – Crystal size generalization.}
+\paragraph{Experiment 4: Crystal size generalization}
 This experiment investigates whether surrogate models can generalize to crystal radii not seen during training—an additional axis of out-of-distribution generalization beyond crystal count. The experiment is designed around two conditions:
 
 \begin{itemize}
