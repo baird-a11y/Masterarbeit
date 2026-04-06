@@ -1,0 +1,105 @@
+\documentclass[
+    paper = a4,
+    fontsize = 12pt,
+    headinclude = true,
+    open = right,        % Kapitel auf rechter Seite starten
+    twoside = true,
+    BCOR = 10mm,
+    toc = listofnumbered,
+    toc = bibnumbered,
+    numbers = noendperiod
+]{scrreprt}
+
+% ============================================================================
+% PRÄAMBEL - Alle Pakete und Einstellungen
+% ============================================================================
+\input{config/packages}       % zuerst: Pakete (inkl. amsthm)
+\input{config/commands}       % dann: Theorem-Umgebungen usw.
+\input{config/julia_listing}  % optional: Listings-Stil
+
+
+\raggedbottom
+
+% ============================================================================
+% METADATEN
+% ============================================================================
+\title{Data-Driven Stokes Flow Prediction in Multi-Crystal Sedimentation:}
+\subtitle{A Systematic Comparison of Spatial and Spectral Neural Surrogate Architectures}
+\author{Paul Baselt}
+\date{\today}
+
+% ============================================================================
+% DOKUMENT
+% ============================================================================
+\begin{document}
+
+% -----------------------------
+% Titelseite (ohne Kopf/Fuß)
+% -----------------------------
+\pagestyle{empty}       % keine Kopf-/Fußzeilen
+\pagenumbering{Roman}   % römische Nummerierung fürs Frontmatter
+
+\input{frontmatter/titlepage}
+
+% Frontmatter ohne Seitenzahlen
+\cleardoublepage
+\pagestyle{empty}
+
+% -----------------------------
+% Frontmatter
+% -----------------------------
+\input{frontmatter/declaration}
+\input{frontmatter/acknowledgements}
+\input{frontmatter/abstract_de}
+\input{frontmatter/abstract_en}
+\input{frontmatter/abbreviations}
+
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+% =====================================================
+% Lists – numbered with Roman numerals (I, II, III)
+% =====================================================
+
+\cleardoublepage
+\setcounter{chapter}{0}               % Kapitelzähler für die Listen neu starten
+\renewcommand{\thechapter}{\Roman{chapter}}  % Kapitelnummern: I, II, III
+
+\listoffigures
+\listoftables
+%\lstlistoflistings
+
+% -----------------------------
+% Hauptteil (arabische Nummern, Seitenzahlen ab hier)
+% -----------------------------
+\cleardoublepage
+\pagestyle{scrheadings}
+\pagenumbering{arabic}
+\setcounter{chapter}{0}                 % Kapitelzählung für den Hauptteil neu starten
+\renewcommand{\thechapter}{\arabic{chapter}}  % Kapitelnummern wieder 1, 2, 3, ...
+
+\input{chapters/01_introduction}
+\input{chapters/02_related_work}
+\input{chapters/03_theory}
+\input{chapters/04_methodology}
+\input{chapters/05_implementation}
+\input{chapters/06_experiments}
+\input{chapters/08_results}
+\input{chapters/11_discussion}
+\input{chapters/10_conclusions}
+
+% -----------------------------
+% Anhänge
+% -----------------------------
+\appendix
+\input{appendix/A_additional_results}
+\input{appendix/B_code_documentation}
+\input{appendix/C_ki_tools}
+
+% -----------------------------
+% Literaturverzeichnis
+% -----------------------------
+\cleardoublepage
+\printbibliography
+
+\end{document}
