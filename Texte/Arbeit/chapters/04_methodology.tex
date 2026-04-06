@@ -21,7 +21,7 @@ Training data are generated using the geodynamic finite-difference code \textsc{
 discretization practices, where robustness under viscosity and density contrasts is essential \parencite{thieulot_choice_2022}.  
 
 Each simulation represents a steady (quasi-static) configuration of $1\ldots N_{\max}$ rigid crystals settling in a viscous matrix. Since the incompressible Stokes equations are quasi-static, each simulation directly yields a steady-state velocity field for a fixed crystal arrangement. Transient crystal dynamics are not modeled; the surrogate is trained on individual steady-state flow snapshots.
-
+\newpage
 \subsection{Domain and Discretization}
 
 The computational domain is a rectangular box discretized on a fixed $256\times256$ grid with uniform spacing $\Delta x=\Delta z$. This resolution is sufficient to resolve boundary layers and wake structures around individual crystals while remaining computationally tractable for dataset generation and training; finer grids such as $512\times512$ would increase storage and runtime costs substantially without providing meaningful additional information for the surrogate modeling task \parencite{guo_convolutional_2016,thuerey_deep_2020}. The surrogate models operate on fields represented on this grid, and the fixed discretization provides a controlled benchmark for comparing output representations.
@@ -161,16 +161,16 @@ A final $1\times1$ convolution projects the decoder features onto a single outpu
 
 The FNO follows the architecture proposed by \textcite{li_fourier_2021}, consisting of a pointwise lifting layer, a sequence of Fourier layers, and a pointwise projection layer.
 
-\paragraph{Lifting—}
+\paragraph{Lifting.}
 A pointwise linear layer maps the five input channels into a higher-dimensional feature space of width $d_v$, where $d_v$ is a hyperparameter controlling the channel dimension of the internal feature representation.
 
-\paragraph{Fourier layers—}
+\paragraph{Fourier layers.}
 Each Fourier layer applies the operation defined in Equation~\eqref{eq:fourier_layer}: the input is transformed into Fourier space via a two-dimensional Fast Fourier Transform (FFT), multiplied with a learnable complex weight tensor $R_l$ for the lowest $k_{\max}$ modes, and transformed back. This spectral path is combined with a pointwise linear transformation (bias path) and a Gaussian Error Linear Unit (GELU) activation. A stack of $L$ such layers forms the core of the model.
 
-\paragraph{Projection—}
+\paragraph{Projection.}
 A pointwise linear layer maps the learned feature representation to the single output channel $\psi_{\mathrm{norm}}$.
 
-\paragraph{Hyperparameters—}
+\paragraph{Hyperparameters.}
 All experiments use $k_{\max} = 16$ retained Fourier modes, a channel width of $d_v = 64$, and $L = 4$ Fourier layers. This yields approximately $8.4$ million trainable parameters (spectral weight tensors are stored as \texttt{ComplexF32}; each complex element is counted as a single parameter in Flux.jl). The U-Net with base channel width 32 has approximately $9.4$ million trainable parameters, making the two architectures broadly comparable in model size.
 
 \subsection{Regularization and Practical Considerations}
@@ -220,7 +220,7 @@ Primary evaluation metrics include:
 \begin{itemize}
     \item mean-squared error (MSE) of the predicted target field,
     \item relative $L_2$ errors for $\psi$, $\partial_x\psi$, and $\partial_z\psi$,
-          which quantify errors in both amplitude and derived velocity gradients,
+          which quantify errors in both amplitude and derived velocity gradients.
 \end{itemize}
 
 Errors are grouped by the number of crystals in the test sample ($1\ldots N_{\max}$), enabling direct assessment of how prediction quality changes as hydrodynamic interactions become more complex—an approach motivated

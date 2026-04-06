@@ -71,7 +71,7 @@ In Experiment~1, the composite loss function, which augments the standard MSE wi
 
 For batch size~16, however, the composite loss leads to substantially \emph{higher} evaluation errors than plain MSE training (Section~\ref{ssec:results:exp1:unet:metrics}). This is a somewhat unexpected finding. One possible explanation is that the additional gradient and boundary terms modify the effective gradient magnitudes differently across layers, increasing the ELR spread—an effect that would be particularly detrimental for the already less stable bs\,16 training regime. Another contributing factor is that the gradient loss computed via finite differences over the predicted field introduces numerical noise that acts as an additional source of instability when combined with the less regularized gradient estimates of larger batches.
 
-Whatever the precise mechanism, the results indicate that the benefits of the composite loss depend critically on the batch size, and that a simple uniform adoption of additional loss terms does not guarantee improved accuracy.
+Whatever the precise mechanism is, the results indicate that the benefits of the composite loss depend critically on the batch size, and that a simple uniform adoption of additional loss terms does not guarantee improved accuracy.
 
 % ============================================================================
 \section{High-Frequency Artifacts: Training Transient vs.\ Structural Limitation}

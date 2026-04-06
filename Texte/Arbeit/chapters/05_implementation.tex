@@ -48,7 +48,7 @@ The code base is organized into two parallel module trees that share common infr
           pipelines.
 \end{itemize}
 
-Both trees share the same LaMEM interface module for data generation, the same Poisson solver for stream-function reconstruction, and the same dataset interface (\texttt{PsiDataset}, \texttt{batch\_iterator}), ensuring that U-Net and FNO train and are evaluated on identical data. Within each tree, a main execution script dispatches to dedicated modules depending on the selected workflow stage: data generation, preprocessing, training, or evaluation. Each stage can be executed independently, enabling flexible experimentation and reducing coupling between components.
+Both trees share the same LaMEM interface module for data generation, the same Poisson solver for stream-function reconstruction, and the same dataset interface (\texttt{PsiDataset}, \texttt{batch\_iterator}), ensuring that U-Net and FNO are trained and evaluated on identical data. Within each tree, a main execution script dispatches to dedicated modules depending on the selected workflow stage: data generation, preprocessing, training, or evaluation. Each stage can be executed independently, enabling flexible experimentation and reducing coupling between components.
 
 % ----------------------------------------------------------------------------
 \section{Model Implementations}

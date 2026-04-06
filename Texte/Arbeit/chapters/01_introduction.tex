@@ -30,9 +30,9 @@ Since the Stokes equations are linear and inertial effects are negligible ($\mat
 Accurate numerical simulation of multi-crystal sedimentation remains computationally demanding due to the strongly multiscale nature of crystal--fluid interactions. Any physically meaningful model needs to account for:
 
 \begin{itemize}
-    \item \textbf{Microscale crystal boundaries}, where steep velocity gradients and localized shear layers develop,
-    \item \textbf{Long-range hydrodynamic interactions} between multiple crystals mediated by the surrounding fluid, and
-    \item \textbf{Domain-scale flow structures} that control the large-scale transport of crystals and melt.
+    \item \textbf{microscale crystal boundaries}, where steep velocity gradients and localized shear layers develop;
+    \item \textbf{long-range hydrodynamic interactions} between multiple crystals mediated by the surrounding fluid; and
+    \item \textbf{domain-scale flow structures} that control the large-scale transport of crystals and melt.
 \end{itemize}
 
 The computational cost of resolving hydrodynamic interactions typically scales between $\mathcal{O}(N^2)$ and $\mathcal{O}(N^3)$ with the number of particles $N$ \parencite{ladd_numerical_nodate}. Numerical methods that explicitly couple particle and fluid dynamics such as Lattice Boltzmann discrete element methods (LBM-DEM) or immersed boundary approaches generally require each particle to be resolved by tens to hundreds of grid cells. Even in two-dimensional configurations, this leads to simulations with $10^5$-$10^6$ fluid nodes per particle \parencite{Li_IBM-LBM-DEM_2022,leonardi_coupled_2014}. For systems containing more than ten crystals, total grid sizes can easily exceed $10^7$--$10^8$ degrees of freedom, resulting in runtimes ranging from several hours to multiple days per simulation \parencite{Li_IBM-LBM-DEM_2022}.
@@ -99,7 +99,7 @@ These assumptions allow for a focused investigation of surrogate modeling strate
 
 \section{Structure of the Thesis}
 
-The remainder of this thesis is organized as follows.
+The remainder of this thesis is outlined below.
 A review of recent machine-learning-based surrogate models for fluid dynamics and their relation to the present work is provided in Chapter~\ref{ch:related}.
 The physical and mathematical foundations of Stokes flow, the stream-function formulation, and the two network architectures are introduced in Chapter~\ref{ch:theory}.
 Chapter~\ref{ch:methodology} then describes the full computational workflow, including LaMEM data generation, stream-function computation, input construction, and training and evaluation procedures.
