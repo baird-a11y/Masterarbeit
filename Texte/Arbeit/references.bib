@@ -36,7 +36,7 @@
 	url = {https://linkinghub.elsevier.com/retrieve/pii/S0045782522001207},
 	doi = {10.1016/j.cma.2022.114778},
 	abstract = {Neural operators can learn nonlinear mappings between function spaces and offer a new simulation paradigm for real-time prediction of complex dynamics for realistic diverse applications as well as for system identification in science and engineering. Herein, we investigate the performance of two neural operators, which have shown promising results so far, and we develop new practical extensions that will make them more accurate and robust and importantly more suitable for industrial-complexity applications. The first neural operator, DeepONet, was published in 2019 (Lu et al., 2019), and its original architecture was based on the universal approximation theorem of Chen \& Chen (1995). The second one, named Fourier Neural Operator or FNO, was published in 2020 (Li et al., 2020), and it is based on parameterizing the integral kernel in the Fourier space. DeepONet is represented by a summation of products of neural networks (NNs), corresponding to the branch NN for the input function and the trunk NN for the output function; both NNs are general architectures, e.g., the branch NN can be replaced with a CNN or a ResNet. According to Kovachki et al. (2021), FNO in its continuous form can be viewed conceptually as a DeepONet with a specific architecture of the branch NN and a trunk NN represented by a trigonometric basis. In order to compare FNO with DeepONet computationally for realistic setups, we develop several extensions of FNO that can deal with complex geometric domains as well as mappings where the input and output function spaces are of different dimensions. We also develop an extended DeepONet with special features that provide inductive bias and accelerate training, and we present a faster implementation of DeepONet with cost comparable to the computational cost of FNO, which is based on the Fast Fourier Transform.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	journal = {Computer Methods in Applied Mechanics and Engineering},
 	author = {Lu, Lu and Meng, Xuhui and Cai, Shengze and Mao, Zhiping and Goswami, Somdatta and Zhang, Zhongqiang and Karniadakis, George Em},
@@ -52,7 +52,7 @@
 	isbn = {978-1-62410-711-5},
 	url = {https://arc.aiaa.org/doi/10.2514/6.2024-2742},
 	doi = {10.2514/6.2024-2742},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	booktitle = {{AIAA} {SCITECH} 2024 {Forum}},
 	publisher = {American Institute of Aeronautics and Astronautics},
@@ -69,7 +69,7 @@
 	url = {https://www.nature.com/articles/s41598-024-73529-y},
 	doi = {10.1038/s41598-024-73529-y},
 	abstract = {We evaluate the capability of convolutional neural networks (CNNs) to predict a velocity field as it relates to fluid flow around various arrangements of obstacles within a two-dimensional, rectangular channel. We base our network architecture on a gated residual U-Net template and train it on velocity fields generated from computational fluid dynamics (CFD) simulations. We then assess the extent to which our model can accurately and efficiently predict steady flows in terms of velocity fields associated with inlet speeds and obstacle configurations not included in our training set. Real-world applications often require fluid-flow predictions in larger and more complex domains that contain more obstacles than used in model training. To address this problem, we propose a method that decomposes a domain into subdomains for which our model can individually and accurately predict the fluid flow, after which we apply smoothness and continuity constraints to reconstruct velocity fields across the whole of the original domain. This piecewise, semicontinuous approach is computationally more efficient than the alternative, which involves generation of CFD datasets required to retrain the model on larger and more spatially complex domains. We introduce a local orientational vector field entropy (LOVE) metric, which quantifies a decorrelation scale for velocity fields in geometric domains with one or more obstacles, and use it to devise a strategy for decomposing complex domains into weakly interacting subsets suitable for application of our modeling approach. We end with an assessment of error propagation across modeled domains of increasing size.},
-	language = {en},
+	
 	number = {1},
 	urldate = {2026-02-15},
 	journal = {Scientific Reports},
@@ -97,7 +97,7 @@
 	url = {https://www.mdpi.com/2297-8747/28/5/102},
 	doi = {10.3390/mca28050102},
 	abstract = {In recent years, Physics-Informed Neural Networks (PINNs) have drawn great interest among researchers as a tool to solve computational physics problems. Unlike conventional neural networks, which are black-box models that “blindly” establish a correlation between input and output variables using a large quantity of labeled data, PINNs directly embed physical laws (primarily partial differential equations) within the loss function of neural networks. By minimizing the loss function, this approach allows the output variables to automatically satisfy physical equations without the need for labeled data. The Navier–Stokes equation is one of the most classic governing equations in thermal ﬂuid engineering. This study constructs a PINN to solve the Navier–Stokes equations for a 2D incompressible laminar ﬂow problem. Flows passing around a 2D circular particle are chosen as the benchmark case, and an elliptical particle is also examined to enrich the research. The velocity and pressure ﬁelds are predicted by the PINNs, and the results are compared with those derived from Computational Fluid Dynamics (CFD). Additionally, the particle drag force coefﬁcient is calculated to quantify the discrepancy in the results of the PINNs as compared to CFD outcomes. The drag coefﬁcient maintained an error within 10\% across all test scenarios.},
-	language = {en},
+	
 	number = {5},
 	urldate = {2026-02-15},
 	journal = {Mathematical and Computational Applications},
@@ -115,7 +115,7 @@
 	url = {http://arxiv.org/abs/1801.06879},
 	doi = {10.1016/j.jcp.2018.04.018},
 	abstract = {We are interested in the development of surrogate models for uncertainty quantification and propagation in problems governed by stochastic PDEs using a deep convolutional encoder-decoder network in a similar fashion to approaches considered in deep learning for image-to-image regression tasks. Since normal neural networks are data intensive and cannot provide predictive uncertainty, we propose a Bayesian approach to convolutional neural nets. A recently introduced variational gradient descent algorithm based on Stein's method is scaled to deep convolutional networks to perform approximate Bayesian inference on millions of uncertain network parameters. This approach achieves state of the art performance in terms of predictive accuracy and uncertainty quantification in comparison to other approaches in Bayesian neural networks as well as techniques that include Gaussian processes and ensemble methods even when the training data size is relatively small. To evaluate the performance of this approach, we consider standard uncertainty quantification benchmark problems including flow in heterogeneous media defined in terms of limited data-driven permeability realizations. The performance of the surrogate model developed is very good even though there is no underlying structure shared between the input (permeability) and output (flow/pressure) fields as is often the case in the image-to-image regression models used in computer vision problems. Studies are performed with an underlying stochastic input dimensionality up to \$4,225\$ where most other uncertainty quantification methods fail. Uncertainty propagation tasks are considered and the predictive output Bayesian statistics are compared to those obtained with Monte Carlo estimates.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	journal = {Journal of Computational Physics},
 	author = {Zhu, Yinhao and Zabaras, Nicholas},
@@ -135,7 +135,7 @@
 	url = {https://onlinelibrary.wiley.com/doi/10.1111/cgf.13619},
 	doi = {10.1111/cgf.13619},
 	abstract = {This paper presents a novel generative model to synthesize ﬂuid simulations from a set of reduced parameters. A convolutional neural network is trained on a collection of discrete, parameterizable ﬂuid simulation velocity ﬁelds. Due to the capability of deep learning architectures to learn representative features of the data, our generative model is able to accurately approximate the training data set, while providing plausible interpolated in-betweens. The proposed generative model is optimized for ﬂuids by a novel loss function that guarantees divergence-free velocity ﬁelds at all times. In addition, we demonstrate that we can handle complex parameterizations in reduced spaces, and advance simulations in time by integrating in the latent space with a second network. Our method models a wide variety of ﬂuid behaviors, thus enabling applications such as fast construction of simulations, interpolation of ﬂuids with different parameters, time re-sampling, latent space simulations, and compression of ﬂuid simulation data. Reconstructed velocity ﬁelds are generated up to 700× faster than re-simulating the data with the underlying CPU solver, while achieving compression rates of up to 1300×.},
-	language = {en},
+	
 	number = {2},
 	urldate = {2026-02-15},
 	journal = {Computer Graphics Forum},
@@ -153,7 +153,7 @@
 	url = {https://dl.acm.org/doi/10.1145/2939672.2939738},
 	doi = {10.1145/2939672.2939738},
 	abstract = {In aerodynamics related design, analysis and optimization problems, ﬂow ﬁelds are simulated using computational ﬂuid dynamics (CFD) solvers. However, CFD simulation is usually a computationally expensive, memory demanding and time consuming iterative process. These drawbacks of CFD limit opportunities for design space exploration and forbid interactive design. We propose a general and ﬂexible approximation model for real-time prediction of non-uniform steady laminar ﬂow in a 2D or 3D domain based on convolutional neural networks (CNNs). We explored alternatives for the geometry representation and the network architecture of CNNs. We show that convolutional neural networks can estimate the velocity ﬁeld two orders of magnitude faster than a GPU-accelerated CFD solver and four orders of magnitude faster than a CPU-based CFD solver at a cost of a low error rate. This approach can provide immediate feedback for real-time design iterations at the early stage of design. Compared with existing approximation models in the aerodynamics domain, CNNs enable an eﬃcient estimation for the entire velocity ﬁeld. Furthermore, designers and engineers can directly apply the CNN approximation model in their design space exploration algorithms without training extra lower-dimensional surrogate models.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	booktitle = {Proceedings of the 22nd {ACM} {SIGKDD} {International} {Conference} on {Knowledge} {Discovery} and {Data} {Mining}},
 	publisher = {ACM},
@@ -169,7 +169,7 @@
 	url = {http://arxiv.org/abs/2302.01178},
 	doi = {10.48550/arXiv.2302.01178},
 	abstract = {Although very successfully used in conventional machine learning, convolution based neural network architectures – believed to be inconsistent in function space – have been largely ignored in the context of learning solution operators of PDEs. Here, we present novel adaptations for convolutional neural networks to demonstrate that they are indeed able to process functions as inputs and outputs. The resulting architecture, termed as convolutional neural operators (CNOs), is designed specifically to preserve its underlying continuous nature, even when implemented in a discretized form on a computer. We prove a universality theorem to show that CNOs can approximate operators arising in PDEs to desired accuracy. CNOs are tested on a novel suite of benchmarks, encompassing a diverse set of PDEs with possibly multi-scale solutions and are observed to significantly outperform baselines, paving the way for an alternative framework for robust and accurate operator learning. Our code is publicly available at https://github.com/bogdanraonic3/ConvolutionalNeuralOperator.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	publisher = {arXiv},
 	author = {Raonić, Bogdan and Molinaro, Roberto and Ryck, Tim De and Rohner, Tobias and Bartolucci, Francesca and Alaifari, Rima and Mishra, Siddhartha and Bézenac, Emmanuel de},
@@ -187,7 +187,7 @@
 	issn = {0028-0836, 1476-4687},
 	url = {https://www.nature.com/articles/332534a0},
 	doi = {10.1038/332534a0},
-	language = {en},
+	
 	number = {6164},
 	urldate = {2026-02-15},
 	journal = {Nature},
@@ -205,7 +205,7 @@
 	url = {https://arc.aiaa.org/doi/10.2514/1.J058291},
 	doi = {10.2514/1.J058291},
 	abstract = {With this study, we investigate the accuracy of deep learning models for the inference of Reynolds-Averaged Navier-Stokes solutions. We focus on a modernized Unet architecture and evaluate a large number of trained neural networks with respect to their accuracy for the calculation of pressure and velocity distributions. In particular, we illustrate how training data size and the number of weights inﬂuence the accuracy of the solutions. With our best models, we arrive at a mean relative pressure and velocity error of less than 3\% across a range of previously unseen airfoil shapes. In addition all source code is publicly available in order to ensure reproducibility and to provide a starting point for researchers interested in deep learning methods for physics problems. While this work focuses on RANS solutions, the neural network architecture and learning setup are very generic and applicable to a wide range of PDE boundary value problems on Cartesian grids.},
-	language = {en},
+	
 	number = {1},
 	urldate = {2026-02-15},
 	journal = {AIAA Journal},
@@ -241,7 +241,7 @@
 	url = {https://arxiv.org/abs/2503.17797},
 	doi = {10.48550/ARXIV.2503.17797},
 	abstract = {Partial Differential Equation (PDE) problems often exhibit strong local spatial structures, and effectively capturing these structures is critical for approximating their solutions. Recently, the Fourier Neural Operator (FNO) has emerged as an efficient approach for solving these PDE problems. By using parametrization in the frequency domain, FNOs can efficiently capture global patterns. However, this approach inherently overlooks the critical role of local spatial features, as frequency-domain parameterized convolutions primarily emphasize global interactions without encoding comprehensive localized spatial dependencies. Although several studies have attempted to address this limitation, their extracted Local Spatial Features (LSFs) remain insufficient, and computational efficiency is often compromised. To address this limitation, we introduce a convolutional neural network (CNN)based feature pre-extractor to capture LSFs directly from input data, resulting in a hybrid architecture termed Conv-FNO. Furthermore, we introduce two novel resizing schemes to make our Conv-FNO resolution invariant. In this work, we focus on demonstrating the effectiveness of incorporating LSFs into FNOs by conducting both a theoretical analysis and extensive numerical experiments. Our findings show that this simple yet impactful modification enhances the representational capacity of FNOs and significantly improves performance on challenging PDE benchmarks.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	publisher = {arXiv},
 	author = {Liu, Chaoyu and Murari, Davide and Liu, Lihao and Li, Yangming and Budd, Chris and Schönlieb, Carola-Bibiane},
@@ -258,7 +258,7 @@
 	url = {https://linkinghub.elsevier.com/retrieve/pii/S0045782522005114},
 	doi = {10.1016/j.cma.2022.115496},
 	abstract = {Predicting the dynamic behaviors of particles in suspension subject to hydrodynamic interaction (HI) and external drive can be critical for many applications. By harvesting advanced deep learning techniques, the present work introduces a new framework, hydrodynamic interaction graph neural network (HIGNN), for inferring and predicting the particles’ dynamics in Stokes suspensions. It overcomes the limitations of traditional approaches in computational efficiency, accuracy, and/or transferability. In particular, by uniting the data structure represented by a graph and the neural networks with learnable parameters, the HIGNN constructs surrogate modeling for the mobility tensor of particles which is the key to predicting the dynamics of particles subject to HI and external forces. To account for the many-body nature of HI, we generalize the state-of-the-art GNN by introducing higher-order connectivity into the graph and the corresponding convolutional operation. For training the HIGNN, we only need the data for a small number of particles in the domain of interest, and hence the training cost can be maintained low. Once constructed, the HIGNN permits fast predictions of the particles’ velocities and is transferable to suspensions of different numbers/concentrations of particles in the same domain and to any external forcing. It has the ability to accurately capture both the long-range HI and short-range lubrication effects. We demonstrate the accuracy, efficiency, and transferability of the proposed HIGNN framework in a variety of systems. The requirement on computing resource is minimum: most simulations only require a desktop with one GPU; the simulations for a large suspension of 100,000 particles call for up to 6 GPUs.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	journal = {Computer Methods in Applied Mechanics and Engineering},
 	author = {Ma, Zhan and Ye, Zisheng and Pan, Wenxiao},
@@ -273,7 +273,7 @@
 	url = {http://arxiv.org/abs/2401.02311},
 	doi = {10.48550/arXiv.2401.02311},
 	abstract = {Solving complex fluid-structure interaction (FSI) problems, characterized by nonlinear partial differential equations, is crucial in various scientific and engineering applications. Traditional computational fluid dynamics (CFD) solvers are insufficient to meet the growing requirements for large-scale and long-period simulations. Fortunately, the rapid advancement in neural networks, especially neural operator learning mappings between function spaces, has introduced novel approaches to tackle these challenges via data-driven modeling. In this paper, we propose a Fourier neural operator-based fluid-structure interaction solver (FNObased FSI solver) for efficient simulation of FSI problems, where the solid solver based on the finite difference method is seamlessly integrated with the Fourier neural operator to predict incompressible flow using the immersed boundary method. We analyze the performance of the FNO-based FSI solver in the following three situations: training data with or without the steady state, training method with one-step label or multi-step labels, and prediction in interpolation or extrapolation. We find that the best performance for interpolation is achieved by training the operator with multi-step labels using steady-state data. Finally, we train the FNO-based FSI solver using this optimal training method and apply it to vesicle dynamics. The results show that the FNO-based FSI solver is capable of capturing the variations in the fluid and the vesicle.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	publisher = {arXiv},
 	author = {Xiao, Wang and Gao, Ting and Liu, Kai and Duan, Jinqiao and Zhao, Meng},
@@ -289,7 +289,7 @@
 	url = {http://arxiv.org/abs/2010.08895},
 	doi = {10.48550/arXiv.2010.08895},
 	abstract = {The classical development of neural networks has primarily focused on learning mappings between ﬁnite-dimensional Euclidean spaces. Recently, this has been generalized to neural operators that learn mappings between function spaces. For partial differential equations (PDEs), neural operators directly learn the mapping from any functional parametric dependence to the solution. Thus, they learn an entire family of PDEs, in contrast to classical methods which solve one instance of the equation. In this work, we formulate a new neural operator by parameterizing the integral kernel directly in Fourier space, allowing for an expressive and efﬁcient architecture. We perform experiments on Burgers’ equation, Darcy ﬂow, and Navier-Stokes equation. The Fourier neural operator is the ﬁrst ML-based method to successfully model turbulent ﬂows with zero-shot super-resolution. It is up to three orders of magnitude faster compared to traditional PDE solvers. Additionally, it achieves superior accuracy compared to previous learning-based solvers under ﬁxed resolution.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	publisher = {arXiv},
 	author = {Li, Zongyi and Kovachki, Nikola and Azizzadenesheli, Kamyar and Liu, Burigede and Bhattacharya, Kaushik and Stuart, Andrew and Anandkumar, Anima},
@@ -303,7 +303,7 @@
 @article{li_fourier_nodate,
 	title = {Fourier {Neural} {Operator} with {Learned} {Deformations} for {PDEs} on {General} {Geometries}},
 	abstract = {Deep learning surrogate models have shown promise in solving partial differential equations (PDEs). Among them, the Fourier neural operator (FNO) achieves good accuracy, and is significantly faster compared to numerical solvers, on a variety of PDEs, such as fluid flows. However, the FNO uses the Fast Fourier transform (FFT), which is limited to rectangular domains with uniform grids. In this work, we propose a new framework, viz., Geo-FNO, to solve PDEs on arbitrary geometries. Geo-FNO learns to deform the input (physical) domain, which may be irregular, into a latent space with a uniform grid. The FNO model with the FFT is applied in the latent space. The resulting Geo-FNO model has both the computation efficiency of FFT and the flexibility of handling arbitrary geometries. Our Geo-FNO is also flexible in terms of its input formats, viz., point clouds, meshes, and design parameters are all valid inputs. We consider a variety of PDEs such as the Elasticity, Plasticity, Euler’s, and Navier-Stokes equations, and both forward modeling and inverse design problems. Comprehensive cost-accuracy experiments show that Geo-FNO is 105 times faster than the standard numerical solvers and twice more accurate compared to direct interpolation on existing ML-based PDE solvers such as the standard FNO.},
-	language = {en},
+	
 	author = {Li, Zongyi and Huang, Daniel Zhengyu and Liu, Burigede},
 	year = {2022},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\GIRELEU3\\Li et al. - Fourier Neural Operator with Learned Deformations for PDEs on General Geometries.pdf:application/pdf},
@@ -317,7 +317,7 @@
 	url = {https://link.springer.com/10.1007/s00521-021-06633-z},
 	doi = {10.1007/s00521-021-06633-z},
 	abstract = {We demonstrate several techniques to encourage practical uses of neural networks for ﬂuid ﬂow estimation. In the present paper, three perspectives which are remaining challenges for applications of machine learning to ﬂuid dynamics are considered: 1. interpretability of machine-learned results, 2. bulking out of training data, and 3. generalizability of neural networks. For the interpretability, we ﬁrst demonstrate two methods to observe the internal procedure of neural networks, i.e., visualization of hidden layers and application of gradient-weighted class activation mapping (Grad-CAM), applied to canonical ﬂuid ﬂow estimation problems—(1) drag coefﬁcient estimation of a cylinder wake and (2) velocity estimation from particle images. It is exempliﬁed that both approaches can successfully tell us evidences of the great capability of machine learning-based estimations. We then utilize some techniques to bulk out training data for super-resolution analysis and temporal prediction for cylinder wake and NOAA sea surface temperature data to demonstrate that sufﬁcient training of neural networks with limited amount of training data can be achieved for ﬂuid ﬂow problems. The generalizability of machine learning model is also discussed by accounting for the perspectives of inter/extrapolation of training data, considering super-resolution of wakes behind two parallel cylinders. We ﬁnd that various ﬂow patterns generated by complex interaction between two cylinders can be reconstructed well, even for the test conﬁgurations regarding the distance factor. The present paper can be a signiﬁcant step toward practical uses of neural networks for both laminar and turbulent ﬂow problems.},
-	language = {en},
+	
 	number = {5},
 	urldate = {2026-02-15},
 	journal = {Neural Computing and Applications},
@@ -336,7 +336,7 @@
 	url = {https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2009GC002509},
 	doi = {10.1029/2009GC002509},
 	abstract = {Magma chambers can be considered as thermochemically driven convection systems. We present a new numerical method that describes the movement of crystallized minerals in terms of active spherical particles in a convecting magma that is represented by an infinite Prandtl number fluid. The main part focuses on the results we obtained. A finite volume thermochemical convection model for two and three dimensions and a discrete element method, which is used to model granular material, are combined. The new model is validated with floating experiments using particles of different densities and an investigation of single and multiparticle settling velocities. The resulting velocities are compared with theoretical predictions by Stokes's law and a hindered settling function for the multiparticle system. Two fundamental convection regimes are identified in the parameter space that is spanned by the Rayleigh number and the chemical Rayleigh number, which is a measure for the density of the particles. We define the T regime that is dominated by thermal convection. Here the thermal driving force is strong enough to keep all particles in suspension. As the particles get denser, they start settling to the ground, which results in a C regime. The C regime is characterized by the existence of a sediment layer with particle‐rich material and a suspension layer with few particles. It is shown that the presence of particles can reduce the vigor of thermal convection. In the frame of a parameter study we discuss the change between the regimes that is systematically investigated. We show that the so‐called TC transition fits a power law. Furthermore, we investigate the settling behavior of the particles in vigorous thermal convection, which can be linked to crystal settling in magma chambers. We develop an analytical settling law that describes the number of settled particles against time and show that the results fit the observations from numerical and laboratory experiments.},
-	language = {en},
+	
 	number = {12},
 	urldate = {2026-02-15},
 	journal = {Geochemistry, Geophysics, Geosystems},
@@ -354,7 +354,7 @@
 	url = {https://amses-journal.springeropen.com/articles/10.1186/s40323-022-00221-z},
 	doi = {10.1186/s40323-022-00221-z},
 	abstract = {Many real world problems involve fluid flow phenomena, typically be described by the Navier–Stokes equations. The Navier–Stokes equations are partial differential equations (PDEs) with highly nonlinear properties. Currently mostly used methods solve this dif‑ferential equation by discretizing geometries. In the field of fluid mechanics the finite volume method (FVM) is widely used for numerical flow simulation, so‑called com‑putational fluid dynamics (CFD). Due to high computational costs and cumbersome generation of the discretization they are not widely used in real time applications. Our presented work focuses on advancing PDE‑constrained deep learning frameworks for more real‑world applications with irregular geometries without parameterization. We present a Deep Neural Network framework that generate surrogates for non‑geometric boundaries by data free solely physics driven training, by minimizing the residuals of the governing PDEs (i.e., conservation laws) so that no computationally expensive CFD simulation data is needed. We named this method geometry aware physics informed neural network—GAPINN. The framework involves three network types. The first network reduces the dimensions of the irregular geometries to a latent representation. In this work we used a Variational‑Auto‑Encoder (VAE) for this task. We proposed the concept of using this latent representation in combination with spatial coordinates as input for PINNs. Using PINNs we showed that it is possible to train a surrogate model purely driven on the reduction of the residuals of the underlying PDE for irregular non‑parametric geometries. Furthermore, we showed the way of designing a boundary constraining network (BCN) to hardly enforce boundary conditions during training of the PINN. We evaluated this concept on test cases in the fields of biofluidmechanics. The experiments comprise laminar flow (Re = 500) in irregular shaped vessels. The main highlight of the presented GAPINN is the use of PINNs on irregular non‑parameterized geometries. Despite that we showed the usage of this framework for Navier Stokes equations, it should be feasible to adapt this framework for other problems described by PDEs.},
-	language = {en},
+	
 	number = {1},
 	urldate = {2026-02-15},
 	journal = {Advanced Modeling and Simulation in Engineering Sciences},
@@ -373,7 +373,7 @@
 	doi = {10.1038/s41598-023-27738-6},
 	abstract = {Abstract
             Despite advances in seismology and computing, the ability to image subsurface volcanic environments is poor, limiting our understanding of the overall workings of volcanic systems. This is related to substantive structural heterogeneities which strongly scatters seismic waves obscuring the ballistic arrivals normally used in seismology for wave velocity determination. Here we address this constraint by, using a deep learning approach, a Fourier neural operator (FNO), to model and invert seismic signals in volcanic settings. The FNO is trained using 40,000+ simulations of elastic wave propagation through complex volcano models, and includes the full scattered wavefield. Once trained, the forward network is used to predict elastic wave propagation and is shown to accurately reproduce the seismic wavefield. The FNO is also trained to predict heterogeneous velocity models given a limited set of input seismograms. It is shown to capture details of the complex velocity structure that lie far outside the ability of current methods available in volcano imagery.},
-	language = {en},
+	
 	number = {1},
 	urldate = {2026-02-15},
 	journal = {Scientific Reports},
@@ -390,7 +390,7 @@
 	url = {https://arxiv.org/abs/2505.10270},
 	doi = {10.48550/ARXIV.2505.10270},
 	abstract = {Active colloidal particles create flow around them due to non-equilibrium process on their surfaces. In this paper, we infer the activity of such colloidal particles from the flow field created by them via deep learning. We first explain our method for one active particle, inferring the \$2s\$ mode (or the stresslet) and the \$3t\$ mode (or the source dipole) from the flow field data, along with the position and orientation of the particle. We then apply the method to a system of many active particles. We find excellent agreements between the predictions and the true values of activity. Our method presents a principled way to predict arbitrary activity from the flow field created by active particles.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	publisher = {arXiv},
 	author = {Mohapatra, Aditya and Kumar, Aditya and Deb, Mayurakshi and Dhomkar, Siddharth and Singh, Rajesh},
@@ -416,7 +416,7 @@
 	issn = {1068-9613, 1068-9613},
 	url = {https://hw.oeaw.ac.at?arp=0x003d1ae0},
 	doi = {10.1553/etna_vol56s86},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	journal = {ETNA - Electronic Transactions on Numerical Analysis},
 	author = {Margenberg, Nils and Lessig, Christian and Richter, Thomas},
@@ -428,7 +428,7 @@
 @article{kovachki_neural_nodate,
 	title = {Neural {Operator}: {Learning} {Maps} {Between} {Function} {Spaces} {With} {Applications} to {PDEs}},
 	abstract = {The classical development of neural networks has primarily focused on learning mappings between finite dimensional Euclidean spaces or finite sets. We propose a generalization of neural networks to learn operators, termed neural operators, that map between infinite dimensional function spaces. We formulate the neural operator as a composition of linear integral operators and nonlinear activation functions. We prove a universal approximation theorem for our proposed neural operator, showing that it can approximate any given nonlinear continuous operator. The proposed neural operators are also discretization-invariant, i.e., they share the same model parameters among different discretization of the underlying function spaces. Furthermore, we introduce four classes of efficient parameterization, viz., graph neural operators, multi-pole graph neural operators, lowrank neural operators, and Fourier neural operators. An important application for neural operators is learning surrogate maps for the solution operators of partial differential equations (PDEs). We consider standard PDEs such as the Burgers, Darcy subsurface flow, and the Navier-Stokes equations, and show that the proposed neural operators have superior performance compared to existing machine learning based methodologies, while being several orders of magnitude faster than conventional PDE solvers.},
-	language = {en},
+	
 	author = {Kovachki, Nikola and Li, Zongyi and Liu, Burigede and Azizzadenesheli, Kamyar and Bhattacharya, Kaushik and Stuart, Andrew},
 	year = {2021},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\BIHFK5EL\\Kovachki et al. - Neural Operator Learning Maps Between Function Spaces With Applications to PDEs.pdf:application/pdf},
@@ -442,7 +442,7 @@
 	shorttitle = {{NSFnets} ({Navier}-{Stokes} flow nets)},
 	url = {https://linkinghub.elsevier.com/retrieve/pii/S0021999120307257},
 	doi = {10.1016/j.jcp.2020.109951},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	journal = {Journal of Computational Physics},
 	author = {Jin, Xiaowei and Cai, Shengze and Li, Hui and Karniadakis, George Em},
@@ -474,7 +474,7 @@
 	url = {https://se.copernicus.org/articles/13/229/2022/},
 	doi = {10.5194/se-13-229-2022},
 	abstract = {Geodynamical simulations over the past decades have widely been built on quadrilateral and hexahedral ﬁnite elements. For the discretization of the key Stokes equation describing slow, viscous ﬂow, most codes use either the unstable Q1 × P0 element, a stabilized version of the equalorder Q1 × Q1 element, or more recently the stable Taylor–Hood element with continuous (Q2 × Q1) or discontinuous (Q2 × P−1) pressure. However, it is not clear which of these choices is actually the best at accurately simulating “typical” geodynamic situations.},
-	language = {en},
+	
 	number = {1},
 	urldate = {2026-02-15},
 	journal = {Solid Earth},
@@ -511,7 +511,7 @@
 	url = {http://arxiv.org/abs/1711.10561},
 	doi = {10.48550/arXiv.1711.10561},
 	abstract = {We introduce physics informed neural networks – neural networks that are trained to solve supervised learning tasks while respecting any given law of physics described by general nonlinear partial diﬀerential equations. In this two part treatise, we present our developments in the context of solving two main classes of problems: data-driven solution and data-driven discovery of partial diﬀerential equations. Depending on the nature and arrangement of the available data, we devise two distinct classes of algorithms, namely continuous time and discrete time models. The resulting neural networks form a new class of data-eﬃcient universal function approximators that naturally encode any underlying physical laws as prior information. In this ﬁrst part, we demonstrate how these networks can be used to infer solutions to partial diﬀerential equations, and obtain physics-informed surrogate models that are fully diﬀerentiable with respect to all input coordinates and free parameters.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	publisher = {arXiv},
 	author = {Raissi, Maziar and Perdikaris, Paris and Karniadakis, George Em},
@@ -529,7 +529,7 @@
 	url = {https://linkinghub.elsevier.com/retrieve/pii/S0032591024003267},
 	doi = {10.1016/j.powtec.2024.119684},
 	abstract = {Solid-fluid multiphase systems are ubiquitous in many chemical, pharmaceutical, and energy based applications. These flows are challenging to study experimentally, thus several numerical simulation techniques have been developed. In this paper we use Particle Resolved Simulations (PRS) combined with Deep Learning (DL) to predict drag forces on each particle in suspensions of ellipsoidal particles for use in lower fidelity Euler-Lagrange and Euler-Euler simulations. Suspensions with solid fraction of 0.1, 0.2 and 0.3 are investigated at Reynolds numbers of 10, 50, 100 and 200. A UNet architecture is used to predict the velocity and pressure fields and a CNN is used to predict the drag forces. It is shown that drag force predictions using the predicted velocity and pressure fields give more accurate results than predictions that only use geometric information.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	journal = {Powder Technology},
 	author = {Ashwin, Neil Raj and Tafti, Danesh and Muralidhar, Nikhil and Cao, Ze},
@@ -544,7 +544,7 @@
 	url = {http://arxiv.org/abs/2505.16041},
 	doi = {10.48550/arXiv.2505.16041},
 	abstract = {Mantle convection simulations are an essential tool for understanding how rocky planets evolve. However, the poorly known input parameters to these simulations, the non-linear dependence of transport properties on pressure and temperature, and the long integration times in excess of several billion years all pose a computational challenge for numerical solvers. We propose a physics-based machine learning approach that predicts creeping flow velocities as a function of temperature while conserving mass, thereby bypassing the numerical solution of the Stokes problem. A finite-volume solver then uses the predicted velocities to advect and diffuse the temperature field to the next time-step, enabling autoregressive rollout at inference. For training, our model requires temperature-velocity snapshots from a handful of simulations (94). We consider mantle convection in a two-dimensional rectangular box with basal and internal heating, pressure- and temperature-dependent viscosity. Overall, our model is up to 89 times faster than the numerical solver. We also show the importance of different components in our convolutional neural network architecture such as mass conservation, learned paddings on the boundaries, and loss scaling for the overall rollout performance. Finally, we test our approach on unseen scenarios to demonstrate some of its strengths and weaknesses.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	publisher = {arXiv},
 	author = {Agarwal, Siddhant and Bekar, Ali Can and Hüttig, Christian and Greenberg, David S. and Tosi, Nicola},
@@ -562,7 +562,7 @@
 	url = {http://arxiv.org/abs/1901.06314},
 	doi = {10.1016/j.jcp.2019.05.024},
 	abstract = {Surrogate modeling and uncertainty quantification tasks for PDE systems are most often considered as supervised learning problems where input and output data pairs are used for training. The construction of such emulators is by definition a small data problem which poses challenges to deep learning approaches that have been developed to operate in the big data regime. Even in cases where such models have been shown to have good predictive capability in high dimensions, they fail to address constraints in the data implied by the PDE model. This paper provides a methodology that incorporates the governing equations of the physical model in the loss/likelihood functions. The resulting physics-constrained, deep learning models are trained without any labeled data (e.g. employing only input data) and provide comparable predictive responses with data-driven models while obeying the constraints of the problem at hand. This work employs a convolutional encoder-decoder neural network approach as well as a conditional flow-based generative model for the solution of PDEs, surrogate model construction, and uncertainty quantification tasks. The methodology is posed as a minimization problem of the reverse Kullback-Leibler (KL) divergence between the model predictive density and the reference conditional density, where the later is defined as the Boltzmann-Gibbs distribution at a given inverse temperature with the underlying potential relating to the PDE system of interest. The generalization capability of these models to out-of-distribution input is considered. Quantification and interpretation of the predictive uncertainty is provided for a number of problems.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	journal = {Journal of Computational Physics},
 	author = {Zhu, Yinhao and Zabaras, Nicholas and Koutsourelakis, Phaedon-Stelios and Perdikaris, Paris},
@@ -603,7 +603,7 @@
               SIGNIFICANCE
             
             PINO uses the neural operator framework that is guaranteed to be a universal approximator for any continuous operator and discretization convergent in the limit of mesh refinement. Moreover, PINO succeeds in settings where no training data is available and only PDE constraints are imposed. These advantages could lead to applications such as weather forecast, airfoil designs, and turbulence control.},
-	language = {en},
+	
 	number = {3},
 	urldate = {2026-02-15},
 	journal = {ACM / IMS Journal of Data Science},
@@ -617,7 +617,7 @@
 @article{richter-powell_neural_2022,
 	title = {Neural {Conservation} {Laws}: {A} {Divergence}-{Free} {Perspective}},
 	abstract = {We investigate the parameterization of deep neural networks that by design satisfy the continuity equation, a fundamental conservation law. This is enabled by the observation that any solution of the continuity equation can be represented as a divergence-free vector field. We hence propose building divergence-free neural networks through the concept of differential forms, and with the aid of automatic differentiation, realize two practical constructions. As a result, we can parameterize pairs of densities and vector fields that always exactly satisfy the continuity equation, foregoing the need for extra penalty methods or expensive numerical simulation. Furthermore, we prove these models are universal and so can be used to represent any divergence-free vector field. Finally, we experimentally validate our approaches by computing neural network-based solutions to fluid equations, solving for the Hodge decomposition, and learning dynamical optimal transport maps.},
-	language = {en},
+	
 	author = {Richter-Powell, Jack and Lipman, Yaron and Chen, Ricky T. Q.},
 	year = {2022},
 	file = {PDF:C\:\\Users\\Paul Baselt\\Zotero\\storage\\2EJUHHVU\\Richter-Powell et al. - Neural Conservation Laws A Divergence-Free Perspective.pdf:application/pdf},
@@ -630,7 +630,7 @@
 	url = {http://arxiv.org/abs/2005.05448},
 	doi = {10.1103/PhysRevFluids.5.114304},
 	abstract = {The settling behaviour of small inertial particles in turbulent convection is a fundamental problem across several disciplines, from geophysics to metallurgy. In a geophysical context, the settling of dense crystals controls the mode of solidification of magma chambers and planetary-scale magma oceans, while rising of light bubbles of volatiles drives volcanic outgassing and the formation of primordial atmospheres. Motivated by these geophysical systems, we perform a systematic numerical study on the settling rate of particles in a rectangular two-dimensional Rayleigh-Benard system with Rayleigh number up to 10{\textasciicircum}12 and Prandtl number from 10 to 50. Under the idealized condition of spherically-shaped particles with small Reynolds number, two limiting behaviours exist for the settling velocity. On the one hand, Stokes' law applies to particles with small but finite response time, leading to a constant settling rate. On the other hand, particles with a vanishing response time are expected to settle at an exponential rate. Based on our simulations, we present a new physical model that bridges the gap between the above limiting behaviours by describing the sedimentation of inertial particles as a random process with two key components: i) the transport of particles from vigorously convecting regions into sluggish, low-velocity "piles" that naturally develop at the horizontal boundaries of the system, and ii) the probability that particles escape such low-velocity regions without settling at their base. In addition, we identify four distinct settling regimes and analyze the horizontal distribution of sedimented particles. For two of these regimes settling is particularly slow and the distribution is strongly non-uniform, with dense particles being deposited preferentially below major clusters of upwellings.},
-	language = {en},
+	
 	number = {11},
 	urldate = {2026-02-15},
 	journal = {Physical Review Fluids},
@@ -650,7 +650,7 @@
 	url = {http://arxiv.org/abs/1906.02382},
 	doi = {10.1016/j.cma.2019.112732},
 	abstract = {Numerical simulations on fluid dynamics problems primarily rely on spatially or/and temporally discretization of the governing equation into the finite-dimensional algebraic system solved by computers. Due to complicated nature of the physics and geometry, such process can be computational prohibitive for most real-time applications and many-query analyses. Therefore, developing a cost-effective surrogate model is of great practical significance. Deep learning (DL) has shown new promises for surrogate modeling due to its capability of handling strong nonlinearity and high dimensionality. However, the off-the-shelf DL architectures fail to operate when the data becomes sparse. Unfortunately, data is often insufficient in most parametric fluid dynamics problems since each data point in the parameter space requires an expensive numerical simulation based on the first principle, e.g., Naiver--Stokes equations. In this paper, we provide a physics-constrained DL approach for surrogate modeling of fluid flows without relying on any simulation data. Specifically, a structured deep neural network (DNN) architecture is devised to enforce the initial and boundary conditions, and the governing partial differential equations are incorporated into the loss of the DNN to drive the training. Numerical experiments are conducted on a number of internal flows relevant to hemodynamics applications, and the forward propagation of uncertainties in fluid properties and domain geometry is studied as well. The results show excellent agreement on the flow field and forward-propagated uncertainties between the DL surrogate approximations and the first-principle numerical simulations.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	journal = {Computer Methods in Applied Mechanics and Engineering},
 	author = {Sun, Luning and Gao, Han and Pan, Shaowu and Wang, Jian-Xun},
@@ -669,7 +669,7 @@
 	url = {https://linkinghub.elsevier.com/retrieve/pii/S2666827021000888},
 	doi = {10.1016/j.mlwa.2021.100176},
 	abstract = {Algebraic or geometric multigrid methods are commonly used in numerical solvers as they are a multiresolution method able to handle problems with multiple scales. In this work, we propose a modification to the commonly-used U-Net neural network architecture that is inspired by the principles of multigrid methods, referred to here as U-Net-MG. We then demonstrate that this proposed U-Net-MG architecture can successfully reduce the test prediction errors relative to the conventional U-Net architecture when modeling a set of fluid dynamic problems. In total, we demonstrate an improvement in the prediction of velocity and pressure fields for the canonical fluid dynamics cases of flow past a stationary cylinder, flow past 2 cylinders in out-of-phase motion, and flow past an oscillating airfoil in both the propulsion and energy harvesting modes. In general, while both the U-Net and U-Net-MG models can model the systems well with test RMSEs of less than 1\%, the use of the U-Net-MG architecture can further reduce RMSEs by between 20\% and 70\%.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	journal = {Machine Learning with Applications},
 	author = {Le, Quang Tuyen and Ooi, Chinchun},
@@ -684,7 +684,7 @@
 	url = {http://arxiv.org/abs/2404.07200},
 	doi = {10.48550/arXiv.2404.07200},
 	abstract = {In solving partial differential equations (PDEs), Fourier Neural Operators (FNOs) have exhibited notable effectiveness. However, FNO is observed to be ineffective with large Fourier kernels that parameterize more frequencies. Current solutions rely on setting small kernels, restricting FNO’s ability to capture complex PDE data in real-world applications. This paper offers empirical insights into FNO’s difficulty with large kernels through spectral analysis: FNO exhibits a unique Fourier parameterization bias, excelling at learning dominant frequencies in target data while struggling with non-dominant frequencies. To mitigate such a bias, we propose SpecB-FNO to enhance the capture of non-dominant frequencies by adopting additional residual modules to learn from the previous ones’ prediction residuals iteratively. By effectively utilizing large Fourier kernels, SpecB-FNO achieves better prediction accuracy on diverse PDE applications, with an average improvement of 50\%.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	publisher = {arXiv},
 	author = {Qin, Shaoxiang and Lyu, Fuyuan and Peng, Wenhui and Geng, Dingyang and Wang, Ju and Tang, Xing and Leroyer, Sylvie and Gao, Naiping and Liu, Xue and Wang, Liangzhu Leon},
@@ -700,7 +700,7 @@
 	url = {http://arxiv.org/abs/2209.15616},
 	doi = {10.48550/arXiv.2209.15616},
 	abstract = {Partial differential equations (PDEs) are central to describing complex physical system simulations. Their expensive solution techniques have led to an increased interest in deep neural network based surrogates. However, the practical utility of training such surrogates is contingent on their ability to model complex multi-scale spatio-temporal phenomena. Various neural network architectures have been proposed to target such phenomena, most notably Fourier Neural Operators (FNOs), which give a natural handle over local \& global spatial information via parameterization of different Fourier modes, and U-Nets which treat local and global information via downsampling and upsampling paths. However, generalizing across different equation parameters or time-scales still remains a challenge. In this work, we make a comprehensive comparison between various FNO, ResNet, and U-Net like approaches to fluid mechanics problems in both vorticity-stream and velocity function form. For U-Nets, we transfer recent architectural improvements from computer vision, most notably from object segmentation and generative modeling. We further analyze the design considerations for using FNO layers to improve performance of U-Net architectures without major degradation of computational cost. Finally, we show promising results on generalization to different PDE parameters and time-scales with a single surrogate model. Source code for our PyTorch benchmark framework is available at https://github.com/microsoft/pdearena.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	publisher = {arXiv},
 	author = {Gupta, Jayesh K. and Brandstetter, Johannes},
@@ -718,7 +718,7 @@
 	url = {https://linkinghub.elsevier.com/retrieve/pii/S0309170822000562},
 	doi = {10.1016/j.advwatres.2022.104180},
 	abstract = {Numerical simulation of multiphase flow in porous media is essential for many geoscience applications. Machine learning models trained with numerical simulation data can provide a faster alternative to traditional simulators. Here we present U-FNO, a novel neural network architecture for solving multiphase flow problems with superior accuracy, speed, and data efficiency. U-FNO is designed based on the newly proposed Fourier neural operator (FNO), which has shown excellent performance in single-phase flows. We extend the FNObased architecture to a highly complex CO2-water multiphase problem with wide ranges of permeability and porosity heterogeneity, anisotropy, reservoir conditions, injection configurations, flow rates, and multiphase flow properties. The U-FNO architecture is more accurate in gas saturation and pressure buildup predictions than the original FNO and a state-of-the-art convolutional neural network (CNN) benchmark. Meanwhile, it has superior data utilization efficiency, requiring only a third of the training data to achieve the equivalent accuracy as CNN. U-FNO provides superior performance in highly heterogeneous geological formations and critically important applications such as gas saturation and pressure buildup ‘‘fronts’’ determination. The trained model can serve as a general-purpose alternative to routine numerical simulations of 2D-radial CO2 injection problems with significant speed-ups than traditional simulators.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	journal = {Advances in Water Resources},
 	author = {Wen, Gege and Li, Zongyi and Azizzadenesheli, Kamyar and Anandkumar, Anima and Benson, Sally M.},
@@ -745,7 +745,7 @@
 	url = {http://arxiv.org/abs/1505.04597},
 	doi = {10.48550/arXiv.1505.04597},
 	abstract = {There is large consent that successful training of deep networks requires many thousand annotated training samples. In this paper, we present a network and training strategy that relies on the strong use of data augmentation to use the available annotated samples more eﬃciently. The architecture consists of a contracting path to capture context and a symmetric expanding path that enables precise localization. We show that such a network can be trained end-to-end from very few images and outperforms the prior best method (a sliding-window convolutional network) on the ISBI challenge for segmentation of neuronal structures in electron microscopic stacks. Using the same network trained on transmitted light microscopy images (phase contrast and DIC) we won the ISBI cell tracking challenge 2015 in these categories by a large margin. Moreover, the network is fast. Segmentation of a 512x512 image takes less than a second on a recent GPU. The full implementation (based on Caﬀe) and the trained networks are available at http://lmb.informatik.uni-freiburg.de/people/ronneber/u-net.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	publisher = {arXiv},
 	author = {Ronneberger, Olaf and Fischer, Philipp and Brox, Thomas},
@@ -763,7 +763,7 @@
 	url = {https://www.worldscientific.com/doi/10.1142/S0219876221410188},
 	doi = {10.1142/S0219876221410188},
 	abstract = {Microfluidics have shown great promise in multiple applications, especially in biomedical diagnostics and separations. While the flow properties of these microfluidic devices can be solved by numerical methods such as computational fluid dynamics (CFD), the process of mesh generation and setting up a numerical solver requires some domain familiarity, while more intuitive commercial programs such as Fluent and StarCCM can be expensive. Hence, in this work, we demonstrated the use of a U-Net convolutional neural network as a surrogate model for predicting the velocity and pressure fields that would result for a particular set of microfluidic filter designs. The surrogate model is fast, easy to set-up and can be used to predict and assess the flow velocity and pressure fields across the domain for new designs of interest via the input of a geometry-encoding matrix. In addition, we demonstrate that the same methodology can also be used to train a network to predict pressure based on velocity data, and propose that this can be an alternative to numerical algorithms for calculating pressure based on velocity measurements from particle-image velocimetry measurements. Critically, in both applications, we demonstrate prediction test errors of less than 1\%, suggesting that this is indeed a viable method.},
-	language = {en},
+	
 	number = {07},
 	urldate = {2026-02-15},
 	journal = {International Journal of Computational Methods},
@@ -781,7 +781,7 @@
 	url = {https://academic.oup.com/petrology/article-lookup/doi/10.1093/petrology/30.6.1471},
 	doi = {10.1093/petrology/30.6.1471},
 	abstract = {Thermal convection in magma chambers is believed to be almost always highly time-dependent, or 'turbulent', and predicted convective velocities are commonly orders of magnitude larger than settling velocities for typical crystals calculated from Stokes' Law. To understand crystal settling in magma chambers we have therefore undertaken a theoretical and experimental study of particle settling in a turbulently convecting fluid. The regime of interest is where the ratio, S, of the Stokes' Law settling velocity, v,, to the root mean square vertical component of convective velocity, W, at mid-depth in the fluid is less than unity. Although v, {\textless} W, settling is still possible because convective velocities are height-dependent and must decrease to zero at the boundaries of the fluid. Particles immediately adjacent to the bottom boundary settle out with their full Stokes' settling velocities. At the same time, convection is vigorous enough to ensure that the distribution of particles in the fluid is uniform. It follows that the number of particles in suspension decays with time according to an exponential law, and the decay constant is simply the ratio of v, to h, the depth of the fluid. Experiments confirm this relationship, at least for low particle concentrations, provided S {\textless} 0-5 and there is no re-entrainment of particles from the floor of the tank. We apply this relationship to crystals in magma chambers and so calculate residence times for typical crystals. We find that for basaltic magmas the predicted residence times are small compared with the many thousands of years that a chamber takes to solidify if cooling is dominated by conduction through the country rock. We therefore conclude that crystal settling may be an efficient differentiation mechanism. Significant magmatic evolution may, however, take place on time-scales that are competitive with these residence times.},
-	language = {en},
+	
 	number = {6},
 	urldate = {2026-02-15},
 	journal = {Journal of Petrology},
@@ -815,7 +815,7 @@
 	url = {http://arxiv.org/abs/1406.1667},
 	doi = {10.1017/jfm.2014.330},
 	abstract = {Direct numerical simulation of the gravity-induced settling of ﬁnite-size particles in triplyperiodic domains has been performed under dilute conditions. For a single solid-to-ﬂuid density ratio of 1.5 we have considered two values of the Galileo number corresponding to steady vertical motion (Ga = 121) and to steady oblique motion (Ga = 178) in the case of one isolated sphere. For the multi-particle system we observe strong particle clustering only in the latter case. The geometry and time scales related to clustering are determined from Voronoı¨ tesselation and particle-conditioned averaging. As a consequence of clustering, the average particle settling velocity is increased by 12\% as compared to the value of an isolated sphere; such a collective eﬀect is not observed in the non-clustering case. By deﬁning a local (instantaneous) ﬂuid velocity average in the vicinity of the ﬁnite-size particles it is shown that the observed enhancement of the settling velocity is due to the fact that the downward ﬂuid motion (with respect to the global average) which is induced in the cluster regions is preferentially sampled by the particles. It is further observed that the variance of the particle velocity is strongly enhanced in the clustering case. With the aid of a decomposition of the particle velocity it is shown that this increase is due to enhanced ﬂuid velocity ﬂuctuations (due to clustering) in the vicinity of the particles. Finally, we discuss a possible explanation for the observation of a critical Galileo number marking the onset of clustering under dilute conditions.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	journal = {Journal of Fluid Mechanics},
 	author = {Uhlmann, Markus and Doychev, Todor},
@@ -834,7 +834,7 @@
 	url = {https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2022JB025809},
 	doi = {10.1029/2022JB025809},
 	abstract = {The dynamics of geophysical dilute turbulent gas-particles mixtures depends to a large extent on particle concentration, which in turn depends predominantly on the particle settling velocity. We experimentally investigate air-particle mixtures contained in a vertical pipe in which the velocity of an ascending air flux matches the settling velocity of glass particles. To obtain local particle concentrations in these mixtures, we use acoustic probing and air pressure measurements and show that these independent techniques yield similar results for a range of particle sizes and particle concentrations. Moreover, we find that in suspensions of small particles (78 μm) the settling velocity increases with the local particle concentration due to the formation of particle clusters. These clusters settle with a velocity that is four times faster than the terminal settling velocity of single particles, and they double settling speeds of the suspensions. In contrast, in suspensions of larger particles (467 μm) the settling velocity decreases with increasing particle concentration. Although particle clusters are still present in this case, the settling velocity is decreased by 30\%, which is captured by a hindered settling model. These results suggest an interplay between hindered settling and cluster-induced enhanced settling, which in our experiments occur respectively at Stokes number O(100) and O(1). We discuss implications for volcanic plumes and pyroclastic currents. Our study suggests that clustering and related enhanced or hindered particle settling velocities should be considered in models of volcanic phenomena and that drag law corrections are needed for reliable predictions and hazard assessment.},
-	language = {en},
+	
 	number = {3},
 	urldate = {2026-02-15},
 	journal = {Journal of Geophysical Research: Solid Earth},
@@ -852,7 +852,7 @@
 	url = {http://arxiv.org/abs/2206.09505},
 	doi = {10.1017/jfm.2023.32},
 	abstract = {The dynamics of sedimenting particles under gravity are surprisingly complex due to the presence of effective long-ranged forces. When the particles are polar with a well-defined symmetry axis and non-uniform density, recent theoretical predictions suggest that prolate objects will repel and oblate ones will weakly attract. We tested these predictions using mass polar proalte spheroids, which are composed of 2 mm spheres glued together. We probed different aspect rations (\$κ\$) and center of mass offsets (\$χ\$) by combining spheres of different densities. Experiments were done in both quasi-two-dimensional (2D) and three=dimensional (3D) chambers. By optically tracking the motion of single particles, we found that the dynamics were well-described by a reduced mobility matrix model that could be solved analytically. Pairs of particles exhibited an effective repulsion, and their separation roughly scaled as {\textasciitilde}\$(κ-1)/χ{\textasciicircum}\{0.39\}\$, i.e. particles that were more prolate or had smaller mass asymmetry had stronger repulsion effects. In 3D, particles with \$χ{\textgreater}0\$ were distributed more uniformly than \$χ=0\$ particles, and the degree of uniformity increased with \$κ\$, indicating that the effective 2-body repulsion manifests for a large number of particles.},
-	language = {en},
+	
 	urldate = {2026-02-15},
 	journal = {Journal of Fluid Mechanics},
 	author = {Nissanka, Kavinda J. and Ma, Xiaolei and Burton, Justin C.},

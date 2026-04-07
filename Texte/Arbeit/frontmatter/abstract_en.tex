@@ -22,9 +22,8 @@ compared on identical data and evaluation metrics: the U-Net, an encoder--decode
 model with skip connections that extracts spatially hierarchical features, and
 the Fourier Neural Operator (FNO), which operates in the spectral domain and
 provides a global receptive field per layer. Both models are trained to predict
-the stream function $\psi$ from a five-channel geometric input encoding consisting
-of a crystal mask, a signed distance field, the radius of the nearest crystal,
-and normalized spatial coordinates. Predicting $\psi$ rather
+the stream function $\psi$ from a four-channel geometric input encoding consisting
+of a crystal mask, a signed distance field, and normalized spatial coordinates. Predicting $\psi$ rather
 than velocity components directly enforces incompressibility by construction,
 eliminating a common source of systematic constraint violations in purely
 data-driven velocity surrogates.
@@ -48,9 +47,8 @@ distribution, the FNO degrades severely ($71.3 \pm 4.8\%$ on~$\psi$) while the
 U-Net shows substantially lower errors ($44.9 \pm 8.2\%$), attributable to the
 FNO's fixed spectral truncation at $k_{\max} = 16$ Fourier modes. A
 variable-radius FNO trained on three discrete crystal sizes reduces this
-degradation to $10.4\%$ through explicit size conditioning via the radius input
-channel, demonstrating that the spectral limitation can be overcome without
-architectural modifications.
+degradation to $10.4\%$, demonstrating that the spectral limitation can be
+overcome through training data diversity without architectural modifications.
 
 Gradient-derived velocity quantities prove consistently harder to
 reproduce than $\psi$ itself, as numerical differentiation amplifies

@@ -20,9 +20,9 @@ systematisch verglichen: das U-Net, ein Encoder-Decoder-Modell mit
 Skip-Connections zur Extraktion räumlich hierarchischer Merkmale, und der
 Fourier Neural Operator (FNO), der im Spektralbereich operiert und pro Schicht
 ein globales rezeptives Feld besitzt. Beide Modelle werden darauf trainiert, die
-Stromfunktion~$\psi$ aus einer fünfkanaligen geometrischen Eingabekodierung
-vorherzusagen, bestehend aus einer Kristallmaske, einem Signed-Distance-Feld,
-dem Radius des nächstgelegenen Kristalls sowie normierten Raumkoordinaten. Die
+Stromfunktion~$\psi$ aus einer vierkanaligen geometrischen Eingabekodierung
+vorherzusagen, bestehend aus einer Kristallmaske, einem Signed-Distance-Feld
+sowie normierten Raumkoordinaten. Die
 Vorhersage von~$\psi$ statt direkter Geschwindigkeitskomponenten erzwingt
 Inkompressibilität per Konstruktion und eliminiert so eine häufige Quelle
 systematischer Verletzungen physikalischer Nebenbedingungen in rein
@@ -50,9 +50,9 @@ größer als die Trainingsverteilung sind, degradiert der FNO stark
 Fehler aufweist ($44{,}9 \pm 8{,}2\%$)—zurückzuführen auf die feste
 Spektralabschneidung des FNO bei $k_{\max} = 16$ Fourier-Moden. Ein auf variablen Radien
 trainierter FNO mit drei diskreten Kristallgrößen reduziert diese Degradation
-durch explizite Größenkonditionierung über den Radiuseingangskanal auf
-$10{,}4\%$ und zeigt damit, dass die spektrale Einschränkung ohne
-Architekturänderungen überwunden werden kann.
+auf $10{,}4\%$ und zeigt damit, dass die spektrale Einschränkung durch
+Variabilität in den Trainingsdaten ohne Architekturänderungen überwunden
+werden kann.
 
 Aus~$\psi$ abgeleitete Geschwindigkeitsfelder erweisen sich
 konsistent als schwieriger zu reproduzieren als die Stromfunktion selbst, da

@@ -54,7 +54,7 @@ Both trees share the same LaMEM interface module for data generation, the same P
 \section{Model Implementations}
 % ----------------------------------------------------------------------------
 
-Both architectures are implemented explicitly using Flux primitives. They share the same input and output interface: a five-channel input tensor of shape $(256,256,5)$ and a single-channel output $\psi_{\mathrm{norm}}$ of shape $(256,256,1)$. Both models load and process the same pre-generated JLD2 datasets; the number of input channels is determined dynamically at model construction time from the first loaded sample. This makes the representation geometry-agnostic: configurations with varying numbers of crystals are encoded on the same fixed grid without architectural changes.
+Both architectures are implemented explicitly using Flux primitives. They share the same input and output interface: a four-channel input tensor of shape $(256,256,4)$ and a single-channel output $\psi_{\mathrm{norm}}$ of shape $(256,256,1)$. Both models load and process the same pre-generated JLD2 datasets; the number of input channels is determined dynamically at model construction time from the first loaded sample. This makes the representation geometry-agnostic: configurations with varying numbers of crystals are encoded on the same fixed grid without architectural changes.
 
 \subsection*{U-Net}
 
@@ -73,7 +73,7 @@ Each FNO block combines the spectral convolution path with a pointwise $1\times1
 allows each block to simultaneously capture global spectral structure and local spatial features.
 
 \paragraph{Model assembly.}
-The complete model chains a pointwise lifting convolution ($5 \to d_v$ channels), a stack of $L$ FNO blocks, and a two-layer pointwise projection ($d_v \to d_v$, GELU, $d_v \to 1$). The architecture is parameterized by the channel width $d_v$, the number of retained Fourier modes $k_{\max}$, and the number of Fourier layers $L$.
+The complete model chains a pointwise lifting convolution ($4 \to d_v$ channels), a stack of $L$ FNO blocks, and a two-layer pointwise projection ($d_v \to d_v$, GELU, $d_v \to 1$). The architecture is parameterized by the channel width $d_v$, the number of retained Fourier modes $k_{\max}$, and the number of Fourier layers $L$.
 
 % ----------------------------------------------------------------------------
 \section{Data Pipeline and Dataset Interfaces}

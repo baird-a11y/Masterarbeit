@@ -68,7 +68,7 @@ This experiment investigates whether surrogate models can generalize to crystal 
 \begin{itemize}
     \item \textbf{Fixed-radius baseline.} The best-performing models from Experiment~1—FNO Exp-1.4 (bs\,16, lr~$=5\times10^{-4}$) and U-Net Exp-1.1 (bs\,8, lr~$=10^{-3}$)—are evaluated on single-crystal samples ($n=1$) with unseen radii, both substantially smaller ($r = 0.005$) and substantially larger ($r = 0.5$) than the training radius $r = 0.05$. This quantifies the size-generalization error for models that have had no exposure to size variability, and assesses whether either architecture is inherently more robust to geometric scale changes.
 
-    \item \textbf{Variable-radius training.} A new FNO is trained on single-crystal samples ($n = 1$) with three discrete radii: $r \in \{0.02,\, 0.05,\, 0.08\}$ (1\,000 samples each, i.e., 3\,000 training samples total). This condition is evaluated for the FNO only. The design of Experiment~4 was adapted in response to the results of Experiments~2 and~3, where the FNO consistently outperformed the U-Net by a substantial margin: given this performance gap, extending the variable-radius training to the U-Net would yield limited additional insight. The more informative question is therefore whether the stronger FNO architecture can leverage explicit size variability in training to improve generalization across the size axis. The radius channel of the input representation explicitly encodes the crystal size at each grid point, enabling the network to condition its prediction on the local crystal geometry.
+    \item \textbf{Variable-radius training.} A new FNO is trained on single-crystal samples ($n = 1$) with three discrete radii: $r \in \{0.02,\, 0.05,\, 0.08\}$ (1\,000 samples each, i.e., 3\,000 training samples total). This condition is evaluated for the FNO only. The design of Experiment~4 was adapted in response to the results of Experiments~2 and~3, where the FNO consistently outperformed the U-Net by a substantial margin: given this performance gap, extending the variable-radius training to the U-Net would yield limited additional insight. The more informative question is therefore whether the stronger FNO architecture can leverage explicit size variability in training to improve generalization across the size axis.
 \end{itemize}
 
 Both architectures are evaluated in the fixed-radius baseline; only the FNO is evaluated in the variable-radius condition. Results are reported for the two OOD size regimes:
@@ -85,14 +85,14 @@ Extrapolation OOD   & $r = 0.01$,\ $r = 0.1$    & Outside training range \\
 \end{tabular}
 \end{center}
 
-The expected outcome is that the fixed-radius model degrades substantially for any $r \neq 0.05$, while the variable-radius model generalizes well within the training range and degrades gracefully outside it. This two-stage comparison isolates the contribution of size variability in training data from the effect of the radius input channel.
+The expected outcome is that the fixed-radius model degrades substantially for any $r \neq 0.05$, while the variable-radius model generalizes well within the training range and degrades gracefully outside it. This two-stage comparison isolates the contribution of size variability in training data from other confounding factors.
 
 % ----------------------------------------------------------------------------
 \section{Learning Task and Input Encoding}
 \label{sec:experiments:task}
 % ----------------------------------------------------------------------------
 
-Both models learn the mapping from the five-channel geometric input described in Section~\ref{sec:input_channels} to the normalized stream function $\psi_{\mathrm{norm}}$. Rescaling to physical units is applied in post-processing using the stored per-sample scale factor.
+Both models learn the mapping from the four-channel geometric input described in Section~\ref{sec:input_channels} to the normalized stream function $\psi_{\mathrm{norm}}$. Rescaling to physical units is applied in post-processing using the stored per-sample scale factor.
 
 % ----------------------------------------------------------------------------
 \section{Evaluation Metrics}
@@ -145,7 +145,7 @@ Max.\ gradient norm      & ---                         & 1.0                    
 Loss                     & Composite (MSE + grad + bnd) & Composite (MSE + grad + bnd)           \\
 Batch size               & 8/16                           & 8/16                                     \\
 Epochs (Exp.\,1)         & 180                       & 100                                   \\
-Input channels           & 5                           & 5                                      \\
+Input channels           & 4                           & 4                                      \\
 Output channels          & 1                           & 1                                      \\
 Base channels / width    & 32                          & $d_v = 64$                             \\
 Architecture depth       & 4 encoder levels            & $L = 4$ FNO blocks                     \\

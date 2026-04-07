@@ -47,9 +47,6 @@
            given={Nicola},
            giveni={N\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \list{publisher}{1}{%
         {arXiv}%
       }
@@ -148,9 +145,6 @@
            familyi={C\bibinitperiod},
            given={Ze},
            giveni={Z\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \strng{namehash}{508329cf4e4c28bd7c82c8c05a937f5b}
       \strng{fullhash}{335990836b4858d88983c9a6537b43a9}
@@ -509,9 +503,6 @@
            given={Francesco},
            giveni={F\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \list{location}{1}{%
         {San Francisco California USA}%
       }
@@ -685,9 +676,6 @@
            given={Dwayne},
            giveni={D\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{541cdfcc3cd64ec9f49dae8a947fc332}
       \strng{fullhash}{541cdfcc3cd64ec9f49dae8a947fc332}
       \strng{fullhashraw}{541cdfcc3cd64ec9f49dae8a947fc332}
@@ -792,9 +780,6 @@
            familyi={K\bibinitperiod},
            given={George\bibnamedelima Em},
            giveni={G\bibinitperiod\bibinitdelim E\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \strng{namehash}{8666ea16cfeb512e52478e48d3a17b0a}
       \strng{fullhash}{be4470955ebf9e3809271a5253207609}
@@ -961,9 +946,6 @@
            given={Andrew},
            giveni={A\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{d1a1701be8d68f5d464310f6647611ca}
       \strng{fullhash}{078512b57b8a9d515380736bbc9b9136}
       \strng{fullhashraw}{078512b57b8a9d515380736bbc9b9136}
@@ -1096,9 +1078,6 @@
            familyi={O\bibinitperiod},
            given={Chinchun},
            giveni={C\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \strng{namehash}{027e7a643429c9775640e651ec804a4c}
       \strng{fullhash}{3bc78e0c92d71e02a10d02028af8660f}
@@ -1414,9 +1393,6 @@
            given={Burigede},
            giveni={B\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{edf93f47ab09a8c56b86e9ad2e628607}
       \strng{fullhash}{35cc0626c43e7a24bd044d982ae2f9b6}
       \strng{fullhashraw}{35cc0626c43e7a24bd044d982ae2f9b6}
@@ -1480,9 +1456,6 @@
            familyi={A\bibinitperiod},
            given={Anima},
            giveni={A\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \list{publisher}{1}{%
         {arXiv}%
@@ -1568,9 +1541,6 @@
            given={Anima},
            giveni={A\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{edf93f47ab09a8c56b86e9ad2e628607}
       \strng{fullhash}{a20453edd54dc7869dd1af04d3e64900}
       \strng{fullhashraw}{a20453edd54dc7869dd1af04d3e64900}
@@ -1651,9 +1621,6 @@
            given={George\bibnamedelima Em},
            giveni={G\bibinitperiod\bibinitdelim E\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{fdebff66447a2ecc33abe80490823209}
       \strng{fullhash}{0575d327b79f8a6542f3cad4e89f0fcd}
       \strng{fullhashraw}{0575d327b79f8a6542f3cad4e89f0fcd}
@@ -1712,9 +1679,6 @@
            given={Wenxiao},
            giveni={W\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{5bb43a9a2cb73ba246dbacc85706b93a}
       \strng{fullhash}{5b36ca27982cc76ae8efa6f488a5f005}
       \strng{fullhashraw}{5b36ca27982cc76ae8efa6f488a5f005}
@@ -1767,9 +1731,6 @@
            familyi={N\bibinitperiod},
            given={Roger},
            giveni={R\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \strng{namehash}{de8a74e56e8559b4219b6fb10f2f647f}
       \strng{fullhash}{de8a74e56e8559b4219b6fb10f2f647f}
@@ -1824,9 +1785,6 @@
            familyi={N\bibinitperiod},
            given={Roger},
            giveni={R\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \strng{namehash}{de8a74e56e8559b4219b6fb10f2f647f}
       \strng{fullhash}{de8a74e56e8559b4219b6fb10f2f647f}
@@ -1898,9 +1856,6 @@
            given={Rajesh},
            giveni={R\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \list{publisher}{1}{%
         {arXiv}%
       }
@@ -1963,9 +1918,6 @@
            given={Koji},
            giveni={K\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{1a86e5ad0013941d1d909d242831cabb}
       \strng{fullhash}{28803334b732b583b2190a76eeab17b3}
       \strng{fullhashraw}{28803334b732b583b2190a76eeab17b3}
@@ -2024,9 +1976,6 @@
            familyi={B\bibinitperiod},
            given={Justin\bibnamedelima C.},
            giveni={J\bibinitperiod\bibinitdelim C\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \strng{namehash}{df1cae3240d6e93edae8b9d857e85c11}
       \strng{fullhash}{622dde8a214662011811fb5412cffbb5}
@@ -2092,9 +2041,6 @@
            familyi={W\bibinitperiod},
            given={Philipp},
            giveni={P\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \strng{namehash}{3e940eeed54e6de18fc8f226eacabbe6}
       \strng{fullhash}{3a81f26b60a52781f87d54fb8a8e2c18}
@@ -2210,9 +2156,6 @@
            given={Michael},
            giveni={M\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{4a9c5159e12ca83795f12fe04cda60a9}
       \strng{fullhash}{014ce08c41206e1fe41d9ef08f2ff98a}
       \strng{fullhashraw}{014ce08c41206e1fe41d9ef08f2ff98a}
@@ -2271,9 +2214,6 @@
            familyi={T\bibinitperiod},
            given={Nicola},
            giveni={N\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \strng{namehash}{f011c9ba70d13fdc642917e1ace37482}
       \strng{fullhash}{8e797e5e1136699a5237aff66456fd19}
@@ -2340,9 +2280,6 @@
            familyi={V\bibinitperiod\bibinitdelim D\bibinitperiod\bibinitdelim W\bibinitperiod},
            given={Siet},
            giveni={S\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \strng{namehash}{116a802a533772828837366c4983fa50}
       \strng{fullhash}{99e741956dc8769298d5b184b8c0dfd1}
@@ -2473,9 +2410,6 @@
            given={Liangzhu\bibnamedelima Leon},
            giveni={L\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \list{publisher}{1}{%
         {arXiv}%
       }
@@ -2533,9 +2467,6 @@
            familyi={K\bibinitperiod},
            given={George\bibnamedelima Em},
            giveni={G\bibinitperiod\bibinitdelim E\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \list{publisher}{1}{%
         {arXiv}%
@@ -2654,9 +2585,6 @@
            given={Michael\bibnamedelima L.},
            giveni={M\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{279475e488ee4c0a455b8ffe2a46335a}
       \strng{fullhash}{47576dc57979586602088ce08fd7f711}
       \strng{fullhashraw}{47576dc57979586602088ce08fd7f711}
@@ -2740,9 +2668,6 @@
            familyi={B\bibinitperiod},
            given={Emmanuel\bibnamedelima de},
            giveni={E\bibinitperiod\bibinitdelim d\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \list{publisher}{1}{%
         {arXiv}%
@@ -2852,9 +2777,6 @@
            given={Ricky\bibnamedelimb T.\bibnamedelimi Q.},
            giveni={R\bibinitperiod\bibinitdelim T\bibinitperiod\bibinitdelim Q\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{71fbc4b4f25ad70af4cc20f6dd43a0ce}
       \strng{fullhash}{3d4c01a9f24ed55aa7ac4f823428758a}
       \strng{fullhashraw}{3d4c01a9f24ed55aa7ac4f823428758a}
@@ -2893,9 +2815,6 @@
            familyi={B\bibinitperiod},
            given={Thomas},
            giveni={T\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \list{publisher}{1}{%
         {arXiv}%
@@ -3106,9 +3025,6 @@
            given={Jian-Xun},
            giveni={J\bibinithyphendelim X\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{8f3952542ddd485c6857a60c4a2edc74}
       \strng{fullhash}{1233b4997ec92099938337b67b4147a4}
       \strng{fullhashraw}{1233b4997ec92099938337b67b4147a4}
@@ -3230,9 +3146,6 @@
            given={Wolfgang},
            giveni={W\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{dce3c100b00ab4819280eb2398b92ed5}
       \strng{fullhash}{dce3c100b00ab4819280eb2398b92ed5}
       \strng{fullhashraw}{dce3c100b00ab4819280eb2398b92ed5}
@@ -3297,9 +3210,6 @@
            given={Xiangyu},
            giveni={X\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{7ca013e8f748f47bfcddb49cc265bd99}
       \strng{fullhash}{18385dd1fbc10ce0f6b9e90aa8837dd9}
       \strng{fullhashraw}{18385dd1fbc10ce0f6b9e90aa8837dd9}
@@ -3353,9 +3263,6 @@
            familyi={D\bibinitperiod},
            given={Todor},
            giveni={T\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \strng{namehash}{e60e485c2d08887efaf4b74c1ef81561}
       \strng{fullhash}{e60e485c2d08887efaf4b74c1ef81561}
@@ -3412,9 +3319,6 @@
            familyi={S\bibinitperiod},
            given={J.},
            giveni={J\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \strng{namehash}{64d9da0d2c542533eadcb2ff01b23116}
       \strng{fullhash}{64d9da0d2c542533eadcb2ff01b23116}
@@ -3539,9 +3443,6 @@
            given={Sally\bibnamedelima M.},
            giveni={S\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
       }
-      \list{language}{1}{%
-        {en}%
-      }
       \strng{namehash}{b02df1c39971d57d6c3cd164c5b549cc}
       \strng{fullhash}{e41650c7cba2b36500dcc11577913511}
       \strng{fullhashraw}{e41650c7cba2b36500dcc11577913511}
@@ -3594,9 +3495,6 @@
            familyi={Z\bibinitperiod},
            given={Nicholas},
            giveni={N\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \strng{namehash}{d7371e9585dd65bafa3ef340a6a961a0}
       \strng{fullhash}{d7371e9585dd65bafa3ef340a6a961a0}
@@ -3662,9 +3560,6 @@
            familyi={P\bibinitperiod},
            given={Paris},
            giveni={P\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
       }
       \strng{namehash}{80013f0e58e2c3b33e525838f984f574}
       \strng{fullhash}{3d2751e6f84e600c2a72f04bd1b4ef31}

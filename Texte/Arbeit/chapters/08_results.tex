@@ -964,41 +964,7 @@ The variable-radius FNO achieves a mean $\psi$ error of $10.4\%$ across all eval
 \label{ssec:results:exp4:conditioning}
 % ----------------------------------------------------------------------------
 
-Compared to the fixed-radius baseline (FNO Exp-1.4, trained on $r = 0.05$ only; Table~\ref{tab:metrics_exp4}), the variable-radius model avoids the catastrophic failure observed for large crystals ($71.3\%$ on $\psi$), demonstrating that including size variability in training data substantially improves robustness to geometric scale changes. The radius input channel, which encodes crystal size explicitly at each grid point, enables the model to condition its predictions on the local crystal geometry and generalize across the evaluated size range—including radii not seen during training.
-
-% ----------------------------------------------------------------------------
-\section{Spectral Analysis of FNO Prediction Errors}
-\label{sec:results:spectral}
-% ----------------------------------------------------------------------------
-
-Since the FNO operates by parameterizing the integral kernel in the Fourier domain and explicitly retaining only the lowest $k_{\max} = 16$ modes in each spatial direction \parencite{li_fourier_2021}, a natural question is whether the prediction errors are concentrated at wavenumbers beyond the truncation boundary. To investigate this, the normalized 2D power spectrum of the residual $\hat\psi - \psi$ is computed for each evaluation sample as $P(\mathbf{k}) = N^{-2}|\mathcal{F}\{\hat\psi - \psi\}(\mathbf{k})|^2$, averaged across all samples within each experiment, and summarized via a radial average $\bar{P}(k)$. The relative error fraction per wavenumber, $r(k) = \bar{P}_{\mathrm{residual}}(k) / \bar{P}_{\mathrm{truth}}(k)$, quantifies what fraction of signal power at each frequency is explained by the prediction error.
-
-Figure~\ref{fig:freq_spectrum_2d} shows the mean 2D power spectra of the ground truth and the residual for all four experiments, zoomed to $k \in [-64, 64]$ to make the FNO truncation boundary (cyan dashed box, $k = \pm 16$) visible. The ground truth spectra are dominated by low-frequency content: virtually all energy is concentrated near the origin, consistent with the smooth, globally structured nature of Stokes flow. The cross-shaped pattern along the $k_x = 0$ and $k_z = 0$ axes reflects the periodic boundary conditions of the simulation domain. The residual spectra share the same qualitative structure, confirming that the prediction errors are distributed similarly to the signal itself rather than being concentrated at high wavenumbers.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig_freq_spectrum_2d.pdf}
-    \caption{\textbf{Mean 2D power spectra (log\textsubscript{10} scale) of the ground truth $\psi$ (top row)
-             and the residual $\hat\psi - \psi$ (bottom row) for all four experiments (bs\,=\,16).}
-             The cyan dashed box marks the FNO truncation boundary at $k = \pm 16$.
-             Spectra are averaged over all held-out evaluation samples per experiment and
-             zoomed to $k \in [-64,\,64]$.}
-    \label{fig:freq_spectrum_2d}
-\end{figure}
-\newpage
-Figure~\ref{fig:freq_error_ratio} quantifies this observation through the relative error fraction $r(k)$. Across all four experiments, $r(k)$ is approximately constant over the full displayed wavenumber range and remains well below $10^{-2}$ at every frequency—both inside and outside the FNO truncation boundary. No systematic increase is observed for $k > 16$, which would be the expected signature of truncation-induced error.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{../../Ergebnisse/Bilder_Arbeit/fig_freq_error_ratio.pdf}
-    \caption{\textbf{Relative error fraction $r(k) = \bar{P}_{\mathrm{residual}}(k) / \bar{P}_{\mathrm{truth}}(k)$
-             as a function of wavenumber $k$ for all four experiments (bs\,=\,16, log\textsubscript{10} scale).}
-             The vertical dashed line marks the FNO truncation boundary at $k = 16$; the shaded
-             region marks the high-frequency range not retained by the model.}
-    \label{fig:freq_error_ratio}
-\end{figure}
-
-The same analysis applied to Experiment~3 samples grouped by crystal count ($n \leq 5$, $6$–$10$, $11$–$15$, $16$–$25$) yields indistinguishable curves, with no systematic variation across crystal-count groups.
+Compared to the fixed-radius baseline (FNO Exp-1.4, trained on $r = 0.05$ only; Table~\ref{tab:metrics_exp4}), the variable-radius model avoids the catastrophic failure observed for large crystals ($71.3\%$ on $\psi$), demonstrating that including size variability in training data substantially improves robustness to geometric scale changes.
 
 % ----------------------------------------------------------------------------
 \section{Computational Efficiency}
