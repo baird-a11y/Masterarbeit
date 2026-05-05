@@ -1,0 +1,674 @@
+% ============================================================
+% Master's Thesis Defense — Paul Baselt
+% Stokes Flow Prediction with Neural Surrogates (FNO vs. U-Net)
+% ============================================================
+\documentclass[aspectratio=169, 10pt]{beamer}
+
+% ---- Theme ----
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+% ---- Packages ----
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+% ---- Custom colors ----
+\definecolor{fnocolor}{RGB}{31, 119, 180}     % blue
+\definecolor{unetcolor}{RGB}{214, 39, 40}     % red
+\definecolor{accentgreen}{RGB}{44, 160, 44}   % green
+
+% ---- Metadata ----
+\title[Stokes Flow Surrogate Modeling]{%
+  Surrogate Modeling of Stokes Flow\\
+  with Crystalline Inclusions}
+\subtitle{FNO vs.\ U-Net — Master's Thesis Defense}
+\author{Paul Baselt}
+\date{\today}
+\institute[]{Master's Thesis in Computer Science}
+
+% ============================================================
+\begin{document}
+% ============================================================
+
+% ---- Title slide ----
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% ---- Outline ----
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+% ============================================================
+\section{Problem Statement}
+% ============================================================
+
+\begin{frame}{Problem Statement — Crystal Sedimentation in Magma}
+  \begin{columns}[T]
+    \column{0.55\textwidth}
+      \textbf{Physical Process}
+      \begin{itemize}
+        \item Crystals (olivine, plagioclase) sediment in viscous magma
+        \item Stokes regime: $\mathrm{Re} \ll 1$ (negligible inertia)
+        \item Long-range interactions between crystals
+        \item Influences thermal and chemical differentiation
+      \end{itemize}
+      \vspace{0.5em}
+      \textbf{Governing Equations}
+      \[
+        \mathbf{0} = -\nabla p + \mu \nabla^2 \mathbf{u} + \rho\mathbf{g},
+        \quad \nabla \cdot \mathbf{u} = 0
+      \]
+
+    \column{0.42\textwidth}
+      \textbf{Computational Challenge}
+      \begin{itemize}
+        \item LaMEM solver: ${\approx}\,8$--$9\,\text{s}$ per sample
+        \item Scaling: $\mathcal{O}(N^2)$--$\mathcal{O}(N^3)$ with crystal count~$N$
+        \item Millions of degrees of freedom for $N > 10$
+        \item Systematic parameter studies barely feasible
+      \end{itemize}
+      \vspace{0.5em}
+      \begin{block}{Goal}
+        A fast surrogate model that outperforms\\
+        the numerical solver by orders of magnitude
+      \end{block}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Problem Statement — Stream Function as Learning Target}
+  \begin{columns}[T]
+    \column{0.55\textwidth}
+      \textbf{Why the stream function $\psi$?}
+      \begin{itemize}
+        \item Velocity field derived from $\psi$:
+        \[
+          u_x = \frac{\partial\psi}{\partial z},\quad
+          u_z = -\frac{\partial\psi}{\partial x}
+        \]
+        \item Incompressibility ($\nabla\!\cdot\!\mathbf{u}=0$) satisfied by construction
+        \item Smoother learning target than direct velocity components
+        \item Physically consistent predictions by construction
+      \end{itemize}
+
+    \column{0.42\textwidth}
+      \textbf{Input → Output}
+      \begin{itemize}
+        \item \textbf{Input:} Geometry mask (crystal positions and radii on a $256\times256$ grid)
+        \item \textbf{Output:} Normalized stream function field~$\psi_\text{norm}$
+        \item Velocity field derived via finite differences
+      \end{itemize}
+      \vspace{0.4em}
+      \begin{alertblock}{Error Metrics}
+        $\bar{\varepsilon}_\psi$: mean relative $L_2$ error on~$\psi$\\
+        $\bar{\varepsilon}_v$: mean relative $L_2$ error on velocity
+      \end{alertblock}
+  \end{columns}
+\end{frame}
+
+% ============================================================
+\section{Scope and Goals}
+% ============================================================
+
+\begin{frame}{Scope and Goals}
+  \begin{block}{Research Question}
+    Can neural surrogate models (FNO and U-Net) predict Stokes flow
+    with multiple crystalline inclusions accurately and efficiently?
+    Which architecture generalizes better?
+  \end{block}
+
+  \vspace{0.5em}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+      \textbf{In Scope}
+      \begin{itemize}
+        \item Two architectures: \textcolor{fnocolor}{\textbf{FNO}} and \textcolor{unetcolor}{\textbf{U-Net}}
+        \item 4 experiments with increasing complexity
+        \item Training \& evaluation on LaMEM-generated data
+        \item Hyperparameter search (lr, batch size)
+        \item Out-of-distribution (OOD) generalization analysis
+      \end{itemize}
+
+    \column{0.48\textwidth}
+      \textbf{Out of Scope}
+      \begin{itemize}
+        \item 3D simulations
+        \item Time-dependent flows
+        \item Non-stationary boundary conditions
+        \item Direct pressure field prediction
+        \item Physics-informed loss terms
+      \end{itemize}
+  \end{columns}
+
+  \vspace{0.5em}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+      \textbf{FNO:} 100 epochs training
+    \column{0.48\textwidth}
+      \textbf{U-Net:} 180 epochs training
+  \end{columns}
+\end{frame}
+
+% ============================================================
+\section{Architectures: FNO vs.\ U-Net}
+% ============================================================
+
+\begin{frame}{Architecture Comparison}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+      \begin{block}{\textcolor{fnocolor}{Fourier Neural Operator (FNO)}}
+        \begin{itemize}
+          \item Learns operator $\mathcal{G}: a \mapsto u$ between function spaces
+          \item Convolution in the spectral domain (FFT)
+          \item Retains only $k_\text{max} = 16$ frequency modes
+          \item Global, long-range dependencies
+          \item Resolution-independent (by design)
+          \item Particularly suited for elliptic PDEs (Stokes)
+        \end{itemize}
+      \end{block}
+
+    \column{0.48\textwidth}
+      \begin{block}{\textcolor{unetcolor}{U-Net}}
+        \begin{itemize}
+          \item Encoder–decoder with skip connections
+          \item Local convolutional kernels (spatial locality)
+          \item Multi-scale feature extraction
+          \item Strong at geometric structures
+          \item Composite loss: MSE + gradient term
+          \item High computational efficiency (CPU-native)
+        \end{itemize}
+      \end{block}
+  \end{columns}
+
+  \vspace{0.8em}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+      \textbf{Advantage:} Global coherence, fewer parameters
+    \column{0.48\textwidth}
+      \textbf{Advantage:} Spatial detail, faster inference
+  \end{columns}
+
+  \vspace{0.5em}
+  \begin{center}
+    \small\textit{Hypothesis: FNO better for long-range Stokes interactions;
+    U-Net stronger at local geometry boundaries}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Architectures — Key Differences}
+  \begin{center}
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Property} & \textcolor{fnocolor}{\textbf{FNO}} & \textcolor{unetcolor}{\textbf{U-Net}} \\
+    \midrule
+    Learning paradigm    & Operator (function space) & Image-to-image \\
+    Receptive field      & Global (spectral)          & Local (convolution) \\
+    Frequency processing & Selective ($k \leq k_\text{max}$) & Implicit (pooling) \\
+    High-frequency       & Limited ($k_\text{max}=16$) & Better (skip conn.) \\
+    Boundary conditions  & Softly enforced            & Directly in geometry \\
+    Inference time       & ${\approx}687\,\text{ms}$ (incl. transfer) & ${\approx}5{.}5\,\text{ms}$ \\
+    Speedup vs.\ LaMEM  & ${\approx}12\times$         & ${>}1500\times$ \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+
+  \vspace{0.5em}
+  \begin{alertblock}{Spectral Limitation of FNO}
+    The FNO discards Fourier modes with $k > k_\text{max} = 16$. For flows
+    with sharp boundary layers (large crystals) this leads to systematic
+    approximation errors.
+  \end{alertblock}
+\end{frame}
+
+% ============================================================
+\section{Experiments}
+% ============================================================
+
+\begin{frame}{Experimental Design — Overview}
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+      \textbf{Dataset (LaMEM-generated)}
+      \begin{itemize}
+        \item Domain: $[-1,1]^2$, grid $256\times256$
+        \item Fixed: crystal radius $r = 0.05$
+        \item 1\,000 train / 100 validation / 10 evaluation (per stratum)
+        \item Normalized stream function as target
+      \end{itemize}
+
+      \vspace{0.8em}
+      \textbf{Hyperparameter Search (Exp.~1)}
+      \begin{itemize}
+        \item LR: $10^{-3},\; 5\!\times\!10^{-3},\; 10^{-4},\; 5\!\times\!10^{-4}$
+        \item Batch size: 8 and 16
+        \item $\Rightarrow$ 8 configurations per architecture
+      \end{itemize}
+
+    \column{0.45\textwidth}
+      \begin{enumerate}
+        \item[\textbf{Exp.~1}] \textbf{Single-Crystal Baseline}\\
+          $n = 1$, hyperparameter search
+        \vspace{0.4em}
+        \item[\textbf{Exp.~2}] \textbf{Multi-Crystal Generalization}\\
+          Training: $n \in \{1,\ldots,10\}$\\
+          OOD: $n \in \{11, 12, 15, 20, 25\}$
+        \vspace{0.4em}
+        \item[\textbf{Exp.~3}] \textbf{Stress Test}\\
+          Training: $n \leq 25$\\
+          OOD: $n \in \{35, 50, 60, 80, 84\}$
+        \vspace{0.4em}
+        \item[\textbf{Exp.~4}] \textbf{Crystal Size}\\
+          OOD radii: $r \in \{0.005, 0.5\}$\\
+          Variable-radius FNO: $r \in \{0.02, 0.05, 0.08\}$
+      \end{enumerate}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Experiment~1 — Single-Crystal Baseline}
+  \begin{columns}[T]
+    \column{0.55\textwidth}
+      \textbf{Setup:} $n=1$ crystal, FNO 100 epochs / U-Net 180 epochs
+
+      \vspace{0.5em}
+      \begin{center}
+      \small
+      \begin{tabular}{lcc}
+        \toprule
+        \textbf{Architecture (lr, bs)} & $\bar{\varepsilon}_\psi$ & $\bar{\varepsilon}_v$ \\
+        \midrule
+        \textcolor{fnocolor}{FNO} Exp-1.4 ($5\!\times\!10^{-4}$, bs\,16) & $\mathbf{1.62\%}$ & $3.44\%$ \\
+        \textcolor{fnocolor}{FNO} Exp-1.2 ($5\!\times\!10^{-3}$,\ bs\,8)  & $2.07\%$ & $4.13\%$ \\
+        \textcolor{unetcolor}{U-Net} Exp-1.2 ($5\!\times\!10^{-3}$, bs\,8)  & $5.50\%$ & $8.50\%$ \\
+        \textcolor{unetcolor}{U-Net} Exp-1.3 ($10^{-4}$, bs\,16)  & $13.5\%$ & $23.1\%$ \\
+        \bottomrule
+      \end{tabular}
+      \end{center}
+
+    \column{0.42\textwidth}
+      \textbf{Key Findings}
+      \begin{itemize}
+        \item FNO achieves $1.62\%$ — factor ${\approx}3.4\times$ better than best U-Net
+        \item Batch size 16 better than 8 for FNO
+        \item U-Net: bs\,8 clearly better than bs\,16
+        \item No overfitting (training and validation curves closely aligned)
+        \item No spatial dependence of FNO error on crystal position
+      \end{itemize}
+  \end{columns}
+
+  \vspace{0.5em}
+  \begin{center}
+    \small\textit{[Figure: Bar chart Exp-1 — all configurations]}\\
+    % \includegraphics[width=0.85\textwidth]{../Ergebnisse/Bilder_Arbeit/fig3_exp1_eval_balken.pdf}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Experiment~2 — Multi-Crystal Generalization}
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+      \textbf{Training:} $n \leq 10$ crystals\\
+      \textbf{Best configurations from Exp.~1}
+
+      \vspace{0.5em}
+      \begin{center}
+      \small
+      \begin{tabular}{lccc}
+        \toprule
+        \textbf{Architecture} & In-dist $\bar{\varepsilon}_\psi$ & OOD $\bar{\varepsilon}_\psi$\\
+                               & (mean $n=1$–$10$) & ($n=25$) \\
+        \midrule
+        \textcolor{fnocolor}{FNO}    & ${\sim}5.5\%$ & ${\sim}13.8\%$ \\
+        \textcolor{unetcolor}{U-Net} & ${\sim}22.1\%$ & ${\sim}26.8\%$ \\
+        \bottomrule
+      \end{tabular}
+      \end{center}
+
+      \vspace{0.5em}
+      \textbf{FNO error grows with $n$}\\
+      \small (4\% at $n=1$ → 9\% at $n=10$)
+
+    \column{0.45\textwidth}
+      \textbf{Key Findings}
+      \begin{itemize}
+        \item FNO: ${\approx}4\times$ better in-distribution
+        \item FNO: ${\approx}2\times$ better at OOD ($n=25$)
+        \item U-Net: best checkpoint often early (epoch~43)
+        \item U-Net error barely sensitive to $n$\\
+          ($17$–$25\%$ in-dist)
+        \item FNO advantage at OOD smaller than in-dist
+      \end{itemize}
+
+      \vspace{0.4em}
+      \begin{center}
+        \small\textit{[Figure: FNO vs.\ U-Net over $n$]}\\
+        % \includegraphics[width=\textwidth]{../Ergebnisse/Bilder_Arbeit/fig12_fno_unet_exp23_comparison.pdf}
+      \end{center}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Experiment~3 — Stress Test}
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+      \textbf{Training:} $n \leq 25$ crystals\\
+      \textbf{OOD evaluation:} $n = 35, 50, 60, 80, 84$
+
+      \vspace{0.5em}
+      \begin{center}
+      \small
+      \begin{tabular}{lccc}
+        \toprule
+        \textbf{Architecture} & In-dist & OOD\\
+                               & $\bar{\varepsilon}_\psi$ & $\bar{\varepsilon}_\psi$ ($n=50$) \\
+        \midrule
+        \textcolor{fnocolor}{FNO}    & ${\sim}6.8\%$  & $12.4\%$ \\
+        \textcolor{unetcolor}{U-Net}  & ${\sim}23\%$   & $21.5\%$ \\
+        \bottomrule
+      \end{tabular}
+      \end{center}
+
+      \vspace{0.5em}
+      \textbf{Noteworthy:} U-Net overtakes FNO at $n=50$!
+
+    \column{0.45\textwidth}
+      \textbf{Key Findings}
+      \begin{itemize}
+        \item FNO: ${\approx}3.4\times$ better in-distribution
+        \item At $n=50$: FNO $12.4\%$ vs.\ U-Net $21.5\%$
+        \item Extreme OOD ($n > 60$): FNO $15$–$22\%$
+        \item FNO advantage diminishes with extreme OOD
+        \item U-Net: more stable OOD error than expected\\
+          (local convolutions help with dense packings?)
+        \item Best-checkpoint FNO: epoch 100 (no overfitting)
+      \end{itemize}
+  \end{columns}
+
+  \vspace{0.3em}
+  \begin{center}
+    \small\textit{[Figure: Generalization curves Exp.~2 and~3 comparison]}\\
+    % \includegraphics[width=0.75\textwidth]{../Ergebnisse/Bilder_Arbeit/fig12_fno_unet_exp23_comparison.pdf}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Experiment~4 — Crystal Size}
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+      \textbf{Fixed baseline:} Training on $r=0.05$, OOD radii $r\in\{0.005, 0.5\}$
+
+      \vspace{0.5em}
+      \begin{center}
+      \small
+      \begin{tabular}{llc}
+        \toprule
+        \textbf{Model} & \textbf{Eval radius} & $\bar{\varepsilon}_\psi$ \\
+        \midrule
+        \textcolor{fnocolor}{FNO} (fixed) & small ($r=0.005$) & $12.1\%$ \\
+        \textcolor{fnocolor}{FNO} (fixed) & large ($r=0.5$)   & $\mathbf{71.3\%}$ \\
+        \textcolor{unetcolor}{U-Net} (fixed) & small          & ${\approx}12\%$ \\
+        \textcolor{unetcolor}{U-Net} (fixed) & large          & ${\approx}35\%$ \\
+        \midrule
+        \textcolor{fnocolor}{FNO} (var.) & all radii          & $10.4\%$ \\
+        \bottomrule
+      \end{tabular}
+      \end{center}
+
+    \column{0.45\textwidth}
+      \textbf{Key Findings}
+      \begin{itemize}
+        \item \textbf{FNO fails on large crystals!}\\
+          Boundary-layer frequencies $> k_\text{max}$
+        \item U-Net degrades more gracefully (skip conn.\ help)
+        \item Small crystals: both similarly robust
+        \item \textbf{Variable-radius FNO} ($r \in \{0.02, 0.05, 0.08\}$):\\
+          $10.4\%$ → catastrophic failure prevented
+        \item Large std.\ dev.\ ($\pm10.8\%$): difficulty varies strongly
+      \end{itemize}
+  \end{columns}
+\end{frame}
+
+% ============================================================
+\section{Results}
+% ============================================================
+
+\begin{frame}{Results — Overview}
+  \begin{center}
+  \begin{tabular}{llcc}
+    \toprule
+    \textbf{Experiment} & \textbf{Architecture} & $\bar{\varepsilon}_\psi^{\text{in-dist}}$ & $\bar{\varepsilon}_\psi^{\text{OOD}}$ \\
+    \midrule
+    Exp.~1 ($n=1$) & \textcolor{fnocolor}{FNO}   & $1.62\%$      & — \\
+                   & \textcolor{unetcolor}{U-Net} & $5.50\%$      & — \\
+    \midrule
+    Exp.~2 ($n\leq10$) & \textcolor{fnocolor}{FNO}   & ${\sim}5.5\%$  & $13.8\%$ ($n=25$) \\
+                       & \textcolor{unetcolor}{U-Net} & ${\sim}22\%$  & $26.8\%$ ($n=25$) \\
+    \midrule
+    Exp.~3 ($n\leq25$) & \textcolor{fnocolor}{FNO}   & ${\sim}6.8\%$  & $12.4\%$ ($n=50$) \\
+                       & \textcolor{unetcolor}{U-Net} & ${\sim}23\%$  & $21.5\%$ ($n=50$) \\
+    \midrule
+    Exp.~4 (size, fixed) & \textcolor{fnocolor}{FNO}   & — & $71.3\%$ (large) \\
+                         & \textcolor{unetcolor}{U-Net} & — & ${\sim}35\%$ (large) \\
+    Exp.~4 (var.\ FNO)   & \textcolor{fnocolor}{FNO}   & — & $10.4\%$ (all radii) \\
+    \midrule
+    \multicolumn{2}{l}{\textbf{Speedup vs.\ LaMEM}} & \textcolor{fnocolor}{${\approx}12\times$} & \textcolor{unetcolor}{${>}1500\times$} \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Results — FNO Dominance and Its Limits}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+      \textbf{\textcolor{fnocolor}{FNO Strengths}}
+      \begin{itemize}
+        \item Clearly better in-distribution (factor $3$–$4\times$)
+        \item Better OOD generalization to more crystals
+        \item No overfitting over 100 epochs
+        \item Monotone error convergence
+        \item Spatially uniform error distribution
+      \end{itemize}
+
+      \vspace{0.5em}
+      \textbf{\textcolor{unetcolor}{U-Net Strengths}}
+      \begin{itemize}
+        \item $1500\times$ faster than LaMEM
+        \item More robust on large crystals (Exp.~4)
+        \item OOD error grows slower at extreme $n$
+        \item Easier to deploy on CPU
+      \end{itemize}
+
+    \column{0.48\textwidth}
+      \textbf{Critical Limitations}
+      \begin{itemize}
+        \item \textbf{FNO:} Spectral bias at $k > k_\text{max}$\\
+          → catastrophic failure on large crystals ($71\%$)
+        \item \textbf{U-Net:} Generally higher base error\\
+          → still behind despite 180 epochs
+        \item Both: $n>50$ only limitedly reliable
+        \item Very small evaluation sets ($n=10$ samples)
+      \end{itemize}
+
+      \vspace{0.5em}
+      \begin{block}{Conclusion}
+        FNO is the stronger architecture for this task,
+        as long as no extreme geometry scales occur.
+      \end{block}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Results — Qualitative Predictions}
+  \begin{center}
+    \textit{[Figure: Predicted vs.\ ground-truth $\psi$ and velocity field]}
+
+    \vspace{0.5em}
+    % \includegraphics[width=0.9\textwidth]{../Ergebnisse/Bilder_Arbeit/fig2_fno_exp1_eval_bs16_4.pdf}
+
+    \vspace{1em}
+    \textit{[Figure: Error field (residual) — FNO vs.\ U-Net]}
+    % \includegraphics[width=0.9\textwidth]{../Ergebnisse/Bilder_Arbeit/...}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Results — Generalization over Crystal Count}
+  \begin{center}
+    \textit{[Figure: Exp.~2 and~3 — $\bar{\varepsilon}_\psi$ over $n$ for FNO and U-Net]}
+
+    % \includegraphics[width=0.9\textwidth]{../Ergebnisse/Bilder_Arbeit/fig12_fno_unet_exp23_comparison.pdf}
+
+    \vspace{0.5em}
+    \textit{[Figure: Overview bar chart all experiments]}
+    % \includegraphics[width=0.7\textwidth]{../Ergebnisse/Bilder_Arbeit/fig13_fno_unet_overview_bars.pdf}
+  \end{center}
+
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+      \textbf{Exp.~2 → Exp.~3:} Both models improve with\\
+      more training data ($n\leq10$ → $n\leq25$)
+    \column{0.48\textwidth}
+      \textbf{OOD boundary:} FNO advantage diminishes at $n > 3\times n_\text{train,max}$
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Results — Crystal Size and Spectral Bias}
+  \begin{center}
+    \textit{[Figure: Exp.~4 — error by crystal size]}
+
+    % \includegraphics[width=0.75\textwidth]{../Ergebnisse/Bilder_Arbeit/fig11_exp4_crystal_size.pdf}
+  \end{center}
+
+  \vspace{0.3em}
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+      \textbf{Interpretation}
+      \begin{itemize}
+        \item Large crystal → steep gradients near boundary
+        \item FNO needs high Fourier modes ($k > 16$) → fails
+        \item U-Net: convolutional kernels capture local sharpness better
+        \item Small crystal: smooth flow → both robust
+      \end{itemize}
+
+    \column{0.45\textwidth}
+      \textbf{Variable-Radius Solution}
+      \begin{itemize}
+        \item Training on $r \in \{0.02, 0.05, 0.08\}$
+        \item $\bar{\varepsilon}_\psi = 10.4\%$ — no catastrophic failure
+        \item But: still higher than in-dist Exp.~1 ($1.62\%$)
+        \item Shows: size variability in training data is essential
+      \end{itemize}
+  \end{columns}
+\end{frame}
+
+% ============================================================
+\section*{Summary \& Outlook}
+% ============================================================
+
+\begin{frame}{Summary}
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+      \textbf{Key Contributions}
+      \begin{enumerate}
+        \item Systematic FNO–U-Net comparison on Stokes flow\\
+          with up to 25 crystals
+        \item FNO outperforms U-Net in-distribution by factor $3$–$4$
+        \item Both models generalize to unseen crystal counts
+        \item Spectral bias of FNO identified and quantified
+        \item Variable-radius training as solution for size OOD
+        \item Computational savings: $12\times$ (FNO) to $>1500\times$ (U-Net)
+      \end{enumerate}
+
+    \column{0.45\textwidth}
+      \textbf{Outlook}
+      \begin{itemize}
+        \item Higher $k_\text{max}$ values or adaptive spectral modes
+        \item 3D extension
+        \item Physics-informed loss terms
+        \item Larger evaluation sets (more robust statistics)
+        \item Combining FNO + U-Net (U-FNO approach)
+        \item Direct coupling with LaMEM workflow
+      \end{itemize}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[plain]
+  \begin{center}
+    \Large\textbf{Thank you!}
+
+    \vspace{1.5em}
+    \normalsize Questions and Discussion
+
+    \vspace{2em}
+    \small
+    \begin{tabular}{ll}
+      \textbf{Contact:} & paul.baselt@example.com \\
+      \textbf{Code:}    & \texttt{FNO\_Ansatz/} \& \texttt{UNET\_Ansatz/} \\
+      \textbf{Data:}    & \texttt{Ergebnisse/} \\
+    \end{tabular}
+  \end{center}
+\end{frame}
+
+% ============================================================
+% BACKUP SLIDES (after backup label, not in table of contents)
+% ============================================================
+
+\appendix
+
+\begin{frame}{Backup — FNO Architecture Details}
+  \begin{itemize}
+    \item Fourier layer: Input $\to$ FFT $\to$ weights on $k \leq k_\text{max}$ modes $\to$ IFFT $+ W\cdot v$
+    \item $k_\text{max} = 16$, 4 Fourier layers, $d_v = 64$ channels
+    \item Activation function: GELU
+    \item Adam optimizer, 100 epochs, MSE loss
+    \item Resolution: $256 \times 256$ (resolution-independent by design)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Backup — U-Net Architecture Details}
+  \begin{itemize}
+    \item Encoder: 4 levels, each Conv-BN-ReLU, MaxPool
+    \item Decoder: transposed conv + skip connections
+    \item Composite loss: MSE + $\lambda \cdot \|\nabla(\hat\psi - \psi)\|^2$
+    \item Adam optimizer, 180 epochs
+    \item Best-checkpoint selection via validation $\bar{\varepsilon}_\psi$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Backup — Metrics in Detail}
+  \begin{itemize}
+    \item $\bar{\varepsilon}_\psi = \frac{1}{N}\sum_{i=1}^{N} \frac{\|\hat\psi_i - \psi_i\|_2}{\|\psi_i\|_2}$: mean relative $L_2$ error on $\psi$
+    \item $\bar{\varepsilon}_v$: analogous for derived velocity field
+    \item $\bar{e}_\text{max}$: mean maximum absolute error on $\psi$
+    \item $\overline{\text{MSE}}_\psi$: mean squared error on $\psi$
+    \item Divergence RMS: physical sanity check ($\sim10^{-26}$ for FNO)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Backup — Experiment~1 Full Table (FNO)}
+  \begin{center}
+  \small
+  \begin{tabular}{lccc}
+    \toprule
+    \textbf{Config (lr, bs)} & $\bar{\varepsilon}_\psi$ & $\bar{\varepsilon}_v$ & $\overline{\text{MSE}}_\psi$ \\
+    \midrule
+    Exp-1.1 ($10^{-3}$, bs\,16)            & $2.06\pm0.72\%$ & $3.02\pm0.53\%$ & $0.0157$ \\
+    Exp-1.2 ($5\!\times\!10^{-3}$, bs\,16) & $2.31\pm0.93\%$ & $4.15\pm0.79\%$ & $0.0227$ \\
+    Exp-1.3 ($10^{-4}$, bs\,16)            & $5.10\pm2.59\%$ & $8.18\pm1.34\%$ & $0.1091$ \\
+    Exp-1.4 ($5\!\times\!10^{-4}$, bs\,16) & $\mathbf{1.62\pm0.49\%}$ & $3.44\pm0.37\%$ & $\mathbf{0.0090}$ \\
+    \midrule
+    Exp-1.1 ($10^{-3}$, bs\,8)             & $4.18\pm0.79\%$ & $4.89\pm0.90\%$ & $0.0595$ \\
+    Exp-1.2 ($5\!\times\!10^{-3}$, bs\,8)  & $\mathbf{2.07\pm0.65\%}$ & $4.13\pm0.56\%$ & $0.0164$ \\
+    Exp-1.3 ($10^{-4}$, bs\,8)             & $5.85\%$ & — & — \\
+    Exp-1.4 ($5\!\times\!10^{-4}$, bs\,8)  & $2.61\pm\ldots\%$ & $3.82\%$ & — \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+\end{frame}
+
+\end{document}
