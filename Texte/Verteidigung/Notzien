@@ -1,0 +1,194 @@
+# Vortragsskript – Masterarbeit-Verteidigung
+**Paul Baselt · JGU Mainz · April 2026**
+*Gesamtdauer: ~30 Minuten · Fragezeit: ~15 Minuten*
+
+---
+
+## Zeitplan
+
+| Abschnitt | Folien | Zeit |
+|---|---|---|
+| Titelfolie | 1 | 1 min |
+| Agenda | 2 | 1 min |
+| 01 Motivation | 3–4 | 4 min |
+| 02 Physik | 5 | 3 min |
+| 03 Methodik | 6–7 | 6 min |
+| 04 Experimente & Ergebnisse | 8–11 | 11 min |
+| 05 Diskussion & Fazit | 12–14 | 4 min |
+| Dank & Fragen | 15 | 1 min |
+| **Summe** | | **~31 min** |
+
+---
+
+## Folie 1 – Titelfolie (1 min)
+
+Guten Tag, mein Name ist Paul Baselt. Ich freue mich, Ihnen heute meine Masterarbeit vorstellen zu dürfen, die den Titel trägt:
+
+*„Data-Driven Stokes Flow Prediction in Multi-Crystal Sedimentation – A Systematic Comparison of Spatial and Spectral Neural Surrogate Architectures"*
+
+Die Arbeit wurde betreut von Professor Kaus am Institut für Geowissenschaften und Professor Wand am Institut für Informatik. Ich werde versuchen, in etwa dreißig Minuten durch die wesentlichen Aspekte zu führen und freue mich danach auf Ihre Fragen.
+
+---
+
+## Folie 2 – Agenda (1 min)
+
+Kurz zum Aufbau: Ich beginne mit der Motivation und der zentralen Forschungsfrage, gehe dann kurz auf den physikalischen Hintergrund ein, erkläre die beiden Architekturen und die Methodik, präsentiere anschließend die vier Experimente mit ihren wichtigsten Befunden und schließe mit Diskussion und Fazit.
+
+---
+
+## Folie 3 – Geowissenschaftlicher Kontext (2 min)
+
+Kristalle sedimentieren in viskosen Magmafluiden – das ist ein fundamentaler geodynamischer Prozess, der bestimmt, wie sich ein Magmareservoir chemisch differenziert und welche Strukturen im Inneren entstehen.
+
+Das numerische Problem dabei: Man muss gleichzeitig mikroskopische Grenzschichten um jeden einzelnen Kristall auflösen und weitreichende hydrodynamische Wechselwirkungen über das gesamte Simulationsgebiet erfassen. Das ist inherent multiskalig.
+
+Erschwerend kommt hinzu, dass die Interaktionskosten mit der Partikelzahl nahezu quadratisch skalieren – das macht systematische Parameterstudien mit klassischen Solvern wie LaMEM rechnerisch kaum durchführbar. Unser Solver LaMEM benötigt etwa acht Sekunden pro Stokes-Lösung auf einem 256×256-Gitter. Für Tausende von Konfigurationen wird das sehr teuer.
+
+---
+
+## Folie 4 – Forschungsfrage (2 min)
+
+Daraus ergibt sich die zentrale Frage: Können datengetriebene Surrogatmodelle – also neuronale Netzwerke – diese teuren Solver ersetzen?
+
+Ich habe drei Hypothesen formuliert: Erstens, dass ausreichendes Sampling des geometrischen Konfigurationsraums OOD-Generalisierung ermöglicht. Zweitens, dass die Vorhersage der Stromfunktion ψ anstelle direkter Geschwindigkeitskomponenten die Aufgabe vereinfacht und Inkompressibilität konstruktiv erzwingt. Drittens, dass der Fourier Neural Operator dem U-Net überlegen ist, weil er ein globales Rezeptivfeld besitzt, das für die elliptischen Stokes-Gleichungen besser geeignet ist.
+
+Spoiler: Alle drei Hypothesen werden zumindest teilweise bestätigt – mit einer überraschenden Ausnahme, auf die ich später eingehe.
+
+---
+
+## Folie 5 – Physikalischer Hintergrund (3 min)
+
+Im Stokes-Regime – also bei sehr kleiner Reynoldszahl, wie es in Magma der Fall ist – vereinfachen sich die Navier-Stokes-Gleichungen erheblich. Der Trägheitsterm fällt weg, und wir erhalten die Stokes-Gleichungen: negativer Druckgradient plus viskose Terme gleich null, kombiniert mit der Inkompressibilitätsbedingung.
+
+Die Schlüsselidee meiner Arbeit: Statt Geschwindigkeitskomponenten ux und uz direkt vorherzusagen, sage ich die Stromfunktion ψ vorher. Die Verbindung ist einfach: ux ist die partielle Ableitung von ψ nach z, und uz ist minus die partielle Ableitung nach x. Das bedeutet, jede glatte Funktion ψ liefert automatisch ein divergenzfreies Geschwindigkeitsfeld – Inkompressibilität ist per Konstruktion garantiert, ohne Penalty-Term in der Verlustfunktion.
+
+Ich rekonstruiere ψ aus den LaMEM-Simulationen durch Lösung der Poisson-Gleichung ∇²ψ = −ω, wobei ω die Vortizität ist. Das gibt mir ein physikalisch konsistentes skalares Lernziel auf dem 256×256-Gitter.
+
+---
+
+## Folie 6 – Methodischer Workflow (3 min)
+
+Der Gesamtworkflow sieht so aus: Zunächst generiere ich Trainingsdaten mit LaMEM. Für jede Kristallkonfiguration erhalte ich Geschwindigkeitsfelder und daraus durch den Poisson-Solve das Ziel-ψ.
+
+Die Eingabe für das neuronale Netz ist ein vierkanaliger Tensor: Erstens die Kristallmaske als binäres Bild. Zweitens ein Signed-Distance-Field, das den Abstand jedes Gitterpunkts zur nächsten Kristalloberfläche kodiert. Drittens und viertens die normierten x- und z-Koordinaten. Dieses Encoding gibt dem Netz eine geometrisch reichhaltige Repräsentation, ohne domänenspezifisches Vorwissen über die Stokes-Gleichungen voraussetzen zu müssen.
+
+Das Netz sagt ψ̂ vorher; daraus werden Geschwindigkeiten durch Finite-Differenzen-Differentiation abgeleitet. Evaluiert wird dann mit einer umfassenden Metriksammlung – relativer L²-Fehler, MAE, Divergenz-RMS und weiteres.
+
+---
+
+## Folie 7 – Architekturvergleich (3 min)
+
+Die beiden verglichenen Architekturen: Das U-Net ist ein klassisches Encoder-Decoder-Modell mit Skip-Connections. Es extrahiert räumlich hierarchische Merkmale durch lokale Faltungen. Die Herausforderung: Batch Normalization erhöht die Sensitivität gegenüber Lernrate und Batchgröße – eine Beobachtung, die direkt zur Arbeit von Mehmeti-Göpel und Wand 2024 zu Weight Dynamics in normalisierten Netzwerken passt.
+
+Der Fourier Neural Operator dagegen operiert im Spektralbereich. Jede FNO-Schicht kombiniert einen globalen spektralen Pfad, der die ersten kmax = 16 Fourier-Moden lernt, mit einem lokalen pointwise 1×1-Konvolutionspfad. Weil kein Batch Normalization verwendet wird, ist das Training wesentlich stabiler.
+
+Beide Modelle sind auf identischen Daten trainiert und mit identischen Metriken evaluiert – das ist zentral für einen fairen Vergleich.
+
+---
+
+## Folie 8 – Experimentelles Design (2 min)
+
+Ich habe vier Experimente durchgeführt. Experiment 1 ist die Einzelkristall-Baseline mit Hyperparameter-Sweep über vier Lernraten und zwei Batchgrößen. Experiment 2 testet Mehrkristall-Generalisierung mit Training auf n von 1 bis 10 Kristallen. Experiment 3 ist der Stress-Test mit Training auf bis zu 25 Kristallen und OOD-Test bei n=50. Experiment 4 untersucht Kristallgröße-Generalisierung: Training auf Radius r=0.05, Test auf r=0.005 (klein) und r=0.5 (groß).
+
+---
+
+## Folie 9 – Exp. 1: Ergebnisse (2 min)
+
+In der Einzelkristall-Baseline ist der FNO klar überlegen. Der beste FNO erreicht 1.6 bis 2.3 Prozent relativen L²-Fehler auf ψ, verglichen mit 5.5 bis 6.5 Prozent beim besten U-Net – also etwa ein Faktor drei zugunsten des FNO.
+
+Das U-Net zeigt ausgeprägte Validation-Loss-Oszillationen bei hohen Lernraten, insbesondere mit Batchgröße 16. Das ist konsistent mit der theoretischen Vorhersage der Mehmeti-Göpel-Arbeit zum effektiven Lernratenspread durch Batch Normalization.
+
+Eine wichtige technische Beobachtung: Der Composite Loss – MSE plus ein Gradienten-Penalty auf die abgeleiteten Geschwindigkeiten – reduziert beim U-Net das Verhältnis von Geschwindigkeitsfehler zu ψ-Fehler von etwa 3× auf etwa 1.5 bis 2×. Das liegt daran, dass numerische Differentiation hochfrequente Residuen in ψ amplifiziert; der Gradienten-Penalty zwingt das Netz, diese zu unterdrücken.
+
+---
+
+## Folie 10 – Exp. 2 & 3: Mehrkristall-Generalisierung (4 min)
+
+In den Mehrkristall-Experimenten setzt sich der FNO-Vorteil fort, aber OOD-Generalisierung ist herausfordernd.
+
+In Experiment 2, trainiert auf bis zu 10 Kristalle, erreicht der FNO in-distribution Fehler von 4 bis 7 Prozent auf ψ. Das U-Net kommt auf 17 bis 29 Prozent – der Faktor 3 bis 4 bleibt also erhalten. Im OOD-Regime, bei n=20 also doppelt so viele wie im Training, übersteigen beide Fehler deutlich die 10-Prozent-Marke.
+
+Der entscheidende Befund kommt in Experiment 3: Wenn ich die Trainingsverteilung auf n ≤ 25 erweitere, kann der FNO bis zu n=35 Fehler unter 10 Prozent halten – das ist deutlich weiter als in Experiment 2. Das zeigt: Die Breite der Trainingsverteilung ist der entscheidende Faktor für die OOD-Reichweite. Das ist konsistent mit Befunden aus der Literatur zur Multi-Obstacle-Strömungsmodellierung.
+
+Interessant ist auch, dass das U-Net ein flacheres Fehlerprofil über Kristallzahlen zeigt – es verschlechtert sich nicht so abrupt wie der FNO außerhalb der Trainingsverteilung, aber seine absolute Genauigkeit ist durchgehend schlechter.
+
+---
+
+## Folie 11 – Exp. 4: Rangumkehr (3 min)
+
+Experiment 4 ist das überraschendste Ergebnis. Für kleine OOD-Kristalle mit r=0.005 performen beide Architekturen ähnlich, etwa 11 bis 12 Prozent auf ψ.
+
+Für große Kristalle mit r=0.5 dagegen versagt der FNO dramatisch: 71.3 Prozent Fehler auf ψ. Das U-Net kommt auf 44.9 Prozent – ebenfalls weit entfernt von Trainingsleistung, aber wesentlich besser als der FNO. Das ist eine vollständige Umkehr der Architekturrangfolge.
+
+Die Ursache ist klar: Große Kristalle erzeugen Grenzschichtstrukturen, die hohe räumliche Frequenzen benötigen. Der FNO schneidet bei kmax=16 Fourier-Moden ab – diese Strukturen kann er schlicht nicht repräsentieren. Das U-Net mit seinen lokalen Faltungen und Skip-Connections ist für scharfe Gradienten bei neuen Skalen robuster.
+
+Die Lösung: Ein auf drei diskreten Radien trainierter FNO reduziert den OOD-Fehler für große Kristalle auf 10.4 Prozent. Die spektrale Beschränkung ist also keine fundamentale Architekturgrenze – sie kann durch Variabilität in den Trainingsdaten überwunden werden, ohne die Architektur zu ändern.
+
+---
+
+## Folie 12 – Diskussion (2 min)
+
+Vier Kernpunkte zur Diskussion:
+
+Erstens FNO-Stabilität versus U-Net-Oszillationen: Das lässt sich direkt auf die Batch-Normalization-Dynamik zurückführen. Ohne BN konvergiert der FNO monoton und robust.
+
+Zweitens die spektrale Abschneidung bei kmax=16: Das ist die Achillesferse des FNO für Größen-OOD. Adaptive Fourier-Moden, wie im Geo-FNO, wären ein natürlicher nächster Schritt.
+
+Drittens die Stromfunktions-Repräsentation: Divergenz-RMS-Werte in der Größenordnung von 10⁻²⁶ bestätigen, dass exakte Inkompressibilität für alle Vorhersagen garantiert ist. Das ist ein klarer Vorteil gegenüber direkter Geschwindigkeitsvorhersage.
+
+Viertens der konsistente Befund, dass Geschwindigkeitsfehler größer als ψ-Fehler sind: Numerische Differentiation verstärkt hochfrequente Residuen – das ist ein inhärentes Problem der Stream-Funktion-Methode, das sich aber durch den Composite Loss deutlich mildern lässt.
+
+---
+
+## Folie 13 – Fazit (2 min)
+
+Die drei Hypothesen zusammenfassend:
+
+Hypothese 1 – bestätigt für den FNO: OOD-Generalisierung ist möglich, skaliert aber mit der Breite der Trainingsverteilung. Für das U-Net nur schwach bestätigt, da es schon in-distribution hohe Fehler zeigt.
+
+Hypothese 2 – vollständig bestätigt: Die ψ-Formulierung erzwingt exakte Inkompressibilität und vereinfacht die Lernaufgabe.
+
+Hypothese 3 – bedingt bestätigt: Der FNO dominiert in Experimenten 1 bis 3, aber die Größen-OOD in Experiment 4 liefert eine Rangumkehr. Das zeigt: Die "bessere" Architektur ist kontextabhängig.
+
+Die praktischen Richtlinien, die ich ableite: FNO bevorzugen, wenn Generalisierung über Kristallzahlen gefragt ist. U-Net wenn geometrische Skalierungsrobustheit wichtiger ist. Und immer: Stromfunktion statt direkter Geschwindigkeitsvorhersage.
+
+---
+
+## Folie 14 – Ausblick (2 min)
+
+Fünf Richtungen für zukünftige Arbeit:
+
+Adaptive Fourier-Moden würden die Größen-OOD-Limitation des FNO architekturell lösen. Hybride U-FNO-Architekturen könnten das Beste beider Welten kombinieren. Eine Erweiterung auf 3D-Stokes-Strömungen wäre der nächste Schritt zu geophysikalisch realistischen Anwendungen. Das Surrogatmodell ist als Baustein für ein Zeitschritt-Framework gedacht: Pro Zeitschritt dauert der Surrogate Millisekunden statt acht Sekunden. Und schließlich würde Unsicherheitsquantifizierung das Vertrauen in die Vorhersagen für geophysikalische Anwendungen deutlich erhöhen.
+
+---
+
+## Folie 15 – Vielen Dank (1 min)
+
+Das war ein Überblick über meine Arbeit. Die wichtigsten Takeaways: Der FNO ist für Mehrkristall-Stokes-Strömungen das stärkere Modell – außer wenn Kristallgröße variiert. Die Stromfunktionsformulierung ist eine solide Designentscheidung. Und Breite der Trainingsverteilung schlägt Architekturkomplexität bei der OOD-Generalisierung.
+
+Den Code finden Sie öffentlich auf GitLab. Ich freue mich auf Ihre Fragen.
+
+---
+
+## Mögliche Prüferfragen & Antworten
+
+**F: Warum genau führt Batch Normalization zu Instabilität?**
+Durch BN wird der effektive Lernratenspread zwischen frühen und späten Schichten vergrößert. Mehmeti-Göpel & Wand 2024 zeigen theoretisch, dass dies zu einer erhöhten Sensitivität gegenüber der globalen Lernrate führt – insbesondere wenn Batchgröße und Lernrate gemeinsam skalieren, da BN von der Batchstatistik abhängt.
+
+**F: Warum haben Sie kmax=16 gewählt?**
+Das ist der Standardwert aus der FNO-Literatur (Li et al. 2021). Für die Trainingsdomäne r=0.05 reicht das aus; die spektralen Hauptmerkmale der Strömung liegen in diesem Bereich. Experiment 4 zeigt dann, wo diese Wahl an ihre Grenzen stößt.
+
+**F: Wie wurde die Poisson-Gleichung für ψ numerisch gelöst?**
+Mit einem 5-Punkt-Stencil auf dem 256×256-Gitter, Kronecker-Produkt-Assemblierung des diskreten Laplace-Operators, homogene Dirichlet-Randbedingungen ψ|∂Ω = 0. Das fixiert den Gauge und ist konsistent mit den Free-Slip-Wandbedingungen von LaMEM.
+
+**F: Warum sind die Datensätze so klein (1000 Samples)?**
+Das ist eine zentrale Limitation, die ich explizit diskutiere. Für n=1 ist der Konfigurationsraum zweidimensional und 1000 Samples decken ihn gut ab. Für höhere Kristallzahlen wächst der Raum exponentiell, und die Samples sind nur ein Ausschnitt. Größere Datensätze würden die Generalisierung vermutlich verbessern.
+
+**F: Haben Sie den Computational Speedup gemessen?**
+Ja – Section 7.5 der Arbeit. Die Inferenz eines FNO ist um mehrere Größenordnungen schneller als ein LaMEM-Solve (~8s vs. Millisekunden), was Langzeitsimulationen erst praktikabel macht.
+
+**F: Warum keine PINNs?**
+PINNs optimieren für jede neue Geometrie separat – das ist für unsere Anwendung unpraktisch. Surrogatmodelle wie FNO und U-Net lernen eine Abbildung über den gesamten Konfigurationsraum, was Inferenz in Echtzeit ermöglicht.
+
+**F: Was bedeutet die Variable-Radius-FNO-Lösung für die Architekturwahl?**
+Es zeigt, dass die spektrale Truncation keine fundamentale Architekturbarriere ist – sie kann durch Trainingsdat-Diversität adressiert werden. Für einen praktischen Einsatz würde ich daher empfehlen, variable Kristallgrößen in die Trainingsverteilung einzubeziehen, bevor man auf adaptive Fourier-Moden wechselt.
