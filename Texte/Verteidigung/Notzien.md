@@ -380,3 +380,4 @@ PINNs optimize per instance at inference time (slow) and scale poorly across man
 
 **What does this mean for real magma chambers?**
 Results transfer directly to any parameter combination with Re ≪ 1 and the same geometric setup. Qualitative screening of crystal arrangements is immediately feasible; quantitative trajectory calculations over many timesteps require higher accuracy and a study of error accumulation.
+
